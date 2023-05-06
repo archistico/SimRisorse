@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Gestionale
 {
-    internal class Risorse
+    public class Risorse
     {
-        public Risorsa persone = new Risorsa() { nome = "Persone", qt = 0 };
-        public Risorsa soldati = new Risorsa() { nome = "Soldati", qt = 0 };
-        public Risorsa alberi = new Risorsa() { nome = "Alberi", qt = 0 };
-        public Risorsa legno = new Risorsa() { nome = "Legno", qt = 0 };
-        public Risorsa pietra = new Risorsa() { nome = "Pietra", qt = 0 };
+        public Risorsa persone = new Risorsa() { nome = "Persone", quantita = 0 };
+        public Risorsa soldati = new Risorsa() { nome = "Soldati", quantita = 0 };
+        public Risorsa alberi = new Risorsa() { nome = "Alberi", quantita = 0 };
+        public Risorsa legno = new Risorsa() { nome = "Legno", quantita = 0 };
+        public Risorsa pietra = new Risorsa() { nome = "Pietra", quantita = 0 };
     }
 }

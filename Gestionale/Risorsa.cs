@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Gestionale
 {
-    internal class Risorsa
+    public class Risorsa
     {
         public string nome = "";
-        public float qt = 0;
+        public string descrizione = "";
+        public float quantita = 0;
     }
 }

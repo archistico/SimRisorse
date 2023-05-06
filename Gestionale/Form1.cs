@@ -5,8 +5,8 @@ namespace Gestionale
     public partial class Form1 : Form
     {
         public DateTime inizio;
-        public Costruzione comune;
-
+        public Costruzione[] costruzioni = new Costruzione[5];
+        
         public Form1()
         {
             InitializeComponent();
@@ -17,6 +17,10 @@ namespace Gestionale
             inizio = DateTime.Now;
             orologio.Start();
 
+            costruzioni[0] = new Costruzione { nome = "Comune", quantita = 1 };
+            costruzioni[1] = new Costruzione { nome = "Taglialegna", quantita = 1 };
+
+            costruzioni[1].produzione.legno.quantita = 1;
 
         }
 
