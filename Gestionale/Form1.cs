@@ -5,7 +5,8 @@ namespace Gestionale
     public partial class Form1 : Form
     {
         public DateTime inizio;
-        public Costruzione[] costruzioni = new Costruzione[5];
+        public List<Costruzione> costruzioni = new List<Costruzione>();
+        public Magazzino magazzino = new Magazzino();
         
         public Form1()
         {
@@ -17,11 +18,41 @@ namespace Gestionale
             inizio = DateTime.Now;
             orologio.Start();
 
-            costruzioni[0] = new Costruzione { nome = "Comune", quantita = 1 };
-            costruzioni[1] = new Costruzione { nome = "Taglialegna", quantita = 1 };
+            costruzioni.Add(new Comune());
+            costruzioni.Add(new Taglialegna());
+            costruzioni.Add(new Segheria());
+            costruzioni.Add(new Tagliapietra());
+        }
 
-            costruzioni[1].produzione.legno.quantita = 1;
+        private void CalcoloMagazzino()
+        {
+            Magazzino magazzinoAttuale = new Magazzino();
 
+            foreach (Costruzione costruzione in this.costruzioni)
+            {
+                foreach (Risorsa risorsa in costruzione.magazzino.Lista)
+                {
+                    magazzinoAttuale.massimo.getRisorsa(risorsa.nome).quantita += risorsa.quantita;
+                }
+            }
+
+            magazzino = magazzinoAttuale;
+        }
+
+        private void CalcoloCiclo()
+        {
+
+        }
+
+        private void VisualizzaMagazzino()
+        {
+            lblMagazzino.Text = String.Empty;
+            foreach (Risorsa risorsa in new Risorse().Lista)
+            {
+                lblMagazzino.AppendText(risorsa.nome + " \t"
+                        + magazzino.deposito.getRisorsa(risorsa.nome).quantita + " \t"
+                        + magazzino.massimo.getRisorsa(risorsa.nome).quantita + System.Environment.NewLine);
+            }
         }
 
         private void orologio_Tick(object sender, EventArgs e)
@@ -29,7 +60,12 @@ namespace Gestionale
             DateTime ora = DateTime.Now;
             int secondi = Convert.ToInt32(System.Math.Round((ora - inizio).TotalSeconds));
 
-            lblSecondiPassati.Text = secondi.ToString();            
+            lblSecondiPassati.Text = secondi.ToString();
+
+            CalcoloMagazzino();
+            CalcoloCiclo();
+
+            VisualizzaMagazzino();
         }
     }
 }

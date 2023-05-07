@@ -32,6 +32,8 @@
             this.lblSecondiPassati = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.orologio = new System.Windows.Forms.Timer(this.components);
+            this.lblMagazzino = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // lblSecondiPassati
@@ -57,11 +59,30 @@
             this.orologio.Interval = 1000;
             this.orologio.Tick += new System.EventHandler(this.orologio_Tick);
             // 
+            // lblMagazzino
+            // 
+            this.lblMagazzino.Location = new System.Drawing.Point(366, 26);
+            this.lblMagazzino.Multiline = true;
+            this.lblMagazzino.Name = "lblMagazzino";
+            this.lblMagazzino.Size = new System.Drawing.Size(310, 521);
+            this.lblMagazzino.TabIndex = 7;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(366, 8);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(64, 15);
+            this.label2.TabIndex = 8;
+            this.label2.Text = "Magazzino";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(688, 559);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.lblMagazzino);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lblSecondiPassati);
             this.Name = "Form1";
@@ -76,5 +97,7 @@
         private Label lblSecondiPassati;
         private Label label1;
         private System.Windows.Forms.Timer orologio;
+        private TextBox lblMagazzino;
+        private Label label2;
     }
 }

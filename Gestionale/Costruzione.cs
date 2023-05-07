@@ -10,12 +10,21 @@ namespace Gestionale
     {
         public string nome = "";
         public string descrizione = "";
-        public int quantita;
-        public Risorse dotazione;
-        public Risorse costo;
-        public Risorse produzione;
-        public Risorse consumo;
-        public Risorse reciclo;
-        public Risorse magazzino;
+        public int quantita = 0;
+        public Risorse dotazione = new Risorse();
+        public Risorse costo = new Risorse();
+        public Risorse produzione = new Risorse();
+        public Risorse consumo = new Risorse();
+        public Risorse reciclo = new Risorse();
+        public Risorse magazzino = new Risorse();
+
+        public DateTime inizio;
+
+        public Costruzione()
+        {
+            this.inizio = DateTime.Now;
+        }
+
+        
     }
 }
