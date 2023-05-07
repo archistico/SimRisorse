@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Timers;
 
 namespace Gestionale
@@ -20,24 +21,10 @@ namespace Gestionale
 
             costruzioni.Add(new Comune());
             costruzioni.Add(new Taglialegna());
+            costruzioni.Add(new Taglialegna());
             costruzioni.Add(new Segheria());
-            costruzioni.Add(new Tagliapietra());
-        }
-
-        private void CalcoloMagazzino()
-        {
-            Magazzino magazzinoAttuale = new Magazzino();
-
-            foreach (Costruzione costruzione in this.costruzioni)
-            {
-                foreach (Risorsa risorsa in costruzione.magazzino.Lista)
-                {
-                    magazzinoAttuale.massimo.getRisorsa(risorsa.nome).quantita += risorsa.quantita;
-                }
-            }
-
-            magazzino = magazzinoAttuale;
-        }
+            //costruzioni.Add(new Tagliapietra());
+        }        
 
         private void CalcoloCiclo()
         {
@@ -57,13 +44,12 @@ namespace Gestionale
 
         private void orologio_Tick(object sender, EventArgs e)
         {
-            DateTime ora = DateTime.Now;
-            int secondi = Convert.ToInt32(System.Math.Round((ora - inizio).TotalSeconds));
+            int secondi = Convert.ToInt32(System.Math.Round((DateTime.Now - inizio).TotalSeconds));
 
             lblSecondiPassati.Text = secondi.ToString();
 
-            CalcoloMagazzino();
-            CalcoloCiclo();
+            magazzino.CalcoloMassimoMagazzino(costruzioni);
+            magazzino.CalcoloDepositoCiclo(costruzioni);
 
             VisualizzaMagazzino();
         }

@@ -25,6 +25,9 @@ namespace Gestionale
             this.inizio = DateTime.Now;
         }
 
-        
+        public int CicliTotali()
+        {
+            return Convert.ToInt32(System.Math.Round((DateTime.Now - inizio).TotalSeconds));
+        }
     }
 }
