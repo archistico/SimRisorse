@@ -53,5 +53,15 @@ namespace Gestionale
 
             VisualizzaMagazzino();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            costruzioni.Add(new Segheria());
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            costruzioni.Add(new Taglialegna());
+        }
     }
 }

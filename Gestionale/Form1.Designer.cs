@@ -34,6 +34,8 @@
             this.orologio = new System.Windows.Forms.Timer(this.components);
             this.lblMagazzino = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lblSecondiPassati
@@ -76,11 +78,33 @@
             this.label2.TabIndex = 8;
             this.label2.Text = "Magazzino";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(65, 91);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(98, 23);
+            this.button1.TabIndex = 9;
+            this.button1.Text = "+ segheria";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(65, 62);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(98, 23);
+            this.button2.TabIndex = 10;
+            this.button2.Text = "+ taglialegna";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(688, 559);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lblMagazzino);
             this.Controls.Add(this.label1);
@@ -99,5 +123,7 @@
         private System.Windows.Forms.Timer orologio;
         private TextBox lblMagazzino;
         private Label label2;
+        private Button button1;
+        private Button button2;
     }
 }
