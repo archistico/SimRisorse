@@ -1,0 +1,13 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SimRisorse.Desktop.App" RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="7" /><Setter Property="Padding" Value="15,10" />
+      <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.primary"><Setter Property="Background" Value="#176858" /><Setter Property="Foreground" Value="White" /></Style>
+    <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="#66766E" /><Setter Property="FontSize" Value="12" /></Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#DDE9DD" /></Style>
+  </Application.Styles>
+</Application>

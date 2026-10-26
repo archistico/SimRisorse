@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><IsTestProject>true</IsTestProject></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/SimRisorse.Infrastructure/SimRisorse.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" /><PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Fixtures/economy-foundation-v1.sqlite3" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

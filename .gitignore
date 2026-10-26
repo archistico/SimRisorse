@@ -361,3 +361,13 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# SimRisorse: local caches and local save data, never source/reference assets.
+/.local-cache/
+/.local-data/
+/graphify-out/cache/
+/.graphify_*.json
+/.graphify_python
+*.db-shm
+*.db-wal
+*.db-journal

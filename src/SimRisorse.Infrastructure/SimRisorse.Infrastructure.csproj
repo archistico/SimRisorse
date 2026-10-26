@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../SimRisorse.Application/SimRisorse.Application.csproj" />
+    <ProjectReference Include="../SimRisorse.Core/SimRisorse.Core.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+</Project>

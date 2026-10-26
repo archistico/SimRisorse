@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Model/SimRisorse.StackProbe.Model.csproj" />
+  <Project Path="Persistence/SimRisorse.StackProbe.Persistence.csproj" />
+  <Project Path="Desktop/SimRisorse.StackProbe.Desktop.csproj" />
+  <Project Path="Tests/SimRisorse.StackProbe.Tests.csproj" />
+</Solution>

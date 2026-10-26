@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Model/SimRisorse.StackProbe.Model.csproj" />
+    <ProjectReference Include="../Persistence/SimRisorse.StackProbe.Persistence.csproj" />
+    <ProjectReference Include="../Desktop/SimRisorse.StackProbe.Desktop.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <PackageReference Include="Avalonia.Headless.XUnit" />
+  </ItemGroup>
+</Project>

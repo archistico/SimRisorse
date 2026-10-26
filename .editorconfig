@@ -1,0 +1,24 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+csharp_style_namespace_declarations = file_scoped:warning
+
+[*.{csproj,props,slnx,json}]
+indent_style = space
+indent_size = 2
+
+[packages.lock.json]
+insert_final_newline = false
+
+[legacy/**]
+trim_trailing_whitespace = false
+
+[experiments/**]
+csharp_style_namespace_declarations = file_scoped:silent

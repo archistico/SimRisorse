@@ -1,0 +1,124 @@
+# Game design
+
+Data di riferimento: 2026-10-26. Questo documento distingue requisiti confermati, proposte e questioni da risolvere; gli screenshot sono evidenze di un riferimento, non una specifica da copiare integralmente.
+
+## Visione e ciclo di gioco
+
+Il giocatore costruisce un'economia partendo da materiali di base. Investimenti diversi in edifici e lavoratori cambiano la velocità di progressione. L'obiettivo è arrivare a costruire tutti i tipi di edificio previsti dallo scenario nel minor tempo di gioco possibile.
+
+Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento, organizzare il lavoro, far avanzare la simulazione, raggiungere nuovi sblocchi e correggere i colli di bottiglia. La visione comprende soldati, castelli e missioni di conquista delle isole.
+
+## Requisiti confermati
+
+| ID | Requisito | Conseguenza |
+| --- | --- | --- |
+| G-01 | Costruire tutti i tipi di edificio è il traguardo generale | Serve un insieme di obiettivi finito per ciascuno scenario |
+| G-02 | Edifici successivi più difficili da ottenere | La progressione introduce costi e dipendenze crescenti |
+| G-03 | Il numero di edifici influenza il tempo di completamento | Il giocatore sceglie quali capacità produttive espandere |
+| G-04 | Gestione tramite elenco | Nessuna collocazione spaziale degli edifici nel perimetro iniziale |
+| G-05 | Lavoratori presenti nel gioco | Costruzioni e disponibilità di personale sono vincoli distinti |
+| G-06 | Soldati, castelli e missioni di conquista delle isole | La progressione militare appartiene alla visione del prodotto |
+| G-07 | Il gioco si ferma durante la pausa e quando non si gioca | Nessuna produzione a gioco chiuso o recupero del tempo trascorso |
+| G-08 | Classifica basata sul tempo di gioco | Serve una misura del tempo separata dall'orologio del calendario |
+| G-09 | Partita molto efficiente di circa 8 ore; strategie meno efficaci anche oltre 32 ore | Obiettivo da misurare, non durata già garantita |
+
+Le otto ore indicano tempo effettivamente avanzato nella simulazione. Il tempo speso a riflettere in pausa non viene conteggiato. Il rapporto iniziale tra tempo reale e simulato resta in Q-04.
+
+Per la sola prova M1 sono state definite [regole operative provvisorie](scenarios/ECONOMY_PROBE.md): tre strutture, otto abitanti, acquisti immediati, assegnazioni manuali, passi di un secondo e ordini in pausa. Q-03, Q-04, Q-06 e Q-07 hanno quindi una risposta limitata all'esperimento; non sono chiuse per il gioco completo.
+
+M2 ha trasferito il piccolo ciclo nello [scenario economico del Core](scenarios/ECONOMY_FOUNDATION.md), con acquisti e assegnazioni multipli, risorse frazionarie e priorità dichiarate. I valori restano di riferimento, non bilanciamento finale. Q-07 ha una politica implementata nel primo motore: prenotazioni per priorità, ricette complete e materiali disponibili al passo successivo; una diversa politica futura richiederà un cambio esplicito delle regole.
+
+Le cinque nuove immagini di risorse e strutture sono analizzate nei [riferimenti delle filiere](references/RESOURCE_AND_PRODUCTION_CHAINS.md). Esplicitano alimentazione, monete, armi, colonie e tre catene decorative: sono riferimenti per progettare i contenuti futuri, senza introdurre automaticamente nuove regole nel Core o chiudere le domande sull'obiettivo finale.
+
+M3 rende giocabile lo scenario ridotto: ordini da 1, 5 o 10 unità, viste Edifici/Risorse, pausa e ripresa da checkpoint. La versione corrente usa tempo reale 1:1 durante l'esecuzione, ordini consentiti in pausa, pausa alla minimizzazione/sospensione e ripresa manuale; perdere il focus da solo non interrompe il gioco. I flussi visibili sono previsioni per il prossimo secondo di gioco e non produzione offline. Queste politiche sono formalizzate nell'[ADR 0007](adr/0007-desktop-persistence-and-lifecycle.md).
+
+## Proposte di lavoro non ancora confermate
+
+### Economia e costruzioni
+
+- Catalogo di tipi di edificio con costi, requisiti, posti di lavoro, ricette ed effetti sulla capacità.
+- Edifici organizzati per categorie: produzione di base, trasformazione, abitazioni, depositi, alimentazione, esercito e navigazione.
+- Investimenti che richiedono tempo per ripagarsi; espandere la produzione vicino alla vittoria può non convenire.
+- Quantità aggregate per tipo, con suddivisioni interne solo quando servono per lavoratori, avanzamento delle costruzioni o stato operativo.
+- Possibilità di demolire e recuperare parte dei materiali, con regole ancora da definire.
+
+### Popolazione
+
+- Un bacino condiviso tra abitanti disponibili, lavoratori, reclute e soldati.
+- Reclutamento che sottrae persone all'economia civile e addestramento che richiede tempo e risorse.
+- Abitazioni con capacità e possibile crescita della popolazione; eventuale dotazione immediata di abitanti trattata come effetto separato.
+- Cibo come vincolo di mantenimento. Soglie, consumatori e conseguenze delle carenze non sono ancora decisi.
+
+Le persone sono conteggi interi. Un tasso di crescita frazionario può accumulare avanzamento senza rappresentare una frazione di lavoratore assegnabile. Non è deciso come gestire eventuali rientri, congedi o perdite.
+
+### Esercito e isole
+
+- Missioni gestite da schede, senza controllo tattico diretto.
+- Isole che possono offrire risorse, capacità produttiva o sblocchi.
+- Durata delle missioni legata al medesimo tempo di simulazione dell'economia.
+- Esiti inizialmente deterministici e informazioni sufficienti a pianificare una spedizione.
+- Navi e contingenti come entità distinte dagli edifici, anche quando l'interfaccia usa elenchi simili.
+
+Il legame obbligatorio tra conquiste e vittoria non è ancora confermato. Caserme, castelli, cantieri e tipi di truppe devono ricevere funzioni precise prima di entrare nel catalogo definitivo.
+
+### Interfaccia
+
+- Riepilogo persistente di risorse, tempo e stato della partita.
+- Elenco filtrabile con quantità, personale, produttività e motivi di blocco.
+- Scheda di dettaglio con costo, consumo, produzione, requisiti ed effetti dell'acquisto.
+- Operazioni multiple per ridurre il numero di clic quando si gestiscono centinaia di edifici.
+- Informazioni testuali per gli stati: un colore, da solo, non deve essere l'unica spiegazione.
+
+## Questioni aperte
+
+| ID | Decisione da prendere | Prima di |
+| --- | --- | --- |
+| Q-01 | Vittoria: possedere contemporaneamente ogni tipo, averlo costruito almeno una volta o completare anche una struttura finale? | Specifica dell'obiettivo |
+| Q-02 | Quali isole o conquiste sono obbligatorie per completare lo scenario? | Catalogo completo e bilanciamento |
+| Q-03 | Costruzione immediata o con durata? Code, parallelismo e acquisti multipli? | Prima funzionalità di costruzione |
+| Q-04 | Velocità iniziale 1:1? Ordini applicabili in pausa? Come trattare minimizzazione e perdita del focus? | Collegamento tra interfaccia e orologio |
+| Q-05 | Dotazione iniziale, abitazioni, crescita, consumo alimentare e carenze? | Popolazione dinamica |
+| Q-06 | Assegnazione manuale o automatica dei lavoratori? Produttività con personale incompleto? | Economia minima |
+| Q-07 | Disponibilità di materiali condivisi: priorità, ripartizione e produzione parziale? Destinazione dell'eccesso a magazzino pieno? | Algoritmo di produzione |
+| Q-08 | Demolizione: rimborsi e gestione di lavoratori, abitanti e scorte oltre la capacità residua? | Demolizione |
+| Q-09 | Truppe, addestramento, costi, perdite, durata, esiti e trasporti delle missioni? | Modulo militare |
+| Q-10 | Classifica solo locale o pubblica? Difficoltà, pareggi, uso di salvataggi precedenti e partite valide? | Risultati competitivi |
+
+Non tutte le domande bloccano il primo prototipo. Per l'economia minima bastano Q-03, Q-06 e Q-07, una dotazione iniziale e una regola esplicita di avanzamento del tempo. Le altre vanno risolte prima della funzionalità interessata.
+
+Per Q-05 è disponibile una [proposta numerica M4](scenarios/CIVIL_GROWTH_DRAFT.md), con case, crescita e prima filiera alimentare. Definisce anche ordine del passo, carenze, recupero e prove attese. Rimane una bozza: la partita corrente continua a usare popolazione fissa e regole Economy Foundation.
+
+## Obiettivi di bilanciamento
+
+- Verificare prima che le filiere siano raggiungibili e che lo scenario possa essere completato.
+- Confrontare una strategia di riferimento efficiente con strategie meno efficaci ma plausibili.
+- Misurare tempo di completamento, attese, scorte inutilizzate, inattività degli edifici e vincoli di personale.
+- Raggiungere la durata desiderata attraverso decisioni e progressione, evitando attese obbligatorie prive di alternative.
+- Separare i risultati per scenario e versione delle regole; il formato esatto della classifica resta Q-10.
+
+Le simulazioni automatiche servono per misurare e cercare errori. Non dimostrano da sole che una strategia sia matematicamente ottimale; le prove con giocatori restano necessarie per valutare leggibilità e ritmo.
+
+## Perimetro iniziale e rinvii
+
+La prima versione dimostrativa riguarda un piccolo ciclo economico con lavoratori e pausa. Esercito e isole rimangono nella roadmap del prodotto, ma non sono requisiti della prima dimostrazione tecnica.
+
+Mappa con collocamento spaziale, combattimento tattico, produzione offline e gioco simultaneo tra utenti non rientrano nel perimetro iniziale. La decisione su una classifica pubblica è distinta dal multiplayer.
+
+## Glossario
+
+| Termine | Significato |
+| --- | --- |
+| Partita | Stato di una singola esecuzione dello scenario, riprendibile da salvataggio |
+| Scenario | Contenuti, condizioni iniziali e obiettivi di una partita |
+| Tipo di edificio | Definizione nel catalogo, distinta dalla quantità posseduta |
+| Ricetta | Input, output e requisiti di una lavorazione |
+| Capacità | Limite disponibile, distinto dalla quantità attualmente presente |
+| Lavoratore | Persona assegnata a un'attività civile |
+| Tempo di gioco | Tempo avanzato dal motore; esclude pause e chiusura |
+| Versione delle regole | Identità del catalogo e delle formule usate dalla partita |
+
+## Riferimenti
+
+- [Analisi degli screenshot](references/README.md).
+- [Decisioni architetturali](adr/README.md).
+- [Roadmap](ROADMAP.md).

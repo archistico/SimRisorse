@@ -1,0 +1,114 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SimRisorse.StackProbe.Desktop"
+        x:Class="SimRisorse.StackProbe.Desktop.MainWindow"
+        x:DataType="vm:ProbeViewModel"
+        Title="SimRisorse — Economia iniziale" Width="1180" Height="790" MinWidth="1020" MinHeight="720"
+        Background="#F4F5F0" FontFamily="Segoe UI" Foreground="#1F332C">
+  <Grid ColumnDefinitions="205,*">
+    <Border Background="#173D32" Padding="24,32">
+      <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <StackPanel Spacing="7">
+          <TextBlock Text="SIMRISORSE" FontSize="21" FontWeight="Bold" Foreground="#F5F2E7" LetterSpacing="1" />
+          <TextBlock Text="La tua colonia, una scelta alla volta." Foreground="#AFCCC0" TextWrapping="Wrap" FontSize="12" LineHeight="20" />
+        </StackPanel>
+        <Border Grid.Row="1" Background="#2A5345" CornerRadius="7" Padding="13" Margin="0,35,0,0">
+          <TextBlock Text="01   Economia" Foreground="White" FontWeight="SemiBold" />
+        </Border>
+        <StackPanel Grid.Row="2" Spacing="12" Margin="4,25,0,0">
+          <TextBlock Text="ISOLA INIZIALE" Foreground="#AFCCC0" FontSize="11" LetterSpacing="1" />
+          <TextBlock Text="3 tipi di edificio" Foreground="#F5F2E7" />
+          <TextBlock Text="8 abitanti" Foreground="#F5F2E7" />
+        </StackPanel>
+        <StackPanel Grid.Row="4" Spacing="8">
+          <TextBlock Text="Una filiera in equilibrio" Foreground="#E2D1A2" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <TextBlock Text="Più edifici offrono più posti. Servono lavoratori e materiali per farli produrre." Foreground="#AFCCC0" TextWrapping="Wrap" FontSize="12" LineHeight="20" />
+        </StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Column="1" Margin="30,27" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="22">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="5">
+          <TextBlock Text="Economia iniziale" FontSize="28" FontWeight="SemiBold" />
+          <TextBlock Text="Organizza la produzione. Ogni lavoratore conta." Foreground="#67766F" />
+        </StackPanel>
+        <Border Grid.Column="1" Background="#E6EBE3" CornerRadius="8" Padding="18,10">
+          <StackPanel Spacing="3">
+            <TextBlock Text="{Binding PlayState}" FontSize="10" FontWeight="Bold" Foreground="#466253" />
+            <TextBlock x:Name="ClockText" Text="{Binding Clock}" FontSize="23" FontWeight="SemiBold" />
+          </StackPanel>
+        </Border>
+      </Grid>
+      <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="13">
+        <Border Background="White" CornerRadius="9" Padding="19,15">
+          <StackPanel Spacing="4"><TextBlock Classes="label" Text="TRONCHI" /><TextBlock Text="{Binding Logs}" FontSize="27" FontWeight="SemiBold" /><TextBlock Classes="label" Text="Capacità 1.000" /></StackPanel>
+        </Border>
+        <Border Grid.Column="1" Background="White" CornerRadius="9" Padding="19,15">
+          <StackPanel Spacing="4"><TextBlock Classes="label" Text="LEGNO LAVORATO" /><TextBlock x:Name="PlanksText" Text="{Binding Planks}" FontSize="27" FontWeight="SemiBold" /><TextBlock Classes="label" Text="Capacità 1.000" /></StackPanel>
+        </Border>
+        <Border Grid.Column="2" Background="White" CornerRadius="9" Padding="19,15">
+          <StackPanel Spacing="4"><TextBlock Classes="label" Text="PIETRA" /><TextBlock Text="{Binding Stone}" FontSize="27" FontWeight="SemiBold" /><TextBlock Classes="label" Text="Capacità 1.000" /></StackPanel>
+        </Border>
+      </Grid>
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+        <TextBlock Text="Edifici e lavoratori" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="{Binding Population}" Foreground="#466253" VerticalAlignment="Center" />
+      </Grid>
+      <Grid Grid.Row="3" ColumnDefinitions="*,305" ColumnSpacing="18">
+        <Border Background="White" CornerRadius="9" Padding="8,16">
+          <Grid RowDefinitions="Auto,*" RowSpacing="10">
+            <Grid ColumnDefinitions="*,70,76" Margin="14,0,8,0">
+              <TextBlock Classes="label" Text="STRUTTURA" /><TextBlock Grid.Column="1" Classes="label" Text="EDIFICI" /><TextBlock Grid.Column="2" Classes="label" Text="PERSONALE" />
+            </Grid>
+            <ListBox x:Name="BuildingsList" Grid.Row="1" ItemsSource="{Binding Buildings}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:BuildingRow">
+                  <Grid ColumnDefinitions="38,*,60,76" RowDefinitions="Auto,Auto" Margin="3,10" ColumnSpacing="6" RowSpacing="7">
+                    <Border Grid.RowSpan="2" Background="#E6EBE3" Width="34" Height="37" CornerRadius="6" VerticalAlignment="Top"><TextBlock Text="{Binding Initials}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#176858" /></Border>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Text="{Binding Staff}" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Status}" FontSize="12" Foreground="#67766F" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
+        </Border>
+        <Border Grid.Column="1" Background="#E8EEE6" CornerRadius="9" Padding="21,20">
+          <Grid RowDefinitions="*,Auto" RowSpacing="12">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="label" Text="DETTAGLIO STRUTTURA" />
+                <TextBlock Text="{Binding Selected.Name}" FontSize="23" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Selected.Description}" TextWrapping="Wrap" FontSize="12" LineHeight="19" Foreground="#53685C" />
+                <TextBlock Text="{Binding Selected.Recipe}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
+                <TextBlock Text="Per ogni lavoratore assegnato" Classes="label" />
+              </StackPanel>
+            </ScrollViewer>
+            <StackPanel Grid.Row="1" Spacing="8">
+              <Border Height="1" Background="#CBD7C9" Margin="0,2" />
+              <TextBlock Text="{Binding Selected.Cost}" FontWeight="SemiBold" />
+              <Button x:Name="BuildButton" Classes="primary" Content="Costruisci +1" Command="{Binding ConstructCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="7">
+                <Button x:Name="ReleaseButton" Content="− Lavoratore" Command="{Binding ReleaseCommand}" Padding="7,10" FontSize="12" HorizontalAlignment="Stretch" />
+                <Button x:Name="AssignButton" Grid.Column="1" Content="+ Lavoratore" Command="{Binding AssignCommand}" Padding="7,10" FontSize="12" HorizontalAlignment="Stretch" />
+              </Grid>
+              <TextBlock Text="{Binding Selected.Activity}" TextWrapping="Wrap" Classes="label" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+      <StackPanel Grid.Row="4" Spacing="13">
+        <Border Background="#E9E5D5" CornerRadius="7" Padding="13,10"><TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" Foreground="#625A3D" /></Border>
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="9">
+          <Button x:Name="PauseButton" Classes="primary" Content="{Binding PauseAction}" Command="{Binding TogglePauseCommand}" />
+          <TextBlock Grid.Column="1" Text="{Binding BusyState}" Classes="label" VerticalAlignment="Center" Margin="7,0" />
+          <Button Grid.Column="2" Content="Nuova partita" Command="{Binding NewGameCommand}" />
+          <Button x:Name="LoadButton" Grid.Column="3" Content="Carica" Command="{Binding LoadCommand}" />
+          <Button x:Name="SaveButton" Grid.Column="4" Content="Salva" Command="{Binding SaveCommand}" />
+        </Grid>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>
