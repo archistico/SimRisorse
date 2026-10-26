@@ -56,22 +56,25 @@ public sealed class GameRuntime(GameScenario scenario)
         }
     }
 
-    internal Persistence.GameSaveError TryRestore(GameSnapshot snapshot, long revision)
+    /// <summary>Restores a checkpoint, converting it first when an explicit upgrade to the active rules is known.</summary>
+    internal (Persistence.GameSaveError Error, string? UpgradedFromRules) TryRestore(GameSnapshot snapshot, long revision)
     {
         lock (_gate)
         {
-            if (_revision != revision) return Persistence.GameSaveError.Superseded;
-            if (!GameSession.SupportsSnapshotFormat(snapshot.FormatVersion)) return Persistence.GameSaveError.UnsupportedFormat;
-            if (snapshot.ScenarioId != _session.Scenario.Id || snapshot.RulesVersion != _session.Scenario.Catalog.RulesVersion)
-                return Persistence.GameSaveError.IncompatibleRules;
+            if (_revision != revision) return (Persistence.GameSaveError.Superseded, null);
+            if (!GameSession.SupportsSnapshotFormat(snapshot.FormatVersion)) return (Persistence.GameSaveError.UnsupportedFormat, null);
+            var rules = _session.Scenario.Catalog.RulesVersion;
+            var upgraded = snapshot.ScenarioId == _session.Scenario.Id ? Scenarios.ScenarioUpgrades.Apply(snapshot, rules) : snapshot;
+            if (upgraded.ScenarioId != _session.Scenario.Id || upgraded.RulesVersion != rules)
+                return (Persistence.GameSaveError.IncompatibleRules, null);
             try
             {
-                var replacement = GameSession.Restore(_session.Scenario, snapshot);
+                var replacement = GameSession.Restore(_session.Scenario, upgraded);
                 _session = replacement;
                 _revision++;
-                return Persistence.GameSaveError.None;
+                return (Persistence.GameSaveError.None, ReferenceEquals(upgraded, snapshot) ? null : snapshot.RulesVersion);
             }
-            catch (ArgumentException) { return Persistence.GameSaveError.InvalidData; }
+            catch (ArgumentException) { return (Persistence.GameSaveError.InvalidData, null); }
         }
     }
 }

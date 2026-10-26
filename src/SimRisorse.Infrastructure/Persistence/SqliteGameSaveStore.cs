@@ -82,6 +82,7 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             throw new GameSaveException(GameSaveError.InvalidData, "Snapshot cannot be written.");
         Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
         using var connection = Open(SqliteOpenMode.ReadWriteCreate);
+        PreserveReplacedRules(connection, snapshot);
         using var transaction = connection.BeginTransaction();
         var fileVersion = CheckFormat(connection, transaction, allowEmpty: true);
         if (fileVersion != 0 && fileVersion != snapshot.FormatVersion)
@@ -153,6 +154,47 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             insert.ExecuteNonQuery();
         }
         transaction.Commit();
+    }
+
+    /// <summary>
+    /// Copies the current checkpoint next to the save before it is replaced by a different scenario or rules version.
+    /// Existing copies are never overwritten; the write is refused when no free name is available.
+    /// </summary>
+    private void PreserveReplacedRules(SqliteConnection connection, GameSnapshot snapshot)
+    {
+        string? rules = null;
+        using (var read = connection.BeginTransaction(deferred: true))
+        {
+            // Other file generations are refused by the write below, so they need no copy.
+            if (CheckFormat(connection, read, allowEmpty: true) != snapshot.FormatVersion) return;
+            using var table = Command(connection, read, "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='game_save';");
+            if (Convert.ToInt64(table.ExecuteScalar()) == 0) return;
+            using var command = Command(connection, read, "SELECT scenario_id,rules_version FROM game_save WHERE slot=1;");
+            using var reader = command.ExecuteReader();
+            if (reader.Read() && (reader.GetString(0) != snapshot.ScenarioId || reader.GetString(1) != snapshot.RulesVersion))
+                rules = reader.GetString(1);
+        }
+        if (rules is null) return;
+        var directory = Path.GetDirectoryName(DatabasePath)!;
+        var name = $"{Path.GetFileNameWithoutExtension(DatabasePath)}.{SafeFileSegment(rules)}.backup";
+        var extension = Path.GetExtension(DatabasePath);
+        for (var attempt = 1; attempt <= 100; attempt++)
+        {
+            var target = Path.Combine(directory, attempt == 1 ? name + extension : $"{name}-{attempt}{extension}");
+            if (File.Exists(target)) continue;
+            using var vacuum = connection.CreateCommand();
+            vacuum.CommandText = "VACUUM INTO $target;";
+            vacuum.Parameters.AddWithValue("$target", target);
+            vacuum.ExecuteNonQuery();
+            return;
+        }
+        throw new GameSaveException(GameSaveError.Unavailable, "No free name for the backup of the replaced checkpoint.");
+    }
+
+    private static string SafeFileSegment(string value)
+    {
+        var safe = new string(value.Select(item => char.IsAsciiLetterOrDigit(item) || item is '-' or '_' ? item : '_').Take(64).ToArray());
+        return safe.Length == 0 ? "unknown" : safe;
     }
 
     private GameSnapshot LoadCore()

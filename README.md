@@ -6,7 +6,7 @@ La scelta centrale è come investire risorse e lavoratori: espandere la produzio
 
 ## Stato del progetto
 
-**26 ottobre 2026: M0–M3 completate e primo incremento M4 giocabile su Avalonia 12.** La [soluzione definitiva](SimRisorse.slnx) contiene motore, casi d'uso, interfaccia, salvataggi SQLite e simulatore, verificati con **117 test**. Lo [scenario Civil Growth](docs/scenarios/CIVIL_GROWTH.md) aggiunge case, pescatori, trasformazione del pesce in cibo e crescita degli abitanti. Catalogo completo, esercito, isole, vittoria e classifica restano nelle milestone successive. La bozza Windows Forms e la prova M1 restano separate come riferimenti.
+**27 ottobre 2026: M0–M3 completate e tre incrementi M4 giocabili su Avalonia 12.** La [soluzione definitiva](SimRisorse.slnx) contiene motore, casi d'uso, interfaccia, salvataggi SQLite e simulatore, verificati con **140 test** e un controllo automatico che ogni struttura del catalogo sia raggiungibile. Lo [scenario Civil Growth](docs/scenarios/CIVIL_GROWTH.md) aggiunge case, crescita degli abitanti, filiere del pesce e del pane (fattoria, pozzo, mulino, forno) e magazzini che ampliano la capacità. Catalogo completo, esercito, isole, vittoria e classifica restano nelle milestone successive. La bozza Windows Forms e la prova M1 restano separate come riferimenti.
 
 L'impostazione tecnica adottata è un monolite modulare con funzionalità verticali e un motore indipendente dall'interfaccia. **C#/.NET 10, Avalonia 12.1.4/MVVM e SQLite sono lo stack desktop**, con Microsoft.Data.Sqlite 10.0.14. Core e Application usano solo il framework e i riferimenti interni previsti. Windows è verificato, Linux/macOS non ancora. Compatibilità dei salvataggi e controllo puntuale delle dipendenze sono descritti nel [report della migrazione](docs/validation/AVALONIA_12.md); l'audit CLI dell'ambiente incontra ancora un errore TLS.
 
@@ -41,7 +41,7 @@ La definizione esatta di vittoria, il ruolo obbligatorio delle isole e le formul
 | [Verifica del desktop](docs/validation/M3_DESKTOP.md) | 82 test, rendering e avvio nativo Windows |
 | [Migrazione Avalonia 12](docs/validation/AVALONIA_12.md) | Baseline dei pacchetti, compatibilità dei checkpoint e dipendenze |
 | [Scenario civile M4](docs/scenarios/CIVIL_GROWTH.md) | Regole eseguibili di abitazioni, crescita, alimentazione e recupero |
-| [Verifiche M4](docs/validation/M4_CIVIL_GROWTH.md) | 117 test, cronologie civili, otto render e ripresa nativa |
+| [Verifiche M4](docs/validation/M4_CIVIL_GROWTH.md) | 140 test, raggiungibilità del catalogo, cronologie civili, magazzino e pane, otto render e ripresa nativa |
 
 ## Struttura attuale
 

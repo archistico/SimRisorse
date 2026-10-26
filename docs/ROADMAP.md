@@ -1,6 +1,6 @@
 # Roadmap
 
-Aggiornata al 2026-10-26. Le milestone hanno dipendenze e criteri di uscita, senza stime di calendario non ancora fondate. Il [changelog](../CHANGELOG.md) registra solo il lavoro realizzato.
+Aggiornata al 2026-10-27. Le milestone hanno dipendenze e criteri di uscita, senza stime di calendario non ancora fondate. Il [changelog](../CHANGELOG.md) registra solo il lavoro realizzato.
 
 | Milestone | Obiettivo | Stato | Dipende da |
 | --- | --- | --- | --- |
@@ -8,7 +8,7 @@ Aggiornata al 2026-10-26. Le milestone hanno dipendenze e criteri di uscita, sen
 | M1 | Specifica minima e validazione dello stack | Completata il 2026-10-26 | M0 |
 | M2 | Motore economico verificabile senza UI | Completata il 2026-10-26 | M1, regole minime definite |
 | M3 | Prima partita desktop salvabile | Completata il 2026-10-26 | M2, stack confermato |
-| M4 | Popolazione dinamica e progressione civile | In corso; case, crescita e prima filiera completate | M3 |
+| M4 | Popolazione dinamica e progressione civile | In corso; case, crescita, filiere pesce/pane e magazzino completati | M3 |
 | M5 | Soldati, navigazione e isole | Da avviare | M4, regole militari definite |
 | M6 | Scenario completo, risultati e bilanciamento | Da avviare | M5, condizione di vittoria definita |
 | M7 | Consolidamento e distribuzione | Da avviare | M6 |
@@ -68,7 +68,13 @@ Completata con desktop Avalonia collegato al Core, proiezioni di flusso, ordini 
 
 Primo incremento completato: [scenario Civil Growth](scenarios/CIVIL_GROWTH.md), con abitazioni, crescita intera, pescatore, pesce→cibo e carenze recuperabili. Parametri provvisori adottati per questo scenario. [Verifiche](validation/M4_CIVIL_GROWTH.md): 117 test, due cronologie di sviluppo/recupero, simulazioni fino a 32 ore, otto render e ripresa nativa della crescita parziale. Snapshot/file v2 e vecchio scenario v1 separati nell'[ADR 0009](adr/0009-civil-growth-and-save-generations.md).
 
-Resta da completare l'ampliamento civile: magazzini espandibili e ulteriori filiere, a partire da grano/mulino/pozzo/forno. Demolizione e rimborsi richiedono ancora Q-08. Il primo incremento non chiude M4 né il bilanciamento del gioco completo.
+Secondo incremento completato il 2026-10-27: magazzino con +500 capacità per risorsa, regole `civil-growth-2` e conversione esplicita dei checkpoint `civil-growth-1` con copia di sicurezza ([ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md)). 128 test e cronologia `storage`.
+
+Terzo incremento completato il 2026-10-27: filiera fattoria/pozzo/mulino/forno con regole `civil-growth-3` e conversioni concatenate. 132 test e cronologia `bread`.
+
+Analisi di raggiungibilità del catalogo aggiunta il 2026-10-27 (`--check-catalog`, eseguita dalla validazione): copre la parte "nessuno sblocco irraggiungibile per un errore del catalogo" del criterio di uscita. 140 test.
+
+Resta da completare la progressione civile: con i valori attuali il pane non è necessario, quindi serve un motivo di gioco per le filiere avanzate (abitazioni più grandi o sblocchi), oltre a carne e strumenti per i colli di bottiglia. Demolizione e rimborsi richiedono ancora Q-08. Gli incrementi realizzati non chiudono M4 né il bilanciamento del gioco completo.
 
 - Risolvere le regole di abitazioni, crescita, cibo e carenze (Q-05).
 - Ampliare ricette e prerequisiti, verificando che la dotazione iniziale consenta di avviare tutte le filiere necessarie.

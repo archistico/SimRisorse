@@ -192,7 +192,10 @@ public sealed class MainViewModel : ObservableObject
             {
                 _autoSaveAllowed = true;
                 _closeFailure = false;
-                _message = load ? "Partita ripresa in pausa. Il tempo trascorso a gioco chiuso non viene conteggiato." : "Partita salvata.";
+                _message = !load ? "Partita salvata." : result.UpgradedFromRules is { } previous
+                    ? $"Partita ripresa in pausa e aggiornata dalle regole {previous} a {result.View.RulesVersion}: le nuove strutture partono da zero. " +
+                      "Al prossimo salvataggio il file originale viene conservato come copia accanto alla partita."
+                    : "Partita ripresa in pausa. Il tempo trascorso a gioco chiuso non viene conteggiato.";
             }
             else if (initial && result.Error == GameSaveError.NotFound)
             {

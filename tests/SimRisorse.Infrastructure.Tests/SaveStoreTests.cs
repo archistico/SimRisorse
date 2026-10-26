@@ -72,6 +72,42 @@ public sealed class SaveStoreTests
         Assert.Equal(GameSaveError.UnsupportedFormat,
             Assert.Throws<GameSaveException>(() => database.Store.Save(growthFirst ? oldState : newState)).Error);
         Assert.Equal(bytes, File.ReadAllBytes(database.PathName));
+        Assert.Single(Directory.GetFiles(database.DirectoryName));
+    }
+
+    [Fact]
+    public void ReplacingACheckpointWrittenWithOtherRulesKeepsACopyOfTheOriginal()
+    {
+        using var database = new TestDatabase();
+        var scenario = CivilGrowthScenario.Create();
+        var game = GameSession.Create(scenario);
+        game.Construct("small-house", 1);
+        game.Resume(); game.Advance(TimeSpan.FromSeconds(59));
+        var current = game.Snapshot();
+        var previous = current with
+        {
+            RulesVersion = "civil-growth-1",
+            Buildings = [.. current.Buildings.Where(item => !CivilGrowthScenario.Changes.Any(change => change.AddedBuildings.Contains(item.BuildingId)))]
+        };
+        database.Store.Save(previous);
+        database.Store.Save(previous);
+        Assert.Single(Directory.GetFiles(database.DirectoryName));
+
+        database.Store.Save(current);
+        var backup = Path.Combine(database.DirectoryName, "game.civil-growth-1.backup.sqlite3");
+        Assert.Equal(2, Directory.GetFiles(database.DirectoryName).Length);
+        Equal(previous, new SqliteGameSaveStore(backup).Load());
+        Equal(current, database.Store.Load());
+        database.Store.Save(current);
+        Assert.Equal(2, Directory.GetFiles(database.DirectoryName).Length);
+
+        database.Store.Save(previous with { RulesVersion = "../other rules" });
+        Assert.True(File.Exists(Path.Combine(database.DirectoryName, "game.civil-growth-3.backup.sqlite3")));
+        database.Store.Save(current);
+        Assert.True(File.Exists(Path.Combine(database.DirectoryName, "game.___other_rules.backup.sqlite3")));
+        database.Store.Save(previous);
+        Assert.True(File.Exists(Path.Combine(database.DirectoryName, "game.civil-growth-3.backup-2.sqlite3")));
+        Equal(previous, new SqliteGameSaveStore(backup).Load());
     }
 
     [Fact]
@@ -210,6 +246,7 @@ public sealed class SaveStoreTests
     private sealed class TestDatabase : IDisposable
     {
         private readonly string _directory = Path.Combine(Path.GetTempPath(), "SimRisorse.M3.Tests", Guid.NewGuid().ToString("N"));
+        public string DirectoryName => _directory;
         public string PathName => Path.Combine(_directory, "game.sqlite3");
         public SqliteGameSaveStore Store => new(PathName);
         public void Execute(string sql)

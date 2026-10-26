@@ -14,6 +14,7 @@ internal static class GameViewProjector
         var economy = session.ForecastEconomy();
         var population = economy.Population;
         var forecast = economy.Buildings.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
+        var capacity = session.StorageCapacity;
         ImmutableArray<ResourceLine> Lines(ResourceBundle bundle) => bundle.Amounts.Select(item =>
             new ResourceLine(item.Key, scenario.Catalog.ResourcesById[item.Key].Name, item.Value.Units)).ToImmutableArray();
         decimal Flow(string resourceId, bool output) => scenario.Catalog.Buildings.Sum(item =>
@@ -21,14 +22,14 @@ internal static class GameViewProjector
         return new(scenario.Id, scenario.Catalog.RulesVersion, session.ElapsedTicks, session.IsPaused,
             session.Population, session.AvailableWorkers,
             scenario.Catalog.Resources.Select(item => new ResourceView(item.Id, item.Name,
-                snapshot.Resources[item.Id].Units, scenario.Capacity[item.Id].Units, Flow(item.Id, true),
+                snapshot.Resources[item.Id].Units, capacity[item.Id].Units, Flow(item.Id, true),
                 Flow(item.Id, false) + (item.Id == population.FoodResourceId ? population.ConsumedFood.Units : 0m))).ToImmutableArray(),
             scenario.Catalog.Buildings.Select(item => new BuildingView(item.Id, item.Name, buildings[item.Id].Count,
                 buildings[item.Id].AssignedWorkers, (long)buildings[item.Id].Count * item.WorkplacesPerBuilding,
                 item.AllocationPriority, forecast[item.Id].RunnableWorkers, forecast[item.Id].BlockReason,
                 Lines(item.Cost), Lines(item.Recipe?.Input ?? ResourceBundle.Empty), Lines(item.Recipe?.Output ?? ResourceBundle.Empty),
                 item.Prerequisites.Where(id => buildings[id].Count == 0).Select(id => scenario.Catalog.BuildingsById[id].Name).ToImmutableArray(),
-                item.HousingPerBuilding)).ToImmutableArray(),
+                item.HousingPerBuilding, Lines(item.StoragePerBuilding ?? ResourceBundle.Empty))).ToImmutableArray(),
             new(population.HousingCapacity, population.ProgressSeconds, population.IntervalSeconds, population.FoodResourceId,
                 population.RequiredFood.Units, population.ConsumedFood.Units, population.BlockReason));
     }

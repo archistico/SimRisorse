@@ -27,12 +27,19 @@ try {
         '--logger', 'trx', '--results-directory', (Join-Path $runDirectory 'test-results'), '--verbosity', 'minimal')
 
     $simulation = Join-Path $repositoryRoot 'tools/SimRisorse.Simulation/bin/Release/net10.0/SimRisorse.Simulation.dll'
+    foreach ($scenario in @('economy-foundation', 'civil-growth')) {
+        $output = & dotnet $simulation --check-catalog --scenario $scenario
+        if ($LASTEXITCODE -ne 0) { $output; throw "Unreachable unlocks in the $scenario catalog." }
+        $output | Set-Content -LiteralPath (Join-Path $artifacts ("catalog-$scenario.json")) -Encoding UTF8
+    }
     $cases = @(
         @{ Name = '60-seconds'; Arguments = @('--seconds', '60'); Ticks = 60 * [TimeSpan]::TicksPerSecond },
         @{ Name = '8-hours'; Arguments = @('--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
         @{ Name = '32-hours'; Arguments = @('--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour },
         @{ Name = 'civil-bootstrap'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'bootstrap', '--seconds', '121'); Ticks = 121 * [TimeSpan]::TicksPerSecond; Population = 9 },
         @{ Name = 'civil-recovery'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'recovery', '--seconds', '662'); Ticks = 662 * [TimeSpan]::TicksPerSecond; Population = 14 },
+        @{ Name = 'civil-storage'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'storage', '--seconds', '1260'); Ticks = 1260 * [TimeSpan]::TicksPerSecond; Population = 16 },
+        @{ Name = 'civil-bread'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'bread', '--seconds', '660'); Ticks = 660 * [TimeSpan]::TicksPerSecond; Population = 16 },
         @{ Name = 'civil-8-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour; Population = 16 },
         @{ Name = 'civil-32-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour; Population = 16 }
     )
@@ -51,7 +58,18 @@ try {
                 throw 'The reference minute timeline differs.'
             }
         }
-        else {
+        elseif ($name -eq 'civil-storage') {
+            if (($result.Resources | Where-Object Id -eq 'stone').Quantity -ne 1000 -or ($result.Resources | Where-Object Capacity -ne 1500)) {
+                throw 'The warehouse timeline differs.'
+            }
+        }
+        elseif ($name -eq 'civil-bread') {
+            $bakery = $result.Buildings | Where-Object Id -eq 'bakery'
+            if (($result.Resources | Where-Object Id -eq 'food').ProductionPerSecond -ne 4 -or $bakery.RunnableWorkers -ne 1) {
+                throw 'The bread timeline differs.'
+            }
+        }
+        if ($name -ne '60-seconds') {
             foreach ($resource in $result.Resources) {
                 if ($resource.Quantity -lt 0 -or $resource.Quantity -gt $resource.Capacity) { throw 'Resource outside capacity.' }
             }

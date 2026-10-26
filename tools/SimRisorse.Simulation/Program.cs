@@ -8,12 +8,32 @@ using SimRisorse.Application.Features.Sessions.AdvanceTime;
 using SimRisorse.Application.Features.Sessions.GetGameState;
 using SimRisorse.Application.Features.Sessions.SetPause;
 using SimRisorse.Application.Scenarios;
+using SimRisorse.Core.Content;
 
 if (args is ["--help"])
 {
-    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery]");
+    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread]");
     Console.WriteLine("Maximum 168 hours; default 60 seconds. Civil growth defaults to bootstrap; foundation has no strategy.");
+    Console.WriteLine("SimRisorse.Simulation --check-catalog [--scenario economy-foundation|civil-growth]: exit 1 if an unlock is unreachable.");
     return 0;
+}
+var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+if (args is ["--check-catalog", .. var checkArguments])
+{
+    var checkedScenario = checkArguments switch
+    {
+        [] or ["--scenario", "civil-growth"] => CivilGrowthScenario.Create(),
+        ["--scenario", "economy-foundation"] => EconomyFoundationScenario.Create(),
+        _ => null
+    };
+    if (checkedScenario is null) return Usage();
+    var report = CatalogReachability.Analyze(checkedScenario);
+    Console.WriteLine(JsonSerializer.Serialize(new
+    {
+        ScenarioId = checkedScenario.Id, checkedScenario.Catalog.RulesVersion, report.IsComplete,
+        report.ReachableBuildings, report.RenewableResources, report.Issues
+    }, json));
+    return report.IsComplete ? 0 : 1;
 }
 var seconds = 60m;
 var scenarioId = "economy-foundation";
@@ -32,12 +52,12 @@ for (var index = 0; index < args.Length; index += 2)
     seconds = option == "--hours" ? duration * 3600m : duration;
 }
 if (scenarioId is not ("economy-foundation" or "civil-growth") ||
-    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery")))) return Usage();
+    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread")))) return Usage();
 if (scenarioId == "civil-growth") strategy ??= "bootstrap";
 
 static int Usage()
 {
-    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery for civil-growth.");
+    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread for civil-growth.");
     return 2;
 }
 
@@ -78,12 +98,27 @@ try
 {
     if (strategy is not null)
     {
-        if (strategy == "bootstrap") Food(runtime); else Build(runtime, "small-house");
-        var eventTicks = (strategy == "bootstrap" ? 61L : 600L) * TimeSpan.TicksPerSecond;
+        // storage follows bootstrap, then expands the full stocks at second 1200.
+        var recovery = strategy == "recovery";
+        if (recovery) Build(runtime, "small-house"); else Food(runtime);
+        var eventTicks = (recovery ? 600L : 61L) * TimeSpan.TicksPerSecond;
         if (ticks >= eventTicks)
         {
             AdvanceTo(eventTicks);
-            if (strategy == "bootstrap") Build(runtime, "small-house"); else Food(runtime);
+            if (recovery) Food(runtime); else Build(runtime, "small-house");
+        }
+        var storageTicks = 1200L * TimeSpan.TicksPerSecond;
+        if (strategy == "storage" && ticks >= storageTicks)
+        {
+            AdvanceTo(storageTicks);
+            Build(runtime, "warehouse");
+        }
+        // bread follows bootstrap, then starts the whole grain/water/flour chain at second 600.
+        var breadTicks = 600L * TimeSpan.TicksPerSecond;
+        if (strategy == "bread" && ticks >= breadTicks)
+        {
+            AdvanceTo(breadTicks);
+            foreach (var id in new[] { "farm", "farm", "well", "mill", "bakery" }) Build(runtime, id, staff: true);
         }
     }
     AdvanceTo((long)ticks);
@@ -95,9 +130,5 @@ catch (InvalidOperationException exception)
 }
 new SetPauseHandler(runtime).Handle(new(true));
 var view = new GetGameStateHandler(runtime).Handle();
-Console.WriteLine(JsonSerializer.Serialize(view, new JsonSerializerOptions
-{
-    WriteIndented = true,
-    Converters = { new JsonStringEnumConverter() }
-}));
+Console.WriteLine(JsonSerializer.Serialize(view, json));
 return 0;

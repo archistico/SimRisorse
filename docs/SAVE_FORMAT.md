@@ -1,6 +1,6 @@
 # Salvataggi desktop
 
-Stato: implementato per Foundation v1 e per il primo incremento Civil v2. Non è compatibile automaticamente con l'esperimento M1, che usa un file e un modello differenti.
+Stato: implementato per Foundation v1 e per Civil v2, con conversione esplicita delle regole civili e copia di sicurezza. Non è compatibile automaticamente con l'esperimento M1, che usa un file e un modello differenti.
 
 ## Percorso e comportamento
 
@@ -34,9 +34,15 @@ La modalità `--smoke-test` usa sempre un percorso di prova, fornito dal validat
 | `PRAGMA user_version` | `1` | `2` |
 | Versione del contratto snapshot | `1` | `2` |
 | Scenario | `economy-foundation` | `civil-growth` |
-| Regole | `economy-foundation-1` | `civil-growth-1` |
+| Regole | `economy-foundation-1` | `civil-growth-3` (converte `civil-growth-1` e `-2`) |
 
-La versione del file è distinta dalla versione del contratto e dal bilanciamento. Il loader rifiuta file estranei, versioni non supportate e regole che non corrispondono allo scenario attivo. Non sono presenti migrazioni automatiche o fingerprint del catalogo.
+La versione del file è distinta dalla versione del contratto e dal bilanciamento. Il loader rifiuta file estranei, versioni non supportate e regole che non corrispondono allo scenario attivo, salvo le conversioni esplicite elencate sotto. Non sono presenti migrazioni di formato o fingerprint del catalogo.
+
+## Conversioni di regole e copie di sicurezza
+
+Le conversioni dichiarate sono elencate in `CivilGrowthScenario.Changes`: `civil-growth-1 → civil-growth-2` aggiunge il magazzino, `civil-growth-2 → civil-growth-3` fattoria, pozzo, mulino e forno, sempre con quantità zero e mantenendo il resto dello stato. Si applicano in sequenza. Formato file e snapshot restano v2, perché ogni nuovo edificio è una riga in `building_stock` e le nuove risorse con scorta zero non hanno righe. La capacità delle risorse non è salvata: deriva dagli edifici. Decisione nell'[ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md).
+
+Il caricamento converte solo in memoria. Il primo salvataggio che sostituirebbe un checkpoint della stessa generazione con scenario o regole diversi copia prima il file con `VACUUM INTO` in `<nome>.<regole>.backup.sqlite3`, nella stessa cartella (per esempio `civil-growth.civil-growth-1.backup.sqlite3`). Se il nome esiste si usa `-2`, `-3`…: le copie non vengono sovrascritte e, senza un nome libero, il salvataggio fallisce. I caratteri delle regole non sicuri per un percorso diventano `_`. Le copie si riaprono con `run-game.cmd --save-path`, con un programma che supporti quelle regole.
 
 Nelle due generazioni implementate, versione del file e dello snapshot devono corrispondere. Il writer rifiuta anche la sovrascrittura tra v1 e v2: per generazioni diverse si usano percorsi separati. Decisione nell'[ADR 0009](adr/0009-civil-growth-and-save-generations.md).
 
@@ -88,4 +94,4 @@ Il port espone errori applicativi: file assente, formato non supportato, regole 
 
 Round trip, precisione, ricaricamento in pausa, rifiuto di versioni future e database estranei, rollback mediante trigger ed errori di chiusura sono verificati nel [report M3](validation/M3_DESKTOP.md). Ripresa esatta della crescita, rollback v2, stato parziale corrotto e protezione tra generazioni sono nel [report M4](validation/M4_CIVIL_GROWTH.md). La fixture M3 rimane leggibile in v1.
 
-Non sono ancora implementati più slot per scenario, selezione grafica degli scenari, backup gestiti dalla UI, migrazioni di scenario o validazione competitiva per una classifica pubblica. Un arresto forzato può perdere il progresso successivo all'ultimo checkpoint; non è stato simulato uno spegnimento elettrico.
+Non sono ancora implementati più slot per scenario, selezione grafica degli scenari, gestione delle copie dalla UI, migrazioni di formato, conversioni non dichiarate in `CivilGrowthScenario.Changes` o validazione competitiva per una classifica pubblica. Un arresto forzato può perdere il progresso successivo all'ultimo checkpoint; non è stato simulato uno spegnimento elettrico.

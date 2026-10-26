@@ -31,6 +31,7 @@ public sealed class GameSession
     public int Population { get; private set; }
     public int GrowthProgressSeconds { get; private set; }
     public int HousingCapacity => Scenario.HousingCapacity(_buildings.Values);
+    public ResourceBundle StorageCapacity => Scenario.StorageCapacity(_buildings.Values);
     public int AvailableWorkers => Population - checked((int)_buildings.Values.Sum(item => (long)item.AssignedWorkers));
 
     public static GameSession Create(GameScenario scenario)
@@ -48,10 +49,13 @@ public sealed class GameSession
             snapshot.RulesVersion != scenario.Catalog.RulesVersion || snapshot.ElapsedTicks < 0 || snapshot.Population < scenario.Population)
             throw new ArgumentException("Snapshot identity, version, population or elapsed time is invalid.", nameof(snapshot));
         scenario.Catalog.ValidateBundle(snapshot.Resources);
-        if (!scenario.Capacity.Covers(snapshot.Resources)) throw new ArgumentException("Snapshot exceeds storage capacity.", nameof(snapshot));
         GameScenario.ValidateBuildings(scenario.Catalog, snapshot.Buildings, snapshot.Population);
         if (snapshot.Buildings.Length != scenario.Catalog.Buildings.Length)
             throw new ArgumentException("Snapshot must contain every building type, including zero counts.", nameof(snapshot));
+        ResourceBundle capacity;
+        try { capacity = scenario.StorageCapacity(snapshot.Buildings); }
+        catch (OverflowException exception) { throw new ArgumentException("Snapshot storage exceeds the numeric limit.", nameof(snapshot), exception); }
+        if (!capacity.Covers(snapshot.Resources)) throw new ArgumentException("Snapshot exceeds storage capacity.", nameof(snapshot));
         if (scenario.PopulationRules is { } rules)
         {
             if (snapshot.Population > scenario.HousingCapacity(snapshot.Buildings) || snapshot.GrowthProgressSeconds is not { } progress ||
@@ -73,7 +77,7 @@ public sealed class GameSession
     public EconomyForecast ForecastEconomy()
     {
         var population = PopulationPlan();
-        var production = ProductionPlanner.Plan(Scenario.Catalog, Resources, Scenario.Capacity, _buildings, PopulationPlanner.Consumption(population));
+        var production = ProductionPlanner.Plan(Scenario.Catalog, Resources, StorageCapacity, _buildings, PopulationPlanner.Consumption(population));
         return new(production.Buildings, population);
     }
 
@@ -95,6 +99,7 @@ public sealed class GameSession
         {
             cost = definition.Cost.Scale(count);
             nextCount = checked(_buildings[buildingId].Count + count);
+            if (definition.StoragePerBuilding is { } storage) _ = StorageCapacity + storage.Scale(count);
         }
         catch (OverflowException) { return new(GameError.NumericLimit); }
         if (!Resources.Covers(cost)) return new(GameError.InsufficientResources);
@@ -134,10 +139,11 @@ public sealed class GameSession
         try { nextTicks = checked(ElapsedTicks + elapsed.Ticks); }
         catch (OverflowException) { return new(GameError.NumericLimit); }
         var steps = nextTicks / TimeSpan.TicksPerSecond - ElapsedTicks / TimeSpan.TicksPerSecond;
+        var capacity = StorageCapacity;
         for (long step = 0; step < steps; step++)
         {
             var population = PopulationPlan();
-            Resources = ProductionPlanner.Plan(Scenario.Catalog, Resources, Scenario.Capacity, _buildings, PopulationPlanner.Consumption(population)).Resources;
+            Resources = ProductionPlanner.Plan(Scenario.Catalog, Resources, capacity, _buildings, PopulationPlanner.Consumption(population)).Resources;
             if (population.BlockReason == GrowthBlockReason.None && ++GrowthProgressSeconds == population.IntervalSeconds)
             {
                 Population++;

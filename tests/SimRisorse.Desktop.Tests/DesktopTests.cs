@@ -86,6 +86,55 @@ public sealed class DesktopTests
     }
 
     [AvaloniaFact]
+    public async Task PreviousCivilSaveIsConvertedExplainedAndKeptAsBackup()
+    {
+        using var directory = new TemporaryDirectory();
+        var path = Path.Combine(directory.PathName, "civil-growth.sqlite3");
+        var current = GameSession.Create(CivilGrowthScenario.Create()).Snapshot();
+        new SqliteGameSaveStore(path).Save(current with
+        {
+            RulesVersion = "civil-growth-1",
+            Buildings = [.. current.Buildings.Where(item => !CivilGrowthScenario.Changes.Any(change => change.AddedBuildings.Contains(item.BuildingId)))]
+        });
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new SqliteGameSaveStore(path));
+        await viewModel.InitializeAsync();
+        Assert.Contains("civil-growth-1 a civil-growth-3", viewModel.Message);
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
+        Assert.Equal("+500 capacità per ogni risorsa per edificio", viewModel.Selected.Recipe);
+        Assert.Equal("Da costruire", viewModel.Selected.Status);
+        Assert.False(viewModel.Selected.IsProducer);
+        Assert.False(viewModel.AssignCommand.CanExecute(null));
+        Assert.True(await viewModel.SaveAsync());
+        Assert.True(File.Exists(Path.Combine(directory.PathName, "civil-growth.civil-growth-1.backup.sqlite3")));
+    }
+
+    [AvaloniaFact]
+    public async Task WarehouseRaisesTheVisibleCapacityOfEveryResource()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
+        viewModel.ConstructCommand.Execute(null);
+        Assert.Equal("+500 capacità per ogni risorsa", viewModel.Selected.Status);
+        Assert.All(viewModel.Resources, item => Assert.Equal("1.500", item.Capacity));
+        Assert.Contains("Nessun lavoratore", viewModel.Selected.Activity);
+    }
+
+    [AvaloniaFact]
+    public async Task BreadChainShowsRecipesAndBlocksTheBakeryUntilItsSuppliersExist()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "bakery");
+        Assert.Equal("1 farina · 1 acqua → 3 cibo", viewModel.Selected.Recipe);
+        Assert.Equal(new[] { "Mulino", "Pozzo" }, viewModel.Selected.View.MissingPrerequisites);
+        Assert.False(viewModel.ConstructCommand.CanExecute(null));
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "mill");
+        Assert.Equal("2 grano → 1 farina", viewModel.Selected.Recipe);
+        Assert.Equal(8, viewModel.Resources.Count(item => item.Capacity == "1.000"));
+    }
+
+    [AvaloniaFact]
     public async Task FoodShortageIsExplainedWithoutRemovingWorkers()
     {
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
@@ -120,6 +169,12 @@ public sealed class DesktopTests
                 Assert.InRange(point.Y, 0, window.ClientSize.Height - button.Bounds.Height);
             }
             Assert.True(window.FindControl<TextBlock>("GrowthStatusText")!.IsEffectivelyVisible);
+            if (section == 1)
+            {
+                // Eight resources no longer fit at the compact size: the table must scroll inside the window.
+                var scroll = window.FindControl<ScrollViewer>("ResourcesScroll")!;
+                Assert.InRange(scroll.TranslatePoint(default, window)!.Value.Y + scroll.Bounds.Height, 0, window.ClientSize.Height);
+            }
             var growthBar = window.FindControl<ProgressBar>("GrowthProgressBar")!;
             var growthPosition = growthBar.TranslatePoint(default, window)!.Value;
             Assert.InRange(growthPosition.X, 22, 185 - growthBar.Bounds.Width);

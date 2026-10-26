@@ -33,6 +33,7 @@ public sealed class GameCatalog
             if (building.WorkplacesPerBuilding < 0 || building.HousingPerBuilding < 0 || building.Prerequisites.IsDefault)
                 throw new ArgumentException($"Invalid workplace count or prerequisites: {building.Id}.", nameof(buildings));
             ValidateBundle(building.Cost, resourceIds);
+            if (building.StoragePerBuilding is { } storage) ValidateBundle(storage, resourceIds);
             if (building.Recipe is { } recipe)
             {
                 ValidateBundle(recipe.Input, resourceIds);

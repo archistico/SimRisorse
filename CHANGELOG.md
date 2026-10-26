@@ -4,6 +4,32 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-10-27 — Script di pulizia
+
+- Aggiunti `clean.cmd` e `scripts/clean.ps1`: cancellano `bin` e `obj` di ogni progetto del repository, con `-DryRun` per l'anteprima. Esclusi `.git`, `.local-cache` e collegamenti.
+
+### 2026-10-27 — M4: analisi di raggiungibilità del catalogo
+
+- Aggiunto `CatalogReachability.Analyze` nel Core: controllo statico che ogni struttura sia costruibile (prerequisiti, costi pagabili con risorse rinnovabili o con la dotazione iniziale, capacità di base o ampliabile) e che ogni ricetta abbia input rinnovabili ed entri nella capacità. Ignora tempo, persone e contesa.
+- Simulatore: `--check-catalog [--scenario …]`, con codice di uscita 1 se uno sblocco è impossibile. La validazione lo esegue per entrambi gli scenari e salva i report.
+- Test sugli scenari distribuiti (completi) e sulla catena delle conversioni di `civil-growth`. **140 test superati**; regole e salvataggi invariati.
+
+### 2026-10-27 — M4: filiera del pane e regole `civil-growth-3`
+
+- Aggiunti grano, acqua e farina e quattro strutture: fattoria (1 grano/s), pozzo (1 acqua/s), mulino (2 grano → 1 farina) e forno (1 farina + 1 acqua → 3 cibo), con prerequisiti mulino→fattoria e forno→mulino+pozzo. Valori provvisori: il pane affianca il pesce come fonte di cibo, più efficiente per lavoratore ma più costosa.
+- Nuove regole `civil-growth-3`. Le conversioni sono dichiarate in `CivilGrowthScenario.Changes` e si concatenano: i checkpoint `civil-growth-1` e `civil-growth-2` vengono caricati con le nuove strutture a zero e l'originale viene copiato come prima.
+- La tabella della vista Risorse ora scorre, con intestazione e nota fisse: le otto risorse non stavano nella finestra compatta.
+- Simulatore: cronologia `bread`, inclusa nella validazione. Verificati **132 test**, nove simulazioni, otto render e ciclo nativo Windows. Aggiornati scenario, formato, report M4, roadmap e handoff.
+
+### 2026-10-27 — M4: magazzino espandibile e regole `civil-growth-2`
+
+- Aggiunto il Magazzino (100 legno lavorato + 60 pietra, senza personale): +500 capacità per ognuna delle cinque risorse. Valori provvisori scelti dall'utente.
+- Introdotto l'effetto `StoragePerBuilding` nelle definizioni: la capacità effettiva deriva dagli edifici e viene usata da costruzione, previsione, avanzamento, ripristino e vista Risorse. Limite numerico atomico.
+- Nuove regole `civil-growth-2`. I checkpoint `civil-growth-1` vengono convertiti al caricamento con zero magazzini e il desktop lo spiega; regole sconosciute restano rifiutate.
+- L'adattatore SQLite copia il checkpoint in `<nome>.<regole>.backup.sqlite3` prima di sostituirlo con scenario o regole diversi, senza mai sovrascrivere copie esistenti. Formato file/snapshot invariato (v2).
+- UI: descrizione, effetto e stato del magazzino. Simulatore: cronologia `storage`, inclusa nella validazione.
+- Verificati **128 test**, build senza avvisi, otto simulazioni, otto render e ciclo nativo Windows. Aggiunto l'[ADR 0010](docs/adr/0010-storage-capacity-and-rules-conversion.md); aggiornati scenario, formato, report M4, roadmap e handoff.
+
 ### 2026-10-26 — M4: case, crescita e prima filiera alimentare
 
 - Aggiunto lo scenario giocabile `civil-growth-1`, con casa piccola, pescatore e deposito che trasforma pesce in cibo, oltre ai tre produttori di base.

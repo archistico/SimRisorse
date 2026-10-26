@@ -1,16 +1,19 @@
 # Handoff
 
-Ultimo aggiornamento: 2026-10-26. Questo documento descrive il punto operativo da cui continuare; visione e regole complete sono nel [game design](GAME_DESIGN.md).
+Ultimo aggiornamento: 2026-10-27. Questo documento descrive il punto operativo da cui continuare; visione e regole complete sono nel [game design](GAME_DESIGN.md).
 
 ## Stato attuale
 
-- M0–M3 sono completate; il primo incremento M4 è implementato su Avalonia 12.1.4 e verificato con 117 test. Sono giocabili case, crescita degli abitanti, pescatore e pesce→cibo, con salvataggio del progresso parziale. M4 resta in corso per magazzini espandibili e ulteriori filiere civili.
+- M0–M3 sono completate; tre incrementi M4 sono implementati su Avalonia 12.1.4 e verificati con 132 test. Sono giocabili case, crescita degli abitanti, filiere pesce→cibo e grano/acqua→farina→pane, magazzino che amplia la capacità, con salvataggio del progresso parziale. M4 resta in corso per una progressione che renda necessarie le filiere avanzate.
+- 2026-10-27: magazzino (+500 per risorsa, 100 legno lavorato + 60 pietra, senza personale) e regole `civil-growth-2`, con conversione dei checkpoint `civil-growth-1` e copia di sicurezza del file sostituito. Valori e politica di compatibilità scelti dall'utente; decisione nell'[ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md).
+- 2026-10-27: filiera del pane (fattoria, pozzo, mulino, forno) e regole `civil-growth-3`, conversioni concatenate da `-1` e `-2`. L'utente non ha scelto esplicitamente il ruolo del pane: è stato adottato provvisoriamente "affianca il pesce, più efficiente per lavoratore", senza cambiare il Core. Da confermare.
+- 2026-10-27: analisi statica di raggiungibilità del catalogo (`CatalogReachability`, `--check-catalog`), eseguita da test e validazione. Entrambi gli scenari risultano completi.
 - La bozza Windows Forms e i relativi test sono in [legacy/winforms](../legacy/winforms/README.md), con contenuto originale conservato.
 - Le nove immagini di riferimento sono in [docs/references/screenshots](references/screenshots/), indicizzate nel [documento dei riferimenti](references/README.md). Le cinque nuove immagini di risorse e strutture hanno un'[analisi dedicata](references/RESOURCE_AND_PRODUCTION_CHAINS.md).
 - La prova è in [experiments/stack-probe](../experiments/stack-probe/README.md): quattro progetti, interfaccia Avalonia, modello ridotto, salvataggio SQLite e 23 test. La sua soluzione non è quella definitiva.
 - La [soluzione definitiva](../SimRisorse.slnx) contiene Core, Application, Infrastructure, Desktop, Simulation e quattro progetti di test: nove progetti senza riferimenti a bozza o esperimento.
 - Il simulatore esegue lo scenario economico senza finestre; non è ancora uno strumento completo di ricerca delle strategie o bilanciamento.
-- Il nuovo default desktop è `civil-growth-1`, sei tipi di struttura, cinque risorse e otto abitanti iniziali che possono crescere. Foundation rimane eseguibile con `--scenario economy-foundation`. Catalogo completo, vittoria, classifica, esercito e isole non sono implementati. Non sono stati creati commit o release in questo incremento.
+- Il default desktop è lo scenario `civil-growth` con regole `civil-growth-3`: undici tipi di struttura, otto risorse e otto abitanti iniziali che possono crescere. Foundation rimane eseguibile con `--scenario economy-foundation`. Catalogo completo, vittoria, classifica, esercito e isole non sono implementati. Nessun commit o release creato per il secondo e il terzo incremento.
 
 ## Vincoli da mantenere
 
@@ -30,6 +33,7 @@ Ultimo aggiornamento: 2026-10-26. Questo documento descrive il punto operativo d
 - L'[ADR 0007](adr/0007-desktop-persistence-and-lifecycle.md) fissa persistenza, gestione del tempo reale e chiusura. Formato SQLite e limiti sono in [SAVE_FORMAT.md](SAVE_FORMAT.md).
 - L'[ADR 0008](adr/0008-avalonia-12.md) sostituisce la sola baseline dei pacchetti dell'ADR 0007, su richiesta dell'utente. Migrazione e aggiornamento SQLite sono completati; nessun cambiamento a snapshot v1 o regole Economy Foundation.
 - L'[ADR 0009](adr/0009-civil-growth-and-save-generations.md) introduce crescita civile, prenotazione del cibo e snapshot/file v2, mantenendo il vecchio scenario v1 in uno slot distinto. "Nuova partita" conserva lo scenario corrente.
+- L'[ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md) rende la capacità derivata dagli edifici (`StoragePerBuilding`) e introduce conversioni di regole esplicite in `Application/Scenarios/ScenarioUpgrades`, con copia di sicurezza nell'adattatore SQLite.
 - Il contenuto di tutti gli ADR è nell'[indice](adr/README.md). "Accettato" non significa "implementato".
 
 ## Prossimo lavoro: completare M4
@@ -40,11 +44,15 @@ Le nuove schermate di risorse e i diagrammi precisano filiere civili, alimentari
 
 La [proposta originaria](scenarios/CIVIL_GROWTH_DRAFT.md) rimane un documento storico. Le cronologie eseguibili sono nel simulatore: `bootstrap` avvia pescatore/deposito al tempo zero e casa al secondo 61, con primo arrivo al 121; `recovery` parte dalla casa, esaurisce il cibo, poi riavvia la filiera al secondo 600 e ha un nuovo arrivo al 662. I risultati sono verificati, non dimostrazioni di ottimalità.
 
+Il magazzino è completato: capacità effettiva = 1.000 + 500 × magazzini per ogni risorsa, attiva dal secondo successivo. La cronologia `storage` del simulatore lo dimostra al secondo 1200, con legno lavorato, pietra e cibo pieni e produzione ripresa dopo la costruzione.
+
+La filiera del pane è completata: 2 fattorie + pozzo + mulino + forno (5 lavoratori, 420 legno lavorato + 280 pietra) producono 3 cibo/s, contro 1 cibo/s del pesce con 2 lavoratori. La cronologia `bread` la avvia al secondo 600 e raggiunge 4 cibo/s. **Limite di design**: un pescatore basta per 100 abitanti e due case ne ospitano 16, quindi oggi il pane non è necessario.
+
 Passi successivi:
 
-- Introdurre capacità di magazzino espandibile nel catalogo, nella sessione e nelle previsioni; definire costi e limiti prima dell'algoritmo.
-- Ampliare la progressione con grano, acqua, farina e pane, specificando costi, ricette, prerequisiti e modalità delle trasformazioni alimentari. Il riferimento non dimostra una ricetta obbligatoria con pane, carne e pesce insieme.
-- Aggiornare la versione delle regole al prossimo cambio di contenuto e decidere la compatibilità prima di sostituire `civil-growth-1`.
+- Confermare con l'utente il ruolo del pane (affianca / sostituisce / moltiplica) e dare un motivo di gioco alle filiere avanzate, per esempio una casa più grande che richiede il forno o un consumo crescente. Definire costi e posti prima dell'algoritmo.
+- Al prossimo cambio di contenuto creare `civil-growth-4` aggiungendo un elemento a `CivilGrowthScenario.Changes` (solo nuove strutture a zero; cambi di valori o ricette richiedono una funzione di conversione dedicata) e i relativi test; eseguire `--check-catalog`.
+- Strumenti per i colli di bottiglia (roadmap M4): per esempio indicare nella UI quale risorsa manca o quale deposito è pieno per ogni struttura ferma, usando i dati già calcolati dalla previsione.
 - Decidere demolizione e conseguenze su personale, capacità e scorte (Q-08) prima di abilitarla nella UI.
 - Ampliare le cronologie riproducibili e i controlli di avviabilità/recupero, mantenendo i test di tempo, contesa, pause e salvataggi.
 - Ripristinare l'audit CLI quando l'accesso NuGet .NET funziona; conservare il controllo puntuale e le evidenze di aggiornamento già prodotti, senza aggirare TLS.
@@ -58,11 +66,11 @@ Esercito, navigazione e isole rimangono M5; i nove elementi decorativi sono rife
 .\run-game.cmd
 ```
 
-Build Release senza errori o avvisi; **117 test superati**: 49 Core, 24 Application, 21 Infrastructure, 23 Desktop. Verificate otto immagini, sette simulazioni fino a 32 ore, pubblicazione e avvio nativo Windows per entrambi gli scenari. Il ciclo civile riprende il progresso a 59 secondi e genera esattamente un arrivo dopo 1 secondo. Entrambi verificano sospensione notificata alla sola finestra e chiusura ordinata. Fixture M3 ancora compatibile; SQLite v2 verificato anche con errore di scrittura indotto. Dettagli nel [report M4](validation/M4_CIVIL_GROWTH.md).
+Build Release senza errori o avvisi; **140 test superati**: 59 Core, 33 Application, 22 Infrastructure, 26 Desktop. Verificate otto immagini, raggiungibilità dei due cataloghi, nove simulazioni fino a 32 ore (incluse `storage` e `bread`), pubblicazione e avvio nativo Windows per entrambi gli scenari. Il ciclo civile riprende il progresso a 59 secondi e genera esattamente un arrivo dopo 1 secondo. Entrambi verificano sospensione notificata alla sola finestra e chiusura ordinata. Fixture M3 ancora compatibile; SQLite v2 verificato anche con errore di scrittura indotto. Dettagli nel [report M4](validation/M4_CIVIL_GROWTH.md).
 
-La sessione parte/riprende in pausa. Il file personale civile è `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`; Foundation mantiene `game.sqlite3`, accessibile con `run-game.cmd --scenario economy-foundation`. Checkpoint ogni minuto, manuali e alla chiusura; nessuna produzione offline. La chiusura fallita conserva la finestra e offre uscita esplicita senza salvare. File incompatibili all'avvio non vengono sostituiti da autosalvataggi della sessione iniziale di ripiego.
+La sessione parte/riprende in pausa. Il file personale civile è `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`; un checkpoint `civil-growth-1` o `-2` viene convertito al caricamento e, al primo salvataggio, l'originale resta in `civil-growth.<regole>.backup.sqlite3`. Foundation mantiene `game.sqlite3`, accessibile con `run-game.cmd --scenario economy-foundation`. Checkpoint ogni minuto, manuali e alla chiusura; nessuna produzione offline. La chiusura fallita conserva la finestra e offre uscita esplicita senza salvare. File incompatibili all'avvio non vengono sostituiti da autosalvataggi della sessione iniziale di ripiego.
 
-Artefatti correnti in `.local-cache/m4/`: `validation.json`, otto PNG, pubblicazione, sette JSON delle simulazioni e risultati/log/database sotto `runs/<id>/`. Validazione e `run-game.cmd --smoke-test` non usano file personali. Gli artefatti precedenti rimangono nelle cartelle M1–M3.
+Artefatti correnti in `.local-cache/m4/`: `validation.json`, otto PNG, pubblicazione, nove JSON delle simulazioni e risultati/log/database sotto `runs/<id>/`. Validazione e `run-game.cmd --smoke-test` non usano file personali. Gli artefatti precedenti rimangono nelle cartelle M1–M3.
 
 L'audit CLI è stato ritentato ma non completato per errore TLS. Un confronto puntuale con i dati ufficiali VulnerabilityInfo di NuGet ha invece esaminato le 63 coppie pacchetto/versione dei lock della soluzione definitiva: dopo l'aggiornamento SQLite nessuna corrisponde agli intervalli segnalati. Dati, report prima/dopo e limite del controllo sono in `.local-cache/avalonia12-audit/` e nel report della migrazione. Pacchetti scaricati via HTTPS standard in `.local-cache/avalonia12-feed/`, restore da sorgenti locali, nessuna modifica globale.
 
@@ -76,10 +84,11 @@ Linux/macOS, self-contained, spegnimento improvviso e migrazioni di formato non 
 - `ResourceAmount` rappresenta 0,001 unità su `long`; conversioni con più decimali vengono rifiutate, non arrotondate.
 - Il pianificatore usa input e spazio iniziali, priorità crescente e identificatore ordinale; le previsioni usano la stessa contesa. Le attività successive possono restare senza input.
 - Passo economico di un secondo, tempo residuo conservato in tick. Massimo 24 ore per singola chiamata di avanzamento; durata totale non limitata a 24 ore.
-- Il Core valida snapshot e riprende in pausa. `GameSession.Population` è la popolazione effettiva; `GameScenario.Population` è la dotazione iniziale. La capacità abitativa dipende dagli edifici; la capacità delle risorse è ancora fissa nello scenario.
+- Il Core valida snapshot e riprende in pausa. `GameSession.Population` è la popolazione effettiva; `GameScenario.Population` è la dotazione iniziale. Capacità abitativa e capacità delle risorse dipendono dagli edifici: `GameScenario.Capacity` è solo la base, `GameSession.StorageCapacity` quella effettiva.
+- `GameRuntime.TryRestore` applica le conversioni dichiarate solo per lo stesso scenario e verso le regole attive; `PersistenceResult.UpgradedFromRules` segnala la conversione.
 - `ForecastEconomy()` comprende attività delle strutture e piano civile. La proiezione include consumo effettivamente prenotabile e fabbisogno alimentare distinto, così una razione mancante non appare consumata.
 - Foundation emette snapshot v1 senza crescita; Civil emette v2 con `GrowthProgressSeconds` obbligatorio, validato rispetto all'intervallo. Il caricamento di regole diverse non cambia automaticamente lo scenario.
-- Catalogo in memoria: riferimenti e cicli edilizi controllati, nessun fingerprint automatico e nessuna prova generale di raggiungibilità economica.
+- Catalogo in memoria: riferimenti e cicli edilizi controllati, nessun fingerprint automatico. `CatalogReachability.Analyze` verifica staticamente che ogni struttura sia costruibile e ogni ricetta avviabile; non considera tempo, persone o contesa e non è imposto nel costruttore dello scenario.
 
 ## Verifiche precedenti M2 e comandi
 

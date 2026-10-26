@@ -14,7 +14,8 @@ public sealed class LoadGameHandler(GameRuntime runtime, IGameSaveStore store)
             entered = true;
             var snapshot = await Task.Run(store.Load, cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
-            return new(runtime.TryRestore(snapshot, revision), runtime.Read());
+            var (error, upgradedFrom) = runtime.TryRestore(snapshot, revision);
+            return new(error, runtime.Read(), upgradedFrom);
         }
         catch (GameSaveException exception) { return new(exception.Error, runtime.Read()); }
         catch (OperationCanceledException) { return new(GameSaveError.Canceled, runtime.Read()); }

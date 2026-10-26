@@ -16,7 +16,6 @@ public sealed class GameScenario
         ArgumentNullException.ThrowIfNull(initialBuildings);
         catalog.ValidateBundle(capacity);
         catalog.ValidateBundle(initialResources);
-        if (!capacity.Covers(initialResources)) throw new ArgumentException("Initial stocks exceed storage capacity.");
         var initial = initialBuildings.ToImmutableArray();
         ValidateBuildings(catalog, initial, population);
         Id = id;
@@ -29,6 +28,7 @@ public sealed class GameScenario
         InitialResources = initialResources;
         var byId = initial.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
         InitialBuildings = catalog.Buildings.Select(item => byId.GetValueOrDefault(item.Id) ?? new(item.Id, 0, 0)).ToImmutableArray();
+        if (!StorageCapacity(InitialBuildings).Covers(initialResources)) throw new ArgumentException("Initial stocks exceed storage capacity.");
         if (populationRules is not null && HousingCapacity(InitialBuildings) < population)
             throw new ArgumentException("Initial population exceeds housing.", nameof(initialBuildings));
     }
@@ -37,6 +37,7 @@ public sealed class GameScenario
     public GameCatalog Catalog { get; }
     public int Population { get; }
     public PopulationRules? PopulationRules { get; }
+    /// <summary>Base storage before building effects; sessions use <see cref="StorageCapacity"/>.</summary>
     public ResourceBundle Capacity { get; }
     public ResourceBundle InitialResources { get; }
     public ImmutableArray<BuildingState> InitialBuildings { get; }
@@ -51,6 +52,16 @@ public sealed class GameScenario
             if (capacity > int.MaxValue) throw new ArgumentException("Housing exceeds the population limit.");
         }
         return (int)capacity;
+    }
+
+    /// <summary>Base capacity plus storage effects. Throws <see cref="OverflowException"/> beyond the numeric limit.</summary>
+    internal ResourceBundle StorageCapacity(IEnumerable<BuildingState> buildings)
+    {
+        var capacity = Capacity;
+        foreach (var building in buildings)
+            if (building.Count > 0 && Catalog.BuildingsById[building.BuildingId].StoragePerBuilding is { } storage)
+                capacity += storage.Scale(building.Count);
+        return capacity;
     }
 
     internal static void ValidateBuildings(GameCatalog catalog, ImmutableArray<BuildingState> buildings, int population)

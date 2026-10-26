@@ -40,7 +40,16 @@ Per una cache completa e ripristino offline:
 .\validate.cmd -OfflinePackageSource .local-cache/nuget
 ```
 
-Lo script esegue restore con lock, build Release, test e sette simulazioni: Foundation a 60 secondi/8 ore/32 ore, Civil bootstrap a 121 secondi/8 ore/32 ore e recupero a 662 secondi. Genera otto render, pubblica il desktop e verifica il ciclo nativo Windows per entrambi gli scenari. Output in `.local-cache/m4/`, con risultati TRX isolati per esecuzione e riepilogo `validation.json`. `-SkipNativeSmoke` esclude soltanto il lancio automatico del pacchetto.
+Lo script esegue restore con lock, build Release, test, il controllo di raggiungibilità dei due cataloghi e nove simulazioni: Foundation a 60 secondi/8 ore/32 ore, Civil bootstrap a 121 secondi/8 ore/32 ore, recupero a 662 secondi, magazzino a 1260 e pane a 660. Genera otto render, pubblica il desktop e verifica il ciclo nativo Windows per entrambi gli scenari. Output in `.local-cache/m4/`, con risultati TRX isolati per esecuzione e riepilogo `validation.json`. `-SkipNativeSmoke` esclude soltanto il lancio automatico del pacchetto.
+
+Per cancellare gli output di compilazione di tutti i progetti (soluzione definitiva, test, tools, experiments e legacy):
+
+```powershell
+.\clean.cmd -DryRun   # elenca soltanto le cartelle
+.\clean.cmd
+```
+
+Rimuove solo le cartelle `bin` e `obj` accanto a ogni `.csproj`, all'interno del repository; non tocca `.git`, `.local-cache` (pacchetti NuGet e artefatti di validazione), salvataggi personali o collegamenti. Se un file è in uso (gioco, IDE o test aperti) segnala la cartella ed esce con codice 1. Dopo la pulizia serve un restore prima di `--no-restore`: `validate.cmd` lo esegue da solo.
 
 Il ripristino offline disabilita l'audit solo per il comando corrente; non modificarne la configurazione globale per aggirare errori di rete. Gli script disabilitano la telemetria opzionale Avalonia per il processo di build e ripristinano le variabili ambientali alla fine.
 
@@ -48,7 +57,9 @@ La sorgente offline deve contenere anche le nuove versioni: una cache contenente
 
 Il gioco si avvia con `run-game.cmd` nello scenario civile; `--scenario economy-foundation` riapre lo scenario storico e il suo slot distinto. La verifica usa salvataggi privati, mentre il desktop interattivo usa LocalApplicationData. Non usare il file personale come fixture. Ulteriori regole nel [formato dei salvataggi](SAVE_FORMAT.md).
 
-Il simulatore mantiene Foundation come default per conservare la timeline di riferimento. Per il civile: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121`; `--strategy recovery --seconds 662` prova il recupero dalla carenza. Sono cronologie dichiarate, non un ottimizzatore di strategie.
+Il simulatore mantiene Foundation come default per conservare la timeline di riferimento. Per il civile: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121`; `--strategy recovery --seconds 662` prova il recupero dalla carenza, `storage --seconds 1260` il magazzino e `bread --seconds 660` la filiera del pane. Sono cronologie dichiarate, non un ottimizzatore di strategie.
+
+Dopo ogni modifica del catalogo: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --check-catalog --scenario civil-growth`. Stampa strutture raggiungibili, risorse rinnovabili e problemi (prerequisito irraggiungibile, costo non ottenibile o oltre la capacità, input non rinnovabile, ricetta oltre la capacità) ed esce con codice 1 se ce ne sono. La validazione lo esegue per entrambi gli scenari.
 
 Per la sola simulazione, dopo il build: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --hours 8`. Per rieseguire l'audit online senza alterare i percorsi dei pacchetti negli assets usare `dotnet list SimRisorse.slnx package --no-restore --vulnerable --include-transitive`.
 
