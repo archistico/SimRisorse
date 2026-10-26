@@ -40,13 +40,15 @@ Per una cache completa e ripristino offline:
 .\validate.cmd -OfflinePackageSource .local-cache/nuget
 ```
 
-Lo script esegue restore con lock, build Release, test e simulazioni di 60 secondi, 8 e 32 ore; genera quattro render della UI, pubblica il desktop e ne verifica il ciclo nativo su Windows. Output locali in `.local-cache/m3/`, con risultati TRX isolati per esecuzione e riepilogo `validation.json`. `-SkipNativeSmoke` esclude soltanto il lancio automatico del pacchetto.
+Lo script esegue restore con lock, build Release, test e sette simulazioni: Foundation a 60 secondi/8 ore/32 ore, Civil bootstrap a 121 secondi/8 ore/32 ore e recupero a 662 secondi. Genera otto render, pubblica il desktop e verifica il ciclo nativo Windows per entrambi gli scenari. Output in `.local-cache/m4/`, con risultati TRX isolati per esecuzione e riepilogo `validation.json`. `-SkipNativeSmoke` esclude soltanto il lancio automatico del pacchetto.
 
 Il ripristino offline disabilita l'audit solo per il comando corrente; non modificarne la configurazione globale per aggirare errori di rete. Gli script disabilitano la telemetria opzionale Avalonia per il processo di build e ripristinano le variabili ambientali alla fine.
 
 La sorgente offline deve contenere anche le nuove versioni: una cache contenente soltanto Avalonia 11 non basta. In questo workspace i pacchetti di Avalonia 12 e del nuovo provider sono stati acquisiti da NuGet via HTTPS con verifica dei certificati e poi ripristinati nella cache locale; il client .NET continua a incontrare un errore TLS. Il confronto puntuale con il feed VulnerabilityInfo è documentato nel report, distinto dall'audit CLI.
 
-Il gioco si avvia con `run-game.cmd`; la verifica usa un salvataggio privato, mentre il desktop interattivo usa LocalApplicationData. Non usare il file personale come fixture. Ulteriori regole nel [formato dei salvataggi](SAVE_FORMAT.md).
+Il gioco si avvia con `run-game.cmd` nello scenario civile; `--scenario economy-foundation` riapre lo scenario storico e il suo slot distinto. La verifica usa salvataggi privati, mentre il desktop interattivo usa LocalApplicationData. Non usare il file personale come fixture. Ulteriori regole nel [formato dei salvataggi](SAVE_FORMAT.md).
+
+Il simulatore mantiene Foundation come default per conservare la timeline di riferimento. Per il civile: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121`; `--strategy recovery --seconds 662` prova il recupero dalla carenza. Sono cronologie dichiarate, non un ottimizzatore di strategie.
 
 Per la sola simulazione, dopo il build: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --hours 8`. Per rieseguire l'audit online senza alterare i percorsi dei pacchetti negli assets usare `dotnet list SimRisorse.slnx package --no-restore --vulnerable --include-transitive`.
 

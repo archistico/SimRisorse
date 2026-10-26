@@ -12,7 +12,15 @@
         </StackPanel>
         <Border Grid.Row="1" Background="#2A5345" CornerRadius="7" Padding="12" Margin="0,35,0,0"><StackPanel Spacing="10">
           <TextBlock Text="ISOLA INIZIALE" FontSize="10" Foreground="#BCD6C9" />
-          <TextBlock Text="Economia e persone" Foreground="White" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding ScenarioName}" Foreground="White" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <StackPanel IsVisible="{Binding HasPopulationGrowth}" Spacing="10">
+            <TextBlock Text="CRESCITA" FontSize="10" Foreground="#BCD6C9" />
+            <TextBlock x:Name="GrowthStatusText" Text="{Binding GrowthStatus}" Foreground="White" TextWrapping="Wrap" FontSize="12" />
+            <ProgressBar x:Name="GrowthProgressBar" Value="{Binding GrowthPercent}" Maximum="100" MinWidth="0" Height="4" Foreground="#E2D1A2" />
+            <TextBlock Text="FABBISOGNO" FontSize="10" Foreground="#BCD6C9" />
+            <TextBlock Text="{Binding FoodRequirement}" Foreground="#BCD6C9" TextWrapping="Wrap" FontSize="11" />
+            <TextBlock Text="In pausa il progresso resta fermo." Foreground="#BCD6C9" TextWrapping="Wrap" FontSize="11" />
+          </StackPanel>
         </StackPanel></Border>
         <StackPanel Grid.Row="3" Spacing="10">
           <TextBlock Text="Una filiera in equilibrio" FontWeight="SemiBold" Foreground="#E2D1A2" TextWrapping="Wrap" />
@@ -32,13 +40,13 @@
       <TabControl x:Name="Sections" Grid.Row="1" Background="Transparent">
         <TabItem Header="Edifici">
           <Grid RowDefinitions="Auto,*" RowSpacing="16" Margin="0,14,0,0">
-            <ItemsControl ItemsSource="{Binding Resources}">
+            <ItemsControl ItemsSource="{Binding ResourceHighlights}">
               <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:ResourceRow">
                 <Border Background="White" CornerRadius="9" Padding="16,12" Margin="0,0,10,0"><Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
                   <TextBlock Text="{Binding Name}" Classes="label" /><TextBlock Grid.Column="1" Text="Saldo previsto" Classes="label" FontSize="10" HorizontalAlignment="Right" />
                   <TextBlock Grid.Row="1" Text="{Binding Quantity}" FontSize="27" FontWeight="SemiBold" />
-                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NetRate}" Foreground="#176858" VerticalAlignment="Center" FontWeight="SemiBold" />
+                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NetRate}" Foreground="{Binding NetForeground}" VerticalAlignment="Center" FontWeight="SemiBold" />
                   <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding Stock}" Classes="label" />
                   <ProgressBar Grid.Row="3" Grid.ColumnSpan="2" Value="{Binding FillPercent}" Maximum="100" Height="3" Margin="0,3,0,0" Foreground="#478B71" />
                 </Grid></Border>
@@ -68,7 +76,7 @@
                     <TextBlock Text="{Binding Selected.Name}" FontSize="23" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding Selected.Description}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" LineHeight="19" />
                     <TextBlock Text="{Binding Selected.Recipe}" TextWrapping="Wrap" FontWeight="SemiBold" FontSize="12" />
-                    <TextBlock Text="Per lavoratore, ogni secondo di gioco" Classes="label" TextWrapping="Wrap" />
+                    <TextBlock Text="Per lavoratore, ogni secondo di gioco" IsVisible="{Binding Selected.IsProducer}" Classes="label" TextWrapping="Wrap" />
                   </StackPanel></ScrollViewer>
                   <StackPanel Grid.Row="1" Spacing="8">
                     <Border Background="#CBD7C9" Height="1" Margin="0,2" />
@@ -93,13 +101,13 @@
                 <ItemsControl x:Name="ResourcesTable" Grid.Row="1" ItemsSource="{Binding Resources}">
                   <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:ResourceRow">
                     <Grid ColumnDefinitions="*,130,110,120,120,100" Margin="0,13">
-                      <TextBlock Text="{Binding Name}" /><TextBlock Grid.Column="1" Text="{Binding Quantity}" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" /><TextBlock Grid.Column="3" Text="{Binding Production}" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" FontWeight="SemiBold" Foreground="#176858" />
+                      <TextBlock Text="{Binding Name}" /><TextBlock Grid.Column="1" Text="{Binding Quantity}" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" /><TextBlock Grid.Column="3" Text="{Binding Production}" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" FontWeight="SemiBold" Foreground="{Binding NetForeground}" />
                     </Grid>
                   </DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
               </Grid>
             </Border>
-            <TextBlock Text="Il saldo considera persone assegnate, input disponibili, spazio e priorità delle filiere." Classes="label" TextWrapping="Wrap" />
+            <TextBlock Text="Il saldo considera lavoratori, fabbisogno degli abitanti, input disponibili, spazio e priorità delle filiere." Classes="label" TextWrapping="Wrap" />
           </StackPanel>
         </TabItem>
       </TabControl>

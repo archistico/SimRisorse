@@ -1,6 +1,6 @@
 # M4 — Proposta di crescita civile
 
-Stato: **bozza progettuale, non implementata e non ancora confermata come regola di prodotto**. La partita eseguibile resta [Economy Foundation](ECONOMY_FOUNDATION.md). Questa scheda rende concreta Q-05 del [game design](../GAME_DESIGN.md) prima di modificare il motore.
+Stato: **proposta storica precedente al primo incremento M4**. Il proseguimento dello sviluppo ha adottato questi valori provvisori nel nuovo [scenario Civil Growth](CIVIL_GROWTH.md); consultare quella scheda per il comportamento eseguibile e l'[ADR 0009](../adr/0009-civil-growth-and-save-generations.md) per la compatibilità. Il testo seguente conserva la proposta originaria e non certifica un bilanciamento definitivo.
 
 ## Primo ciclo proposto
 

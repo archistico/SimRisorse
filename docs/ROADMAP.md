@@ -8,7 +8,7 @@ Aggiornata al 2026-10-26. Le milestone hanno dipendenze e criteri di uscita, sen
 | M1 | Specifica minima e validazione dello stack | Completata il 2026-10-26 | M0 |
 | M2 | Motore economico verificabile senza UI | Completata il 2026-10-26 | M1, regole minime definite |
 | M3 | Prima partita desktop salvabile | Completata il 2026-10-26 | M2, stack confermato |
-| M4 | Popolazione dinamica e progressione civile | Bozza di scenario preparata; codice da avviare | M3 |
+| M4 | Popolazione dinamica e progressione civile | In corso; case, crescita e prima filiera completate | M3 |
 | M5 | Soldati, navigazione e isole | Da avviare | M4, regole militari definite |
 | M6 | Scenario completo, risultati e bilanciamento | Da avviare | M5, condizione di vittoria definita |
 | M7 | Consolidamento e distribuzione | Da avviare | M6 |
@@ -66,7 +66,9 @@ Completata con desktop Avalonia collegato al Core, proiezioni di flusso, ordini 
 
 ## M4 — Popolazione dinamica e progressione civile
 
-Prerequisito tecnico completato: [migrazione ad Avalonia 12](validation/AVALONIA_12.md), con 83 test e compatibilità dei checkpoint M3 verificata. Preparata la [proposta del primo ciclo civile](scenarios/CIVIL_GROWTH_DRAFT.md): case, crescita e pesce trasformato in cibo. Valori e conseguenze delle carenze sono proposte, non ancora funzionalità eseguibili o regole confermate del prodotto.
+Primo incremento completato: [scenario Civil Growth](scenarios/CIVIL_GROWTH.md), con abitazioni, crescita intera, pescatore, pesce→cibo e carenze recuperabili. Parametri provvisori adottati per questo scenario. [Verifiche](validation/M4_CIVIL_GROWTH.md): 117 test, due cronologie di sviluppo/recupero, simulazioni fino a 32 ore, otto render e ripresa nativa della crescita parziale. Snapshot/file v2 e vecchio scenario v1 separati nell'[ADR 0009](adr/0009-civil-growth-and-save-generations.md).
+
+Resta da completare l'ampliamento civile: magazzini espandibili e ulteriori filiere, a partire da grano/mulino/pozzo/forno. Demolizione e rimborsi richiedono ancora Q-08. Il primo incremento non chiude M4 né il bilanciamento del gioco completo.
 
 - Risolvere le regole di abitazioni, crescita, cibo e carenze (Q-05).
 - Ampliare ricette e prerequisiti, verificando che la dotazione iniziale consenta di avviare tutte le filiere necessarie.

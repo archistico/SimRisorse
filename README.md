@@ -6,7 +6,7 @@ La scelta centrale è come investire risorse e lavoratori: espandere la produzio
 
 ## Stato del progetto
 
-**26 ottobre 2026: M0–M3 completate e desktop aggiornato ad Avalonia 12.** La [soluzione definitiva](SimRisorse.slnx) contiene motore, casi d'uso, interfaccia Avalonia, salvataggi SQLite e simulatore, verificati con **83 test**. Puoi giocare al primo ciclo economico con tre strutture e otto abitanti. Per M4 è preparata una [proposta di crescita civile](docs/scenarios/CIVIL_GROWTH_DRAFT.md); popolazione dinamica, catalogo completo, esercito e isole non sono ancora implementati. La bozza Windows Forms e la prova M1 restano separate come riferimenti.
+**26 ottobre 2026: M0–M3 completate e primo incremento M4 giocabile su Avalonia 12.** La [soluzione definitiva](SimRisorse.slnx) contiene motore, casi d'uso, interfaccia, salvataggi SQLite e simulatore, verificati con **117 test**. Lo [scenario Civil Growth](docs/scenarios/CIVIL_GROWTH.md) aggiunge case, pescatori, trasformazione del pesce in cibo e crescita degli abitanti. Catalogo completo, esercito, isole, vittoria e classifica restano nelle milestone successive. La bozza Windows Forms e la prova M1 restano separate come riferimenti.
 
 L'impostazione tecnica adottata è un monolite modulare con funzionalità verticali e un motore indipendente dall'interfaccia. **C#/.NET 10, Avalonia 12.1.4/MVVM e SQLite sono lo stack desktop**, con Microsoft.Data.Sqlite 10.0.14. Core e Application usano solo il framework e i riferimenti interni previsti. Windows è verificato, Linux/macOS non ancora. Compatibilità dei salvataggi e controllo puntuale delle dipendenze sono descritti nel [report della migrazione](docs/validation/AVALONIA_12.md); l'audit CLI dell'ambiente incontra ancora un errore TLS.
 
@@ -39,8 +39,9 @@ La definizione esatta di vittoria, il ruolo obbligatorio delle isole e le formul
 | [Verifica del motore](docs/validation/M2_CORE.md) | 45 test, simulazioni lunghe e limiti dell'audit |
 | [Salvataggi](docs/SAVE_FORMAT.md) | Percorso, formato, checkpoint e comportamento in caso di errore |
 | [Verifica del desktop](docs/validation/M3_DESKTOP.md) | 82 test, rendering e avvio nativo Windows |
-| [Migrazione Avalonia 12](docs/validation/AVALONIA_12.md) | Baseline corrente, 83 test, compatibilità dei checkpoint e dipendenze |
-| [Proposta M4](docs/scenarios/CIVIL_GROWTH_DRAFT.md) | Case, crescita e prima filiera alimentare; bozza non implementata |
+| [Migrazione Avalonia 12](docs/validation/AVALONIA_12.md) | Baseline dei pacchetti, compatibilità dei checkpoint e dipendenze |
+| [Scenario civile M4](docs/scenarios/CIVIL_GROWTH.md) | Regole eseguibili di abitazioni, crescita, alimentazione e recupero |
+| [Verifiche M4](docs/validation/M4_CIVIL_GROWTH.md) | 117 test, cronologie civili, otto render e ripresa nativa |
 
 ## Struttura attuale
 
@@ -95,12 +96,15 @@ Per aprire il gioco dopo la validazione:
 
 Le viste Edifici e Risorse mostrano quantità, capacità, costi, personale e flussi previsti al secondo. Puoi impartire ordini da 1, 5 o 10 unità. Il gioco parte in pausa e tenta di riprendere il salvataggio esistente.
 
-Salvataggio ogni minuto e alla chiusura ordinata, oltre al comando manuale. Il file è sotto `%LOCALAPPDATA%\SimRisorse\game.sqlite3` su Windows. La ripresa non produce risorse per il tempo trascorso a gioco chiuso. Dettagli e gestione degli errori nel [formato dei salvataggi](docs/SAVE_FORMAT.md).
+Nel nuovo scenario ogni casa offre 8 posti. Con spazio e cibo, arriva un abitante ogni 60 secondi validi di gioco. Ogni abitante consuma 0,010 cibo/s; una carenza ferma la crescita e lascia attivi i produttori. I valori sono provvisori per lo sviluppo, non il bilanciamento finale.
+
+Salvataggio ogni minuto e alla chiusura ordinata, oltre al comando manuale. Il nuovo scenario usa `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3` su Windows. Il vecchio checkpoint `game.sqlite3` rimane separato e si riprende con `run-game.cmd --scenario economy-foundation`. La ripresa conserva la crescita parziale e non produce risorse per il tempo trascorso a gioco chiuso. Dettagli nel [formato dei salvataggi](docs/SAVE_FORMAT.md).
 
 Dopo la validazione, per eseguire il nuovo motore senza finestre:
 
 ```powershell
 dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --seconds 60
+dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121
 ```
 
 L'esperimento iniziale si avvia ancora con `scripts/run-stack-probe.cmd`, dopo la sua validazione separata: vedere il [README M1](experiments/stack-probe/README.md). La [bozza Windows Forms](legacy/winforms/README.md) non è la nuova applicazione.

@@ -19,11 +19,18 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
         "tree-feller" => "Fornisce i tronchi che alimentano le segherie. Più persone assegnate aumentano la raccolta.",
         "sawmill" => "Trasforma i tronchi in tavole per costruire e ampliare la colonia.",
         "stonecutter" => "Estrae la pietra necessaria agli investimenti e alle nuove costruzioni.",
+        "small-house" => "Offre spazio per nuovi abitanti. La crescita richiede cibo e tempo di gioco; la casa non impiega lavoratori.",
+        "fisher" => "Raccoglie pesce da trasformare in cibo nel deposito alimentare.",
+        "food-store" => "Trasforma il pesce in cibo per gli abitanti. Il cibo consente alla popolazione di crescere.",
         _ => "Assegna persone e controlla materiali e spazio per far lavorare la struttura."
     };
-    public string Recipe => (_view.InputPerWorker.IsEmpty ? string.Empty : Format(_view.InputPerWorker) + " → ") + Format(_view.OutputPerWorker);
-    public string Activity => $"{_view.RunnableWorkers} di {Workers} lavoratori possono produrre nel prossimo secondo.";
+    public bool IsProducer => !_view.BlockReason.HasFlag(ProductionBlockReason.NotProducer);
+    public string Recipe => _view.HousingPerBuilding > 0 ? $"+{_view.HousingPerBuilding} posti abitativi per edificio" :
+        (_view.InputPerWorker.IsEmpty ? string.Empty : Format(_view.InputPerWorker) + " → ") + Format(_view.OutputPerWorker);
+    public string Activity => !IsProducer ? $"+{_view.HousingPerBuilding} posti per edificio. Nessun lavoratore richiesto." :
+        $"{_view.RunnableWorkers} di {Workers} lavoratori possono produrre nel prossimo secondo.";
     public string Status => _view.BlockReason.HasFlag(ProductionBlockReason.NotConstructed) ? "Da costruire" :
+        !IsProducer ? $"{(long)Count * _view.HousingPerBuilding} posti abitativi" :
         _view.BlockReason.HasFlag(ProductionBlockReason.NoWorkers) ? "Nessun lavoratore" :
         _view.BlockReason.HasFlag(ProductionBlockReason.MissingInputs) && _view.BlockReason.HasFlag(ProductionBlockReason.StorageFull) ? "Materiali e spazio insufficienti" :
         _view.BlockReason.HasFlag(ProductionBlockReason.MissingInputs) ? "Materie prime insufficienti" :

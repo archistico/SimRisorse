@@ -40,7 +40,7 @@ public sealed class PersistenceFeatureTests
         var initial = store.Snapshot;
         store.Snapshot = change switch
         {
-            "version" => initial with { FormatVersion = 2 },
+            "version" => initial with { FormatVersion = GameSession.SnapshotFormatVersion + 1 },
             "rules" => initial with { RulesVersion = "unknown" },
             _ => initial with { Buildings = [new("tree-feller", 1, 99), new("sawmill", 1, 1), new("stonecutter", 1, 1)] }
         };

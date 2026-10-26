@@ -10,6 +10,71 @@ namespace SimRisorse.Infrastructure.Tests;
 public sealed class SaveStoreTests
 {
     [Fact]
+    public void GrowthProgressAndFractionalTimeSurviveARealCheckpointAndOnlyOneArrivalFollows()
+    {
+        using var database = new TestDatabase();
+        var scenario = CivilGrowthScenario.Create();
+        var game = GameSession.Create(scenario);
+        game.Construct("small-house", 1);
+        game.Resume(); game.Advance(TimeSpan.FromMilliseconds(59500));
+        database.Store.Save(game.Snapshot());
+        var saved = database.Store.Load();
+        Equal(game.Snapshot(), saved);
+        Assert.Equal(2, saved.FormatVersion);
+        Assert.Equal(59, saved.GrowthProgressSeconds);
+        var restored = GameSession.Restore(scenario, saved);
+        restored.Advance(TimeSpan.FromDays(1));
+        Equal(saved, restored.Snapshot());
+        restored.Resume(); restored.Advance(TimeSpan.FromMilliseconds(500));
+        Assert.Equal(9, restored.Population);
+        Assert.Equal(0, restored.GrowthProgressSeconds);
+        Assert.Equal(25.2m, restored.Resources["food"].Units);
+    }
+
+    [Fact]
+    public void FailedV2SaveRollsBackGrowthPopulationAndStocksTogether()
+    {
+        using var database = new TestDatabase();
+        var game = GameSession.Create(CivilGrowthScenario.Create());
+        game.Construct("small-house", 1);
+        game.Resume(); game.Advance(TimeSpan.FromSeconds(59));
+        var before = game.Snapshot();
+        database.Store.Save(before);
+        database.Execute("CREATE TRIGGER fail_building BEFORE INSERT ON building_stock BEGIN SELECT RAISE(ABORT,'injected failure'); END;");
+        game.Advance(TimeSpan.FromSeconds(1));
+        Assert.Throws<GameSaveException>(() => database.Store.Save(game.Snapshot()));
+        Equal(before, database.Store.Load());
+    }
+
+    [Theory]
+    [InlineData("DELETE FROM population_state;")]
+    [InlineData("PRAGMA ignore_check_constraints=ON; UPDATE population_state SET growth_seconds=-1;")]
+    [InlineData("UPDATE population_state SET growth_seconds=2147483648;")]
+    [InlineData("DROP TABLE population_state;")]
+    public void IncompleteOrInvalidGrowthDataDoesNotBecomeZeroProgress(string change)
+    {
+        using var database = new TestDatabase();
+        database.Store.Save(GameSession.Create(CivilGrowthScenario.Create()).Snapshot());
+        database.Execute(change);
+        Assert.Equal(GameSaveError.InvalidData, Assert.Throws<GameSaveException>(() => database.Store.Load()).Error);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DifferentSaveGenerationsCannotOverwriteEachOther(bool growthFirst)
+    {
+        using var database = new TestDatabase();
+        var oldState = GameSession.Create(EconomyFoundationScenario.Create()).Snapshot();
+        var newState = GameSession.Create(CivilGrowthScenario.Create()).Snapshot();
+        database.Store.Save(growthFirst ? newState : oldState);
+        var bytes = File.ReadAllBytes(database.PathName);
+        Assert.Equal(GameSaveError.UnsupportedFormat,
+            Assert.Throws<GameSaveException>(() => database.Store.Save(growthFirst ? oldState : newState)).Error);
+        Assert.Equal(bytes, File.ReadAllBytes(database.PathName));
+    }
+
+    [Fact]
     public void M3CheckpointRemainsCompatibleAfterUpdatingTheDesktopAndSQLite()
     {
         var scenario = EconomyFoundationScenario.Create();
@@ -74,8 +139,8 @@ public sealed class SaveStoreTests
     }
 
     [Theory]
-    [InlineData("PRAGMA user_version=2;")]
-    [InlineData("UPDATE game_save SET snapshot_version=2;")]
+    [InlineData("PRAGMA user_version=3;")]
+    [InlineData("UPDATE game_save SET snapshot_version=3;")]
     public void FutureVersionsAreNotLoadedOrOverwritten(string change)
     {
         using var database = new TestDatabase();
@@ -137,6 +202,7 @@ public sealed class SaveStoreTests
         Assert.Equal(expected.FormatVersion, actual.FormatVersion);
         Assert.Equal(expected.ElapsedTicks, actual.ElapsedTicks);
         Assert.Equal(expected.Population, actual.Population);
+        Assert.Equal(expected.GrowthProgressSeconds, actual.GrowthProgressSeconds);
         Assert.Equal(expected.Resources, actual.Resources);
         Assert.Equal(expected.Buildings.OrderBy(item => item.BuildingId).ToArray(), actual.Buildings.OrderBy(item => item.BuildingId).ToArray());
     }

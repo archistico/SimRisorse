@@ -3,7 +3,7 @@ using SimRisorse.Core.Content;
 
 namespace SimRisorse.Application.Features.Sessions.StartGame;
 
-public sealed record StartGameRequest(GameScenario Scenario);
+public sealed record StartGameRequest(GameScenario? Scenario = null);
 
 public sealed class StartGameHandler(GameRuntime runtime)
 {

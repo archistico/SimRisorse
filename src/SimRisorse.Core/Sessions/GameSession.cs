@@ -2,13 +2,15 @@ using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Content;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Population;
 
 namespace SimRisorse.Core.Sessions;
 
 /// <summary>Single-owner aggregate. Concurrent callers must use the application runtime.</summary>
 public sealed class GameSession
 {
-    public const int SnapshotFormatVersion = 1;
+    public const int SnapshotFormatVersion = 2;
+    public static bool SupportsSnapshotFormat(int version) => version is 1 or SnapshotFormatVersion;
     public static TimeSpan MaximumAdvance { get; } = TimeSpan.FromHours(24);
     private readonly Dictionary<string, BuildingState> _buildings;
 
@@ -17,6 +19,8 @@ public sealed class GameSession
         Scenario = scenario;
         Resources = snapshot.Resources;
         ElapsedTicks = snapshot.ElapsedTicks;
+        Population = snapshot.Population;
+        GrowthProgressSeconds = snapshot.GrowthProgressSeconds ?? 0;
         _buildings = snapshot.Buildings.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
     }
 
@@ -24,36 +28,56 @@ public sealed class GameSession
     public ResourceBundle Resources { get; private set; }
     public long ElapsedTicks { get; private set; }
     public bool IsPaused { get; private set; } = true;
-    public int AvailableWorkers => Scenario.Population - checked((int)_buildings.Values.Sum(item => (long)item.AssignedWorkers));
+    public int Population { get; private set; }
+    public int GrowthProgressSeconds { get; private set; }
+    public int HousingCapacity => Scenario.HousingCapacity(_buildings.Values);
+    public int AvailableWorkers => Population - checked((int)_buildings.Values.Sum(item => (long)item.AssignedWorkers));
 
     public static GameSession Create(GameScenario scenario)
     {
         ArgumentNullException.ThrowIfNull(scenario);
-        return new(scenario, new(SnapshotFormatVersion, scenario.Id, scenario.Catalog.RulesVersion, 0,
-            scenario.Population, scenario.InitialResources, scenario.InitialBuildings));
+        return new(scenario, new(scenario.PopulationRules is null ? 1 : SnapshotFormatVersion, scenario.Id, scenario.Catalog.RulesVersion, 0,
+            scenario.Population, scenario.InitialResources, scenario.InitialBuildings, scenario.PopulationRules is null ? null : 0));
     }
 
     public static GameSession Restore(GameScenario scenario, GameSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(scenario);
         ArgumentNullException.ThrowIfNull(snapshot);
-        if (snapshot.FormatVersion != SnapshotFormatVersion || snapshot.ScenarioId != scenario.Id ||
-            snapshot.RulesVersion != scenario.Catalog.RulesVersion || snapshot.ElapsedTicks < 0 || snapshot.Population != scenario.Population)
+        if (snapshot.FormatVersion != (scenario.PopulationRules is null ? 1 : SnapshotFormatVersion) || snapshot.ScenarioId != scenario.Id ||
+            snapshot.RulesVersion != scenario.Catalog.RulesVersion || snapshot.ElapsedTicks < 0 || snapshot.Population < scenario.Population)
             throw new ArgumentException("Snapshot identity, version, population or elapsed time is invalid.", nameof(snapshot));
         scenario.Catalog.ValidateBundle(snapshot.Resources);
         if (!scenario.Capacity.Covers(snapshot.Resources)) throw new ArgumentException("Snapshot exceeds storage capacity.", nameof(snapshot));
         GameScenario.ValidateBuildings(scenario.Catalog, snapshot.Buildings, snapshot.Population);
         if (snapshot.Buildings.Length != scenario.Catalog.Buildings.Length)
             throw new ArgumentException("Snapshot must contain every building type, including zero counts.", nameof(snapshot));
+        if (scenario.PopulationRules is { } rules)
+        {
+            if (snapshot.Population > scenario.HousingCapacity(snapshot.Buildings) || snapshot.GrowthProgressSeconds is not { } progress ||
+                progress < 0 || progress >= rules.GrowthIntervalSeconds)
+                throw new ArgumentException("Invalid population or growth progress.", nameof(snapshot));
+        }
+        else if (snapshot.Population != scenario.Population || snapshot.GrowthProgressSeconds is not null)
+            throw new ArgumentException("Fixed population snapshots cannot contain growth.", nameof(snapshot));
         return new(scenario, snapshot);
     }
 
-    public GameSnapshot Snapshot() => new(SnapshotFormatVersion, Scenario.Id, Scenario.Catalog.RulesVersion,
-        ElapsedTicks, Scenario.Population, Resources,
-        Scenario.Catalog.Buildings.Select(item => _buildings[item.Id]).ToImmutableArray());
+    public GameSnapshot Snapshot() => new(Scenario.PopulationRules is null ? 1 : SnapshotFormatVersion, Scenario.Id, Scenario.Catalog.RulesVersion,
+        ElapsedTicks, Population, Resources,
+        Scenario.Catalog.Buildings.Select(item => _buildings[item.Id]).ToImmutableArray(),
+        Scenario.PopulationRules is null ? null : GrowthProgressSeconds);
 
-    public ImmutableArray<BuildingProduction> ForecastProduction() =>
-        ProductionPlanner.Plan(Scenario.Catalog, Resources, Scenario.Capacity, _buildings).Buildings;
+    private PopulationForecast PopulationPlan() => PopulationPlanner.Plan(Scenario.PopulationRules, Population, HousingCapacity, GrowthProgressSeconds, Resources);
+
+    public EconomyForecast ForecastEconomy()
+    {
+        var population = PopulationPlan();
+        var production = ProductionPlanner.Plan(Scenario.Catalog, Resources, Scenario.Capacity, _buildings, PopulationPlanner.Consumption(population));
+        return new(production.Buildings, population);
+    }
+
+    public ImmutableArray<BuildingProduction> ForecastProduction() => ForecastEconomy().Buildings;
 
     public void Pause() => IsPaused = true;
     public void Resume() => IsPaused = false;
@@ -63,6 +87,8 @@ public sealed class GameSession
         if (count <= 0) return new(GameError.InvalidQuantity);
         if (buildingId is null || !Scenario.Catalog.BuildingsById.TryGetValue(buildingId, out var definition)) return new(GameError.UnknownBuilding);
         if (definition.Prerequisites.Any(id => _buildings[id].Count == 0)) return new(GameError.MissingPrerequisite);
+        if (Scenario.PopulationRules is not null && (long)count * definition.HousingPerBuilding > int.MaxValue - HousingCapacity)
+            return new(GameError.NumericLimit);
         ResourceBundle cost;
         int nextCount;
         try
@@ -109,7 +135,15 @@ public sealed class GameSession
         catch (OverflowException) { return new(GameError.NumericLimit); }
         var steps = nextTicks / TimeSpan.TicksPerSecond - ElapsedTicks / TimeSpan.TicksPerSecond;
         for (long step = 0; step < steps; step++)
-            Resources = ProductionPlanner.Plan(Scenario.Catalog, Resources, Scenario.Capacity, _buildings).Resources;
+        {
+            var population = PopulationPlan();
+            Resources = ProductionPlanner.Plan(Scenario.Catalog, Resources, Scenario.Capacity, _buildings, PopulationPlanner.Consumption(population)).Resources;
+            if (population.BlockReason == GrowthBlockReason.None && ++GrowthProgressSeconds == population.IntervalSeconds)
+            {
+                Population++;
+                GrowthProgressSeconds = 0;
+            }
+        }
         ElapsedTicks = nextTicks;
         return GameActionResult.Success;
     }

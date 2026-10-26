@@ -13,9 +13,10 @@ internal sealed record ProductionPlan(ResourceBundle Resources, ImmutableArray<B
 internal static class ProductionPlanner
 {
     public static ProductionPlan Plan(GameCatalog catalog, ResourceBundle resources, ResourceBundle capacity,
-        IReadOnlyDictionary<string, BuildingState> buildings)
+        IReadOnlyDictionary<string, BuildingState> buildings, ResourceBundle? reservedConsumption = null)
     {
-        var available = catalog.Resources.ToDictionary(item => item.Id, item => resources[item.Id].Milliunits, StringComparer.Ordinal);
+        var remaining = reservedConsumption is null ? resources : resources - reservedConsumption;
+        var available = catalog.Resources.ToDictionary(item => item.Id, item => remaining[item.Id].Milliunits, StringComparer.Ordinal);
         var space = catalog.Resources.ToDictionary(item => item.Id, item => capacity[item.Id].Milliunits - resources[item.Id].Milliunits, StringComparer.Ordinal);
         var output = catalog.Resources.ToDictionary(item => item.Id, _ => 0L, StringComparer.Ordinal);
         var reports = ImmutableArray.CreateBuilder<BuildingProduction>(catalog.Buildings.Length);

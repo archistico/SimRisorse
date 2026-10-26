@@ -30,6 +30,112 @@ public static class TestAppBuilder
 public sealed class DesktopTests
 {
     [Fact]
+    public void ScenariosHaveDistinctPersonalSlotsAndSmokeTestsUsePrivatePaths()
+    {
+        var current = DesktopOptions.Parse([]);
+        var historical = DesktopOptions.Parse(["--scenario", "economy-foundation"]);
+        Assert.Equal("civil-growth", current.Scenario.Id);
+        Assert.EndsWith("civil-growth.sqlite3", current.SavePath);
+        Assert.EndsWith("game.sqlite3", historical.SavePath);
+        Assert.NotEqual(current.SavePath, historical.SavePath);
+        var smoke = DesktopOptions.Parse(["--smoke-test"]);
+        Assert.NotEqual(current.SavePath, smoke.SavePath);
+        Assert.NotEqual(historical.SavePath, smoke.SavePath);
+        Assert.Contains("SimRisorse.NativeSmoke", smoke.SavePath);
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--scenario", "unknown"]));
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--save-path", "--smoke-test"]));
+    }
+
+    [AvaloniaFact]
+    public async Task HousesGrowthAndFoodConsumptionRemainVisibleAndResumeExactly()
+    {
+        using var directory = new TemporaryDirectory();
+        var store = new SqliteGameSaveStore(Path.Combine(directory.PathName, "civil.sqlite3"));
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), store);
+        await viewModel.InitializeAsync();
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false);
+        try
+        {
+            window.Show();
+            Assert.Contains("8 / 8", viewModel.Population);
+            Assert.Contains("Case piene", window.FindControl<TextBlock>("GrowthStatusText")!.Text!);
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
+            Assert.Contains("posti abitativi", viewModel.Selected.Recipe);
+            Assert.Contains("posti abitativi", viewModel.Selected.Status);
+            Assert.False(window.FindControl<Button>("AssignButton")!.IsEffectivelyEnabled);
+            Click(window, "BuildButton");
+            Assert.Contains("8 / 16", viewModel.Population);
+            Click(window, "PauseButton");
+            viewModel.Advance(TimeSpan.FromMilliseconds(59500));
+            Assert.Contains("59 / 60", viewModel.GrowthStatus);
+            Assert.True(await viewModel.SaveAsync());
+            viewModel.NewGameCommand.Execute(null);
+            viewModel.ConfirmNewGameCommand.Execute(null);
+            Assert.Equal("civil-growth", viewModel.View.ScenarioId);
+            Assert.Contains("8 / 8", viewModel.Population);
+            Assert.True(await viewModel.LoadAsync());
+            Assert.Contains("59 / 60", viewModel.GrowthStatus);
+            Assert.True(viewModel.IsPaused);
+            Click(window, "PauseButton");
+            viewModel.Advance(TimeSpan.FromMilliseconds(500));
+            Assert.Equal(9, viewModel.View.Population);
+            Assert.Equal(0.09m, viewModel.View.Resources.Single(item => item.Id == "food").ConsumptionPerSecond);
+            Assert.Equal(25.2m, viewModel.View.Resources.Single(item => item.Id == "food").Quantity);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public async Task FoodShortageIsExplainedWithoutRemovingWorkers()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.TogglePauseCommand.Execute(null);
+        viewModel.Advance(TimeSpan.FromSeconds(376));
+        Assert.Equal(8, viewModel.View.Population);
+        Assert.Equal(5, viewModel.View.AvailableWorkers);
+        Assert.Contains("Manca cibo", viewModel.GrowthStatus);
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1240, 850, 0, "civil-buildings.png")]
+    [InlineData(1040, 740, 0, "civil-buildings-compact.png")]
+    [InlineData(1240, 850, 1, "civil-resources.png")]
+    [InlineData(1040, 740, 1, "civil-resources-compact.png")]
+    public async Task CivilScreensRenderHousingAndFoodWithPrimaryControlsVisible(int width, int height, int section, string file)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            window.FindControl<TabControl>("Sections")!.SelectedIndex = section;
+            Dispatcher.UIThread.RunJobs();
+            foreach (var name in section == 0 ? new[] { "BuildButton", "AssignButton", "PauseButton", "SaveButton" } : new[] { "PauseButton", "SaveButton" })
+            {
+                var button = window.FindControl<Button>(name)!;
+                var point = button.TranslatePoint(default, window)!.Value;
+                Assert.InRange(point.Y, 0, window.ClientSize.Height - button.Bounds.Height);
+            }
+            Assert.True(window.FindControl<TextBlock>("GrowthStatusText")!.IsEffectivelyVisible);
+            var growthBar = window.FindControl<ProgressBar>("GrowthProgressBar")!;
+            var growthPosition = growthBar.TranslatePoint(default, window)!.Value;
+            Assert.InRange(growthPosition.X, 22, 185 - growthBar.Bounds.Width);
+            using var image = window.CaptureRenderedFrame();
+            Assert.NotNull(image);
+            var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+            if (!string.IsNullOrWhiteSpace(artifacts))
+            {
+                Directory.CreateDirectory(artifacts);
+                image.Save(Path.Combine(artifacts, file), PngBitmapEncoderOptions.Default);
+            }
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [Fact]
     public void DesktopDoesNotCallTheSQLiteDriverDirectly() => Assert.DoesNotContain(
         typeof(MainViewModel).Assembly.GetReferencedAssemblies(), reference => reference.Name!.StartsWith("Microsoft.Data.Sqlite", StringComparison.Ordinal));
 

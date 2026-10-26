@@ -12,8 +12,8 @@ using SimRisorse.Application.Features.Sessions.SetPause;
 using SimRisorse.Application.Features.Sessions.StartGame;
 using SimRisorse.Application.Persistence;
 using SimRisorse.Application.ReadModels;
-using SimRisorse.Application.Scenarios;
 using SimRisorse.Core.Sessions;
+using SimRisorse.Core.Population;
 
 namespace SimRisorse.Desktop.Presentation;
 
@@ -54,7 +54,7 @@ public sealed class MainViewModel : ObservableObject
         NewGameCommand = new(() => { SynchronizeTime?.Invoke(); Pause(); _newGameConfirmation = true; Refresh(); }, () => !_busy && !_closing);
         ConfirmNewGameCommand = new(() =>
         {
-            new StartGameHandler(runtime).Handle(new(EconomyFoundationScenario.Create()));
+            new StartGameHandler(runtime).Handle(new());
             _newGameConfirmation = false;
             _autoSaveAllowed = true;
             _message = "Nuova colonia pronta. La partita è in pausa.";
@@ -68,6 +68,8 @@ public sealed class MainViewModel : ObservableObject
 
     public Action? SynchronizeTime { get; set; }
     public ObservableCollection<ResourceRow> Resources { get; }
+    public IEnumerable<ResourceRow> ResourceHighlights => HasPopulationGrowth
+        ? Resources.Where(item => item.Id is "food" or "planks" or "stone") : Resources.Take(3);
     public ObservableCollection<BuildingRow> Buildings { get; }
     public IReadOnlyList<int> BatchSizes { get; } = Array.AsReadOnly(new[] { 1, 5, 10 });
     public BuildingRow Selected { get => _selected; set { if (value is not null && value != _selected) { _selected = value; Refresh(); } } }
@@ -88,7 +90,20 @@ public sealed class MainViewModel : ObservableObject
     }
     public string PlayState => IsPaused ? "IN PAUSA" : "IN CORSO";
     public string PauseAction => IsPaused ? "Avvia produzione" : "Metti in pausa";
-    public string Population => $"{_view.AvailableWorkers} disponibili / {_view.Population} abitanti";
+    public bool HasPopulationGrowth => _view.PopulationState.IntervalSeconds > 0;
+    public string ScenarioName => HasPopulationGrowth ? "Crescita civile" : "Economia di base";
+    public string Population => HasPopulationGrowth
+        ? $"{_view.Population} / {_view.PopulationState.HousingCapacity} abitanti · {_view.AvailableWorkers} liberi"
+        : $"{_view.AvailableWorkers} disponibili / {_view.Population} abitanti";
+    public string GrowthStatus => _view.PopulationState.BlockReason switch
+    {
+        GrowthBlockReason.MissingFood => "Manca cibo: crescita sospesa",
+        GrowthBlockReason.HousingFull => "Case piene: costruisci abitazioni",
+        GrowthBlockReason.None => $"Prossimo abitante: {_view.PopulationState.ProgressSeconds} / {_view.PopulationState.IntervalSeconds} s",
+        _ => "Popolazione fissa"
+    };
+    public string FoodRequirement => $"{_view.PopulationState.RequiredFoodPerSecond:0.###} cibo/s";
+    public double GrowthPercent => HasPopulationGrowth ? 100d * _view.PopulationState.ProgressSeconds / _view.PopulationState.IntervalSeconds : 0d;
     public string BusyState => _loading ? "Caricamento in corso…" : _busy ? "Salvataggio in corso…" :
         _autoSaveAllowed ? "Salvataggio ogni minuto e alla chiusura" : "Salvataggio automatico sospeso";
     public string SelectedCost => BuildingRow.Format(Selected.View.Cost, BatchSize);
@@ -104,6 +119,7 @@ public sealed class MainViewModel : ObservableObject
     public AsyncUiCommand LoadCommand { get; }
 
     private bool CanConstruct() => Selected.View.MissingPrerequisites.IsEmpty && Selected.Count <= int.MaxValue - BatchSize &&
+        (!HasPopulationGrowth || (long)BatchSize * Selected.View.HousingPerBuilding <= int.MaxValue - _view.PopulationState.HousingCapacity) &&
         Selected.View.Cost.All(cost => _view.Resources.Single(item => item.Id == cost.ResourceId).Quantity >= cost.Quantity * BatchSize);
 
     private UiCommand Action(Func<CommandResult> action, Func<bool> condition) => new(() =>

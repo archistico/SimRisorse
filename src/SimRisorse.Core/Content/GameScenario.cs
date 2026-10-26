@@ -1,13 +1,14 @@
 using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Population;
 
 namespace SimRisorse.Core.Content;
 
 public sealed class GameScenario
 {
     public GameScenario(string id, GameCatalog catalog, int population, ResourceBundle capacity,
-        ResourceBundle initialResources, IEnumerable<BuildingState> initialBuildings)
+        ResourceBundle initialResources, IEnumerable<BuildingState> initialBuildings, PopulationRules? populationRules = null)
     {
         ContentIdentifier.Validate(id, nameof(id));
         ArgumentNullException.ThrowIfNull(catalog);
@@ -21,18 +22,36 @@ public sealed class GameScenario
         Id = id;
         Catalog = catalog;
         Population = population;
+        PopulationRules = populationRules;
+        if (populationRules is not null && !catalog.ResourcesById.ContainsKey(populationRules.FoodResourceId))
+            throw new ArgumentException("Population food must be a catalog resource.", nameof(populationRules));
         Capacity = capacity;
         InitialResources = initialResources;
         var byId = initial.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
         InitialBuildings = catalog.Buildings.Select(item => byId.GetValueOrDefault(item.Id) ?? new(item.Id, 0, 0)).ToImmutableArray();
+        if (populationRules is not null && HousingCapacity(InitialBuildings) < population)
+            throw new ArgumentException("Initial population exceeds housing.", nameof(initialBuildings));
     }
 
     public string Id { get; }
     public GameCatalog Catalog { get; }
     public int Population { get; }
+    public PopulationRules? PopulationRules { get; }
     public ResourceBundle Capacity { get; }
     public ResourceBundle InitialResources { get; }
     public ImmutableArray<BuildingState> InitialBuildings { get; }
+
+    internal int HousingCapacity(IEnumerable<BuildingState> buildings)
+    {
+        if (PopulationRules is null) return Population;
+        long capacity = 0;
+        foreach (var building in buildings)
+        {
+            capacity += (long)building.Count * Catalog.BuildingsById[building.BuildingId].HousingPerBuilding;
+            if (capacity > int.MaxValue) throw new ArgumentException("Housing exceeds the population limit.");
+        }
+        return (int)capacity;
+    }
 
     internal static void ValidateBuildings(GameCatalog catalog, ImmutableArray<BuildingState> buildings, int population)
     {

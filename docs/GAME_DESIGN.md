@@ -86,7 +86,7 @@ Il legame obbligatorio tra conquiste e vittoria non è ancora confermato. Caserm
 
 Non tutte le domande bloccano il primo prototipo. Per l'economia minima bastano Q-03, Q-06 e Q-07, una dotazione iniziale e una regola esplicita di avanzamento del tempo. Le altre vanno risolte prima della funzionalità interessata.
 
-Per Q-05 è disponibile una [proposta numerica M4](scenarios/CIVIL_GROWTH_DRAFT.md), con case, crescita e prima filiera alimentare. Definisce anche ordine del passo, carenze, recupero e prove attese. Rimane una bozza: la partita corrente continua a usare popolazione fissa e regole Economy Foundation.
+Per Q-05 è implementata una prima risposta nello [scenario Civil Growth](scenarios/CIVIL_GROWTH.md): case con 8 posti, un arrivo ogni 60 secondi nutriti con spazio disponibile, consumo di 0,010 cibo per abitante/s e carenze che fermano soltanto la crescita. Pescatore e deposito alimentare avviano la filiera pesce→cibo. Sono regole provvisorie di scenario, non un bilanciamento definitivo o una scelta sul futuro mantenimento dei soldati. La [proposta originaria](scenarios/CIVIL_GROWTH_DRAFT.md) rimane come riferimento storico; Economy Foundation è ancora eseguibile con le proprie regole.
 
 ## Obiettivi di bilanciamento
 

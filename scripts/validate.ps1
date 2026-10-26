@@ -2,7 +2,7 @@ param([string]$OfflinePackageSource = '', [switch]$SkipNativeSmoke)
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$artifacts = Join-Path $repositoryRoot '.local-cache/m3'
+$artifacts = Join-Path $repositoryRoot '.local-cache/m4'
 $packages = Join-Path $repositoryRoot '.local-cache/nuget'
 $runDirectory = Join-Path $artifacts ('runs/' + [Guid]::NewGuid().ToString('N'))
 $previousTelemetry = $env:AVALONIA_TELEMETRY_OPTOUT
@@ -30,7 +30,11 @@ try {
     $cases = @(
         @{ Name = '60-seconds'; Arguments = @('--seconds', '60'); Ticks = 60 * [TimeSpan]::TicksPerSecond },
         @{ Name = '8-hours'; Arguments = @('--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
-        @{ Name = '32-hours'; Arguments = @('--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour }
+        @{ Name = '32-hours'; Arguments = @('--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour },
+        @{ Name = 'civil-bootstrap'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'bootstrap', '--seconds', '121'); Ticks = 121 * [TimeSpan]::TicksPerSecond; Population = 9 },
+        @{ Name = 'civil-recovery'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'recovery', '--seconds', '662'); Ticks = 662 * [TimeSpan]::TicksPerSecond; Population = 14 },
+        @{ Name = 'civil-8-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour; Population = 16 },
+        @{ Name = 'civil-32-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour; Population = 16 }
     )
     foreach ($case in $cases) {
         $arguments = @($simulation) + $case.Arguments
@@ -39,6 +43,9 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Simulation failed: $name" }
         $result = $output | ConvertFrom-Json
         if ($result.ElapsedTicks -ne $case.Ticks) { throw 'Wrong simulation duration.' }
+        if ($case.Population -and ($result.Population -ne $case.Population -or $result.PopulationState.ProgressSeconds -ne 0)) {
+            throw "Wrong population/progress for $name."
+        }
         if ($name -eq '60-seconds') {
             if (($result.Resources | Where-Object Id -eq 'planks').Quantity -ne 179) {
                 throw 'The reference minute timeline differs.'
@@ -56,18 +63,21 @@ try {
         '-c', 'Release', '--self-contained', 'false', '--output', $publish, '--verbosity', 'minimal')
     $nativeSmoke = 'Not run'
     if (-not $SkipNativeSmoke -and [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) {
-        $smokePath = Join-Path $runDirectory 'native-save.sqlite3'
-        $process = Start-Process -FilePath (Join-Path $publish 'SimRisorse.Desktop.exe') -WindowStyle Hidden -PassThru `
-            -ArgumentList @('--smoke-test', '--save-path', ('"' + $smokePath + '"')) -WorkingDirectory $publish `
-            -RedirectStandardError (Join-Path $runDirectory 'native-stderr.log') -RedirectStandardOutput (Join-Path $runDirectory 'native-stdout.log')
-        # Keep the process handle before it exits; Windows PowerShell otherwise may lose ExitCode.
-        $null = $process.Handle
-        if (-not $process.WaitForExit(10000)) { Stop-Process -Id $process.Id; throw 'Desktop native smoke timed out.' }
-        $nativeExitCode = $process.ExitCode
-        $process.Dispose()
-        if ($nativeExitCode -ne 0) { Get-Content -LiteralPath (Join-Path $runDirectory 'native-stderr.log'); throw "Desktop native smoke failed: $nativeExitCode" }
-        if (-not (Test-Path -LiteralPath $smokePath)) { throw 'Native smoke did not save the game.' }
-        $nativeSmoke = 'Passed on Windows: save, load, suspend notification, close'
+        foreach ($scenario in @('civil-growth', 'economy-foundation')) {
+            $smokePath = Join-Path $runDirectory ($scenario + '-native-save.sqlite3')
+            $stderr = Join-Path $runDirectory ($scenario + '-native-stderr.log')
+            $process = Start-Process -FilePath (Join-Path $publish 'SimRisorse.Desktop.exe') -WindowStyle Hidden -PassThru `
+                -ArgumentList @('--smoke-test', '--scenario', $scenario, '--save-path', ('"' + $smokePath + '"')) -WorkingDirectory $publish `
+                -RedirectStandardError $stderr -RedirectStandardOutput (Join-Path $runDirectory ($scenario + '-native-stdout.log'))
+            # Keep the process handle before it exits; Windows PowerShell otherwise may lose ExitCode.
+            $null = $process.Handle
+            if (-not $process.WaitForExit(10000)) { Stop-Process -Id $process.Id; throw 'Desktop native smoke timed out.' }
+            $nativeExitCode = $process.ExitCode
+            $process.Dispose()
+            if ($nativeExitCode -ne 0) { Get-Content -LiteralPath $stderr; throw "Desktop native smoke failed: $scenario, $nativeExitCode" }
+            if (-not (Test-Path -LiteralPath $smokePath)) { throw 'Native smoke did not save the game.' }
+        }
+        $nativeSmoke = 'Passed on Windows for both scenarios: save, load, growth resume, suspend notification, close'
     }
     $total = $passed = $failed = 0
     Get-ChildItem -LiteralPath (Join-Path $runDirectory 'test-results') -Filter '*.trx' | ForEach-Object {
@@ -86,7 +96,8 @@ try {
         nativeSmoke = $nativeSmoke; offlineRestore = [bool]$OfflinePackageSource
         dependencyAuditRequested = (-not [bool]$OfflinePackageSource)
         testResults = (Join-Path $runDirectory 'test-results')
-        screenshots = @('buildings.png', 'buildings-compact.png', 'resources.png', 'resources-compact.png')
+        screenshots = @('buildings.png', 'buildings-compact.png', 'resources.png', 'resources-compact.png',
+            'civil-buildings.png', 'civil-buildings-compact.png', 'civil-resources.png', 'civil-resources-compact.png')
     }
     $report | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $artifacts 'validation.json') -Encoding UTF8
     $report | ConvertTo-Json

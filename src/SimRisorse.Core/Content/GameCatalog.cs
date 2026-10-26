@@ -30,7 +30,7 @@ public sealed class GameCatalog
             ContentIdentifier.Validate(building.Id, nameof(buildings));
             ArgumentException.ThrowIfNullOrWhiteSpace(building.Name);
             if (!buildingIds.Add(building.Id)) throw new ArgumentException($"Duplicate building: {building.Id}.", nameof(buildings));
-            if (building.WorkplacesPerBuilding < 0 || building.Prerequisites.IsDefault)
+            if (building.WorkplacesPerBuilding < 0 || building.HousingPerBuilding < 0 || building.Prerequisites.IsDefault)
                 throw new ArgumentException($"Invalid workplace count or prerequisites: {building.Id}.", nameof(buildings));
             ValidateBundle(building.Cost, resourceIds);
             if (building.Recipe is { } recipe)

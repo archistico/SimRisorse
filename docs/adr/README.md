@@ -18,11 +18,12 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 | [0001](0001-modular-monolith-and-vertical-features.md) | Monolite modulare e funzionalità verticali | Accettato | Core, Application, Infrastructure, Desktop e Simulation implementati |
 | [0002](0002-simulation-time-and-pause.md) | Tempo di simulazione, pausa e riproducibilità | Accettato | Core e adattatore monotono desktop verificati |
 | [0003](0003-versioned-content-catalog.md) | Catalogo versionato e stato separato dalle definizioni | Accettato | Catalogo immutabile e validato in memoria; formato esterno futuro |
-| [0004](0004-population-and-military-boundaries.md) | Popolazione e progressione militare come modelli espliciti | Accettato | Popolazione fissa e assegnazioni in M2; crescita e militari futuri |
+| [0004](0004-population-and-military-boundaries.md) | Popolazione e progressione militare come modelli espliciti | Accettato | Assegnazioni e crescita civile implementate; militari futuri |
 | [0005](0005-desktop-stack-candidate.md) | C#/.NET, Avalonia e SQLite per il primo desktop | Accettato | Desktop definitivo e adattatore SQLite collegati in M3 |
 | [0006](0006-economic-step-and-resource-precision.md) | Precisione delle risorse e prenotazioni nel passo economico | Accettato | Implementato e verificato in M2 |
 | [0007](0007-desktop-persistence-and-lifecycle.md) | Desktop, salvataggi e ciclo di vita della partita | Accettato | Implementato e verificato in M3 |
 | [0008](0008-avalonia-12.md) | Avalonia 12 per il desktop | Accettato | Avalonia 12.1.4, xUnit 3 headless e provider SQLite aggiornati e verificati |
+| [0009](0009-civil-growth-and-save-generations.md) | Crescita civile e generazioni di salvataggio | Accettato | Primo scenario civile, snapshot/file v2 e compatibilità v1 verificati |
 
 ## Come aggiungere una decisione
 

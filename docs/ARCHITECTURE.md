@@ -1,8 +1,8 @@
 # Architettura
 
-Stato: Core, Application, Infrastructure, Desktop e Simulation implementati e collegati. Le scelte formalizzate sono nel [registro ADR](adr/README.md). La partita M3 usa ancora il piccolo scenario economico a popolazione fissa; i moduli di progressione successivi non sono implementati.
+Stato: Core, Application, Infrastructure, Desktop e Simulation implementati e collegati. Le scelte formalizzate sono nel [registro ADR](adr/README.md). Il primo incremento M4 implementa popolazione dinamica, case e filiera alimentare; la progressione militare non è ancora implementata.
 
-Il desktop corrente usa Avalonia 12.1.4 e Microsoft.Data.Sqlite 10.0.14, con compatibilità dei checkpoint v1 verificata: [ADR 0008](adr/0008-avalonia-12.md). La [proposta M4](scenarios/CIVIL_GROWTH_DRAFT.md) descrive i prossimi effetti su popolazione e alimentazione, senza introdurli nelle regole correnti.
+Il desktop corrente usa Avalonia 12.1.4 e Microsoft.Data.Sqlite 10.0.14: [ADR 0008](adr/0008-avalonia-12.md). Il nuovo [scenario civile](scenarios/CIVIL_GROWTH.md) usa snapshot/file v2 e uno slot separato, mantenendo quello M3 disponibile in v1: [ADR 0009](adr/0009-civil-growth-and-save-generations.md).
 
 ## Impostazione
 
@@ -83,6 +83,8 @@ Invarianti da verificare: risorse mai negative, nessun output senza gli input ri
 
 Una definizione di edificio descrive identificatore stabile, costi, prerequisiti, lavoro, ricette ed effetti. Lo stato della partita descrive quantità possedute, scorte, assegnazioni e avanzamenti. Le due cose non vengono confuse nella stessa classe derivata per ogni edificio.
 
+M4 introduce l'effetto `HousingPerBuilding` e `PopulationRules` opzionali. La sessione possiede popolazione effettiva e secondi di crescita; gli scenari senza queste regole rimangono a popolazione fissa. Un piano civile prenota il cibo prima delle ricette, senza riutilizzare lo spazio liberato nel medesimo passo. Forecast e avanzamento condividono i pianificatori; Application aggiunge consumo civile, fabbisogno e motivi di blocco alle proiezioni.
+
 Il catalogo è versionato e validato: identificatori duplicati, riferimenti mancanti, valori non ammessi e dipendenze irraggiungibili devono emergere prima dell'avvio dello scenario. Il formato dei file, per esempio JSON, resta da scegliere.
 
 M2 verifica riferimenti e cicli dei prerequisiti edilizi, senza dimostrare tutta la raggiungibilità economica. Il catalogo è costruito in memoria e usa identificatori testuali stabili; non richiede di modificare enum o sottoclassi per aggiungere una ricetta. La versione delle regole viene assegnata esplicitamente, senza fingerprint automatico del contenuto.
@@ -95,7 +97,7 @@ Lo stato viene mantenuto in memoria e salvato tramite un contratto applicativo. 
 
 Il salvataggio deve comprendere tempo simulato, risorse, popolazione, costruzioni, attività in corso, versione del formato e identità delle regole. Deve consentire di riprendere senza produrre risorse per il tempo trascorso a programma chiuso.
 
-Formato, atomicità e rifiuto delle versioni non supportate sono definiti per M3; migrazioni e compatibilità con cataloghi precedenti restano da introdurre. Non si ricalcola silenziosamente una vecchia partita con un bilanciamento nuovo.
+Formato, atomicità e rifiuto delle versioni non supportate sono definiti per M3 e per lo stato di crescita M4. Sono supportati checkpoint v1 e v2 nel rispettivo scenario; le conversioni tra cataloghi o generazioni restano da introdurre. Non si ricalcola silenziosamente una vecchia partita con un bilanciamento nuovo.
 
 `GameSnapshot` è un contratto immutabile in memoria, con controlli di identità, scorte e assegnazioni e ripresa in pausa. Non coincide con il formato su disco o il salvataggio dell'esperimento. L'adattatore converte esplicitamente dati e quantità e il runtime li valida prima della sostituzione della partita attiva.
 

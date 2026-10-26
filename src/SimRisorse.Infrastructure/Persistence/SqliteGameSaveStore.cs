@@ -10,7 +10,7 @@ namespace SimRisorse.Infrastructure.Persistence;
 public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
 {
     public const int ApplicationId = 0x53494D52;
-    public const int FileVersion = 1;
+    public const int FileVersion = 2;
     private const int MaximumEntries = 10000;
     public string DatabasePath { get; } = Path.GetFullPath(path);
 
@@ -54,38 +54,41 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
         return command;
     }
 
-    private static void CheckFormat(SqliteConnection connection, SqliteTransaction transaction, bool allowEmpty)
+    private static int CheckFormat(SqliteConnection connection, SqliteTransaction transaction, bool allowEmpty)
     {
         using var id = Command(connection, transaction, "PRAGMA application_id;");
         using var version = Command(connection, transaction, "PRAGMA user_version;");
         var applicationId = Convert.ToInt64(id.ExecuteScalar());
         var fileVersion = Convert.ToInt64(version.ExecuteScalar());
-        if (applicationId == ApplicationId && fileVersion == FileVersion) return;
+        if (applicationId == ApplicationId && fileVersion is 1 or FileVersion) return (int)fileVersion;
         if (allowEmpty && applicationId == 0 && fileVersion == 0)
         {
             using var tables = Command(connection, transaction, "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
-            if (Convert.ToInt64(tables.ExecuteScalar()) == 0) return;
+            if (Convert.ToInt64(tables.ExecuteScalar()) == 0) return 0;
         }
         throw new GameSaveException(GameSaveError.UnsupportedFormat, "Unrecognized or unsupported save format.");
     }
 
     private void SaveCore(GameSnapshot snapshot)
     {
-        if (snapshot.FormatVersion != GameSession.SnapshotFormatVersion)
+        if (!GameSession.SupportsSnapshotFormat(snapshot.FormatVersion))
             throw new GameSaveException(GameSaveError.UnsupportedFormat, "Snapshot version is not supported.");
         if (snapshot.Resources is null || snapshot.Buildings.IsDefault || snapshot.ElapsedTicks < 0 || snapshot.Population < 0 ||
             string.IsNullOrWhiteSpace(snapshot.ScenarioId) || string.IsNullOrWhiteSpace(snapshot.RulesVersion) ||
             snapshot.Resources.Amounts.Count > MaximumEntries || snapshot.Buildings.Length > MaximumEntries ||
+            (snapshot.FormatVersion == 1 ? snapshot.GrowthProgressSeconds is not null : snapshot.GrowthProgressSeconds is not >= 0) ||
             snapshot.Buildings.Any(item => item is null || string.IsNullOrWhiteSpace(item.BuildingId) || item.Count < 0 || item.AssignedWorkers < 0) ||
             snapshot.Buildings.Select(item => item.BuildingId).Distinct(StringComparer.Ordinal).Count() != snapshot.Buildings.Length)
             throw new GameSaveException(GameSaveError.InvalidData, "Snapshot cannot be written.");
         Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
         using var connection = Open(SqliteOpenMode.ReadWriteCreate);
         using var transaction = connection.BeginTransaction();
-        CheckFormat(connection, transaction, allowEmpty: true);
+        var fileVersion = CheckFormat(connection, transaction, allowEmpty: true);
+        if (fileVersion != 0 && fileVersion != snapshot.FormatVersion)
+            throw new GameSaveException(GameSaveError.UnsupportedFormat, "Different save generations use separate slots.");
         using (var schema = Command(connection, transaction, $"""
             PRAGMA application_id={ApplicationId};
-            PRAGMA user_version={FileVersion};
+            PRAGMA user_version={snapshot.FormatVersion};
             CREATE TABLE IF NOT EXISTS game_save (
                 slot INTEGER PRIMARY KEY CHECK(slot=1), snapshot_version INTEGER NOT NULL,
                 scenario_id TEXT NOT NULL, rules_version TEXT NOT NULL,
@@ -103,7 +106,7 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
         using (var existing = Command(connection, transaction, "SELECT snapshot_version FROM game_save WHERE slot=1;"))
         {
             var savedVersion = existing.ExecuteScalar();
-            if (savedVersion is not null && Convert.ToInt64(savedVersion) != GameSession.SnapshotFormatVersion)
+            if (savedVersion is not null && Convert.ToInt64(savedVersion) != snapshot.FormatVersion)
                 throw new GameSaveException(GameSaveError.UnsupportedFormat, "Existing snapshot version must not be overwritten.");
         }
         using (var metadata = Command(connection, transaction, """
@@ -119,6 +122,19 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             metadata.Parameters.AddWithValue("$time", snapshot.ElapsedTicks);
             metadata.Parameters.AddWithValue("$population", snapshot.Population);
             metadata.ExecuteNonQuery();
+        }
+        if (snapshot.FormatVersion == 2)
+        {
+            using var growth = Command(connection, transaction, """
+                CREATE TABLE IF NOT EXISTS population_state (
+                    slot INTEGER PRIMARY KEY CHECK(slot=1) REFERENCES game_save(slot),
+                    growth_seconds INTEGER NOT NULL CHECK(growth_seconds>=0)
+                ) STRICT;
+                INSERT INTO population_state VALUES(1,$progress)
+                ON CONFLICT(slot) DO UPDATE SET growth_seconds=excluded.growth_seconds;
+                """);
+            growth.Parameters.AddWithValue("$progress", snapshot.GrowthProgressSeconds!.Value);
+            growth.ExecuteNonQuery();
         }
         using (var clear = Command(connection, transaction, "DELETE FROM resource_stock WHERE slot=1; DELETE FROM building_stock WHERE slot=1;")) clear.ExecuteNonQuery();
         foreach (var (id, amount) in snapshot.Resources.Amounts)
@@ -143,7 +159,7 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
     {
         using var connection = Open(SqliteOpenMode.ReadOnly);
         using var transaction = connection.BeginTransaction(deferred: true);
-        CheckFormat(connection, transaction, allowEmpty: false);
+        var fileVersion = CheckFormat(connection, transaction, allowEmpty: false);
         int version, population;
         long elapsed;
         string scenario, rules;
@@ -157,7 +173,8 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             elapsed = reader.GetInt64(3);
             population = checked((int)reader.GetInt64(4));
         }
-        if (version != GameSession.SnapshotFormatVersion) throw new GameSaveException(GameSaveError.UnsupportedFormat, "Unsupported snapshot version.");
+        if (!GameSession.SupportsSnapshotFormat(version)) throw new GameSaveException(GameSaveError.UnsupportedFormat, "Unsupported snapshot version.");
+        if (version != fileVersion) throw new GameSaveException(GameSaveError.InvalidData, "Snapshot and file versions differ.");
         if (elapsed < 0 || population < 0 || string.IsNullOrWhiteSpace(scenario) || string.IsNullOrWhiteSpace(rules))
             throw new GameSaveException(GameSaveError.InvalidData, "Invalid save metadata.");
         var resources = new List<KeyValuePair<string, ResourceAmount>>();
@@ -171,7 +188,16 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
         if (resources.Count > MaximumEntries || buildings.Count == 0 || buildings.Count > MaximumEntries ||
             buildings.Any(item => string.IsNullOrWhiteSpace(item.BuildingId) || item.Count < 0 || item.AssignedWorkers < 0))
             throw new GameSaveException(GameSaveError.InvalidData, "The save exceeds format limits.");
-        var snapshot = new GameSnapshot(version, scenario, rules, elapsed, population, ResourceBundle.FromAmounts(resources), buildings.ToImmutable());
+        int? progress = null;
+        if (version == 2)
+        {
+            using var command = Command(connection, transaction, "SELECT growth_seconds FROM population_state WHERE slot=1;");
+            var value = command.ExecuteScalar();
+            if (value is not long number || number < 0 || number > int.MaxValue)
+                throw new GameSaveException(GameSaveError.InvalidData, "Growth state is missing or invalid.");
+            progress = (int)number;
+        }
+        var snapshot = new GameSnapshot(version, scenario, rules, elapsed, population, ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress);
         transaction.Commit();
         return snapshot;
     }

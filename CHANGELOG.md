@@ -4,6 +4,17 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-10-26 — M4: case, crescita e prima filiera alimentare
+
+- Aggiunto lo scenario giocabile `civil-growth-1`, con casa piccola, pescatore e deposito che trasforma pesce in cibo, oltre ai tre produttori di base.
+- Introdotti capacità abitativa, consumo civile esatto e crescita di persone intere con accumulo dei secondi validi; fame, pausa e case piene sospendono gli arrivi senza perdere il progresso.
+- Condivise prenotazioni alimentari e ricette tra forecast e avanzamento. La previsione delle risorse include il consumo degli abitanti.
+- Aggiunti posti abitativi, stato della crescita e fabbisogno nell'interfaccia; distinte strutture abitative e produttive e saldi negativi delle risorse.
+- Creato snapshot/file SQLite v2 per la crescita parziale. Il nuovo default usa `civil-growth.sqlite3`; Foundation v1 resta disponibile con `--scenario economy-foundation` e non viene convertito o sovrascritto automaticamente.
+- "Nuova partita" mantiene lo scenario corrente. Aggiunti argomenti del simulatore e cronologie `bootstrap` e `recovery`.
+- Verificati **117 test**, build senza avvisi, sette simulazioni fino a 32 ore, otto render e ciclo nativo Windows per entrambi gli scenari, inclusa la ripresa a 59 secondi con un solo arrivo successivo.
+- Aggiornati scenario, ADR 0009, formato dei salvataggi, roadmap e handoff. Magazzini espandibili e ulteriori filiere civili restano da implementare in M4; valori e durata del gioco completo non sono ancora bilanciati.
+
 ### 2026-10-26 — Avalonia 12 e preparazione dello scenario M4
 
 - Aggiornata la soluzione definitiva ad Avalonia **12.1.4**, con lock file coerenti; la prova storica M1 resta separata.

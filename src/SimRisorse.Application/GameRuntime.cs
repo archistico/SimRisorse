@@ -27,12 +27,11 @@ public sealed class GameRuntime(GameScenario scenario)
         }
     }
 
-    internal GameView Start(GameScenario newScenario)
+    internal GameView Start(GameScenario? newScenario)
     {
-        var replacement = GameSession.Create(newScenario);
         lock (_gate)
         {
-            _session = replacement;
+            _session = GameSession.Create(newScenario ?? _session.Scenario);
             _revision++;
             return GameViewProjector.Project(_session);
         }
@@ -62,7 +61,7 @@ public sealed class GameRuntime(GameScenario scenario)
         lock (_gate)
         {
             if (_revision != revision) return Persistence.GameSaveError.Superseded;
-            if (snapshot.FormatVersion != GameSession.SnapshotFormatVersion) return Persistence.GameSaveError.UnsupportedFormat;
+            if (!GameSession.SupportsSnapshotFormat(snapshot.FormatVersion)) return Persistence.GameSaveError.UnsupportedFormat;
             if (snapshot.ScenarioId != _session.Scenario.Id || snapshot.RulesVersion != _session.Scenario.Catalog.RulesVersion)
                 return Persistence.GameSaveError.IncompatibleRules;
             try

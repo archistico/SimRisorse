@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using SimRisorse.Application;
-using SimRisorse.Application.Scenarios;
 using SimRisorse.Desktop.Presentation;
 using SimRisorse.Desktop.Views;
 using SimRisorse.Infrastructure.Persistence;
@@ -18,16 +17,11 @@ public partial class App : Avalonia.Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var args = desktop.Args ?? [];
-            var savePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SimRisorse", "game.sqlite3");
-            var pathIndex = Array.IndexOf(args, "--save-path");
-            if (pathIndex >= 0 && pathIndex + 1 < args.Length) savePath = args[pathIndex + 1];
-            else if (args.Contains("--smoke-test", StringComparer.Ordinal))
-                savePath = Path.Combine(Path.GetTempPath(), "SimRisorse.NativeSmoke", Guid.NewGuid().ToString("N"), "game.sqlite3");
-            var viewModel = new MainViewModel(new GameRuntime(EconomyFoundationScenario.Create()), new SqliteGameSaveStore(savePath));
+            var options = DesktopOptions.Parse(desktop.Args ?? []);
+            var viewModel = new MainViewModel(new GameRuntime(options.Scenario), new SqliteGameSaveStore(options.SavePath));
             var window = new MainWindow(viewModel);
             desktop.MainWindow = window;
-            if (args.Contains("--smoke-test", StringComparer.Ordinal))
+            if (options.SmokeTest)
                 window.Opened += async (_, _) => await NativeSmokeAsync(desktop, window, viewModel);
         }
         base.OnFrameworkInitializationCompleted();
@@ -38,18 +32,30 @@ public partial class App : Avalonia.Application
         try
         {
             await window.Initialization;
+            var growth = viewModel.HasPopulationGrowth;
+            if (growth) viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
             viewModel.ConstructCommand.Execute(null);
-            viewModel.AssignCommand.Execute(null);
+            if (!growth) viewModel.AssignCommand.Execute(null);
             viewModel.TogglePauseCommand.Execute(null);
-            viewModel.Advance(TimeSpan.FromSeconds(1));
+            viewModel.Advance(TimeSpan.FromSeconds(growth ? 59 : 1));
             viewModel.Pause();
             var expected = viewModel.View.ElapsedTicks;
             if (!await viewModel.SaveAsync()) throw new InvalidOperationException("Native save failed.");
             viewModel.NewGameCommand.Execute(null);
             viewModel.ConfirmNewGameCommand.Execute(null);
             if (!await viewModel.LoadAsync()) throw new InvalidOperationException("Native load failed.");
-            if (!viewModel.IsPaused || viewModel.View.ElapsedTicks != expected || viewModel.Selected.Count != 2 || viewModel.Selected.Workers != 2)
+            if (growth) viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
+            if (!viewModel.IsPaused || viewModel.View.ElapsedTicks != expected || viewModel.Selected.Count != 2 ||
+                viewModel.Selected.Workers != (growth ? 0 : 2) || (growth && viewModel.View.PopulationState.ProgressSeconds != 59))
                 throw new InvalidOperationException("Native resume differs from saved state.");
+            if (growth)
+            {
+                viewModel.TogglePauseCommand.Execute(null);
+                viewModel.Advance(TimeSpan.FromSeconds(1));
+                viewModel.Pause();
+                if (viewModel.View.Population != 9 || viewModel.View.PopulationState.ProgressSeconds != 0)
+                    throw new InvalidOperationException("Native population growth differs after resume.");
+            }
             if (OperatingSystem.IsWindows())
             {
                 viewModel.TogglePauseCommand.Execute(null);

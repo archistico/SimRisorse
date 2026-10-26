@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SimRisorse.Application;
+using SimRisorse.Application.Features.Construction.ConstructBuildings;
+using SimRisorse.Application.Features.Population.AssignWorkers;
 using SimRisorse.Application.Features.Sessions.AdvanceTime;
 using SimRisorse.Application.Features.Sessions.GetGameState;
 using SimRisorse.Application.Features.Sessions.SetPause;
@@ -9,37 +11,87 @@ using SimRisorse.Application.Scenarios;
 
 if (args is ["--help"])
 {
-    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] (maximum 168 hours; default 60 seconds)");
+    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery]");
+    Console.WriteLine("Maximum 168 hours; default 60 seconds. Civil growth defaults to bootstrap; foundation has no strategy.");
     return 0;
 }
 var seconds = 60m;
-if (args.Length != 0)
+var scenarioId = "economy-foundation";
+string? strategy = null;
+var options = new HashSet<string>(StringComparer.Ordinal);
+for (var index = 0; index < args.Length; index += 2)
 {
-    if (args.Length != 2 || args[0] is not ("--seconds" or "--hours") ||
-        !decimal.TryParse(args[1], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var value) ||
-        value < 0 || value > (args[0] == "--hours" ? 168m : 604800m))
-    {
-        Console.Error.WriteLine("Use --seconds N or --hours N with a nonnegative duration of at most 168 hours.");
-        return 2;
-    }
-    seconds = args[0] == "--hours" ? value * 3600m : value;
+    var option = args[index];
+    if (index + 1 >= args.Length || !options.Add(option)) return Usage();
+    var value = args[index + 1];
+    if (option == "--scenario") { scenarioId = value; continue; }
+    if (option == "--strategy") { strategy = value; continue; }
+    if (option is not ("--seconds" or "--hours") || (options.Contains("--hours") && options.Contains("--seconds")) ||
+        !decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var duration) ||
+        duration < 0 || duration > (option == "--hours" ? 168m : 604800m)) return Usage();
+    seconds = option == "--hours" ? duration * 3600m : duration;
 }
+if (scenarioId is not ("economy-foundation" or "civil-growth") ||
+    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery")))) return Usage();
+if (scenarioId == "civil-growth") strategy ??= "bootstrap";
+
+static int Usage()
+{
+    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery for civil-growth.");
+    return 2;
+}
+
+static void Build(GameRuntime runtime, string id, bool staff = false)
+{
+    if (!new ConstructBuildingsHandler(runtime).Handle(new(id, 1)).Succeeded ||
+        (staff && !new AssignWorkersHandler(runtime).Handle(new(id, 1)).Succeeded))
+        throw new InvalidOperationException($"The reference strategy could not build/staff {id}.");
+}
+
+static void Food(GameRuntime runtime)
+{
+    Build(runtime, "fisher", staff: true);
+    Build(runtime, "food-store", staff: true);
+}
+
 var ticks = seconds * TimeSpan.TicksPerSecond;
 if (ticks != decimal.Truncate(ticks))
 {
     Console.Error.WriteLine("Duration must be representable in 100-nanosecond ticks.");
     return 2;
 }
-var runtime = new GameRuntime(EconomyFoundationScenario.Create());
+var runtime = new GameRuntime(scenarioId == "civil-growth" ? CivilGrowthScenario.Create() : EconomyFoundationScenario.Create());
 new SetPauseHandler(runtime).Handle(new(false));
-var remainingTicks = (long)ticks;
 var advance = new AdvanceTimeHandler(runtime);
-while (remainingTicks > 0)
+void AdvanceTo(long target)
 {
-    var batch = Math.Min(remainingTicks, TimeSpan.TicksPerHour);
-    var result = advance.Handle(new(TimeSpan.FromTicks(batch)));
-    if (!result.Succeeded) { Console.Error.WriteLine(result.Error); return 1; }
-    remainingTicks -= batch;
+    var remainingTicks = target - new GetGameStateHandler(runtime).Handle().ElapsedTicks;
+    while (remainingTicks > 0)
+    {
+        var batch = Math.Min(remainingTicks, TimeSpan.TicksPerHour);
+        var result = advance.Handle(new(TimeSpan.FromTicks(batch)));
+        if (!result.Succeeded) throw new InvalidOperationException(result.Error.ToString());
+        remainingTicks -= batch;
+    }
+}
+try
+{
+    if (strategy is not null)
+    {
+        if (strategy == "bootstrap") Food(runtime); else Build(runtime, "small-house");
+        var eventTicks = (strategy == "bootstrap" ? 61L : 600L) * TimeSpan.TicksPerSecond;
+        if (ticks >= eventTicks)
+        {
+            AdvanceTo(eventTicks);
+            if (strategy == "bootstrap") Build(runtime, "small-house"); else Food(runtime);
+        }
+    }
+    AdvanceTo((long)ticks);
+}
+catch (InvalidOperationException exception)
+{
+    Console.Error.WriteLine(exception.Message);
+    return 1;
 }
 new SetPauseHandler(runtime).Handle(new(true));
 var view = new GetGameStateHandler(runtime).Handle();
