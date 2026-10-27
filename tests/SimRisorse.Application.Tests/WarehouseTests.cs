@@ -55,6 +55,9 @@ public sealed class WarehouseTests
     [InlineData("civil-growth-1")]
     [InlineData("civil-growth-2")]
     [InlineData("civil-growth-3")]
+    [InlineData("civil-growth-4")]
+    [InlineData("civil-growth-5")]
+    [InlineData("civil-growth-6")]
     public async Task PreviousCivilCheckpointIsConvertedOnLoadKeepingProgress(string rules)
     {
         var scenario = CivilGrowthScenario.Create();

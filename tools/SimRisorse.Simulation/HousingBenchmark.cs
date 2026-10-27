@@ -32,14 +32,14 @@ internal static class HousingBenchmark
 
     public static Comparison Run(bool accelerated = false)
     {
-        var scenario = accelerated ? CivilGrowthScenario.Create() : CivilGrowthScenario.CreateLegacyForBenchmarks();
+        var scenario = accelerated ? CivilGrowthScenario.CreateAcceleratedForBenchmarks() : CivilGrowthScenario.CreateLegacyForBenchmarks();
         return new(scenario.Id, scenario.Catalog.RulesVersion, HorizonSeconds, [48, 100, 136],
             [RunStrategy(Strategy.SmallOnly, accelerated), RunStrategy(Strategy.LargeStandard, accelerated), RunStrategy(Strategy.LargeEarly, accelerated)]);
     }
 
     private static StrategyResult RunStrategy(Strategy strategy, bool accelerated)
     {
-        var scenario = accelerated ? CivilGrowthScenario.Create() : CivilGrowthScenario.CreateLegacyForBenchmarks();
+        var scenario = accelerated ? CivilGrowthScenario.CreateAcceleratedForBenchmarks() : CivilGrowthScenario.CreateLegacyForBenchmarks();
         var game = GameSession.Create(scenario);
         var planksSpent = 0m;
         var stoneSpent = 0m;

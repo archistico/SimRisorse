@@ -2,6 +2,10 @@
 
 Data: 2026-10-27. **D0.1 approvata:** [prima campagna con 22 tipi](FIRST_CAMPAIGN_PROPOSAL.md), di cui 12 presenti e 10 futuri; gli altri 21 riferimenti restano fuori dalla prima campagna. **Altre regole D0 ancora da scegliere.** Il [gate Windows M4 è verificato](../validation/M4_MEASURED_RESULTS.md), 177/177 test, lettore dei benchmark eseguito e nove render ispezionati. Le regole eseguibili restano `civil-growth-5`. La [scheda decisionale D0](D0_DECISION_BOARD.md) distingue perimetro scelto, proposte e condizioni prima del codice M5; gli studi industriali, militari e navali non fissano prezzi o regole approvati.
 
+**Aggiornamento successivo:** M4 chiusa, prototipo approvato e demolizione rinviata; D0.2, ruolo D0.3, S1 e configurazione A della sola M5.1a scelti. **M5.1a verificata**, `civil-growth-6`, 15 tipi presenti e 7 futuri del catalogo da 22, 191/191 test. [Report corrente](../validation/M5_1A_IRON.md). Questo esito aggiorna gli stati preparatori conservati nel dossier; non approva le regole militari/navali o i parametri Oro.
+
+**Ultimo aggiornamento M5.1b:** l'utente ha poi scelto A per l'Oro, con priorità del Ferro sul carbone scarso. Integrata e [verificata M5.1b](../validation/M5_1B_GOLD.md), corrente `civil-growth-7`, **17 tipi presenti / 5 futuri**, 204/204 test. I contratti di Forgia/Zecca e militari/navali restano aperti; i precedenti stati nel dossier sono storici.
+
 ## 1. Perché esiste questo gate
 
 La visione confermata è costruire i tipi di edificio previsti dallo scenario nel minor **tempo di gioco**, facendo crescere economia, popolazione e poi componente militare/navale. La GUI finale sarà **pixel art retro 8-bit essenziale**, per **elenchi e schede**, senza collocamento sulla mappa. Le durate **8 ore** per una partita molto efficiente e **32+ ore** per una meno efficiente sono obiettivi, non risultati misurati.

@@ -2,6 +2,26 @@
 
 Ultimo aggiornamento: 2026-10-27. Questo documento descrive il punto operativo da cui continuare; visione e regole complete sono nel [game design](GAME_DESIGN.md).
 
+## Punto di ripresa corrente — M4 chiusa, M5.1b verificata
+
+**Decisioni ricevute:** prototipo monospace approvato, demolizione rinviata; D0.2 possesso dei 22 tipi con Castello conclusivo; D0.3 una conquista obbligatoria sblocca il Castello; continuità S1 con conversione/backup; configurazioni **A per ferro/carbone e A per Oro approvate con risposte distinte**. Ferro prioritario quando il carbone scarseggia. Non richiedere nuovamente queste scelte.
+
+**Implementato e verificato:** `civil-growth-7`, **17 edifici / 14 risorse**. Oro: miniera 180/120, output 1 minerale/s; fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s, un addetto ciascuna. Ferro invariato. Capacità nuove 1.000 +500 per Magazzino, scorte iniziali zero. Conversione da `-1…-6` con SQLite v2 e backup; ferro esistente, personale, Magazzini e frazioni preservati. Cataloghi v4/v5/v6 disponibili; UI con quattro ulteriori icone.
+
+**Ultimo intervento UI richiesto:** dettaglio con descrizione → costi in elenco → produzione/effetti ed eventuali consumi; costi aggiornati per +1/+5/+10. Sidebar da 240 px con menu Edifici/Risorse; card abitanti/posti/liberi con icona pixel originale, comune alle due pagine. Costi e produzione condividono icone risorsa da 14 px e testo normale da 12 px. Colonne numeriche Risorse compattate per conservare la leggibilità dei nomi nel layout minimo. Conservati monospace e comandi/diagnosi fissi. Vedere [direzione grafica](PIXEL_ART_UI.md).
+
+**Ultimo ritocco del tema:** tutti i pulsanti abilitati in hover usano l'ocra `#E6D5AC` della struttura selezionata e testo scuro, tramite la risorsa condivisa `SelectionBackground`. Hover applicato anche al presenter Fluent; disabilitati grigi e geometria stabile. Test esistenti estesi a Costruisci e Salva.
+
+**Ultimo gate effettivo:** `.\validate.cmd` codice 0, **206/206 test** (67 Core, 61 Application, 30 Infrastructure, 48 Desktop), zero avvisi/errori, 16 cronologie e prova accelerata, quattro benchmark, 17 render standard più due render del nuovo dettaglio, smoke nativi di entrambi gli scenari. Run `899f6ff3e8ff41288330c3d26b4c4ea7`; verificati anche hover ocra, testo scuro e disabilitazione con puntatore fermo. Primo oro da nuova partita a **1.502 s**, con 401 ferro e 402 carbone; Oro/Ferro 1.000 e popolazione 48 a otto ore. Contesa carbone e ripresa dopo seconda miniera verificate.
+
+**Prossimo incremento:** M5.1c scala e contesa del carbone, poi parametri/contratti Spade e Monete prima di M5.2. Restano cinque tipi futuri del catalogo da 22 e l'implementazione di militari, navi, conquista e vittoria. [Report corrente Oro](validation/M5_1B_GOLD.md), [report ferro precedente](validation/M5_1A_IRON.md) e [scheda D0](design/D0_DECISION_BOARD.md). Le sezioni seguenti conservano gli stati precedenti.
+
+## Ultimo intervento — tipografia retro monospace
+
+Su richiesta dell'utente, applicato **Consolas** a tutta l'interfaccia, con fallback DejaVu Sans Mono, Liberation Mono e Courier New. Unica risorsa `ContentControlThemeFontFamily` in `App.axaml`, riusata dalla finestra e dal tema Fluent. Nessun nuovo pacchetto o font distribuito; regole e salvataggi invariati.
+
+**Verificato:** `.\validate.cmd` completato con codice 0, **177/177 test**, zero avvisi/errori, simulazioni e prove native di entrambi gli scenari superate. Run `f87ccb76a0c245bd95c4db8589d0a194`; render civili ispezionati a 1040×740 e 1240×850, compresi Risorse e stato avanzato del Pane in formato compatto. Le decisioni D0 già registrate e quelle pendenti restano distinte da questa modifica grafica.
+
 ## Ultimo incremento — esperimento industriale A/B eseguito
 
 Creato ed eseguito [IndustryProbe](../experiments/industry-probe/README.md), eseguibile opzionale fuori dalla soluzione di produzione: quattro combinazioni A/B × ferro/ferro+oro sotto due politiche di acquisto. Ogni confronto riconcilia 3.601 secondi e viene ripetuto con passi da 1 s e 250+750 ms, con rapporti e snapshot finali identici. Saturazione e ripresa dopo un Magazzino pagato verificate. Build della prova senza avvisi/errori; nessun pacchetto esterno nuovo.

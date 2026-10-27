@@ -28,10 +28,21 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
         "mill" => "Macina il grano in farina per il forno.",
         "bakery" => "Trasforma farina e acqua in Pane per gli abitanti delle case grandi. Il Cibo di base resta necessario per tutti.",
         "warehouse" => "Amplia lo spazio di ogni risorsa. Quando una scorta raggiunge la capacità la sua produzione si ferma: un magazzino la fa ripartire.",
+        "iron-mine" => "Estrae minerale di ferro per la fonderia. Richiede una Casa grande costruita e un lavoratore assegnato.",
+        "coal-mine" => "Estrae il carbone usato dalla fonderia. Richiede una Casa grande costruita e un lavoratore assegnato.",
+        "iron-smelter" => "Fonde il minerale di ferro usando carbone. Le due miniere devono essere costruite; i materiali estratti sono utilizzabili dal secondo successivo.",
+        "gold-mine" => "Estrae minerale d'oro. Richiede una Casa grande costruita e un lavoratore assegnato.",
+        "gold-smelter" => "Fonde il minerale d'oro usando carbone. Condivide il carbone con il ferro, che ha priorità quando le scorte non bastano.",
         _ => "Assegna persone e controlla materiali e spazio per far lavorare la struttura."
     };
     public bool IsProducer => !_view.BlockReason.HasFlag(ProductionBlockReason.NotProducer);
     public bool IsStorage => !_view.StoragePerBuilding.IsEmpty;
+    public string OutputHeading => IsProducer ? "PRODUCE PER ADDETTO / S" : "EFFETTO";
+    public string Output => IsProducer ? Format(_view.OutputPerWorker) : Recipe;
+    public IEnumerable<ResourceDetailLine> OutputLines => _view.OutputPerWorker.Select(output =>
+        new ResourceDetailLine(output.ResourceId, Format([output])));
+    public bool HasInputs => !_view.InputPerWorker.IsEmpty;
+    public string Consumption => "Consuma: " + Format(_view.InputPerWorker) + " /s";
     public string Recipe => _view.HousingPerBuilding > 0 ? $"+{_view.HousingPerBuilding} posti abitativi per edificio" :
         IsStorage ? $"{StorageEffect(1)} per edificio" :
         (_view.InputPerWorker.IsEmpty ? string.Empty : Format(_view.InputPerWorker) + " → ") + Format(_view.OutputPerWorker);

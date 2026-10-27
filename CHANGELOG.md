@@ -4,6 +4,37 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-10-27 — Hover ocra dei pulsanti
+
+- Hover dei pulsanti primari e secondari nello stesso ocra della struttura selezionata (`#E6D5AC`), con testo scuro. Colore condiviso nel tema e applicato anche al contenuto del pulsante Fluent; disabilitazione grigia e geometria stabile preservate.
+- `validate.cmd` completo: **206/206 test**, zero avvisi/errori, smoke nativi superati. Verificati hover di Costruisci e Salva, contrasto del testo e passaggio a disabilitato con puntatore fermo; run `899f6ff3e8ff41288330c3d26b4c4ea7`.
+
+### 2026-10-27 — Dettaglio strutture e navigazione compatta
+
+- Ulteriore rifinitura richiesta: icona pixel degli abitanti, sidebar ampliata ancora a 240 pixel, produzione con icone delle risorse e medesimo testo normale da 12 px dei costi.
+- Costi di costruzione in elenco subito dopo la descrizione, seguiti da produzione per addetto/secondo ed eventuali consumi; i costi si aggiornano con l'ordine +1/+5/+10.
+- Colonna sinistra da 185 a 215 pixel con menu Edifici/Risorse; abitanti, posti e lavoratori liberi in una card accanto alle scorte, visibile in entrambe le pagine. Testata più bassa per lasciare spazio agli elenchi.
+- Aggiunte verifiche di ordine dei contenuti, costi multipli, click sui menu, aggiornamento della popolazione e barre contenute nelle card a 1040×740 e 1240×850. Regole `civil-growth-7` e salvataggi invariati.
+- `validate.cmd` completo superato: **206/206 test**, zero avvisi/errori, simulazioni, benchmark e smoke nativi per entrambi gli scenari. Render controllati in formato compatto e standard; ultima run dopo le rifiniture `a6f36b25cada4bdfaf4d880a757cc788`.
+
+### 2026-10-27 — M5.1b: Oro e carbone condiviso
+
+- L'utente ha scelto la configurazione A per Oro, separatamente dal Ferro e dalla continuità S1 già acquisiti. Aggiunti Miniera d'oro, Fonderia d'oro, due risorse e quattro icone; **`civil-growth-7`, 17 edifici / 14 risorse**. Ferro prioritario con carbone scarso; seconda miniera capace di ripristinare la produzione dell'Oro.
+- Conversione v6→v7 con ferro, lavoratori, Magazzini e frazioni conservati, risorse/edifici nuovi a zero e backup dell'originale alla prima scrittura. Formato SQLite v2 invariato; casi di ripresa e scorte incompatibili verificati.
+- Strategia `gold` da nuova partita: primo Oro a **1.502 s**, Ferro 401 e Carbone 402; a otto ore entrambi i metalli a 1.000 e popolazione 48. `validate.cmd` completo: **204/204 test**, zero avvisi/errori, 16 cronologie più crescita, quattro benchmark, 17 render e smoke nativi di entrambi gli scenari. [Report](docs/validation/M5_1B_GOLD.md). Forgia e Zecca restano future.
+
+### 2026-10-27 — M4 chiusa e prima filiera giocabile ferro/carbone
+
+- Registrate le risposte dell'utente: base grafica monospace accettata, demolizione rinviata; vittoria per possesso dei 22 tipi con Castello conclusivo, sbloccato da una conquista obbligatoria. Scelta S1 e configurazione A per la sola M5.1a.
+- Integrati Miniera ferro, Miniera carbone e Fonderia ferro, con tre risorse, capacità e sei icone originali. Regole **`civil-growth-6`**, 15 edifici / 12 risorse; conversione concatenata dai checkpoint precedenti, preservando frazioni, scorte e backup originale nel formato SQLite v2.
+- Nuova strategia simulata `industry`, primo ferro a 1.102 s da nuova partita e deposito pieno/48 abitanti a otto ore. Cataloghi benchmark v4/v5 e prova A/B storica preservati; aggiunti test di produzione, capienza, conversione, ripresa SQLite e flussi/render Desktop.
+- **Verificato:** `validate.cmd` completo, **191/191 test**, zero avvisi/errori, 14 cronologie e prova accelerata, quattro benchmark, 13 render e smoke nativi per entrambi gli scenari. [Misure M5.1a](docs/validation/M5_1A_IRON.md) e [ADR 0014](docs/adr/0014-first-iron-industry-and-civil-save-upgrade.md). Oro e contenuti successivi non inclusi.
+
+### 2026-10-27 — Tipografia monospace per l'interfaccia retro
+
+- Applicata la richiesta dell'utente di usare un carattere monospace o pixel: **Consolas** condiviso da titoli, cifre, tabelle e controlli, con fallback DejaVu Sans Mono, Liberation Mono e Courier New. La famiglia è definita una volta nel tema Avalonia; rimosso il riferimento locale a Segoe UI dalla finestra.
+- Nessun nuovo pacchetto o asset esterno. `validate.cmd` completo superato: build senza avvisi/errori, 177/177 test (incluse verifiche di prerequisiti visibili e geometria hover), simulazioni e smoke nativi di entrambi gli scenari. Ispezionati i render civili a 1040×740 e 1240×850, inclusi tabella Risorse e stato avanzato del Pane. Run `f87ccb76a0c245bd95c4db8589d0a194`.
+
 ### 2026-10-27 — Prova industriale A/B separata dal gioco
 
 - Aggiunto [IndustryProbe](experiments/industry-probe/README.md), eseguibile senza nuove dipendenze esterne, fuori dalla soluzione di produzione. Usa Core/Application e una colonia sintetica per misurare ipotesi A/B su ferro e oro, con acquisti in blocco o progressivi.

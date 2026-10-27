@@ -1,6 +1,6 @@
 # Prova industriale — ipotesi A/B
 
-**Stato: esperimento eseguito, regole industriali non adottate nel gioco.** Il catalogo futuro da 22 tipi è stato scelto dall'utente; prezzi e ricette di questa prova restano le ipotesi del [dossier M5.1](../../docs/design/M5_1_INDUSTRY_PREFEASIBILITY.md).
+**Stato: esperimento storico eseguito e riproducibile sulla baseline civile v5.** Le configurazioni A di Ferro e Oro sono state successivamente scelte dall'utente e integrate in M5.1a/b; B rimane un'ipotesi. Questo eseguibile conserva il confronto originario e la propria colonia sintetica, distinto dalla cronologia giocabile corrente v7. [Dossier M5.1](../../docs/design/M5_1_INDUSTRY_PREFEASIBILITY.md) e [verifica del gioco con Oro](../../docs/validation/M5_1B_GOLD.md).
 
 Questo eseguibile usa Core e Application esistenti per confrontare gli investimenti industriali. Il suo scenario `industry-probe`, con versioni `industry-hypothesis-a-1` / `industry-hypothesis-b-1`, vive soltanto in questa cartella. Non è selezionabile nel desktop e non carica o salva partite. Non aggiunge pacchetti esterni e non appartiene alla soluzione di produzione.
 

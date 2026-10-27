@@ -1,6 +1,6 @@
 # M5.2 — Forgia, Zecca e utilizzo delle risorse industriali
 
-Data: 2026-10-27, allineamento M4.14/v28. **Stato: studio di prefattibilità, non approvato e non implementato.** Le regole eseguibili correnti sono **`civil-growth-5`**, introdotte in v24/M4.10 e riferite superate dall'utente (174 xUnit attesi). Il prototipo 8-bit v25 e gli incrementi v26–v28 attendono il gate Windows (177 xUnit attesi). Il successivo impiego delle Spade è esaminato nello [studio M5.3](M5_3_ARMY_PREFEASIBILITY.md). Prima di sviluppare M5.2 servono le [decisioni D0](D0_DECISION_BOARD.md), la chiusura M4, M5.1 validata e la scelta S1/S2 dei salvataggi. Nessuna cifra di questo dossier modifica `civil-growth-5`.
+Data: 2026-10-27. **Forgia e Zecca: proposte non approvate e non implementate.** La base corrente è **`civil-growth-7`**, 17 edifici / 14 risorse, [M5.1b verificata con 204/204 test](../validation/M5_1B_GOLD.md). M4 è chiusa, S1 e parametri A dei cinque edifici di Ferro/Oro sono già scelti. Prima di M5.2 servono confronto di scala/carbone M5.1c, [contratti Spade/Monete D0.8](D0_DECISION_BOARD.md) e parametri dei due trasformatori. L'impiego militare delle Spade resta nello [studio M5.3](M5_3_ARMY_PREFEASIBILITY.md). I prezzi Forgia/Zecca seguenti non sono adottati.
 
 ## 1. Che cosa sappiamo davvero dai riferimenti
 
@@ -29,7 +29,7 @@ L'opzione **B di confronto** conserva lavoratori e ricette A ma applica **1,5× 
 
 ### Quadratura degli investimenti e della domanda di carbone
 
-Le somme seguenti usano **M5.1 ipotesi A**, quindi non sono prezzi effettivi di SimRisorse. Suppongono **una sola miniera di ciascun metallo** e **una sola Forgia e Zecca**:
+Le somme seguenti usano **M5.1 A, ora adottata per Ferro e Oro**, insieme ai prezzi ancora proposti di Forgia/Zecca. Suppongono una sola miniera di ciascun metallo e una sola Forgia e Zecca; gli investimenti che includono questi due edifici restano ipotetici:
 
 | Configurazione candidata | Legno / Pietra cumulativi | Lavoratori, tutte attive | Carbone prodotto/s | Carbone richiesto/s | Prodotti nominali a regime |
 | --- | ---: | ---: | ---: | ---: | --- |

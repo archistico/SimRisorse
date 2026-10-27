@@ -1,6 +1,6 @@
 # Direzione grafica — pixel art retro 8-bit essenziale
 
-Decisione confermata il 2026-10-27 dall'utente. **Stato: primo prototipo implementato in v25/M4.11, non ancora validato su Windows.** La finestra Avalonia attuale rimane una base funzionale: pittogrammi e pannelli retro sono sperimentali; non cambiano motore, ricette, bilanciamento o salvataggi.
+Decisione confermata il 2026-10-27 dall'utente. **Stato: prototipo verificato su Windows; tipografia monospace applicata su richiesta dell'utente.** La finestra Avalonia attuale rimane una base funzionale: pittogrammi e pannelli retro sono sperimentali; non cambiano motore, ricette, bilanciamento o salvataggi.
 
 ## Identità e priorità
 
@@ -9,6 +9,7 @@ Decisione confermata il 2026-10-27 dall'utente. **Stato: primo prototipo impleme
 - Edifici selezionati da **elenco o schede per categoria**: nessun posizionamento su una mappa. Un futuro panorama dell'isola, se approvato separatamente, sarà decorativo e non vincolerà le regole del gioco.
 - Evitare la copia di icone o sprite dagli screenshot di riferimento: servono risorse grafiche originali o con licenza compatibile e attribuzione verificata.
 - **Stabilità geometrica degli stati:** hover, pressione, focus e disabilitazione non devono cambiare dimensioni, padding o spessore dei bordi di pulsanti e schede. Cambiano soltanto colore, contrasto e altri elementi che non spostano i vicini. Il difetto osservato in v22 sul pulsante Costruisci viene coperto da un test geometrico v23.
+- **Hover dei pulsanti:** ocra `#E6D5AC`, condiviso con la struttura selezionata tramite `SelectionBackground`, e testo scuro `#263349`. Vale per pulsanti primari e secondari; il grigio dei disabilitati prevale anche quando il puntatore resta sopra il controllo.
 
 ## Vocabolario visivo candidato
 
@@ -19,11 +20,27 @@ Decisione confermata il 2026-10-27 dall'utente. **Stato: primo prototipo impleme
 | Indicatori di stato | 8 × 8 o 16 × 16 pixel | Attivo, senza lavoratori, mancano input, deposito pieno |
 | Bordi dei pannelli | Moduli a multipli di 8 pixel | Griglie, pulsanti e schede con spaziatura regolare |
 
-Le dimensioni sono **ipotesi da verificare con un prototipo**, non vincoli delle regole. Preferire PNG con trasparenza e scala a multipli interi; per gli sprite pixelati impostare l'interpolazione bitmap di Avalonia a `None` e controllare monitor con DPI differenti. Titoli e numeri devono essere leggibili: un font bitmap è candidato per intestazioni grandi, mentre testo lungo e tabelle possono usare un carattere da interfaccia ordinario.
+Le dimensioni sono **ipotesi da verificare con un prototipo**, non vincoli delle regole. Preferire PNG con trasparenza e scala a multipli interi; per gli sprite pixelati impostare l'interpolazione bitmap di Avalonia a `None` e controllare monitor con DPI differenti.
+
+### Tipografia monospace
+
+L'utente ha richiesto un font monospace o pixel per rafforzare l'aspetto retrogaming. L'interfaccia usa ora **Consolas**, con alternative **DejaVu Sans Mono, Liberation Mono, Courier New** in ordine di fallback. La risorsa Avalonia `ContentControlThemeFontFamily` in `App.axaml` è condivisa dalla finestra e dai controlli Fluent: titoli, cifre, tabelle, schede e pulsanti mantengono la stessa famiglia. Sono font di sistema; non vengono aggiunti pacchetti o file di font al progetto.
+
+Verificati su Windows i test geometrici esistenti e i render civili a **1040×740** e **1240×850**, inclusi Risorse e lo stato avanzato del Pane in formato compatto. La scelta mantiene accenti italiani, simboli dei saldi e testi lunghi leggibili nei render osservati. I fallback su altre piattaforme e i DPI fisici restano da verificare.
 
 Palette candidata, da validare con sprite e contrasti reali: sfondo blu notte `#1B1B2F`, pannelli ardesia `#303B50`, testo crema `#F2D49B`, funzionamento verde `#6AA85C`, avvisi corallo `#D66A57`, selezione azzurro `#66BED0`. Il colore non basta a spiegare un errore: usare sempre un'etichetta o una descrizione.
 
 ## Struttura delle schermate
+
+### Disposizione compatta richiesta dall'utente (2026-10-27)
+
+- Colonna sinistra ampliata da 185 a **240 pixel** (prima revisione: 215), con navigazione **Edifici / Risorse** sopra il pannello Crescita civile. Il menu non occupa più una riga sopra le scorte.
+- Fascia comune alle due pagine con quattro card: **abitanti/posti e lavoratori liberi**, poi le tre scorte principali. Testata con orologio e pausa sulla stessa riga; barre di capienza adattate alla larghezza delle card.
+- Dettaglio in ordine di lettura: nome, descrizione, **costi in elenco con icone**, produzione per addetto e secondo (oppure effetto dell'edificio), eventuali consumi. I costi seguono la quantità selezionata: +1/+5/+10; la ricetta resta per singolo addetto.
+- Icona pixel originale degli abitanti nella relativa card. Costi e produzione condividono lo stesso modello visivo: icona risorsa da 14 px e testo monospace normale da 12 px, con una riga per risorsa.
+- Diagnosi, quantità, costruzione e assegnazione restano nel fondo fisso del dettaglio. Verifica delle due dimensioni 1040×740 e 1240×850, con click sul menu laterale e aggiornamento delle card dopo costruzione/assegnazione.
+
+Le seguenti voci conservano i criteri generali del prototipo e i riferimenti alle precedenti fasi.
 
 1. **Sempre visibile:** abitanti/posti, lavoratori liberi, tempo di gioco, pausa e salvataggio; scorte principali con variazione netta `/s`.
 2. **Edifici:** categorie, icona, quantità costruite, lavoratori impiegati, output del prossimo secondo e motivo di inattività. Acquisto e assegnazioni multipli accessibili senza aprire altre finestre.

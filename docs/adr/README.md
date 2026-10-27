@@ -28,6 +28,7 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 | [0011](0011-advanced-housing-and-bread-rations.md) | Pane separato e razione degli abitanti avanzati | Accettato | `civil-growth-4` implementato, gate Windows e benchmark pendenti |
 | [0012](0012-retro-8bit-desktop-visual-language.md) | Identità visiva retro 8-bit essenziale | Accettato | Progettazione soltanto; futura GUI pixel art non ancora implementata |
 | [0013](0013-accelerated-housing-and-fractional-growth.md) | Case che accelerano gli arrivi, frazioni e compatibilità SQLite v2 | Accettato | `civil-growth-5` implementato; gate Windows v24 da eseguire |
+| [0014](0014-first-iron-industry-and-civil-save-upgrade.md) | Prima industria del ferro, regole v6 e continuità S1 | Accettato | M5.1a verificata: 191 test, conversione v5→v6 e backup, benchmark v4/v5 preservati |
 
 ## Come aggiungere una decisione
 

@@ -2,6 +2,8 @@
 
 Data: 2026-10-27. **Stato: proposta quantitativa e di coerenza; nessuna meccanica approvata o implementata.** Non modificare `civil-growth-4` o i salvataggi sulla base di questa analisi.
 
+**Decisione successiva dell'utente:** demolizione **rinviata a un incremento successivo**, consentendo la chiusura M4. Le regole correnti sono `civil-growth-6` con ferro/carbone; rimborso del 25% e politiche delle capacità qui studiate restano proposte non adottate.
+
 ## Perché serve una decisione prima del codice
 
 Le strutture non sono soltanto investimenti: possono ospitare popolazione, impiegare lavoratori, aumentare la capacità delle risorse o sbloccare altre costruzioni. Una demolizione senza condizioni potrebbe lasciare 20 abitanti in 16 posti, far sparire scorte oltre il limite o trattenere lavoratori in edifici inesistenti. Q-08 del game design rimane aperta.

@@ -1,6 +1,6 @@
 # M5.1 — Studio di prefattibilità delle prime filiere industriali
 
-Data: 2026-10-27. **Stato: ipotesi industriali misurate in un esperimento separato, parametri non adottati nel gioco.** Il gate M4 è verificato su Windows (**177/177 test**); D0.1 sceglie il catalogo futuro da 22 tipi, mentre le altre decisioni fondamentali restano aperte. La [prova industriale A/B](../../experiments/industry-probe/README.md) usa il motore esistente in uno scenario sintetico distinto dal desktop: otto confronti, due modalità di avanzamento e risorse riconciliate. Lo studio discende dal [gate D0](PRE_M5_DECISION_GATE.md) e dalla [scheda decisionale](D0_DECISION_BOARD.md). L'implementazione nel gioco richiede ancora chiusura M4, regole operative e politica dei salvataggi scelte.
+Data: 2026-10-27. **Configurazioni A di M5.1a Ferro e M5.1b Oro scelte separatamente e verificate**, corrente `civil-growth-7`, 17 edifici / 14 risorse e **204/204 test**. M4 chiusa e continuità S1 acquisita. [Report Oro](../validation/M5_1B_GOLD.md), [report Ferro](../validation/M5_1A_IRON.md). I cinque edifici della tabella A sono ora adottati; **B e filiere a valle restano proposte**. La [prova A/B](../../experiments/industry-probe/README.md) conserva la baseline civile v5 e il suo output storico.
 
 ## Obiettivo concreto
 
@@ -24,7 +24,7 @@ Il disegno indica le *relazioni*, **non** quantità per secondo, prezzi, lavorat
 
 **Perché separare M5.1a da M5.1b:** se il ferro non produce, si cerca il problema in tre edifici e tre risorse; la competizione per il carbone entra solo dopo aver verificato le regole di base. È un ordine di lavoro proposto, non una nuova meccanica.
 
-Se queste opzioni venissero approvate senza altre strutture, il catalogo crescerebbe da **12 edifici / 9 risorse** (M4) a **15 / 12** (M5.1a), poi a **17 / 14** (M5.1b). Questi totali sono proiezioni di contenuto, non funzionalità già esistenti.
+Progressione ora implementata: **12 edifici / 9 risorse** in M4, **15 / 12** in M5.1a e **17 / 14** in M5.1b. Forgia e Zecca sono fasi successive con parametri ancora da scegliere.
 
 ## Ipotesi numerica A — Piccola filiera misurabile
 
@@ -38,7 +38,7 @@ L'unità è **una risorsa per secondo per lavoratore** salvo indicazione diversa
 | Miniera d'oro | **180 / 120** | → 1 minerale oro | 1 | Casa grande |
 | Fonderia d'oro | **220 / 170** | 1 minerale oro + 1 carbone → 1 oro | 1 | Miniera oro + miniera carbone |
 
-**Costi e produttività sono ipotesi A, non regole confermate.** Il prerequisito Casa grande è un'ipotesi di progressione: si vuole evitare che le miniere precedano qualunque alimentazione avanzata, ma va valutato se il vincolo risulta naturale al giocatore. Non si introducono dipendenze da monete per produrre la prima moneta, né da ferro per estrarre il primo ferro.
+**I costi, le ricette e i prerequisiti dei cinque edifici A sono scelti e implementati.** Le scelte di Ferro e Oro sono distinte; B non è stata adottata. Il ferro ha priorità con carbone scarso.
 
 ### Capacità teoriche, costi e personale
 
@@ -71,14 +71,14 @@ Con capacità base 1.000 e output massimo 2/s da una miniera, il deposito relati
 
 ## Versione delle regole e salvataggi: decisione prima del codice
 
-`civil-growth-5` e lo snapshot SQLite **v2** sono la base attuale. Le nuove risorse avrebbero inizialmente zero unità, i nuovi edifici quantità e personale zero, ma non basta cambiare la tabella degli edifici: occorre una **conversione esplicita e verificata** e una copia dell'originale prima della prima sovrascrittura. Esistono due percorsi:
+**S1 scelta dall'utente e verificata in M5.1a:** `civil-growth-6`, snapshot SQLite **v2**, nuove risorse e righe industriali a zero. Conversione esplicita da `-5`, concatenata da versioni precedenti, con backup prima della prima scrittura. La tabella conserva le due alternative originarie:
 
 | Opzione | Pro | Contro | Stato |
 | --- | --- | --- | --- |
 | **S1. Evolvere lo scenario `civil-growth`** con una nuova versione di regole e nuovi contenuti | Conserva l'ID di scenario e il percorso di ripresa; conversione M4 → M5 relativamente lineare | Nome “civile” meno rappresentativo del gioco completo; conversione da valutare per tutti i vecchi checkpoint | **Preferenza tecnica da discutere** |
 | **S2. Nuovo scenario campagna** con importazione esplicita di partite civili | Nome e identità finali più appropriati; il civile può restare dimostrativo | Nuovo slot e trasformazione tra scenari, UI e salvataggi più complessi | Alternativa da valutare |
 
-Nessuna delle due è approvata. Se si sceglie S1, la prossima versione candidata **successiva all'attuale `civil-growth-5`** potrebbe essere `civil-growth-6`, con snapshot ancora v2 **solo se lo schema resta compatibile**. Il numero `-6` è solo una proposta futura. Se si sceglie S2, serve uno strumento esplicito di importazione e l'identità delle regole non può essere scambiata silenziosamente. Vedere [formato dei salvataggi](../SAVE_FORMAT.md) e [ADR attuali](../adr/README.md).
+S2 non è stata scelta. La compatibilità effettiva S1 è documentata nel [formato dei salvataggi](../SAVE_FORMAT.md) e nell'[ADR 0014](../adr/0014-first-iron-industry-and-civil-save-upgrade.md); nuovi stati militari/navali richiederanno verifiche proprie.
 
 ## Casi di prova e gate per ogni micro-incremento
 
@@ -121,6 +121,6 @@ La politica di accumulare tutto il budget, invece, porta il primo ferro/oro B a 
 ## Handoff e ordine operativo
 
 1. **Evidenza acquisita:** benchmark M4 letti e gate tecnico superato; prova industriale A/B separata eseguita, senza nuove regole nel desktop.
-2. **Chiusura M4:** giudizio utente sul prototipo e classificazione della demolizione. Carne fuori dalla prima campagna per D0.1.
-3. **Decisioni D0 residue:** catalogo già scelto; scegliere vittoria, isole, contratti militari/navali, poi A/B e S1/S2 per le prime filiere integrate.
-4. **Solo dopo l'approvazione:** implementare M5.1a con nuova versione delle regole, test Core/Application/Infrastructure/Desktop, benchmark e migrazione; quindi M5.1b e M5.1c.
+2. **M4 chiusa:** prototipo approvato, demolizione rinviata, Carne fuori dalla prima campagna.
+3. **M5.1a verificata:** configurazione A e S1 scelte; primo ferro da nuova partita a 1.102 s, backup e ripresa esatti.
+4. **M5.1b verificata:** parametri A dell'Oro adottati nelle regole v7, primo Oro da nuova partita a 1.502 s. Prossimo incremento M5.1c per scala/contesa; contratti Spade/Monete e militari/navali prima delle rispettive fasi.

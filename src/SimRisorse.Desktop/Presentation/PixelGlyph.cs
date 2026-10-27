@@ -6,8 +6,8 @@ using Avalonia.Media.Immutable;
 namespace SimRisorse.Desktop.Presentation;
 
 /// <summary>
-/// Original 8×8 pictograms rendered as sharp rectangles. The keys are catalog IDs,
-/// but all graphics live exclusively in Desktop (never in the economic catalog).
+/// Original 8×8 pictograms rendered as sharp rectangles. Keys identify catalog items
+/// or interface indicators; all graphics live exclusively in Desktop.
 /// </summary>
 public sealed class PixelGlyph : Control
 {
@@ -30,9 +30,15 @@ public sealed class PixelGlyph : Control
     // Each picture is exactly eight rows of eight cells. '.' is transparent.
     private static readonly IReadOnlyDictionary<string, string[]> Sprites = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
+        ["population"] = ["..####..", "..#WW#..", "..#WW#..", "...##...", ".#BBBB#.", ".#BBBB#.", "..#..#..", "..#..#.."],
         ["logs"] = ["........", ".######.", ".#TTTT#.", ".#TWWT#.", ".######.", "..#TT#..", "..####..", "........"],
         ["planks"] = ["........", "........", ".######.", ".#TTTT#.", ".######.", ".#TTTT#.", ".######.", "........"],
         ["stone"] = ["........", "...###..", "..#CCC#.", ".#CCWCC#", ".#CCCCC#", "..#CCC#.", "...###..", "........"],
+        ["iron-ore"] = ["........", "...###..", "..#TCC#.", ".#CTWTC#", ".#TTCCC#", "..#CTC#.", "...###..", "........"],
+        ["coal"] = ["........", "...###..", "..##C##.", ".##C####", ".#######", "..#####.", "...###..", "........"],
+        ["iron"] = ["........", "..BBBB..", ".#WWBB#.", "#BBBBBB#", "########", ".######.", "........", "........"],
+        ["gold-ore"] = ["........", "...###..", "..#YCC#.", ".#CYWYC#", ".#YYCCC#", "..#CYC#.", "...###..", "........"],
+        ["gold"] = ["........", "..YYYY..", ".#WWYY#.", "#YYYYYY#", "########", ".######.", "........", "........"],
         ["fish"] = ["........", "........", "..####..", ".#RRRR##", "#RRWRRR#", ".#RRRR##", "..####..", "........"],
         ["food"] = ["........", "..G..G..", "..#GG#..", ".#YYYY#.", ".#YYYY#.", "..#TT#..", "...##...", "........"],
         ["grain"] = ["...Y....", "..YYY...", "...Y.Y..", "..YYY...", "...Y.Y..", "..YYY...", "...T....", "...T...."],
@@ -50,7 +56,12 @@ public sealed class PixelGlyph : Control
         ["well"] = [".######.", "..#CC#..", "..#BB#..", "..#BB#..", ".#BBBB#.", ".#BBBB#.", "..####..", "........"],
         ["mill"] = ["...#....", ".#.#.#..", "..###...", "########", "..###...", ".#.#.#..", "...#....", "..###..."],
         ["bakery"] = ["..######", ".#TTTTT#", ".#TYYYT#", ".#YYYYY#", ".#YWWYY#", ".#TTTTT#", "..######", "........"],
-        ["warehouse"] = ["..YYYY..", ".YYYYYY.", "########", "#CCCCCC#", "#C####C#", "#CTTTTC#", "########", "........"]
+        ["warehouse"] = ["..YYYY..", ".YYYYYY.", "########", "#CCCCCC#", "#C####C#", "#CTTTTC#", "########", "........"],
+        ["iron-mine"] = ["..CCCC..", ".CCTTCC.", "CCTTTTCC", "CT####TC", "CT#TT#TC", "CT#TT#TC", "########", "........"],
+        ["coal-mine"] = ["..CCCC..", ".CCTTCC.", "CCTTTTCC", "CT####TC", "CT#CC#TC", "CT####TC", "########", "........"],
+        ["iron-smelter"] = [".....CC.", ".....CC.", ".######.", ".#CCCC#.", ".#RYYR#.", ".#RWWR#.", ".######.", "........"],
+        ["gold-mine"] = ["..CCCC..", ".CCYYCC.", "CCYYYYCC", "CY####YC", "CY#YY#YC", "CY#YY#YC", "########", "........"],
+        ["gold-smelter"] = [".....YY.", ".....YY.", ".######.", ".#CYYC#.", ".#RWWR#.", ".#YYYY#.", ".######.", "........"]
     };
 
     static PixelGlyph() => AffectsRender<PixelGlyph>(KeyProperty);

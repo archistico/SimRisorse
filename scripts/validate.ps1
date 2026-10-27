@@ -47,11 +47,15 @@ try {
         @{ Name = 'civil-advanced'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'advanced', '--seconds', '880'); Ticks = 880 * [TimeSpan]::TicksPerSecond; Population = 18 },
         @{ Name = 'civil-advanced-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'advanced', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour; Population = 48 },
         @{ Name = 'civil-8-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour; Population = 16 },
-        @{ Name = 'civil-32-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour; Population = 16 }
+        @{ Name = 'civil-32-hours'; Arguments = @('--scenario', 'civil-growth', '--hours', '32'); Ticks = 32 * [TimeSpan]::TicksPerHour; Population = 16 },
+        @{ Name = 'industry-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'industry', '--seconds', '1102'); Ticks = 1102 * [TimeSpan]::TicksPerSecond },
+        @{ Name = 'industry-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'industry', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
+        @{ Name = 'gold-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'gold', '--seconds', '1502'); Ticks = 1502 * [TimeSpan]::TicksPerSecond },
+        @{ Name = 'gold-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'gold', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour }
     )
     foreach ($case in $cases) {
         # Historical trajectories remain reproducible under civil-growth-4;
-        # the active civil-growth-5 rules are checked separately below.
+        # the active civil-growth-7 rules are checked by the industrial and accelerated probes.
         $arguments = @($simulation) + $case.Arguments
         if ($case.Name -like 'civil-*') { $arguments += @('--rules', 'legacy') }
         $name = $case.Name
@@ -91,6 +95,38 @@ try {
             if ($result.PopulationState.HousingCapacity -ne 48 -or $result.PopulationState.AdvancedResidents -ne 2 -or
                 $result.PopulationState.RequiredBreadPerSecond -ne 0.030) { throw 'The advanced housing timeline differs.' }
         }
+        elseif ($name -like 'industry-*') {
+            $iron = $result.Resources | Where-Object Id -eq 'iron'
+            $smelter = $result.Buildings | Where-Object Id -eq 'iron-smelter'
+            if ($result.RulesVersion -ne 'civil-growth-7' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
+                throw 'The industrial rules, construction or workforce differ.'
+            }
+            if ($name -eq 'industry-start' -and ($iron.Quantity -ne 1 -or
+                ($result.Resources | Where-Object Id -eq 'iron-ore').Quantity -ne 2 -or
+                ($result.Resources | Where-Object Id -eq 'coal').Quantity -ne 3)) {
+                throw 'The first industrial production differs.'
+            }
+            if ($name -eq 'industry-8-hours' -and ($iron.Quantity -ne 1000 -or $result.Population -ne 48)) {
+                throw 'The long industrial timeline differs.'
+            }
+        }
+        elseif ($name -like 'gold-*') {
+            $gold = $result.Resources | Where-Object Id -eq 'gold'
+            $smelter = $result.Buildings | Where-Object Id -eq 'gold-smelter'
+            if ($result.RulesVersion -ne 'civil-growth-7' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
+                throw 'The gold rules, construction or workforce differ.'
+            }
+            if ($name -eq 'gold-start' -and ($gold.Quantity -ne 1 -or
+                ($result.Resources | Where-Object Id -eq 'gold-ore').Quantity -ne 1 -or
+                ($result.Resources | Where-Object Id -eq 'iron').Quantity -ne 401 -or
+                ($result.Resources | Where-Object Id -eq 'coal').Quantity -ne 402)) {
+                throw 'The first gold production or shared coal balance differs.'
+            }
+            if ($name -eq 'gold-8-hours' -and ($gold.Quantity -ne 1000 -or $result.Population -ne 48 -or
+                ($result.Resources | Where-Object Id -eq 'iron').Quantity -ne 1000)) {
+                throw 'The long gold and iron timeline differs.'
+            }
+        }
         if ($name -ne '60-seconds') {
             foreach ($resource in $result.Resources) {
                 if ($resource.Quantity -lt 0 -or $resource.Quantity -gt $resource.Capacity) { throw 'Resource outside capacity.' }
@@ -99,9 +135,9 @@ try {
         $output | Set-Content -LiteralPath (Join-Path $artifacts ($name + '.json')) -Encoding UTF8
     }
     $acceleratedOutput = & dotnet $simulation --scenario civil-growth --strategy bootstrap --seconds 180
-    if ($LASTEXITCODE -ne 0) { $acceleratedOutput; throw 'Accelerated civil-growth-5 probe failed.' }
+    if ($LASTEXITCODE -ne 0) { $acceleratedOutput; throw 'Accelerated civil-growth-7 probe failed.' }
     $accelerated = $acceleratedOutput | ConvertFrom-Json
-    if ($accelerated.RulesVersion -ne 'civil-growth-5' -or $accelerated.Population -ne 10 -or
+    if ($accelerated.RulesVersion -ne 'civil-growth-7' -or $accelerated.Population -ne 10 -or
         $accelerated.PopulationState.GrowthRateTwentieths -ne 23 -or
         $accelerated.PopulationState.GrowthRemainderTwentieths -lt 0 -or
         $accelerated.PopulationState.GrowthRemainderTwentieths -ge 20) {
@@ -281,7 +317,9 @@ try {
     $dependencies = $desktopLock.dependencies.'net10.0'
     $screenshots = @('buildings.png', 'buildings-compact.png', 'resources.png', 'resources-compact.png',
         'civil-buildings.png', 'civil-buildings-compact.png', 'civil-resources.png', 'civil-resources-compact.png',
-        'civil-advanced-bread-compact.png')
+        'civil-advanced-bread-compact.png', 'industry-buildings.png', 'industry-buildings-compact.png',
+        'industry-resources.png', 'industry-resources-compact.png', 'gold-buildings.png', 'gold-buildings-compact.png',
+        'gold-resources.png', 'gold-resources-compact.png')
     foreach ($screenshot in $screenshots) {
         $path = Join-Path $screenshotDirectory $screenshot
         if (-not (Test-Path -LiteralPath $path)) { throw "Missing render from this test run: $screenshot" }

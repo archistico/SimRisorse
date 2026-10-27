@@ -13,7 +13,7 @@ using SimRisorse.Simulation;
 
 if (args is ["--help"])
 {
-    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced]");
+    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced|industry|gold]");
     Console.WriteLine("Maximum 168 hours; default 60 seconds. Civil growth defaults to bootstrap; foundation has no strategy.");
     Console.WriteLine("SimRisorse.Simulation --check-catalog [--scenario economy-foundation|civil-growth]: exit 1 if an unlock is unreachable.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-housing: historical M4 comparison; --benchmark-housing-accelerated: new M4.10 comparison.");
@@ -79,12 +79,13 @@ for (var index = 0; index < args.Length; index += 2)
 }
 if (scenarioId is not ("economy-foundation" or "civil-growth") ||
     (legacyCivilRules && scenarioId != "civil-growth") ||
-    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced")))) return Usage();
+    ((strategy is "industry" or "gold") && legacyCivilRules) ||
+    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced" or "industry" or "gold")))) return Usage();
 if (scenarioId == "civil-growth") strategy ??= "bootstrap";
 
 static int Usage()
 {
-    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced for civil-growth.");
+    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced|industry|gold for civil-growth. Industry and gold require current rules.");
     return 2;
 }
 
@@ -144,16 +145,28 @@ try
         }
         // bread follows bootstrap, then starts the whole grain/water/flour chain at second 600.
         var breadTicks = 600L * TimeSpan.TicksPerSecond;
-        if ((strategy is "bread" or "advanced") && ticks >= breadTicks)
+        if ((strategy is "bread" or "advanced" or "industry" or "gold") && ticks >= breadTicks)
         {
             AdvanceTo(breadTicks);
             foreach (var id in new[] { "farm", "farm", "well", "mill", "bakery" }) Build(runtime, id, staff: true);
         }
         var largeHouseTicks = 760L * TimeSpan.TicksPerSecond;
-        if (strategy == "advanced" && ticks >= largeHouseTicks)
+        if ((strategy is "advanced" or "industry" or "gold") && ticks >= largeHouseTicks)
         {
             AdvanceTo(largeHouseTicks);
             Build(runtime, "large-house");
+        }
+        var industryTicks = 1100L * TimeSpan.TicksPerSecond;
+        if ((strategy is "industry" or "gold") && ticks >= industryTicks)
+        {
+            AdvanceTo(industryTicks);
+            foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter" }) Build(runtime, id, staff: true);
+        }
+        var goldTicks = 1500L * TimeSpan.TicksPerSecond;
+        if (strategy == "gold" && ticks >= goldTicks)
+        {
+            AdvanceTo(goldTicks);
+            foreach (var id in new[] { "gold-mine", "gold-smelter" }) Build(runtime, id, staff: true);
         }
     }
     AdvanceTo((long)ticks);

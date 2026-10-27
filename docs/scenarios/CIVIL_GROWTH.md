@@ -1,6 +1,6 @@
 # Scenario Civil Growth
 
-Stato: **`civil-growth-5` implementato in v24, gate Windows v24 riferito superato dall'utente** (174 test xUnit attesi, output grezzi non allegati). Il prototipo 8-bit v25 e gli incrementi non ludici v26/v27 restano da validare. La Casa grande e il Pane distinto sono stati introdotti in `civil-growth-4`; `-5` aggiunge una **velocità di crescita proporzionale al numero e al tipo delle case**, limitata a 2×. Costi, filiere e fabbisogni rimangono gli stessi. L'[audit M4.13](HOUSING_INCENTIVE_AUDIT.md) ne confronta capienze e costi nominali; il bilanciamento effettivo delle otto ore resta da misurare.
+Stato corrente: **`civil-growth-7` verificata**, 17 edifici / 14 risorse, **204/204 test**. M4 chiusa; prototipo monospace approvato e demolizione rinviata. M5.1a introduce Ferro/Carbone e M5.1b l'Oro con parametri A approvati separatamente e continuità S1: [ultimo report](../validation/M5_1B_GOLD.md). Cibo/Pane, crescita e abitazioni restano invariati. I benchmark storici conservano v4/v5; v6 resta disponibile per compatibilità.
 
 ## Dotazione e catalogo
 
@@ -46,8 +46,10 @@ Ogni anello lavora dal secondo successivo a quello in cui il suo input è compar
 | `civil-growth-2` | `civil-growth-3` | Fattoria, pozzo, mulino, forno |
 | `civil-growth-3` | `civil-growth-4` | Casa grande; aggiunta risorsa Pane (zero) e cambio ricetta del Forno |
 | `civil-growth-4` | `civil-growth-5` | Nessun edificio o risorsa aggiunti; accelerazione abitativa; resto frazionario iniziale zero |
+| `civil-growth-5` | `civil-growth-6` | Miniere ferro/carbone e fonderia a zero; nuove scorte industriali zero, capacità 1.000 +500 per Magazzino; frazione esistente conservata |
+| `civil-growth-6` | `civil-growth-7` | Miniera e Fonderia d'oro a zero; scorte nuove zero, capacità 1.000 +500 per Magazzino; Ferro, Carbone e frazioni esistenti conservati |
 
-Le conversioni si concatenano: un checkpoint `civil-growth-1` può passare a `civil-growth-5`. Tempo, abitanti, secondi di crescita e scorte restano invariati; il nuovo resto di crescita parte da zero. Il vecchio Cibo eventualmente prodotto dal Forno **rimane Cibo**, perché la provenienza non è ricostruibile; Pane parte a zero. La partita riprende in pausa. Al primo salvataggio successivo il file originale viene copiato in `civil-growth.<regole originali>.backup.sqlite3`, nella stessa cartella. Restano rifiutate le versioni sconosciute o strutture/risorse non appartenenti alle regole dichiarate.
+Le conversioni si concatenano da `civil-growth-1` alla corrente `-7`. Tempo, abitanti, progresso e scorte esistenti restano invariati. Il resto frazionario parte da zero all'introduzione di v5 e si conserva nei passaggi successivi. Il vecchio Cibo rimane Cibo; Pane, metalli e minerali partono da zero ai rispettivi passaggi. Ripresa in pausa, backup dell'originale alla prima scrittura; versioni sconosciute e dati incoerenti rifiutati.
 
 ## Crescita e cibo
 

@@ -10,7 +10,11 @@ Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento,
 
 ## Requisiti confermati
 
-**Decisione D0.1 del 2026-10-27:** l'utente ha scelto la prima campagna con i [22 tipi di edificio elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): i 12 civili presenti, cinque tipi di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere navale e Castello. Gli altri 21 tipi dei riferimenti sono fuori dalla prima campagna, inclusi Cacciatore, Allevamento, piantagioni e decorazioni. Questa scelta definisce il perimetro dei contenuti futuri; non approva prezzi, ricette, condizioni esatte di vittoria, meccaniche militari/navali o migrazioni. Il catalogo eseguibile rimane di 12 tipi fino agli incrementi M5 autorizzati e verificati.
+**Decisione D0.1 del 2026-10-27:** prima campagna con i [22 tipi elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): 12 civili, cinque di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere e Castello. Gli altri 21 riferimenti sono fuori dalla prima campagna. Con M5.1b **17 tipi sono implementati e 5 restano futuri**.
+
+**Decisioni successive esplicite:** vittoria con possesso di tutti i 22 tipi e Castello conclusivo; una conquista obbligatoria sblocca il Castello. Gli edifici iniziali contano già. M4 chiusa dopo giudizio positivo sul prototipo monospace e rinvio della demolizione. Scelta **S1** per continuare le partite con conversione/backup e **configurazione A per la sola prima filiera ferro/carbone**. M5.1a verificata nelle regole **`civil-growth-6`**, 15 edifici e 12 risorse: [parametri e risultati](validation/M5_1A_IRON.md). Le regole operative militari/navali, l'oro e la funzione di vittoria restano da implementare nei rispettivi incrementi.
+
+**Scelta successiva M5.1b:** approvata separatamente la configurazione A dell'Oro: Miniera 180/120 legno/pietra, 1 minerale/s; Fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s; un addetto ciascuna, capacità 1.000 +500 per Magazzino, scorte iniziali zero. Ferro prioritario con carbone scarso. **M5.1b verificata**, `civil-growth-7`, 17 edifici / 14 risorse e 204/204 test: [report](validation/M5_1B_GOLD.md). Forgia, Zecca e relativi usi rimangono futuri.
 
 | ID | Requisito | Conseguenza |
 | --- | --- | --- |
@@ -62,11 +66,11 @@ Le persone sono conteggi interi. Un tasso di crescita frazionario può accumular
 - Esiti inizialmente deterministici e informazioni sufficienti a pianificare una spedizione.
 - Navi e contingenti come entità distinte dagli edifici, anche quando l'interfaccia usa elenchi simili.
 
-Il legame obbligatorio tra conquiste e vittoria non è ancora confermato. Caserme, castelli, cantieri e tipi di truppe devono ricevere funzioni precise prima di entrare nel catalogo definitivo.
+L'utente ha scelto **una conquista obbligatoria che sblocca il Castello**, costruzione conclusiva. Identità dell'isola, forze, durata, costi ed esiti restano da definire prima del codice militare/navale.
 
 ### Interfaccia
 
-- **Direzione confermata il 2026-10-27:** pixel art retro 8-bit essenziale, con gestione degli edifici sempre per elenchi/schede e informazioni numeriche leggibili. Il [contratto grafico](PIXEL_ART_UI.md) descrive le proposte operative; v25 introduce un **primo prototipo** (pittogrammi 8×8 originali e pannelli squadrati), ancora da verificare a video. La GUI definitiva non è approvata.
+- **Direzione e prototipo approvati il 2026-10-27:** pixel art retro 8-bit essenziale con font monospace, elenchi/schede e informazioni leggibili. Il [contratto grafico](PIXEL_ART_UI.md) descrive la base accettata; rifiniture, DPI fisici e nuove sezioni richiedono ulteriori verifiche.
 - Riepilogo persistente di risorse, tempo e stato della partita.
 - Elenco filtrabile con quantità, personale, produttività e motivi di blocco.
 - Scheda di dettaglio con costo, consumo, produzione, requisiti ed effetti dell'acquisto.
@@ -77,14 +81,14 @@ Il legame obbligatorio tra conquiste e vittoria non è ancora confermato. Caserm
 
 | ID | Decisione da prendere | Prima di |
 | --- | --- | --- |
-| Q-01 | Vittoria: possedere contemporaneamente ogni tipo, averlo costruito almeno una volta o completare anche una struttura finale? | Specifica dell'obiettivo |
-| Q-02 | Quali isole o conquiste sono obbligatorie per completare lo scenario? | Catalogo completo e bilanciamento |
+| Q-01 | **Scelta:** possedere tutti i 22 tipi, Castello conclusivo; funzione da implementare | Vittoria M6 |
+| Q-02 | **Ruolo scelto:** una conquista obbligatoria sblocca il Castello; identità e parametri della missione da fissare | Missioni e bilanciamento |
 | Q-03 | Costruzione immediata o con durata? Code, parallelismo e acquisti multipli? | Prima funzionalità di costruzione |
 | Q-04 | Velocità iniziale 1:1? Ordini applicabili in pausa? Come trattare minimizzazione e perdita del focus? | Collegamento tra interfaccia e orologio |
 | Q-05 | Dotazione iniziale, abitazioni, crescita, consumo alimentare e carenze? | Popolazione dinamica |
 | Q-06 | Assegnazione manuale o automatica dei lavoratori? Produttività con personale incompleto? | Economia minima |
 | Q-07 | Disponibilità di materiali condivisi: priorità, ripartizione e produzione parziale? Destinazione dell'eccesso a magazzino pieno? | Algoritmo di produzione |
-| Q-08 | Demolizione: rimborsi e gestione di lavoratori, abitanti e scorte oltre la capacità residua? | Demolizione |
+| Q-08 | **Rinviata dall'utente**; rimborso e capacità residue da scegliere prima di una futura implementazione | Futuro incremento demolizione |
 | Q-09 | Truppe, addestramento, costi, perdite, durata, esiti e trasporti delle missioni? | Modulo militare |
 | Q-10 | Classifica solo locale o pubblica? Difficoltà, pareggi, uso di salvataggi precedenti e partite valide? | Risultati competitivi |
 
@@ -96,7 +100,7 @@ Per Q-08 è disponibile uno [studio di demolizione](scenarios/DEMOLITION_M4_REVI
 
 ## Gate di design prima della milestone M5
 
-**Stato: D0.1 approvata, altre decisioni D0 aperte; contenuti M5 non implementati.** Prima di aggiungere le filiere industriali e militari occorre definire un obiettivo completo e realizzabile. La [matrice decisionale D0](design/PRE_M5_DECISION_GATE.md) conserva i 43 riferimenti; la [scheda prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md) distingue il catalogo dei 22 tipi scelto dall'utente dalle proposte di vittoria e isole. La [scheda operativa](design/D0_DECISION_BOARD.md) ne organizza le scelte. Le preferenze non confermate rimangono proposte; il perimetro del catalogo non approva da solo ricette o costi.
+**Stato: M4 chiusa; D0.1, D0.2, ruolo D0.3, base D0.7, S1 e configurazione A M5.1a scelti. M5.1a verificata.** La [scheda prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md) raccoglie catalogo e vittoria; la [scheda operativa](design/D0_DECISION_BOARD.md) distingue le scelte ricevute dai parametri militari/navali ancora aperti. Le preferenze non confermate rimangono proposte. Ogni fase successiva deve dimostrare il proprio percorso raggiungibile; il primo ferro è verificato da nuova partita a 1.102 s.
 
 | Decisione | Cosa fissare | Perché condiziona M5/M6 |
 | --- | --- | --- |
@@ -111,7 +115,7 @@ I [diagrammi di riferimento](references/RESOURCE_AND_PRODUCTION_CHAINS.md) conte
 
 **Vincolo per il bilanciamento:** con 8 persone iniziali e un arrivo ogni 60 secondi validi, le regole **storiche** `civil-growth-4` avrebbero un tetto di **488 persone** dopo otto ore. Con `civil-growth-5` e il bonus già a **2× dal tempo zero**, il nuovo limite *puramente aritmetico* è **968 persone** dopo otto ore; nessuna strategia iniziale può disporre gratuitamente di tutta la capienza, del Pane e delle filiere necessarie. Sono limiti ideali, **non** risultati giocati. Per condividere popolazione civile e militare occorre dimostrare che almeno una sequenza di vittoria efficiente resti raggiungibile. La durata obiettivo di circa 8 ore non è ancora stata validata per il gioco completo.
 
-Per il primo blocco successivo al gate è disponibile uno [studio quantitativo M5.1 su ferro, carbone e oro](design/M5_1_INDUSTRY_PREFEASIBILITY.md). Distingue quanto compare nei riferimenti dalle **ipotesi A/B** di costi e produzione, suggerisce incrementi piccoli e identifica le scelte di migrazione dei salvataggi. **Nessuno di questi numeri è parte delle regole approvate.**
+Lo [studio quantitativo M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md) conserva il confronto A/B. I parametri A di Ferro e Oro sono scelti e integrati con approvazioni distinte; **prezzi B e filiere a valle restano ipotesi**.
 
 Il successivo [studio M5.2 su Forgia, Zecca, Spade e Monete](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) valuta l'utilizzo dell'industria prima di introdurre Caserma e Cantiere navale. Una miniera di Carbone ipotetica da 2/s non riuscirebbe a sostenere simultaneamente quattro trasformatori che richiedono in totale 4/s, ma una **produzione organizzata per fasi** potrebbe ridurre il numero di miniere necessarie. È un'alternativa strategica da misurare, non una nuova regola. Rimane aperto se le Monete siano una risorsa spendibile in azioni specifiche o una valuta generale, e se le Spade vengano consumate dal reclutamento o restino in dotazione.
 

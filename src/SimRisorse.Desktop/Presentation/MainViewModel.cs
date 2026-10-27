@@ -161,6 +161,14 @@ public sealed class MainViewModel : ObservableObject
     public string BusyState => _loading ? "Caricamento in corso…" : _busy ? "Salvataggio in corso…" :
         _autoSaveAllowed ? "Salvataggio ogni minuto e alla chiusura" : "Salvataggio automatico sospeso";
     public string SelectedCost => BuildingRow.Format(Selected.View.Cost, BatchSize);
+    public string ConstructionCostHeading => BatchSize == 1 ? "COSTO DI COSTRUZIONE" : $"COSTO PER {BatchSize} EDIFICI";
+    public IEnumerable<ResourceDetailLine> SelectedCostLines => Selected.View.Cost.Select(cost =>
+        new ResourceDetailLine(cost.ResourceId, BuildingRow.Format([cost], BatchSize)));
+    public string PopulationCount => HasPopulationGrowth
+        ? $"{_view.Population} / {_view.PopulationState.HousingCapacity}" : $"{_view.Population}";
+    public string AvailableWorkersText => _view.AvailableWorkers == 1 ? "1 libero" : $"{_view.AvailableWorkers} liberi";
+    public double HousingFillPercent => HasPopulationGrowth && _view.PopulationState.HousingCapacity > 0
+        ? 100d * _view.Population / _view.PopulationState.HousingCapacity : 0d;
     public string BuildLabel => $"Costruisci +{BatchSize}";
     public UiCommand TogglePauseCommand { get; }
     public UiCommand ConstructCommand { get; }

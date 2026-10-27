@@ -1,10 +1,14 @@
 # SimRisorse — D0: scheda operativa delle decisioni prima di M5
 
-Data: 2026-10-27 · scheda v28 aggiornata in M4.15/v29 · **Scheda di lavoro, non verbale di approvazione.**
+Data: 2026-10-27 · aggiornamento M5.1a · **Scheda delle scelte ricevute e delle proposte ancora aperte.**
+
+**Decisioni successive registrate:** M4 chiusa; prototipo monospace approvato, demolizione rinviata. D0.2: possedere tutti i 22 tipi, Castello conclusivo; D0.3: una conquista obbligatoria sblocca il Castello. Scelta **S1** e configurazione **A per la sola M5.1a**, ora [implementata e verificata](../validation/M5_1A_IRON.md). Restano aperti i parametri delle fasi successive, senza riaprire le decisioni già ricevute.
+
+**M5.1b successiva:** configurazione **A dell'Oro scelta separatamente e verificata**, con Ferro prioritario sul carbone scarso. Corrente `civil-growth-7`, 17 edifici / 14 risorse e **204/204 test**. [Report Oro](../validation/M5_1B_GOLD.md). Le scelte già ricevute non si riaprono; il confronto esteso di scala M5.1c precede i nuovi contratti di Forgia/Zecca.
 
 Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo D0](PRE_M5_DECISION_GATE.md) conserva l'inventario dei 43 riferimenti e le alternative ragionate; qui sono raccolti ordine, responsabilità e condizioni per iniziare il codice. Le preferenze tecniche sottostanti **non sono risposte già fornite dall'utente**.
 
-**D0.1 approvata il 2026-10-27:** prima campagna con i **22 tipi scelti** nella [scheda del catalogo e della vittoria](FIRST_CAMPAIGN_PROPOSAL.md), gli altri 21 riferimenti fuori dalla prima campagna. Sono 12 tipi esistenti e 10 nuovi ancora da implementare. Prezzi, ricette, condizione di vittoria e salvataggi non sono approvati da questa scelta.
+**D0.1 approvata il 2026-10-27:** prima campagna con i **22 tipi scelti** nella [scheda del catalogo e della vittoria](FIRST_CAMPAIGN_PROPOSAL.md), altri 21 riferimenti fuori. Dopo M5.1b sono **17 tipi presenti e 5 futuri**. Vittoria, S1 e parametri A di Ferro e Oro sono stati scelti con risposte distinte.
 
 ## 1. Dove siamo davvero
 
@@ -12,13 +16,13 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 | --- | --- | --- |
 | M0–M3 | Completate; test confermati nei rispettivi checkpoint | Baseline da preservare |
 | M4 fino a v24/M4.10 | **Gate Windows riferito superato dall'utente**, 174 xUnit attesi; nessun TRX/JSON disponibile qui | Ultima conferma utilizzabile |
-| v25/M4.11, con correzione PixelGlyph | **Gate Windows verificato: 177/177 test**, nove render ispezionati | Giudizio utente sullo stile e verifica su monitor/DPI reali restano aperti |
+| Prototipo 8-bit e monospace | **Gate verificato e giudizio utente positivo** | Base grafica accettata; prove DPI fisici da ampliare in rifinitura |
 | v26/M4.12 | Lettore PowerShell **eseguito**, quattro benchmark consolidati | [Misure e limiti](../validation/M4_MEASURED_RESULTS.md), input conservati nel run |
 | v27/M4.13 | Audit matematico delle Case, **non benchmark eseguito** | Confrontare poi con dati reali |
 | v28/M4.14 | Questa scheda e allineamento documentale | Gate tecnico verificato; decisioni D0 ancora aperte |
 | v29/M4.15 | Prefattibilità navale M5.4; **solo documentazione** | Decisioni e test futuri, nessuna nave introdotta |
-| Regole e dati | `civil-growth-5` attiva; snapshot SQLite v2, 12 tipi di edifici e 9 risorse | Non retrocedere alla versione `-4` |
-| Catalogo della prima campagna | **22 tipi scelti dall'utente**, di cui 12 implementati e 10 futuri; altri 21 riferimenti fuori dal primo catalogo | Perimetro definito; regole operative e vittoria ancora da fissare |
+| Regole e dati | `civil-growth-7` attiva; snapshot SQLite v2, 17 tipi di edifici e 14 risorse | S1 e backup verificati; cataloghi v4/v5/v6 preservati |
+| Catalogo della prima campagna | **22 tipi scelti dall'utente**, di cui 17 implementati e 5 futuri; altri 21 riferimenti fuori | Vittoria e ruolo della conquista scelti; parametri successivi da fissare |
 
 **Vincoli confermati:** gestione con elenchi/schede, niente posizionamento su mappa; identità visiva pixel art retro 8-bit essenziale; pausa senza progresso offline; la durata di circa 8 ore con strategia efficiente e di 32 ore o più con strategie lente è **un obiettivo**, non un risultato misurato.
 
@@ -26,40 +30,41 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 
 | ID | Domanda concreta all'utente | Indicazione tecnica **provvisoria** | Blocca / criterio di chiusura |
 | --- | --- | --- | --- |
-| **D0.1** Catalogo | **Approvata:** i 22 tipi della scheda prima campagna, altri 21 fuori | 12 presenti + 10 futuri; ID nuovi candidati, regole e prezzi da dimensionare | Perimetro scelto; la raggiungibilità quantitativa resta D0.6 |
-| **D0.2** Vittoria | Bisogna **possedere**, **aver costruito** o raggiungere una sequenza di obiettivi più un traguardo finale? Che effetto ha la demolizione? | **C: traguardi + obiettivo conclusivo**; possesso al termine da fissare a parte | Cinque scenari positivi/negativi, una sola condizione di vittoria non ambigua |
-| **D0.3** Isole | Quante conquiste sono necessarie e quali sblocchi danno? Cosa succede se una spedizione fallisce? | **B: almeno un percorso essenziale**, altre isole facoltative | Prima rotta percorribile senza risorse che si ottengono solo dopo il viaggio |
+| **D0.1** Catalogo | **Approvata:** i 22 tipi della scheda prima campagna, altri 21 fuori | 17 presenti + 5 futuri; parametri successivi da dimensionare | Perimetro scelto; raggiungibilità da verificare per ogni incremento |
+| **D0.2** Vittoria | **Approvata:** possedere tutti i 22 tipi, Castello conclusivo; edifici iniziali validi | Contratto scelto, funzione di vittoria ancora da implementare | Sette casi di accettazione nella scheda prima campagna |
+| **D0.3** Isole | **Ruolo approvato:** una conquista obbligatoria sblocca il Castello | Isola, forze, costi, durata ed esiti da dimensionare in M5.5–M5.6 | Primo viaggio senza dipendenze da risorse coloniali irraggiungibili |
 | **D0.4** Militari | Soldati/reclute occupano case e mangiano? Coda o formazione istantanea? Congedi, perdite e rimborsi? | Unica popolazione contabilizzata; **B: coda** come prima prova, non ancora decisa | `totale = civili impiegati + civili liberi + reclute + soldati`, senza doppioni; casi di pausa/save e transizioni |
 | **D0.5** Tempo | Velocità 1:1 o accelerabile? Come contano pause, riprese, livello difficoltà e punteggio? | Cronometrare **solo secondi simulati validi**; scegliere esplicitamente eventuale accelerazione | Cronologie riproducibili, classifica confrontabile, niente avanzamento offline |
 | **D0.6** Raggiungibilità | Quale percorso di materiali, addetti, capacità e sblocchi rende possibile il primo obiettivo e la vittoria? | Grafo senza cicli, prova dei primi lotti a scorte nuove zero | Almeno una cronologia fattibile per costi, magazzini, cibo e forza lavoro; precede M5.1 |
-| **D0.7** Interfaccia 8-bit | Il prototipo v25 è leggibile a 1040×740 e 1240×850, con DPI reali e messaggi immediati? | Conservare elenchi/schede, pittogramma **più testo**, nessun salto del pulsante Costruisci | Gate Windows e revisione visiva, prima dell'estensione grafica a M5 |
+| **D0.7** Interfaccia 8-bit | **Base approvata dall'utente**, incluso il font monospace | Conservare elenchi/schede, pittogramma più testo e geometria stabile | Gate tecnico e giudizio positivo acquisiti; DPI fisici nella rifinitura |
 | **D0.8** Spade/Monete | Le **Spade si consumano** all'arruolamento o equipaggiano i soldati? Le **Monete sono risorsa per comandi specifici** o valuta di tutta l'economia? | Primo modello più contenuto da valutare: Spade consumate, Monete come scorta mirata | Contratti di pagamento atomico, annullamento e save; richiesto prima di M5.2–M5.4 |
 
 **Non risolto con questa tabella:** prezzi, ricette, addetti, durata addestramento, rimborso della demolizione, ruolo della Carne, numero delle isole, probabilità di fallimento, uso coloniale delle Monete. Vanno scelti con i dossier specifici, senza inferirli dalle illustrazioni.
 
 ## 3. Ordine di approvazione e dipendenze
 
-1. **Chiusura M4:** il gate tecnico è verificato su Windows (**177/177 test**, benchmark, smoke nativi e nove render); il lettore è eseguito e i [risultati misurati](../validation/M4_MEASURED_RESULTS.md) sono distinti dagli [estremi teorici dell'audit case](../scenarios/HOUSING_INCENTIVE_AUDIT.md). Carne e relativi edifici sono fuori dalla prima campagna per D0.1. Restano il giudizio dell'utente sul prototipo e la classificazione della demolizione: approvata, rinviata oppure fuori perimetro. **Solo allora dichiarare conclusa M4.**
-2. **Disegno del gioco, D0.1–D0.3:** concordare catalogo, traguardo e funzione delle isole; fissare quali elementi sono opzionali. Si possono discutere **prima** di poter testare, ma l'implementazione resta bloccata.
+1. **M4 chiusa:** gate tecnico, benchmark e revisione dei render acquisiti; giudizio utente positivo sul monospace, Carne fuori dalla prima campagna e demolizione rinviata. La chiusura non approva il rimborso del 25% o nuove ricette.
+2. **D0.1–D0.3 scelti nel loro perimetro:** catalogo da 22, possesso al termine e Castello dopo una conquista obbligatoria. Dimensionare le singole fasi senza introdurre automaticamente altri contenuti.
 3. **Contratti trasversali, D0.4, D0.5 e D0.8:** conservazione popolazione, tempo, consumi militari e significato delle Monete. Servono per progettare interfacce e persistenza corrette; non implicano già Caserma, Forgia o Zecca.
-4. **Gate di fattibilità, D0.6–D0.7:** completare grafo con costi/capacità, passare almeno un percorso teorico e validare il linguaggio visivo M4. Un dossier pieno di esempi ma senza percorso raggiungibile **non** sblocca M5.
-5. **Scelta S1/S2, prima del primo nuovo stato persistente M5.1a:** decidere se proseguire con `civil-growth` o creare una campagna distinta; approvare una strategia di salvataggi e test di migrazione. È una decisione **aggiuntiva e indispensabile**, non una nona D0 implicitamente chiusa.
+4. **Fattibilità incrementale D0.6:** M5.1a ha un percorso giocato da risorse iniziali a primo ferro in 1.102 s. La raggiungibilità della campagna completa richiederà i parametri militari/navali successivi. Il linguaggio visivo è accettato.
+5. **S1 scelta e verificata:** estensione di `civil-growth`, versione `-6`, conversione e backup. File/snapshot v2 conservati; eventuali nuovi stati militari/navali richiederanno valutazioni e test propri.
 
 ### Contratto dei salvataggi: non ripetere il numero di versione
 
 | Percorso candidato | Politica proposta | Che cosa richiede per l'approvazione |
 | --- | --- | --- |
-| **S1 — Estendere `civil-growth`** | La versione corrente è **`civil-growth-5`**. La futura M5 potrebbe usare **`civil-growth-6`**, *se e solo se* la scelta sarà approvata. Snapshot SQLite v2 può restare soltanto se tecnicamente compatibile. | Conversione dichiarata e non ambigua da versioni storiche `-1…-5`, backup originale, test di round-trip e di pausa/ripresa |
+| **S1 — Scelta dall'utente** | Corrente **`civil-growth-7`**, snapshot SQLite v2 compatibile e verificato | Conversioni concatenate `-1…-6`, backup originale, round-trip e pausa/ripresa testati |
 | **S2 — Nuovo scenario campagna** | Mantenere lo scenario civile e creare ID distinto; trasferire partite soltanto mediante importazione visibile | Contratto tra identità di scenario, checkpoint, nuova UI e copie originali, senza migrazione silenziosa |
 
-**Oggi vale `civil-growth-5`: `civil-growth-6` non esiste, non è implementata né approvata.** La scelta S1/S2 dipende dall'[analisi M5.1](M5_1_INDUSTRY_PREFEASIBILITY.md) e dal [formato salvataggi](../SAVE_FORMAT.md). Indipendentemente dall'opzione, vecchi file, pause, progressi frazionari e ricompense una tantum vanno protetti.
+**Oggi vale `civil-growth-7`, con S1 scelta e M5.1b verificata.** V4/v5 sono conservate per i benchmark e v6 per le verifiche di compatibilità del primo ferro. Il [formato salvataggi](../SAVE_FORMAT.md) descrive anche la conversione dell'Oro.
 
 ## 4. Sequenza realizzativa *dopo* le approvazioni
 
 | Fase futura | Aggiunte **candidate**, non approvate | Gate per passare alla successiva |
 | --- | --- | --- |
-| **M5.1a** | Miniera ferro, miniera carbone, fonderia ferro; minerale ferro, Carbone, Ferro (**+3/+3**) | Costi, ricetta, primo lotto, personale, capacità, backup e SQLite testati; prerequisiti raggiungibili |
-| **M5.1b–c** | Oro con miniera/fonderia e 2 risorse (**+2/+2**); confronto della contesa sul carbone | Due filiere riproducibili, benchmark dei prezzi A/B e misura del collo di bottiglia |
+| **M5.1a — Verificata** | Configurazione A scelta: miniera ferro, miniera carbone, fonderia; **15 edifici / 12 risorse** correnti | 191/191 test, primo ferro, deposito pieno, backup e ripresa verificati |
+| **M5.1b — Verificata** | Oro configurazione A, due nuovi edifici e due risorse | 204/204 test, contesa, backup e ripresa verificati |
+| **M5.1c — Prossima** | Confronto esteso di scala e contesa del carbone | Strategie reali, contatori riconciliati, nessun parametro nuovo implicito |
 | **M5.2a–c** | Forgia, Zecca, Spade, Monete (**+2/+2**), utilizzo da definire | D0.8 approvata, transazioni e produzione a fasi/contemporanea confrontate, mai saldo negativo |
 | **M5.3a–c** | Caserma, arruolamento, addestramento, conservazione persone | D0.4 approvata, code deterministiche, nessuna duplicazione su salvataggio/congedo |
 | **M5.4** | Cantiere, navi e trasporto: [prefattibilità](M5_4_NAVAL_PREFEASIBILITY.md); costi, riutilizzo e capienza **non approvati** | Primo acquisto raggiungibile, nave salvabile, preflight senza doppio impiego, nessuna missione anticipata |
@@ -71,9 +76,9 @@ Le matrici tecniche estese per [M5.1](M5_1_INDUSTRY_PREFEASIBILITY.md), [M5.2](M
 
 ## 5. Cosa chiedere all'utente quando può rivedere il progetto
 
-- **Prima**, il giudizio dell'utente sui render 8-bit e la classificazione della demolizione; gate Windows e revisione tecnica dei render già completati, Carne fuori dalla prima campagna per D0.1.
-- **Poi**, una breve discussione D0.1–D0.3: lista di edifici obbligatori, modello di vittoria e numero di isole necessarie.
-- **Successivamente**, D0.4/D0.5/D0.8 e scelta S1/S2, con esempi di missione, arruolamento e salvataggio.
-- **Infine**, prezzi A/B e simulazione di raggiungibilità D0.6, prima di scrivere M5.1a.
+- **Adesso**, confronto di scala M5.1c; i prezzi A di Ferro e Oro sono già adottati.
+- **Prima di M5.2**, ruolo di Spade e Monete e relativi contratti.
+- **Prima di M5.3–M5.6**, popolazione militare, reclutamento, trasporto, durata ed esiti della conquista già scelta come obbligatoria.
+- **A ogni incremento**, raggiungibilità e compatibilità S1; completare la politica temporale e di classifica prima della funzione di vittoria.
 
-Il gate tecnico M4 è superato. Prossima scelta D0: valutare la [condizione di vittoria e il ruolo della prima conquista](FIRST_CAMPAIGN_PROPOSAL.md), dopo il catalogo D0.1 già scelto. Restano separati giudizio grafico, demolizione, contratti militari e salvataggi; nessun codice M5 anticipato.
+Prossimo lavoro: confronto di scala M5.1c. Vittoria, conquista, base grafica, rinvio demolizione, S1 e parametri A di Ferro/Oro sono già scelti. Contratti militari/navali e Spade/Monete vanno definiti prima delle rispettive implementazioni.

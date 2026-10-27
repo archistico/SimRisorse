@@ -32,6 +32,169 @@ public static class TestAppBuilder
 
 public sealed class DesktopTests
 {
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task SidebarNavigationAndSummaryCardsKeepConstructionDetailsInReadingOrder(int width, int height)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "tree-feller");
+            Dispatcher.UIThread.RunJobs();
+            var description = window.FindControl<TextBlock>("BuildingDescriptionText")!;
+            var costs = window.FindControl<ItemsControl>("ConstructionCostList")!;
+            var output = window.FindControl<ItemsControl>("ProductionOutputList")!;
+            TextBlock OutputText() => Assert.Single(output.GetVisualDescendants().OfType<TextBlock>());
+            string[] CostTexts() => costs.GetVisualDescendants().OfType<TextBlock>().Select(item => item.Text!).ToArray();
+            Assert.Contains("20 legno lavorato", CostTexts());
+            Assert.Contains("10 pietra", CostTexts());
+            Assert.Equal("2 tronchi", OutputText().Text);
+            var costText = costs.GetVisualDescendants().OfType<TextBlock>().First();
+            Assert.Equal(costText.FontFamily, OutputText().FontFamily);
+            Assert.Equal(costText.FontSize, OutputText().FontSize);
+            Assert.Equal(costText.FontWeight, OutputText().FontWeight);
+            Assert.Equal("logs", Assert.Single(output.GetVisualDescendants().OfType<PixelGlyph>()).Key);
+            Assert.True(window.FindControl<PixelGlyph>("PopulationGlyph")!.IsEffectivelyVisible);
+            Assert.True(description.TranslatePoint(default, window)!.Value.Y + description.Bounds.Height <=
+                costs.TranslatePoint(default, window)!.Value.Y);
+            Assert.True(costs.TranslatePoint(default, window)!.Value.Y + costs.Bounds.Height <=
+                output.TranslatePoint(default, window)!.Value.Y);
+            Assert.True(output.TranslatePoint(default, window)!.Value.Y + output.Bounds.Height <
+                window.FindControl<ComboBox>("BatchSelector")!.TranslatePoint(default, window)!.Value.Y);
+
+            window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 5;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Contains("100 legno lavorato", CostTexts());
+            Assert.Contains("50 pietra", CostTexts());
+            Assert.Equal("COSTO PER 5 EDIFICI", window.FindControl<TextBlock>("ConstructionCostText")!.Text);
+            Assert.Equal("2 tronchi", OutputText().Text);
+            window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
+            Click(window, "BuildButton");
+            Assert.Equal("8 / 16", window.FindControl<TextBlock>("PopulationCountText")!.Text);
+            Assert.Equal("5 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "tree-feller");
+            Click(window, "BuildButton");
+            Click(window, "AssignButton");
+            Assert.Equal("4 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
+            var population = window.FindControl<Border>("PopulationCard")!;
+            var resources = window.FindControl<ItemsControl>("ResourceHighlights")!;
+            Assert.Equal(population.TranslatePoint(default, window)!.Value.Y, resources.TranslatePoint(default, window)!.Value.Y);
+            foreach (var bar in resources.GetVisualDescendants().OfType<ProgressBar>()
+                .Concat(population.GetVisualDescendants().OfType<ProgressBar>()))
+            {
+                var card = bar.GetVisualAncestors().OfType<Border>().First();
+                var position = bar.TranslatePoint(default, card)!.Value;
+                Assert.InRange(position.X, 0, card.Bounds.Width - bar.Bounds.Width);
+            }
+
+            foreach (var (name, index) in new[] { ("ResourcesNavigation", 1), ("BuildingsNavigation", 0) })
+            {
+                var navigation = window.FindControl<ListBoxItem>(name)!;
+                var position = navigation.TranslatePoint(default, window)!.Value;
+                Assert.InRange(position.X + navigation.Bounds.Width, 0, window.FindControl<Border>("SidebarPanel")!.Bounds.Width);
+                var point = navigation.TranslatePoint(new Point(navigation.Bounds.Width / 2, navigation.Bounds.Height / 2), window)!.Value;
+                window.MouseDown(point, MouseButton.Left);
+                window.MouseUp(point, MouseButton.Left);
+                Dispatcher.UIThread.RunJobs();
+                Assert.Equal(index, window.FindControl<TabControl>("Sections")!.SelectedIndex);
+                Assert.True(population.IsEffectivelyVisible);
+                Assert.True(resources.IsEffectivelyVisible);
+                if (index == 1) Assert.True(window.FindControl<ItemsControl>("ResourcesTable")!.IsEffectivelyVisible);
+            }
+            using var image = window.CaptureRenderedFrame();
+            Assert.NotNull(image);
+            var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+            if (!string.IsNullOrWhiteSpace(artifacts))
+            {
+                Directory.CreateDirectory(artifacts);
+                image.Save(Path.Combine(artifacts, $"structure-details-{width}.png"), PngBitmapEncoderOptions.Default);
+            }
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740, 0, "industry-buildings-compact.png", false)]
+    [InlineData(1240, 850, 0, "industry-buildings.png", false)]
+    [InlineData(1040, 740, 1, "industry-resources-compact.png", false)]
+    [InlineData(1240, 850, 1, "industry-resources.png", false)]
+    [InlineData(1040, 740, 0, "gold-buildings-compact.png", true)]
+    [InlineData(1240, 850, 0, "gold-buildings.png", true)]
+    [InlineData(1040, 740, 1, "gold-resources-compact.png", true)]
+    [InlineData(1240, 850, 1, "gold-resources.png", true)]
+    public async Task IndustrialCommandsShowPrerequisitesProductionAndScrollableResources(int width, int height, int section, string file, bool includeGold)
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var initial = GameSession.Create(scenario).Snapshot();
+        var store = new MemoryStore { Snapshot = initial with
+        {
+            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m), ("bread", 100m)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" ? item with { Count = 1 } : item)]
+        } };
+        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == (includeGold ? "gold-smelter" : "iron-smelter"));
+        Assert.Contains(includeGold ? "Miniera d'oro, Miniera di carbone" : "Miniera di ferro, Miniera di carbone", viewModel.Selected.Diagnosis);
+        Assert.False(viewModel.ConstructCommand.CanExecute(null));
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var diagnosis = window.FindControl<TextBlock>("ProductionDiagnosisText")!;
+            var build = window.FindControl<Button>("BuildButton")!;
+            Assert.True(diagnosis.Bounds.Height > 0);
+            Assert.True(diagnosis.TranslatePoint(default, window)!.Value.Y + diagnosis.Bounds.Height <=
+                build.TranslatePoint(default, window)!.Value.Y);
+            foreach (var id in includeGold ? new[] { "iron-mine", "coal-mine", "iron-smelter", "gold-mine", "gold-smelter" }
+                : new[] { "iron-mine", "coal-mine", "iron-smelter" })
+            {
+                viewModel.Selected = viewModel.Buildings.Single(item => item.Id == id);
+                Assert.True(viewModel.ConstructCommand.CanExecute(null));
+                viewModel.ConstructCommand.Execute(null);
+                viewModel.AssignCommand.Execute(null);
+                Assert.Equal(1, viewModel.Selected.Count);
+                Assert.Equal(1, viewModel.Selected.Workers);
+            }
+            viewModel.TogglePauseCommand.Execute(null);
+            viewModel.Advance(TimeSpan.FromSeconds(2));
+            viewModel.Pause();
+            Assert.Equal(1m, viewModel.View.Resources.Single(item => item.Id == "iron").Quantity);
+            if (includeGold) Assert.Equal(1m, viewModel.View.Resources.Single(item => item.Id == "gold").Quantity);
+            Assert.Equal("Pronto a produrre", viewModel.Selected.Status);
+            window.FindControl<ListBox>("BuildingsList")!.ScrollIntoView(viewModel.Selected);
+            window.FindControl<TabControl>("Sections")!.SelectedIndex = section;
+            Dispatcher.UIThread.RunJobs();
+            foreach (var name in section == 0 ? new[] { "PauseButton", "SaveButton", "BuildButton", "AssignButton" } : new[] { "PauseButton", "SaveButton" })
+            {
+                var button = window.FindControl<Button>(name)!;
+                Assert.True(button.IsEffectivelyVisible);
+                var point = button.TranslatePoint(default, window)!.Value;
+                Assert.InRange(point.Y, 0, window.ClientSize.Height - button.Bounds.Height);
+            }
+            Assert.Equal(14, viewModel.Resources.Count);
+            if (section == 1)
+            {
+                var scroll = window.FindControl<ScrollViewer>("ResourcesScroll")!;
+                Assert.InRange(scroll.TranslatePoint(default, window)!.Value.Y + scroll.Bounds.Height, 0, window.ClientSize.Height);
+            }
+            using var image = window.CaptureRenderedFrame();
+            Assert.NotNull(image);
+            var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+            if (!string.IsNullOrWhiteSpace(artifacts))
+            {
+                Directory.CreateDirectory(artifacts);
+                image.Save(Path.Combine(artifacts, file), PngBitmapEncoderOptions.Default);
+            }
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
     [Fact]
     public void OriginalRetroGlyphsCoverTheEntireCivilCatalog()
     {
@@ -163,7 +326,7 @@ public sealed class DesktopTests
         });
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new SqliteGameSaveStore(path));
         await viewModel.InitializeAsync();
-        Assert.Contains("civil-growth-1 a civil-growth-5", viewModel.Message);
+        Assert.Contains($"civil-growth-1 a {CivilGrowthScenario.RulesVersion}", viewModel.Message);
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
         Assert.Equal("+500 capacità per ogni risorsa per edificio", viewModel.Selected.Recipe);
         Assert.Equal("Da costruire", viewModel.Selected.Status);
@@ -198,7 +361,7 @@ public sealed class DesktopTests
         Assert.False(viewModel.ConstructCommand.CanExecute(null));
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "mill");
         Assert.Equal("2 grano → 1 farina", viewModel.Selected.Recipe);
-        Assert.Equal(8, viewModel.Resources.Count(item => item.Capacity == "1.000"));
+        Assert.Equal(viewModel.Resources.Count - 1, viewModel.Resources.Count(item => item.Capacity == "1.000"));
         Assert.Equal("100", viewModel.Resources.Single(item => item.Id == "bread").Capacity);
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "large-house");
         Assert.Equal(new[] { "Forno" }, viewModel.Selected.View.MissingPrerequisites);
@@ -259,17 +422,28 @@ public sealed class DesktopTests
             var pointer = build.TranslatePoint(new Point(build.Bounds.Width / 2, build.Bounds.Height / 2), window)!.Value;
             window.MouseMove(pointer);
             Dispatcher.UIThread.RunJobs();
-            Assert.Equal(Color.Parse("#259D80"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+            Assert.Equal(Color.Parse("#E6D5AC"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+            var presenter = build.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>()
+                .Single(item => item.Name == "PART_ContentPresenter");
+            Assert.Equal(Color.Parse("#E6D5AC"), Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Background).Color);
+            Assert.Equal(Color.Parse("#263349"), Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Foreground).Color);
             Assert.Equal(originalGeometry, stableControls.Select(control =>
                 (Position: control.TranslatePoint(default, window)!.Value, Size: control.Bounds.Size)).ToArray());
 
             // Il puntatore resta sul comando mentre l'acquisto esaurisce le risorse.
-            // In questo stato il bottone disabilitato non deve mantenere l'hover verde.
+            // In questo stato il bottone disabilitato non deve mantenere l'hover ocra.
             viewModel.ConstructCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
             Assert.False(viewModel.ConstructCommand.CanExecute(null));
             Assert.False(build.IsEffectivelyEnabled);
             Assert.Equal(Color.Parse("#B8C2BC"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+
+            var save = window.FindControl<Button>("SaveButton")!;
+            window.MouseMove(save.TranslatePoint(new Point(save.Bounds.Width / 2, save.Bounds.Height / 2), window)!.Value);
+            Dispatcher.UIThread.RunJobs();
+            var savePresenter = save.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>()
+                .Single(item => item.Name == "PART_ContentPresenter");
+            Assert.Equal(Color.Parse("#E6D5AC"), Assert.IsAssignableFrom<ISolidColorBrush>(savePresenter.Background).Color);
             Assert.Equal(originalGeometry, stableControls.Select(control =>
                 (Position: control.TranslatePoint(default, window)!.Value, Size: control.Bounds.Size)).ToArray());
 
@@ -521,7 +695,7 @@ public sealed class DesktopTests
             }
             var growthBar = window.FindControl<ProgressBar>("GrowthProgressBar")!;
             var growthPosition = growthBar.TranslatePoint(default, window)!.Value;
-            Assert.InRange(growthPosition.X, 22, 185 - growthBar.Bounds.Width);
+            Assert.InRange(growthPosition.X, 22, window.FindControl<Border>("SidebarPanel")!.Bounds.Width - growthBar.Bounds.Width);
             using var image = window.CaptureRenderedFrame();
             Assert.NotNull(image);
             var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");

@@ -1,5 +1,9 @@
 <Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="SimRisorse.Desktop.App" RequestedThemeVariant="Light">
+  <Application.Resources>
+    <FontFamily x:Key="ContentControlThemeFontFamily">Consolas, DejaVu Sans Mono, Liberation Mono, Courier New</FontFamily>
+    <SolidColorBrush x:Key="SelectionBackground" Color="#E6D5AC" />
+  </Application.Resources>
   <Application.Styles>
     <FluentTheme />
     <Style Selector="Button">
@@ -8,12 +12,16 @@
       <Setter Property="BorderThickness" Value="1" />
     </Style>
     <Style Selector="Button.primary"><Setter Property="Background" Value="#176858" /><Setter Property="Foreground" Value="White" /></Style>
+    <Style Selector="Button:pointerover:not(:disabled):not(:pressed)">
+      <Setter Property="Background" Value="{StaticResource SelectionBackground}" /><Setter Property="Foreground" Value="#263349" />
+      <Setter Property="BorderBrush" Value="#9A6947" />
+    </Style>
+    <Style Selector="Button:pointerover:not(:disabled):not(:pressed) /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource SelectionBackground}" /><Setter Property="Foreground" Value="#263349" />
+      <Setter Property="BorderBrush" Value="#9A6947" />
+    </Style>
     <!-- Lo spessore del bordo resta identico in tutti gli stati: niente salti di layout in hover. -->
     <Style Selector="Button.primary.build"><Setter Property="BorderThickness" Value="1" /><Setter Property="BorderBrush" Value="#176858" /></Style>
-    <Style Selector="Button.primary.build:pointerover">
-      <Setter Property="Background" Value="#259D80" /><Setter Property="Foreground" Value="White" />
-      <Setter Property="BorderBrush" Value="#145A48" />
-    </Style>
     <Style Selector="Button.primary.build:pressed">
       <Setter Property="Background" Value="#105443" /><Setter Property="Foreground" Value="White" />
     </Style>
@@ -23,6 +31,13 @@
     </Style>
     <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="#66766E" /><Setter Property="FontSize" Value="12" /></Style>
     <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#EFE6CF" /></Style>
-    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#E6D5AC" /></Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{StaticResource SelectionBackground}" /></Style>
+    <Style Selector="ListBox.navigation ListBoxItem">
+      <Setter Property="Foreground" Value="#D0D7D4" /><Setter Property="Padding" Value="12,8" />
+      <Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ListBox.navigation ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#394B60" /></Style>
+    <Style Selector="ListBox.navigation ListBoxItem:selected"><Setter Property="Foreground" Value="White" /></Style>
+    <Style Selector="ListBox.navigation ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#176858" /><Setter Property="Foreground" Value="White" /></Style>
   </Application.Styles>
 </Application>

@@ -14,11 +14,137 @@ namespace SimRisorse.Infrastructure.Tests;
 public sealed class SaveStoreTests
 {
     [Fact]
-    public async Task LegacyGrowthSecondsUpgradeAndFractionalBonusSurviveSQLiteWithBackup()
+    public async Task GoldUpgradePreservesIronStocksWorkersAndExistingWarehouseAndBacksUpV6()
+    {
+        using var database = new TestDatabase();
+        var oldScenario = CivilGrowthScenario.CreateIronForBenchmarks();
+        var initial = GameSession.Create(oldScenario).Snapshot();
+        var old = GameSession.Restore(oldScenario, initial with
+        {
+            Resources = ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m), ("bread", 100m)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" or "warehouse"
+                ? item with { Count = 1 } : item)]
+        });
+        foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter" }) BuildAndStaff(old, id);
+        old.Resume();
+        Assert.True(old.Advance(TimeSpan.FromMilliseconds(5500)).Succeeded);
+        var original = old.Snapshot();
+        Assert.Equal(4m, original.Resources["iron"].Units);
+        Assert.NotEqual(0, original.GrowthRemainderTwentieths);
+        database.Store.Save(original);
+        var bytes = File.ReadAllBytes(database.PathName);
+        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var loaded = await new LoadGameHandler(runtime, database.Store).HandleAsync();
+        Assert.True(loaded.Succeeded);
+        Assert.True(loaded.View.IsPaused);
+        Assert.Equal("civil-growth-6", loaded.UpgradedFromRules);
+        Assert.Equal("civil-growth-7", loaded.View.RulesVersion);
+        Assert.Equal(original.ElapsedTicks, loaded.View.ElapsedTicks);
+        Assert.Equal(original.GrowthProgressSeconds, loaded.View.PopulationState.ProgressSeconds);
+        Assert.Equal(original.GrowthRemainderTwentieths, loaded.View.PopulationState.GrowthRemainderTwentieths);
+        foreach (var resource in loaded.View.Resources)
+            Assert.Equal(original.Resources[resource.Id].Units, resource.Quantity);
+        foreach (var building in original.Buildings)
+        {
+            var actual = loaded.View.Buildings.Single(item => item.Id == building.BuildingId);
+            Assert.Equal(building.Count, actual.Count);
+            Assert.Equal(building.AssignedWorkers, actual.AssignedWorkers);
+        }
+        foreach (var id in new[] { "gold", "gold-ore" })
+        {
+            Assert.Equal(0m, loaded.View.Resources.Single(item => item.Id == id).Quantity);
+            Assert.Equal(1500m, loaded.View.Resources.Single(item => item.Id == id).Capacity);
+        }
+        Assert.Equal(bytes, File.ReadAllBytes(database.PathName));
+        Assert.Single(Directory.GetFiles(database.DirectoryName));
+        Assert.True((await new SaveGameHandler(runtime, database.Store).HandleAsync()).Succeeded);
+        Equal(original, new SqliteGameSaveStore(Path.Combine(database.DirectoryName, "game.civil-growth-6.backup.sqlite3")).Load());
+        Assert.Equal(2, database.Store.Load().FormatVersion);
+        Assert.Equal("civil-growth-7", database.Store.Load().RulesVersion);
+    }
+
+    [Fact]
+    public async Task IndustrialUpgradePreservesTheV5CheckpointAndBacksItUpBeforeTheFirstWrite()
+    {
+        using var database = new TestDatabase();
+        var old = GameSession.Create(CivilGrowthScenario.CreateAcceleratedForBenchmarks());
+        Assert.True(old.Construct("small-house", 1).Succeeded);
+        old.Resume();
+        Assert.True(old.Advance(TimeSpan.FromMilliseconds(52500)).Succeeded);
+        var original = old.Snapshot();
+        Assert.NotEqual(0, original.GrowthRemainderTwentieths);
+        database.Store.Save(original);
+        var bytes = File.ReadAllBytes(database.PathName);
+        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var result = await new LoadGameHandler(runtime, database.Store).HandleAsync();
+        Assert.True(result.Succeeded);
+        Assert.True(result.View.IsPaused);
+        Assert.Equal("civil-growth-5", result.UpgradedFromRules);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, result.View.RulesVersion);
+        Assert.Equal(original.ElapsedTicks, result.View.ElapsedTicks);
+        Assert.Equal(original.GrowthProgressSeconds, result.View.PopulationState.ProgressSeconds);
+        Assert.Equal(original.GrowthRemainderTwentieths, result.View.PopulationState.GrowthRemainderTwentieths);
+        foreach (var resource in result.View.Resources)
+            Assert.Equal(original.Resources[resource.Id].Units, resource.Quantity);
+        foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter" })
+        {
+            Assert.Equal(0, result.View.Buildings.Single(item => item.Id == id).Count);
+            Assert.Equal(0, result.View.Buildings.Single(item => item.Id == id).AssignedWorkers);
+        }
+        Assert.Equal(bytes, File.ReadAllBytes(database.PathName));
+        Assert.Single(Directory.GetFiles(database.DirectoryName));
+        Assert.True((await new SaveGameHandler(runtime, database.Store).HandleAsync()).Succeeded);
+        var backup = Path.Combine(database.DirectoryName, "game.civil-growth-5.backup.sqlite3");
+        Equal(original, new SqliteGameSaveStore(backup).Load());
+        var upgraded = database.Store.Load();
+        Assert.Equal(2, upgraded.FormatVersion);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, upgraded.RulesVersion);
+        Assert.True((await new SaveGameHandler(runtime, database.Store).HandleAsync()).Succeeded);
+        Assert.Equal(2, Directory.GetFiles(database.DirectoryName).Length);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void IndustrialStocksWorkersAndFractionalTimeResumeExactlyFromSQLite(bool includeGold)
     {
         using var database = new TestDatabase();
         var scenario = CivilGrowthScenario.Create();
         var initial = GameSession.Create(scenario).Snapshot();
+        var game = GameSession.Restore(scenario, initial with
+        {
+            Resources = ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m), ("bread", 100m)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" ? item with { Count = 1 } : item)]
+        });
+        foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter" }) BuildAndStaff(game, id);
+        if (includeGold)
+            foreach (var id in new[] { "gold-mine", "gold-smelter" }) BuildAndStaff(game, id);
+        game.Resume();
+        Assert.True(game.Advance(TimeSpan.FromMilliseconds(5500)).Succeeded);
+        Assert.Equal(4m, game.Resources["iron"].Units);
+        if (includeGold) Assert.Equal(4m, game.Resources["gold"].Units);
+        database.Store.Save(game.Snapshot());
+        var resumed = GameSession.Restore(scenario, database.Store.Load());
+        Assert.True(resumed.IsPaused);
+        Assert.True(resumed.Advance(TimeSpan.FromHours(1)).Succeeded);
+        Equal(game.Snapshot(), resumed.Snapshot());
+        resumed.Resume();
+        Assert.True(game.Advance(TimeSpan.FromMilliseconds(500)).Succeeded);
+        Assert.True(resumed.Advance(TimeSpan.FromMilliseconds(500)).Succeeded);
+        Assert.Equal(5m, resumed.Resources["iron"].Units);
+        if (includeGold) Assert.Equal(5m, resumed.Resources["gold"].Units);
+        Equal(game.Snapshot(), resumed.Snapshot());
+        Assert.True(game.Advance(TimeSpan.FromSeconds(60)).Succeeded);
+        Assert.True(resumed.Advance(TimeSpan.FromSeconds(60)).Succeeded);
+        Equal(game.Snapshot(), resumed.Snapshot());
+    }
+
+    [Fact]
+    public async Task LegacyGrowthSecondsUpgradeAndFractionalBonusSurviveSQLiteWithBackup()
+    {
+        using var database = new TestDatabase();
+        var scenario = CivilGrowthScenario.Create();
+        var initial = GameSession.Create(CivilGrowthScenario.CreateAcceleratedForBenchmarks()).Snapshot();
         var previous = initial with
         {
             RulesVersion = "civil-growth-4",
@@ -32,7 +158,7 @@ public sealed class SaveStoreTests
         var loaded = await new LoadGameHandler(runtime, database.Store).HandleAsync();
         Assert.True(loaded.Succeeded);
         Assert.Equal("civil-growth-4", loaded.UpgradedFromRules);
-        Assert.Equal("civil-growth-5", loaded.View.RulesVersion);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, loaded.View.RulesVersion);
         Assert.Equal(59, loaded.View.PopulationState.ProgressSeconds);
         Assert.Equal(0, loaded.View.PopulationState.GrowthRemainderTwentieths);
 
@@ -41,7 +167,7 @@ public sealed class SaveStoreTests
         Assert.True(File.Exists(backup));
         Equal(previous, new SqliteGameSaveStore(backup).Load());
         var converted = database.Store.Load();
-        Assert.Equal("civil-growth-5", converted.RulesVersion);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, converted.RulesVersion);
         var game = GameSession.Restore(scenario, converted);
         game.Resume();
         game.Advance(TimeSpan.FromSeconds(1));
@@ -72,7 +198,7 @@ public sealed class SaveStoreTests
     {
         using var database = new TestDatabase();
         var scenario = CivilGrowthScenario.Create();
-        var current = GameSession.Create(scenario).Snapshot();
+        var current = GameSession.Create(CivilGrowthScenario.CreateAcceleratedForBenchmarks()).Snapshot();
         var previous = current with
         {
             RulesVersion = "civil-growth-3",
@@ -87,7 +213,7 @@ public sealed class SaveStoreTests
         Assert.True(loaded.Succeeded);
         Assert.Equal("civil-growth-3", loaded.UpgradedFromRules);
         Assert.True(loaded.View.IsPaused);
-        Assert.Equal("civil-growth-5", loaded.View.RulesVersion);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, loaded.View.RulesVersion);
         Assert.Equal(123.456m, loaded.View.Resources.Single(item => item.Id == "food").Quantity);
         Assert.Equal(0m, loaded.View.Resources.Single(item => item.Id == "bread").Quantity);
         Assert.Equal(100m, loaded.View.Resources.Single(item => item.Id == "bread").Capacity);
@@ -100,7 +226,7 @@ public sealed class SaveStoreTests
         Assert.True(File.Exists(backup));
         Equal(previous, new SqliteGameSaveStore(backup).Load());
         var updated = database.Store.Load();
-        Assert.Equal("civil-growth-5", updated.RulesVersion);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, updated.RulesVersion);
         Assert.Equal(2, updated.FormatVersion);
         Assert.Equal(123.456m, updated.Resources["food"].Units);
         Assert.Equal(0m, updated.Resources["bread"].Units);
@@ -242,11 +368,11 @@ public sealed class SaveStoreTests
         Assert.Equal(2, Directory.GetFiles(database.DirectoryName).Length);
 
         database.Store.Save(previous with { RulesVersion = "../other rules" });
-        Assert.True(File.Exists(Path.Combine(database.DirectoryName, "game.civil-growth-5.backup.sqlite3")));
+        Assert.True(File.Exists(Path.Combine(database.DirectoryName, $"game.{CivilGrowthScenario.RulesVersion}.backup.sqlite3")));
         database.Store.Save(current);
         Assert.True(File.Exists(Path.Combine(database.DirectoryName, "game.___other_rules.backup.sqlite3")));
         database.Store.Save(previous);
-        Assert.True(File.Exists(Path.Combine(database.DirectoryName, "game.civil-growth-5.backup-2.sqlite3")));
+        Assert.True(File.Exists(Path.Combine(database.DirectoryName, $"game.{CivilGrowthScenario.RulesVersion}.backup-2.sqlite3")));
         Equal(previous, new SqliteGameSaveStore(backup).Load());
     }
 

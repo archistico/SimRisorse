@@ -2,9 +2,11 @@
 
 Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** il lettore dei benchmark; **M4.13** l'audit aritmetico delle abitazioni; **M4.14** la [scheda decisionale D0](design/D0_DECISION_BOARD.md); **M4.15** la [prefattibilità M5.4 navale](design/M5_4_NAVAL_PREFEASIBILITY.md). Il gate Windows e la lettura quantitativa sono ora eseguiti. Questo documento distingue implementazione, verifica e decisioni aperte. Lo storico è nel [changelog](../CHANGELOG.md); il punto di ripresa è in [HANDOFF.md](HANDOFF.md).
 
-**Aggiornamento effettivamente verificato su Windows:** corretto `PixelGlyph`, `.\validate.cmd` superato con **177/177 test**, zero avvisi/errori, benchmark e prove native di entrambi gli scenari completati. Eseguito il lettore M4.12 e ispezionati i nove render; [misure e limiti](validation/M4_MEASURED_RESULTS.md). Questo esito aggiorna i riferimenti al gate pendente nelle sezioni storiche. M4 resta aperta per giudizio utente sul prototipo e classificazione della demolizione; Carne è fuori dalla prima campagna per D0.1. Le altre decisioni D0 restano da prendere.
+**Ultimo esito verificato su Windows:** `.\validate.cmd` superato con **204/204 test**, zero avvisi/errori, benchmark e prove native di entrambi gli scenari completati. M4 chiusa; M5.1b Oro integrata. [Report corrente](validation/M5_1B_GOLD.md). Gli stati pendenti nelle sezioni storiche descrivono le fasi precedenti.
 
 ## 1. Stato attuale
+
+**Aggiornamento corrente:** M4 chiusa; D0.1/D0.2/ruolo D0.3, S1 e base grafica scelti. Configurazioni A di Ferro e Oro approvate con risposte distinte. **M5.1b verificata**, `civil-growth-7`, **17 edifici / 14 risorse**, **204/204 test**, 17 render e smoke superati. Prossima M5.1c scala/contesa; Forgia e Zecca richiedono i loro parametri e contratti.
 
 | Milestone | Risultato | Stato |
 | --- | --- | --- |
@@ -12,16 +14,16 @@ Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 | **M1** | Prova dello stack .NET/Avalonia/SQLite | **Completata e verificata** |
 | **M2** | Motore economico indipendente dalla GUI | **Completata e verificata** |
 | **M3** | Prima partita desktop salvabile | **Completata e verificata** |
-| **M4** | Crescita civile, abitazioni e Pane | **Gate tecnico verificato; chiusura progettuale in corso** |
-| **M5** | Economia avanzata, esercito e isole | **Da progettare dopo il gate di design** |
+| **M4** | Crescita civile, abitazioni e Pane | **Chiusa e verificata; demolizione rinviata** |
+| **M5** | Economia avanzata, esercito e isole | **M5.1a Ferro e M5.1b Oro verificate; prossima scala/contesa** |
 | **M6** | Vittoria, risultati e bilanciamento globale | **Da avviare dopo M5** |
 | **M7** | Qualità finale e distribuzione | **Da avviare dopo M6** |
 
-**Baseline corrente:** C#/.NET 10, Avalonia 12.1.4, SQLite; regole `civil-growth-5`, **12 tipi di edifici**, **9 risorse**. La GUI attuale è provvisoria; lo stile finale **pixel art retro 8-bit essenziale** è stato scelto dall'utente e resta un vincolo confermato. Costruzioni tramite elenco o schede, **senza mappa di posizionamento**.
+**Baseline corrente:** C#/.NET 10, Avalonia 12.1.4, SQLite v2; regole `civil-growth-7`, **17 tipi di edifici**, **14 risorse**. GUI retro monospace accettata; costruzioni tramite elenco o schede, **senza mappa di posizionamento**.
 
-**Validazione corrente:** esecuzione Windows `98d961210607483a8afe8d708039efab`, SDK 10.0.201, **177 test superati** (Core 67, Application 46, Infrastructure 26, Desktop 38). Quattro TRX e nove PNG ispezionati; copie dei JSON e impronte conservate nel run. I precedenti gate riferiti dall'utente restano parte dello storico.
+**Validazione corrente:** esecuzione Windows `326e28fa96b14ecb83a1dc8d4433d547`, SDK 10.0.201, **204 test superati** (Core 67, Application 61, Infrastructure 30, Desktop 46), zero avvisi/errori, 17 render generati e smoke nativi superati. I precedenti gate restano nello storico.
 
-**D0.1 approvata dall'utente:** [prima campagna con 22 tipi](design/FIRST_CAMPAIGN_PROPOSAL.md), 12 presenti e 10 futuri; altri 21 riferimenti fuori dalla prima campagna. Carne e relativi edifici sono fuori dal primo catalogo. Vittoria, isole, prezzi, ricette, contratti militari/navali e scelta S1/S2 sono distinti e ancora aperti.
+**Scelte ricevute:** [prima campagna con 22 tipi](design/FIRST_CAMPAIGN_PROPOSAL.md), 17 presenti e 5 futuri; altri 21 riferimenti fuori. Possesso dei 22 tipi e Castello dopo una conquista obbligatoria. Base grafica approvata, demolizione rinviata, S1 e configurazioni A di Ferro/Oro scelte. Parametri di Forgia/Zecca e contratti militari/navali restano distinti.
 
 **Evidenza preparatoria M5.1:** [prova industriale A/B separata](../experiments/industry-probe/README.md) eseguita: otto confronti con acquisti in blocco/progressivi, due modalità di avanzamento, saturazione e ripresa delle fonderie. Ipotesi misurate in una colonia sintetica, senza integrazione nel desktop o approvazione dei parametri. Nuovo gate principale `4c51d35a1c924fdca6656687e8f21e0e`: **177/177 test**, simulazioni e smoke superati.
 
@@ -259,11 +261,11 @@ Asset **originali o con licenza compatibile**. La direzione è descritta in [PIX
 | Priorità | Tema | Stato | Prima di |
 | --- | --- | --- | --- |
 | Alta | Catalogo della prima campagna, fra i 43 tipi di riferimento | **Scelti 22 tipi; altri 21 fuori**. Contratto di vittoria distinto | Gate di design M5 |
-| Alta | Vittoria Q-01 e conquiste obbligatorie Q-02 | **Da decidere** | Gate di design M5 |
+| Alta | Vittoria Q-01 e conquiste Q-02 | **Scelte:** possesso dei 22 tipi, Castello dopo una conquista obbligatoria; parametri missione aperti | Implementazioni M5.5–M6 |
 | Alta | Reclutamento, perdite, mantenimento Q-09 | **Da decidere** | M5.3 |
 | Alta | Ruolo di Spade/Monete, impiego nei comandi e fonte coloniale alternativa | **Da decidere** | M5.2 / M5.3 / M5.4 |
 | Media | Carne: filiera civile alternativa o vettovagliamento militare | **Fuori dalla prima campagna per D0.1**; eventuale ruolo futuro da decidere | Nuova ricetta/missione che la usi |
-| Media | Demolizione Q-08; 25% rimborso solo candidato | **Da decidere** | Eventuale funzionalità di demolizione |
+| Media | Demolizione Q-08; 25% rimborso solo candidato | **Rinviata dall'utente** | Eventuale incremento successivo |
 | Media | Tempo 1:1 oppure accelerazione e impatto sulla classifica | **Da decidere per il gioco completo** | M6.6 |
 | Successiva | Classifica locale o pubblica Q-10 | **Da decidere** | Eventuale servizio pubblico |
 
@@ -281,4 +283,4 @@ Ogni incremento futuro deve comunicare sempre questi cinque elementi, anche quan
 
 Lo stato deve usare esplicitamente **Proposto / Implementato non validato / Verificato / Rinviato**. Una conferma dell'utente sui test è un gate riferito dall'utente; il report numerico locale non va inventato. I documenti da allineare sono [game design](GAME_DESIGN.md), [handoff](HANDOFF.md), [changelog](../CHANGELOG.md) e gli ADR pertinenti. Le regole nuove richiedono una scelta dell'utente; un piano o uno studio non autorizza ad applicarle.
 
-**Prossima sequenza consigliata:** giudizio utente sul prototipo e classificazione di Carne/demolizione, con [gate e misure M4 già verificati](validation/M4_MEASURED_RESULTS.md) → chiusura M4 → **scelte nella scheda D0** (catalogo/vittoria/isole/militari, uso di Spade e Monete) → scelta **S1/S2 per i salvataggi** e raggiungibilità D0.6 → M5.1a ferro/carbone, M5.1b oro, M5.1c scala/contesa → M5.2a Forgia, M5.2b Zecca, M5.2c contesa → M5.3 Caserma e reclutamento → M5.4a–c Cantiere/flotta/preflight (modello e costi navali da approvare) → M5.5–M5.7 missioni, isole e progressione avanzata. Nessuna proposta M5 è resa operativa dal superamento dei test.
+**Prossima sequenza:** contesa/scala M5.1c → contratti Spade/Monete e M5.2 Forgia/Zecca → regole di reclutamento e M5.3 Caserma → parametri navali e M5.4 Cantiere/flotta → M5.5–M5.7 missioni, conquista obbligatoria e Castello → M6 vittoria/classifica. M4, catalogo/vittoria/ruolo della conquista/S1 e parametri A di M5.1a/b sono acquisiti; non richiedono nuova conferma.

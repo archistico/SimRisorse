@@ -10,7 +10,7 @@ internal static class IndustryScenario
     // Hypotheses from the M5.1 dossier, scoped exclusively to this executable.
     internal static GameScenario Create(bool expensive)
     {
-        var civil = CivilGrowthScenario.Create();
+        var civil = CivilGrowthScenario.CreateAcceleratedForBenchmarks();
         var multiplier = expensive ? 1.5m : 1m;
         ResourceBundle Cost(decimal planks, decimal stone) =>
             ResourceBundle.Create(("planks", planks * multiplier), ("stone", stone * multiplier));

@@ -44,7 +44,7 @@ internal static class IndustryBenchmark
             results.Add(whole.Result);
         }
         return new("Experimental hypotheses; prices and recipes are not adopted gameplay rules", "industry-probe",
-            CivilGrowthScenario.RulesVersion, 40,
+            CivilGrowthScenario.CreateAcceleratedForBenchmarks().Catalog.RulesVersion, 40,
             "Seeded civilian colony: 40 housing places, 10 assigned workers, food=100, bread=100; all other stocks zero",
             HorizonSeconds, 1,
             "Compare saving the full industrial budget (buying a warehouse if needed) with buying and staffing each supplier as soon as affordable, in the disclosed construction order",

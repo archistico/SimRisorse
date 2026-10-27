@@ -6,20 +6,20 @@ La scelta centrale è come investire risorse e lavoratori: espandere la produzio
 
 ## Stato del progetto
 
-**27 ottobre 2026: M0–M3 completate; gate tecnico M4 verificato su Windows con 177/177 test superati.** La [soluzione definitiva](SimRisorse.slnx) comprende motore, GUI, salvataggi SQLite e simulatore. Dopo la correzione dei pennelli condivisi di `PixelGlyph`, `.\validate.cmd` completa build Release senza avvisi/errori, simulazioni, quattro benchmark e prove native di entrambi gli scenari. Ispezionati quattro TRX e nove render, eseguito il [lettore dei benchmark M4](docs/validation/M4_BENCHMARK_READER.md); [misure, provenienza e limiti](docs/validation/M4_MEASURED_RESULTS.md).
+**27 ottobre 2026: M0–M4 completate; M5.1b Oro verificata su Windows con 204/204 test.** La [soluzione](SimRisorse.slnx) comprende motore, GUI, salvataggi SQLite e simulatore. `.\validate.cmd` completa build senza avvisi/errori, 16 cronologie più la prova di crescita, quattro benchmark, 17 render e prove native di entrambi gli scenari. [Risultati M5.1b](docs/validation/M5_1B_GOLD.md).
 
-Lo [scenario Civil Growth](docs/scenarios/CIVIL_GROWTH.md) usa `civil-growth-5`: ogni Casa piccola oltre la prima accelera la crescita del 15%, ogni Casa grande del 30%, fino al doppio della velocità, conservando la frazione nel salvataggio. Il prototipo GUI **pixel art retro 8-bit essenziale** include pittogrammi per 12 edifici e 9 risorse. M4 resta da chiudere con il giudizio utente sul prototipo e la classificazione della demolizione; Carne è fuori dalla prima campagna per D0.1. Esercito, isole, vittoria e classifica appartengono alle milestone successive; la [scheda D0](docs/design/D0_DECISION_BOARD.md) e gli studi M5 distinguono il perimetro scelto dalle regole ancora da approvare.
+Lo scenario `civil-growth-7` ha **17 tipi di edifici e 14 risorse**. La Casa grande sblocca le miniere di ferro, carbone e oro; le rispettive miniere sbloccano le due fonderie. L'utente ha scelto i parametri A del Ferro e poi dell'Oro, mantenendo **S1**, conversione e backup. Il Ferro ha priorità con carbone scarso; una seconda miniera sostiene più lavorazioni. Crescita, Cibo/Pane, formato SQLite v2 e GUI retro **Consolas monospace** sono conservati. Carne fuori dalla prima campagna e demolizione rinviata.
 
-**Catalogo futuro scelto dall'utente (D0.1):** [prima campagna con 22 tipi](docs/design/FIRST_CAMPAIGN_PROPOSAL.md), i 12 già presenti più 10 industriali, militari e navali. Gli altri 21 riferimenti, inclusi Cacciatore e Allevamento, sono fuori dalla prima campagna. È una scelta di perimetro; i tipi nuovi non sono ancora implementati e prezzi, ricette e vittoria restano distinti.
+**Prima campagna scelta:** [22 tipi](docs/design/FIRST_CAMPAIGN_PROPOSAL.md), di cui 17 presenti e 5 futuri. Per vincere occorrerà possederli tutti, con il Castello conclusivo sbloccato da una conquista obbligatoria. Vittoria e missioni sono contratti scelti, ancora da implementare. Prezzi di Forgia/Zecca e regole militari/navali restano decisioni separate.
 
-La [roadmap operativa](docs/ROADMAP.md) distingue **M4.6–M4.8** (benchmark e diagnostica), **M4.9** (GUI compatta, hover), **M4.10** (crescita accelerata e migrazione sicura), **M4.11** (prototipo 8-bit), **M4.12** (lettura quantitativa dei risultati), **M4.13** (audit degli incentivi abitativi), **M4.14** (decisioni D0) e **M4.15** (prefattibilità navale). I dati numerici degli stress precedenti restano utili e i benchmark `civil-growth-4` sono preservati come confronto storico. I dossier [D0](docs/design/PRE_M5_DECISION_GATE.md), [M5.1](docs/design/M5_1_INDUSTRY_PREFEASIBILITY.md), [M5.2](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md), [M5.3](docs/design/M5_3_ARMY_PREFEASIBILITY.md) e [M5.4](docs/design/M5_4_NAVAL_PREFEASIBILITY.md) restano **studi non approvati**. Seguono M5–M7: nessuna filiera o regola militare/navale è stata introdotta.
+La [roadmap](docs/ROADMAP.md) conserva la progressione M4 e distingue M5.1a verificata dagli incrementi futuri. I benchmark abitativi `civil-growth-4` e `-5` restano riproducibili. I dossier [M5.2](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md), [M5.3](docs/design/M5_3_ARMY_PREFEASIBILITY.md) e [M5.4](docs/design/M5_4_NAVAL_PREFEASIBILITY.md) preparano regole ancora da scegliere: esercito, navi, isole e vittoria non sono ancora implementati.
 
 L'impostazione tecnica adottata è un monolite modulare con funzionalità verticali e un motore indipendente dall'interfaccia. **C#/.NET 10, Avalonia 12.1.4/MVVM e SQLite sono lo stack desktop**, con Microsoft.Data.Sqlite 10.0.14. Core e Application usano solo il framework e i riferimenti interni previsti. Windows è verificato, Linux/macOS non ancora. Compatibilità dei salvataggi e controllo puntuale delle dipendenze sono descritti nel [report della migrazione](docs/validation/AVALONIA_12.md); l'audit CLI dell'ambiente incontra ancora un errore TLS.
 
 ## Scelte di gioco confermate
 
 - Edifici gestiti tramite elenco e schede, senza collocamento su una mappa.
-- Identità grafica: **pixel art retro 8-bit essenziale**, confermata; v25 introduce un primo prototipo Avalonia, ancora da validare e perfezionare prima della GUI definitiva.
+- Identità grafica: **pixel art retro 8-bit essenziale**, con prototipo monospace approvato e verificato; rifiniture e DPI fisici da ampliare.
 - Produzione e progressione dipendenti dalle quantità di edifici e dall'impiego dei lavoratori.
 - Presenza di soldati e progressione verso castelli e missioni di conquista delle isole.
 - Partite sospendibili: nessun avanzamento durante la pausa o quando non si gioca.
@@ -39,7 +39,7 @@ La definizione esatta di vittoria, il ruolo obbligatorio delle isole e le formul
 | [Sviluppo](docs/DEVELOPMENT.md) | Convenzioni, verifiche e gestione dei cambiamenti |
 | [Handoff](docs/HANDOFF.md) | Stato operativo e prossimo lavoro da riprendere |
 | [Dossier pre-M5 / D0](docs/design/PRE_M5_DECISION_GATE.md) | Inventario dei 43 riferimenti, 12 equivalenti presenti, opzioni di vittoria, isole, militari e criteri di scelta |
-| [Scheda operativa D0](docs/design/D0_DECISION_BOARD.md) | Otto decisioni da approvare, dipendenze M4–M7, versione corrente `civil-growth-5` e scelta S1/S2 dei salvataggi |
+| [Scheda operativa D0](docs/design/D0_DECISION_BOARD.md) | Scelte ricevute e parametri residui; regole correnti v6, continuità S1 e prossimi incrementi |
 | [Prima campagna](docs/design/FIRST_CAMPAIGN_PROPOSAL.md) | Catalogo dei 22 tipi scelto dall'utente; proposta separata di vittoria, prima conquista e casi di accettazione |
 | [Prova industriale A/B](experiments/industry-probe/README.md) | Esperimento opzionale eseguito: ferro/oro, prezzi ipotetici e politiche di acquisto; regole separate dalla partita |
 | [Prefattibilità M5.1](docs/design/M5_1_INDUSTRY_PREFEASIBILITY.md) | Ferro/carbone, oro, contesa, due ipotesi di prezzi, capacità, migrazioni e gate di verifica (nessun codice M5) |
@@ -65,6 +65,8 @@ La definizione esatta di vittoria, il ruolo obbligatorio delle isole e le formul
 | [Valutazione filiera Carne](docs/scenarios/MEAT_DESIGN_REVIEW.md) | Alternative e decisioni ancora aperte, senza introdurre meccaniche non approvate |
 | [Studio demolizione M4](docs/scenarios/DEMOLITION_M4_REVIEW.md) | Confronto dei rimborsi e condizioni per non perdere capacità, persone o scorte |
 | [Verifiche M4](docs/validation/M4_CIVIL_GROWTH.md) | Cronologia delle verifiche; gate corrente superato con 177/177 test |
+| [Verifica M5.1a](docs/validation/M5_1A_IRON.md) | Ferro/carbone giocabili, conversione S1, 191 test e misure da nuova partita |
+| [Verifica M5.1b](docs/validation/M5_1B_GOLD.md) | Oro giocabile, priorità sul carbone, conversione v6→v7, 204 test e misure |
 | [Risultati misurati M4](docs/validation/M4_MEASURED_RESULTS.md) | Quattro benchmark letti, nove render ispezionati, provenienza e decisioni residue |
 | [Lettura benchmark M4](docs/validation/M4_BENCHMARK_READER.md) | Utility v26, quattro JSON storici/accelerati, confronti misurati e limiti della prova |
 
@@ -123,7 +125,7 @@ Le viste Edifici e Risorse mostrano quantità, capacità, costi, personale e flu
 
 Per i residenti avanzati, la barra Crescita include una diagnosi del rifornimento di Pane: differenzia capacità nominale dei Forni, input insufficienti e deposito quasi pieno, con un'autonomia indicativa della scorta senza nuove forniture. Il gate v17 comprendente questa diagnostica è stato riferito superato dall'utente; i dettagli visivi e i relativi screenshot non sono allegati.
 
-La diagnosi proviene dal modello di lettura di Application, indipendente dalla grafica, ed è riutilizzata nel prototipo 8-bit. Se Cibo e Pane mancano insieme prima del primo residente avanzato, vengono segnalate entrambe le necessità senza modificare la priorità della simulazione. Il gate corrente è **verificato su Windows: 177/177 test superati**. Il prototipo conserva avvisi sopra Costruisci senza scorrimento, hover distinto dallo stato disabilitato e bordo a spessore invariato; i render alle due risoluzioni sono stati ispezionati. La valutazione dello stile e dei DPI reali resta aperta.
+La diagnosi proviene dal modello di lettura di Application, indipendente dalla grafica. Se Cibo e Pane mancano insieme vengono segnalate entrambe le necessità. Miniere e fonderie spiegano prerequisiti, input e capacità mancanti. Gate corrente **204/204 test superati**; avvisi sopra Costruisci, geometria hover e layout industriali verificati alle due risoluzioni. La base grafica è accettata; DPI fisici da ampliare.
 
 Nel nuovo scenario le Case piccole offrono 8 posti, le Case grandi 32 e richiedono un Forno già costruito. Con spazio, Cibo e Pane quando necessario, il ritmo base è di un abitante ogni 60 secondi validi, accelerato dalle case aggiuntive fino a 2×. Tutti consumano 0,010 Cibo/s a persona; oltre la capienza delle Case piccole serve anche 0,015 Pane/s a persona avanzata. Le carenze fermano la crescita senza rimuovere abitanti. I valori sono provvisori per lo sviluppo, non il bilanciamento finale.
 
