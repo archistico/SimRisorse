@@ -40,7 +40,9 @@ Per una cache completa e ripristino offline:
 .\validate.cmd -OfflinePackageSource .local-cache/nuget
 ```
 
-Lo script esegue restore con lock, build Release, test, il controllo di raggiungibilità dei due cataloghi e nove simulazioni: Foundation a 60 secondi/8 ore/32 ore, Civil bootstrap a 121 secondi/8 ore/32 ore, recupero a 662 secondi, magazzino a 1260 e pane a 660. Genera otto render, pubblica il desktop e verifica il ciclo nativo Windows per entrambi gli scenari. Output in `.local-cache/m4/`, con risultati TRX isolati per esecuzione e riepilogo `validation.json`. `-SkipNativeSmoke` esclude soltanto il lancio automatico del pacchetto.
+Lo script esegue restore con lock, build Release, test, il controllo di raggiungibilità dei due cataloghi e dodici simulazioni: Foundation a 60 secondi/8 ore/32 ore; Civil bootstrap a 121 secondi/8 ore/32 ore, recupero a 662, magazzino a 1260, filiera Pane a 610 e 660, Case grandi a 880 secondi e 8 ore. Esegue inoltre **quattro confronti**: `--benchmark-housing` (tre strategie storiche `civil-growth-4` su otto ore, `housing-benchmark.json`), `--benchmark-housing-accelerated` (stesse strategie, `civil-growth-5`, `housing-accelerated-benchmark.json`), `--benchmark-bread-scale` (220 abitanti, quattro strategie, `bread-scale-benchmark.json`) e **`--benchmark-bread-high-density`** (320 abitanti, quattro strategie, `bread-high-density-benchmark.json`). Richiede **nove render**, incluso lo stato Pane a 1040×740, isolati per esecuzione in `runs/<id>/screenshots/`; pubblica il desktop e verifica il ciclo nativo Windows per entrambi gli scenari. Output in `.local-cache/m4/`, con risultati TRX isolati e riepilogo `validation.json`. `-SkipNativeSmoke` esclude soltanto il lancio automatico del pacchetto. **Il più recente gate riferito superato dall'utente è v24/M4.10 (174 casi xUnit attesi). v25/v26 prevedono 177 casi e non sono ancora stati eseguiti qui.** Non risultano disponibili in archivio i report grezzi delle conferme precedenti.
+
+**M4.12/v26 — sola lettura dei risultati:** dopo una validazione Windows, `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\report-m4.ps1` confronta i quattro JSON ed espone tempi, carenze e costi effettivi. Per salvarne l'output indicare `-OutputPath .local-cache\m4\m4-report.md`. Il [manuale](validation/M4_BENCHMARK_READER.md) precisa la provenienza e i limiti dei dati; il lettore non ripete il calcolo e non modifica le partite.
 
 Per cancellare gli output di compilazione di tutti i progetti (soluzione definitiva, test, tools, experiments e legacy):
 
@@ -57,7 +59,13 @@ La sorgente offline deve contenere anche le nuove versioni: una cache contenente
 
 Il gioco si avvia con `run-game.cmd` nello scenario civile; `--scenario economy-foundation` riapre lo scenario storico e il suo slot distinto. La verifica usa salvataggi privati, mentre il desktop interattivo usa LocalApplicationData. Non usare il file personale come fixture. Ulteriori regole nel [formato dei salvataggi](SAVE_FORMAT.md).
 
-Il simulatore mantiene Foundation come default per conservare la timeline di riferimento. Per il civile: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121`; `--strategy recovery --seconds 662` prova il recupero dalla carenza, `storage --seconds 1260` il magazzino e `bread --seconds 660` la filiera del pane. Sono cronologie dichiarate, non un ottimizzatore di strategie.
+Il simulatore mantiene Foundation come default per conservare la timeline di riferimento. Per il civile: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121`; `--strategy recovery --seconds 662` prova il recupero dalla carenza, `storage --seconds 1260` il magazzino, `bread --seconds 660` la filiera del Pane e `advanced --seconds 880` le Case grandi e i primi residenti avanzati. `advanced --hours 8` verifica il riempimento della capacità abitativa. Sono cronologie dichiarate, non un ottimizzatore di strategie.
+
+Per confrontare costi, tempi e blocchi di tre politiche: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --benchmark-housing`. Regole e limitazioni sono nella [scheda di confronto](scenarios/HOUSING_BENCHMARK.md). Il risultato è un JSON leggibile anche senza interfaccia grafica; non costituisce la misura della durata del gioco completo.
+
+Per confrontare una filiera Pane, due complete immediate, una seconda completa tardiva e un potenziamento **snello** su un avvio sintetico a 220 residenti: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --benchmark-bread-scale`. Il quarto profilo `lean-chain` di **M4.7** misura acquisti reali, lavoratori, attività dei quattro anelli, Pane prodotto/consumato e 1.800 secondi riconciliati per strategia. **Gate v17 riferito superato dall'utente**, senza JSON grezzo a disposizione: la [scheda](scenarios/BREAD_SCALE_BENCHMARK.md) ne documenta metriche, asserzioni e limiti.
+
+Per stressare le stesse quattro strategie oltre il limite teorico della filiera snella: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --benchmark-bread-high-density`. Questo **nuovo gate M4.8 non ancora eseguito** parte da 320 abitanti, 360 posti e Cibo dimensionato, fino a 350 abitanti in 1.800 secondi. Misura anche i tempi per raggiungere 340/350. Vedere [scenario ad alta densità](scenarios/BREAD_HIGH_DENSITY_BENCHMARK.md) e report `bread-high-density-benchmark.json`.
 
 Dopo ogni modifica del catalogo: `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --check-catalog --scenario civil-growth`. Stampa strutture raggiungibili, risorse rinnovabili e problemi (prerequisito irraggiungibile, costo non ottenibile o oltre la capacità, input non rinnovabile, ricetta oltre la capacità) ed esce con codice 1 se ce ne sono. La validazione lo esegue per entrambi gli scenari.
 
@@ -77,6 +85,18 @@ Per riprodurre le verifiche M1 usare [le istruzioni della prova](../experiments/
 | Comando o percorso di avvio cambiato | README pertinente |
 
 Un cambio di idea non deve trasformare retroattivamente una proposta in una decisione già confermata. Un ADR superato conserva il collegamento alla decisione successiva.
+
+## Resoconto obbligatorio a ogni incremento
+
+Per consentire all'utente di pianificare anche quando non può eseguire test, ogni consegna deve contenere nell'ordine:
+
+1. **Dove siamo:** milestone e sottofase (es. M4.6), versione/checkpoint, **ultima validazione effettivamente confermata**.
+2. **Cosa abbiamo fatto:** cambiamenti circoscritti, moduli/documenti, decisioni già approvate e risultati effettivamente misurati.
+3. **Cosa stiamo implementando:** obiettivo, confini, impatto su regole, formato di salvataggio e interfaccia.
+4. **Cosa ci aspetta:** prossimo incremento concreto, criterio di uscita, dipendenze e posizione nella [roadmap](ROADMAP.md).
+5. **Cosa rimane aperto:** test non eseguiti, rischi, scelte da confermare ed eventuali limiti noti.
+
+Usare gli stati **Proposto**, **Implementato non validato**, **Verificato**, **Rinviato**. Separare esplicitamente la dichiarazione di test superati *riferita dall'utente*, l'evidenza tecnica *eseguita e ispezionata* e il conteggio *atteso*. Non presentare risultati aritmetici teorici o screenshot previsti come misure di un'esecuzione reale. Una revisione della roadmap non costituisce autorizzazione a modificare meccaniche di gioco non approvate.
 
 ## Verifiche proporzionate alla modifica
 

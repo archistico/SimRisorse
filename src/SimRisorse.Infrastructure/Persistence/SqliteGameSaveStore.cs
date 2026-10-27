@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using SimRisorse.Application.Persistence;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Population;
 using SimRisorse.Core.Sessions;
 
 namespace SimRisorse.Infrastructure.Persistence;
@@ -77,6 +78,8 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             string.IsNullOrWhiteSpace(snapshot.ScenarioId) || string.IsNullOrWhiteSpace(snapshot.RulesVersion) ||
             snapshot.Resources.Amounts.Count > MaximumEntries || snapshot.Buildings.Length > MaximumEntries ||
             (snapshot.FormatVersion == 1 ? snapshot.GrowthProgressSeconds is not null : snapshot.GrowthProgressSeconds is not >= 0) ||
+            snapshot.GrowthRemainderTwentieths is < 0 or >= HousingGrowthRules.UnitsPerSecond ||
+            (snapshot.FormatVersion == 1 && snapshot.GrowthRemainderTwentieths != 0) ||
             snapshot.Buildings.Any(item => item is null || string.IsNullOrWhiteSpace(item.BuildingId) || item.Count < 0 || item.AssignedWorkers < 0) ||
             snapshot.Buildings.Select(item => item.BuildingId).Distinct(StringComparer.Ordinal).Count() != snapshot.Buildings.Length)
             throw new GameSaveException(GameSaveError.InvalidData, "Snapshot cannot be written.");
@@ -136,6 +139,18 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
                 """);
             growth.Parameters.AddWithValue("$progress", snapshot.GrowthProgressSeconds!.Value);
             growth.ExecuteNonQuery();
+            // Optional companion table keeps the original growth_seconds column and v2 file format compatible.
+            // Older v2 checkpoints have no companion table and therefore implicitly have a zero remainder.
+            using var fraction = Command(connection, transaction, """
+                CREATE TABLE IF NOT EXISTS population_growth_fraction (
+                    slot INTEGER PRIMARY KEY CHECK(slot=1) REFERENCES game_save(slot),
+                    twentieths INTEGER NOT NULL CHECK(twentieths BETWEEN 0 AND 19)
+                ) STRICT;
+                INSERT INTO population_growth_fraction VALUES(1,$fraction)
+                ON CONFLICT(slot) DO UPDATE SET twentieths=excluded.twentieths;
+                """);
+            fraction.Parameters.AddWithValue("$fraction", snapshot.GrowthRemainderTwentieths);
+            fraction.ExecuteNonQuery();
         }
         using (var clear = Command(connection, transaction, "DELETE FROM resource_stock WHERE slot=1; DELETE FROM building_stock WHERE slot=1;")) clear.ExecuteNonQuery();
         foreach (var (id, amount) in snapshot.Resources.Amounts)
@@ -231,6 +246,7 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             buildings.Any(item => string.IsNullOrWhiteSpace(item.BuildingId) || item.Count < 0 || item.AssignedWorkers < 0))
             throw new GameSaveException(GameSaveError.InvalidData, "The save exceeds format limits.");
         int? progress = null;
+        var remainder = 0;
         if (version == 2)
         {
             using var command = Command(connection, transaction, "SELECT growth_seconds FROM population_state WHERE slot=1;");
@@ -238,8 +254,20 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             if (value is not long number || number < 0 || number > int.MaxValue)
                 throw new GameSaveException(GameSaveError.InvalidData, "Growth state is missing or invalid.");
             progress = (int)number;
+            using var hasFraction = Command(connection, transaction,
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='population_growth_fraction';");
+            if (Convert.ToInt64(hasFraction.ExecuteScalar()) != 0)
+            {
+                using var fraction = Command(connection, transaction,
+                    "SELECT twentieths FROM population_growth_fraction WHERE slot=1;");
+                var fractionValue = fraction.ExecuteScalar();
+                if (fractionValue is not long units || units is < 0 or >= HousingGrowthRules.UnitsPerSecond)
+                    throw new GameSaveException(GameSaveError.InvalidData, "Growth fraction is missing or invalid.");
+                remainder = (int)units;
+            }
         }
-        var snapshot = new GameSnapshot(version, scenario, rules, elapsed, population, ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress);
+        var snapshot = new GameSnapshot(version, scenario, rules, elapsed, population,
+            ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress, remainder);
         transaction.Commit();
         return snapshot;
     }

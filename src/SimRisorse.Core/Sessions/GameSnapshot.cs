@@ -6,4 +6,4 @@ namespace SimRisorse.Core.Sessions;
 
 public sealed record GameSnapshot(int FormatVersion, string ScenarioId, string RulesVersion,
     long ElapsedTicks, int Population, ResourceBundle Resources, ImmutableArray<BuildingState> Buildings,
-    int? GrowthProgressSeconds = null);
+    int? GrowthProgressSeconds = null, int GrowthRemainderTwentieths = 0);

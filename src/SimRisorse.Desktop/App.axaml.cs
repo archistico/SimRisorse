@@ -37,7 +37,7 @@ public partial class App : Avalonia.Application
             viewModel.ConstructCommand.Execute(null);
             if (!growth) viewModel.AssignCommand.Execute(null);
             viewModel.TogglePauseCommand.Execute(null);
-            viewModel.Advance(TimeSpan.FromSeconds(growth ? 59 : 1));
+            viewModel.Advance(TimeSpan.FromSeconds(growth ? 52 : 1));
             viewModel.Pause();
             var expected = viewModel.View.ElapsedTicks;
             if (!await viewModel.SaveAsync()) throw new InvalidOperationException("Native save failed.");

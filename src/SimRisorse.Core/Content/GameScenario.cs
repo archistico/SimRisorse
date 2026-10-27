@@ -24,6 +24,16 @@ public sealed class GameScenario
         PopulationRules = populationRules;
         if (populationRules is not null && !catalog.ResourcesById.ContainsKey(populationRules.FoodResourceId))
             throw new ArgumentException("Population food must be a catalog resource.", nameof(populationRules));
+        if (populationRules?.AdvancedHousing is { } advanced &&
+            (!catalog.ResourcesById.ContainsKey(advanced.BreadResourceId) ||
+             advanced.BreadResourceId == populationRules?.FoodResourceId ||
+             !catalog.BuildingsById.TryGetValue(advanced.BasicHousingBuildingId, out var basicHousing) ||
+             basicHousing.HousingPerBuilding == 0))
+            throw new ArgumentException("Advanced housing requires a different known food resource and a basic housing building.", nameof(populationRules));
+        if (populationRules?.HousingGrowth is { } growth &&
+            (!catalog.BuildingsById.TryGetValue(growth.SmallHouseId, out var small) || small.HousingPerBuilding == 0 ||
+             !catalog.BuildingsById.TryGetValue(growth.LargeHouseId, out var large) || large.HousingPerBuilding == 0))
+            throw new ArgumentException("Accelerated growth requires two known housing building types.", nameof(populationRules));
         Capacity = capacity;
         InitialResources = initialResources;
         var byId = initial.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
@@ -52,6 +62,14 @@ public sealed class GameScenario
             if (capacity > int.MaxValue) throw new ArgumentException("Housing exceeds the population limit.");
         }
         return (int)capacity;
+    }
+
+    internal int BasicHousingCapacity(IEnumerable<BuildingState> buildings)
+    {
+        var basicId = PopulationRules?.AdvancedHousing?.BasicHousingBuildingId;
+        if (basicId is null) return HousingCapacity(buildings);
+        var count = buildings.First(item => item.BuildingId == basicId).Count;
+        return checked(count * Catalog.BuildingsById[basicId].HousingPerBuilding);
     }
 
     /// <summary>Base capacity plus storage effects. Throws <see cref="OverflowException"/> beyond the numeric limit.</summary>

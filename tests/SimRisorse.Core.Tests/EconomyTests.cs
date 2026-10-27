@@ -61,6 +61,8 @@ public sealed class EconomyTests
         var forecast = Assert.Single(game.ForecastProduction());
         Assert.Equal(1, forecast.RunnableWorkers);
         Assert.True(forecast.BlockReason.HasFlag(ProductionBlockReason.MissingInputs));
+        Assert.Equal(new[] { "logs" }, forecast.MissingInputIds);
+        Assert.Empty(forecast.FullOutputIds);
         game.Resume();
         game.Advance(TimeSpan.FromSeconds(1));
         Assert.Equal(ResourceBundle.Create(("logs", 1m), ("planks", 1m)), game.Resources);
@@ -77,7 +79,9 @@ public sealed class EconomyTests
         var game = GameSession.Create(scenario);
         var forecast = game.ForecastProduction();
         Assert.Equal(1, forecast.Single(item => item.BuildingId == "first").RunnableWorkers);
-        Assert.Equal(0, forecast.Single(item => item.BuildingId == "second").RunnableWorkers);
+        var secondForecast = forecast.Single(item => item.BuildingId == "second");
+        Assert.Equal(0, secondForecast.RunnableWorkers);
+        Assert.Equal(new[] { "logs" }, secondForecast.MissingInputIds);
         game.Resume();
         game.Advance(TimeSpan.FromSeconds(1));
         Assert.Equal(ResourceBundle.Create(("planks", 1m)), game.Resources);
@@ -104,10 +108,40 @@ public sealed class EconomyTests
              TestScenarios.Building("second", output: ResourceBundle.Create(("logs", 1m)), priority: 2)],
             ResourceBundle.Empty, ResourceBundle.Create(("logs", 1m)));
         var game = GameSession.Create(scenario);
-        Assert.Equal(0, game.ForecastProduction().Single(item => item.BuildingId == "second").RunnableWorkers);
+        var secondForecast = game.ForecastProduction().Single(item => item.BuildingId == "second");
+        Assert.Equal(0, secondForecast.RunnableWorkers);
+        Assert.Equal(new[] { "logs" }, secondForecast.FullOutputIds);
         game.Resume();
         game.Advance(TimeSpan.FromSeconds(1));
         Assert.Equal(1m, game.Resources["logs"].Units);
+    }
+
+    [Fact]
+    public void ForecastIdentifiesInputAndOutputBottlenecksWithoutChangingTheEconomicStep()
+    {
+        var scenario = TestScenarios.Create(
+            [TestScenarios.Building("processor", ResourceBundle.Create(("logs", 1m)), ResourceBundle.Create(("planks", 1m)))],
+            ResourceBundle.Empty,
+            ResourceBundle.Create(("logs", 10m), ("planks", 1m)));
+        var game = GameSession.Create(scenario);
+        var before = game.Snapshot();
+        var forecast = Assert.Single(game.ForecastProduction());
+        Assert.Equal(ProductionBlockReason.MissingInputs, forecast.BlockReason);
+        Assert.Equal(new[] { "logs" }, forecast.MissingInputIds);
+        Assert.Empty(forecast.FullOutputIds);
+        TestScenarios.EqualState(before, game.Snapshot());
+
+        var full = GameSession.Restore(scenario, before with
+        {
+            Resources = ResourceBundle.Create(("planks", 1m))
+        });
+        var blocked = Assert.Single(full.ForecastProduction());
+        Assert.Equal(ProductionBlockReason.MissingInputs | ProductionBlockReason.StorageFull, blocked.BlockReason);
+        Assert.Equal(new[] { "logs" }, blocked.MissingInputIds);
+        Assert.Equal(new[] { "planks" }, blocked.FullOutputIds);
+        full.Resume();
+        full.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(ResourceBundle.Create(("planks", 1m)), full.Resources);
     }
 
     [Fact]

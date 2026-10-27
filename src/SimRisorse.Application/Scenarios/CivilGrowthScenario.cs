@@ -7,35 +7,46 @@ using SimRisorse.Core.Sessions;
 
 namespace SimRisorse.Application.Scenarios;
 
-/// <summary>A declared conversion between consecutive rules versions: only new building types, starting at zero.</summary>
+/// <summary>A declared conversion between consecutive rules versions, including new building types starting at zero.</summary>
 public sealed record RulesChange(string From, string To, ImmutableArray<string> AddedBuildings);
 
 /// <summary>Civilian progression slices. Values are provisional scenario rules.</summary>
 public static class CivilGrowthScenario
 {
     public const string Id = "civil-growth";
-    public const string RulesVersion = "civil-growth-3";
+    public const string RulesVersion = "civil-growth-5";
 
     /// <summary>Every earlier rules version that can still be loaded, oldest first.</summary>
     public static ImmutableArray<RulesChange> Changes { get; } =
     [
         new("civil-growth-1", "civil-growth-2", ["warehouse"]),
-        new("civil-growth-2", RulesVersion, ["farm", "well", "mill", "bakery"])
+        new("civil-growth-2", "civil-growth-3", ["farm", "well", "mill", "bakery"]),
+        // The bakery's output changes from generic food to the new bread resource.
+        // Old generic food stocks remain generic food: their provenance is unknown.
+        new("civil-growth-3", "civil-growth-4", ["large-house"]),
+        new("civil-growth-4", RulesVersion, [])
     ];
 
-    public static GameScenario Create()
+    public static GameScenario Create() => CreateCore(RulesVersion, accelerated: true);
+
+    /// <summary>Historical rules, retained for comparing the already published M4 benchmarks.</summary>
+    public static GameScenario CreateLegacyForBenchmarks() => CreateCore("civil-growth-4", accelerated: false);
+
+    private static GameScenario CreateCore(string rulesVersion, bool accelerated)
     {
         var foundation = EconomyFoundationScenario.Create();
         ResourceDefinition[] resources =
         [
             .. foundation.Catalog.Resources, new("fish", "Pesce"), new("food", "Cibo"),
-            new("grain", "Grano"), new("water", "Acqua"), new("flour", "Farina")
+            new("grain", "Grano"), new("water", "Acqua"), new("flour", "Farina"), new("bread", "Pane")
         ];
-        var catalog = new GameCatalog(RulesVersion, resources,
+        var catalog = new GameCatalog(rulesVersion, resources,
             [
                 .. foundation.Catalog.Buildings,
                 new("small-house", "Casa piccola", ResourceBundle.Create(("planks", 80m), ("stone", 40m)), 0,
                     null, 35, [], HousingPerBuilding: 8),
+                new("large-house", "Casa grande", ResourceBundle.Create(("planks", 160m), ("stone", 80m)), 0,
+                    null, 36, ["bakery"], HousingPerBuilding: 32),
                 new("warehouse", "Magazzino", ResourceBundle.Create(("planks", 100m), ("stone", 60m)), 0,
                     null, 37, [], StoragePerBuilding: ResourceBundle.Create([.. resources.Select(item => (item.Id, 500m))])),
                 new("fisher", "Pescatore", ResourceBundle.Create(("planks", 40m), ("stone", 20m)), 1,
@@ -49,23 +60,32 @@ public static class CivilGrowthScenario
                 new("mill", "Mulino", ResourceBundle.Create(("planks", 120m), ("stone", 80m)), 1,
                     new(ResourceBundle.Create(("grain", 2m)), ResourceBundle.Create(("flour", 1m))), 60, ["farm"]),
                 new("bakery", "Forno", ResourceBundle.Create(("planks", 150m), ("stone", 100m)), 1,
-                    new(ResourceBundle.Create(("flour", 1m), ("water", 1m)), ResourceBundle.Create(("food", 3m))), 70, ["mill", "well"])
+                    new(ResourceBundle.Create(("flour", 1m), ("water", 1m)), ResourceBundle.Create(("bread", 3m))), 70, ["mill", "well"])
             ]);
         return new(Id, catalog, 8,
-            foundation.Capacity + ResourceBundle.Create(("fish", 1000m), ("food", 1000m), ("grain", 1000m), ("water", 1000m), ("flour", 1000m)),
+            foundation.Capacity + ResourceBundle.Create(("fish", 1000m), ("food", 1000m), ("grain", 1000m),
+                ("water", 1000m), ("flour", 1000m), ("bread", 100m)),
             foundation.InitialResources + ResourceBundle.Create(("food", 30m)),
             [.. foundation.InitialBuildings, new("small-house", 1, 0)],
-            new PopulationRules("food", ResourceAmount.FromUnits(0.010m), 60));
+            new PopulationRules("food", ResourceAmount.FromUnits(0.010m), 60,
+                new AdvancedHousingRules("small-house", "bread", ResourceAmount.FromUnits(0.015m)),
+                accelerated ? new HousingGrowthRules("small-house", "large-house") : null));
     }
 
     /// <summary>
     /// Explicit one-step conversion of an older checkpoint: the declared new building types start at zero.
-    /// Stocks, people, time and growth progress are carried over unchanged. Null when no step is declared.
+    /// Stocks, people, time and whole-second growth progress are carried over unchanged.
+    /// Null when no step is declared or an older checkpoint claims to contain bread stocks.
+    /// A duplicate building in an older checkpoint is rejected by snapshot validation after conversion.
     /// </summary>
     internal static GameSnapshot? UpgradeOneStep(GameSnapshot snapshot)
     {
         var change = Changes.FirstOrDefault(item => item.From == snapshot.RulesVersion);
-        if (change is null || snapshot.Buildings.IsDefault) return null;
+        if (change is null || snapshot.Buildings.IsDefault || snapshot.Resources is null) return null;
+        if (change.From == "civil-growth-3" && snapshot.Resources["bread"] != ResourceAmount.Zero)
+            return null;
+        // Rules -3 -> -4 changes the bakery recipe, not already stored stock.
+        // Never guess whether old food originally came from the bakery or the fish chain.
         return snapshot with
         {
             RulesVersion = change.To,

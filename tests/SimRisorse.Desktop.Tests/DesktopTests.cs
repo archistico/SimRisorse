@@ -4,10 +4,13 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using SimRisorse.Application;
 using SimRisorse.Application.Persistence;
+using SimRisorse.Application.ReadModels;
 using SimRisorse.Application.Scenarios;
 using SimRisorse.Core.Sessions;
 using SimRisorse.Desktop;
@@ -30,6 +33,68 @@ public static class TestAppBuilder
 public sealed class DesktopTests
 {
     [Fact]
+    public void OriginalRetroGlyphsCoverTheEntireCivilCatalog()
+    {
+        var catalog = CivilGrowthScenario.Create().Catalog;
+        Assert.All(catalog.Buildings, building => Assert.True(PixelGlyph.Supports(building.Id),
+            $"Missing pixel pictogram for building {building.Id}."));
+        Assert.All(catalog.Resources, resource => Assert.True(PixelGlyph.Supports(resource.Id),
+            $"Missing pixel pictogram for resource {resource.Id}."));
+        Assert.False(PixelGlyph.Supports("not-a-catalog-key"));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task RetroGlyphPrototypeKeepsResourcesAndBuildingsVisibleInBothLayouts(int width, int height)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        Assert.Contains("15%", viewModel.Buildings.Single(item => item.Id == "small-house").Description);
+        Assert.Contains("30%", viewModel.Buildings.Single(item => item.Id == "large-house").Description);
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var glyphs = window.GetVisualDescendants().OfType<PixelGlyph>()
+                .Where(glyph => glyph.IsEffectivelyVisible).ToArray();
+            Assert.Contains(glyphs, glyph => glyph.Key == "small-house" && glyph.Bounds.Width >= 24);
+            Assert.Contains(glyphs, glyph => glyph.Key == "food" && glyph.Bounds.Height == 16);
+            Assert.All(glyphs, glyph => Assert.True(glyph.Bounds.Width > 0 && glyph.Bounds.Height > 0));
+
+            // The experimental visuals never take away the fixed building diagnosis.
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "bakery");
+            Dispatcher.UIThread.RunJobs();
+            var diagnosis = window.FindControl<TextBlock>("ProductionDiagnosisText")!;
+            var build = window.FindControl<Button>("BuildButton")!;
+            Assert.Contains("Per costruire servono prima:", diagnosis.Text!);
+            Assert.True(diagnosis.TranslatePoint(default, window)!.Value.Y + diagnosis.Bounds.Height <=
+                build.TranslatePoint(default, window)!.Value.Y);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public async Task AcceleratedGrowthStatusShowsSpeedFractionAndAccurateTimeWithoutLayoutSideEffects()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
+        viewModel.ConstructCommand.Execute(null);
+        Assert.Contains("×1,15", viewModel.GrowthStatus);
+        Assert.Contains("~53s", viewModel.GrowthStatus);
+        viewModel.TogglePauseCommand.Execute(null);
+        viewModel.Advance(TimeSpan.FromSeconds(52));
+        Assert.Equal(8, viewModel.View.Population);
+        Assert.Contains("59,8 / 60", viewModel.GrowthStatus);
+        Assert.InRange(viewModel.GrowthPercent, 99, 100);
+        viewModel.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(9, viewModel.View.Population);
+        Assert.Contains("0,95 / 60", viewModel.GrowthStatus);
+    }
+
+    [Fact]
     public void ScenariosHaveDistinctPersonalSlotsAndSmokeTestsUsePrivatePaths()
     {
         var current = DesktopOptions.Parse([]);
@@ -51,7 +116,7 @@ public sealed class DesktopTests
     {
         using var directory = new TemporaryDirectory();
         var store = new SqliteGameSaveStore(Path.Combine(directory.PathName, "civil.sqlite3"));
-        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), store);
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.CreateLegacyForBenchmarks()), store);
         await viewModel.InitializeAsync();
         var window = new MainWindow(viewModel, startTimer: false, initialize: false);
         try
@@ -98,7 +163,7 @@ public sealed class DesktopTests
         });
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new SqliteGameSaveStore(path));
         await viewModel.InitializeAsync();
-        Assert.Contains("civil-growth-1 a civil-growth-3", viewModel.Message);
+        Assert.Contains("civil-growth-1 a civil-growth-5", viewModel.Message);
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
         Assert.Equal("+500 capacità per ogni risorsa per edificio", viewModel.Selected.Recipe);
         Assert.Equal("Da costruire", viewModel.Selected.Status);
@@ -109,14 +174,15 @@ public sealed class DesktopTests
     }
 
     [AvaloniaFact]
-    public async Task WarehouseRaisesTheVisibleCapacityOfEveryResource()
+    public async Task WarehouseRaisesCapacityWhilePreservingTheSmallerBreadBaseCapacity()
     {
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
         await viewModel.InitializeAsync();
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
         viewModel.ConstructCommand.Execute(null);
         Assert.Equal("+500 capacità per ogni risorsa", viewModel.Selected.Status);
-        Assert.All(viewModel.Resources, item => Assert.Equal("1.500", item.Capacity));
+        Assert.All(viewModel.Resources.Where(item => item.Id != "bread"), item => Assert.Equal("1.500", item.Capacity));
+        Assert.Equal("600", viewModel.Resources.Single(item => item.Id == "bread").Capacity);
         Assert.Contains("Nessun lavoratore", viewModel.Selected.Activity);
     }
 
@@ -126,12 +192,290 @@ public sealed class DesktopTests
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
         await viewModel.InitializeAsync();
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "bakery");
-        Assert.Equal("1 farina · 1 acqua → 3 cibo", viewModel.Selected.Recipe);
+        Assert.Equal("1 farina · 1 acqua → 3 pane", viewModel.Selected.Recipe);
         Assert.Equal(new[] { "Mulino", "Pozzo" }, viewModel.Selected.View.MissingPrerequisites);
+        Assert.Contains("Mulino, Pozzo", viewModel.Selected.Diagnosis);
         Assert.False(viewModel.ConstructCommand.CanExecute(null));
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "mill");
         Assert.Equal("2 grano → 1 farina", viewModel.Selected.Recipe);
         Assert.Equal(8, viewModel.Resources.Count(item => item.Capacity == "1.000"));
+        Assert.Equal("100", viewModel.Resources.Single(item => item.Id == "bread").Capacity);
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "large-house");
+        Assert.Equal(new[] { "Forno" }, viewModel.Selected.View.MissingPrerequisites);
+        Assert.Equal("+32 posti abitativi per edificio", viewModel.Selected.Recipe);
+        Assert.False(viewModel.ConstructCommand.CanExecute(null));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task MissingConstructionPrerequisitesStayVisibleAboveTheBuildAction(int width, int height)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "bakery");
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var diagnosis = window.FindControl<TextBlock>("ProductionDiagnosisText")!;
+            var panel = window.FindControl<Border>("BuildingDiagnosisPanel")!;
+            var build = window.FindControl<Button>("BuildButton")!;
+            Assert.True(panel.IsEffectivelyVisible);
+            Assert.Contains("Per costruire servono prima: Mulino, Pozzo", diagnosis.Text);
+            Assert.False(build.IsEffectivelyEnabled);
+            var position = diagnosis.TranslatePoint(default, window)!.Value;
+            var buildPosition = build.TranslatePoint(default, window)!.Value;
+            Assert.True(diagnosis.Bounds.Height > 0, "The prerequisites must receive visible space.");
+            Assert.True(position.Y + diagnosis.Bounds.Height <= buildPosition.Y,
+                "The complete prerequisites must be visible above the action buttons without scrolling.");
+            Assert.InRange(position.Y, 0, window.ClientSize.Height - diagnosis.Bounds.Height);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task BuildHoverAndDisabledStatesUseDistinctBackgroundsWithoutMovingTheLayout(int width, int height)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var build = window.FindControl<Button>("BuildButton")!;
+            var batch = window.FindControl<ComboBox>("BatchSelector")!;
+            var cost = window.FindControl<TextBlock>("ConstructionCostText")!;
+            Control[] stableControls = [batch, cost, build];
+            var originalGeometry = stableControls.Select(control =>
+                (Position: control.TranslatePoint(default, window)!.Value, Size: control.Bounds.Size)).ToArray();
+            Assert.True(build.IsEffectivelyEnabled);
+            Assert.Equal(Color.Parse("#176858"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+            var pointer = build.TranslatePoint(new Point(build.Bounds.Width / 2, build.Bounds.Height / 2), window)!.Value;
+            window.MouseMove(pointer);
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(Color.Parse("#259D80"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+            Assert.Equal(originalGeometry, stableControls.Select(control =>
+                (Position: control.TranslatePoint(default, window)!.Value, Size: control.Bounds.Size)).ToArray());
+
+            // Il puntatore resta sul comando mentre l'acquisto esaurisce le risorse.
+            // In questo stato il bottone disabilitato non deve mantenere l'hover verde.
+            viewModel.ConstructCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(viewModel.ConstructCommand.CanExecute(null));
+            Assert.False(build.IsEffectivelyEnabled);
+            Assert.Equal(Color.Parse("#B8C2BC"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+            Assert.Equal(originalGeometry, stableControls.Select(control =>
+                (Position: control.TranslatePoint(default, window)!.Value, Size: control.Bounds.Size)).ToArray());
+
+            // Anche un prerequisito mancante usa lo stato disabilitato esplicito.
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "bakery");
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(build.IsEffectivelyEnabled);
+            Assert.Equal(Color.Parse("#B8C2BC"), Assert.IsAssignableFrom<ISolidColorBrush>(build.Background).Color);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public async Task AdvancedHousingShowsBreadRationAndResidentCountsWithoutChangingTheSavedPopulation()
+    {
+        var scenario = CivilGrowthScenario.CreateLegacyForBenchmarks();
+        var snapshot = GameSession.Create(scenario).Snapshot();
+        var store = new MemoryStore
+        {
+            Snapshot = snapshot with
+            {
+                Population = 17,
+                Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("food", 100m), ("bread", 20m)),
+                Buildings = [.. snapshot.Buildings.Select(item => item.BuildingId switch
+                {
+                    "large-house" => item with { Count = 1 },
+                    "bakery" => item with { Count = 1 },
+                    _ => item
+                })]
+            }
+        };
+        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "large-house");
+        Assert.Equal(17, viewModel.View.Population);
+        Assert.Equal(9, viewModel.View.PopulationState.AdvancedResidents);
+        Assert.Equal(0.135m, viewModel.View.PopulationState.RequiredBreadPerSecond);
+        Assert.Equal(40, viewModel.View.PopulationState.HousingCapacity);
+        Assert.True(viewModel.HasAdvancedResidents);
+        Assert.Equal(BreadSupplyState.NominalCapacityInsufficient, viewModel.View.BreadSupply.State);
+        Assert.Contains("Capacità nominale dei Forni insufficiente", viewModel.BreadSupplyStatus);
+        Assert.Contains("−0,135 Pane/s", viewModel.BreadSupplyStatus);
+        Assert.Contains("+1 addetto", viewModel.BreadSupplyStatus);
+        Assert.Contains("2 min 28 s", viewModel.BreadSupplyStatus);
+
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = 1040, Height = 740 };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var ration = window.FindControl<TextBlock>("BreadRequirementText")!;
+            Assert.True(ration.IsEffectivelyVisible);
+            Assert.Contains("pane/s", ration.Text!);
+            Assert.Contains("residenti avanzati", ration.Text!);
+            var supply = window.FindControl<TextBlock>("BreadSupplyStatusText")!;
+            Assert.True(supply.IsEffectivelyVisible);
+            Assert.Contains("2 min 28 s", supply.Text!);
+            Assert.Contains("−0,135 Pane/s", supply.Text!);
+            var note = window.FindControl<TextBlock>("GrowthPauseNote")!;
+            var supplyBottom = supply.TranslatePoint(default, window)!.Value.Y + supply.Bounds.Height;
+            var noteTop = note.TranslatePoint(default, window)!.Value.Y;
+            Assert.True(supplyBottom <= noteTop, "Quantified bread deficit overlaps the pause explanation.");
+            Assert.InRange(noteTop + note.Bounds.Height, 0, window.ClientSize.Height);
+            Assert.Contains("+32 posti abitativi", viewModel.Selected.Recipe);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public async Task FullBreadStockIsExplainedAsAStorageLimitNotAsInsufficientOvenCapacity()
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var initial = GameSession.Create(scenario).Snapshot();
+        var store = new MemoryStore
+        {
+            Snapshot = initial with
+            {
+                Population = 9,
+                Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("food", 100m), ("bread", 100m),
+                    ("flour", 1m), ("water", 1m)),
+                Buildings = [.. initial.Buildings.Select(item => item.BuildingId switch
+                {
+                    "large-house" => item with { Count = 1 },
+                    "farm" => item with { Count = 2 },
+                    "well" or "mill" => item with { Count = 1 },
+                    "bakery" => item with { Count = 1, AssignedWorkers = 1 },
+                    _ => item
+                })]
+            }
+        };
+        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
+        await viewModel.InitializeAsync();
+        Assert.Equal(0m, viewModel.View.Resources.Single(item => item.Id == "bread").ProductionPerSecond);
+        Assert.Equal(BreadSupplyState.StorageFull, viewModel.View.BreadSupply.State);
+        Assert.Contains("Forno in attesa: deposito quasi pieno", viewModel.BreadSupplyStatus);
+        Assert.DoesNotContain("Capacità nominale dei Forni insufficiente", viewModel.BreadSupplyStatus);
+
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = 1040, Height = 740 };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var supply = window.FindControl<TextBlock>("BreadSupplyStatusText")!;
+            Assert.True(supply.IsEffectivelyVisible);
+            Assert.Contains("deposito quasi pieno", supply.Text!);
+            var note = window.FindControl<TextBlock>("GrowthPauseNote")!;
+            var supplyBottom = supply.TranslatePoint(default, window)!.Value.Y + supply.Bounds.Height;
+            var noteTop = note.TranslatePoint(default, window)!.Value.Y;
+            Assert.True(supplyBottom <= noteTop, "Bread status overlaps the growth pause explanation.");
+            Assert.InRange(noteTop + note.Bounds.Height, 0, window.ClientSize.Height);
+            using var image = window.CaptureRenderedFrame();
+            Assert.NotNull(image);
+            var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+            if (!string.IsNullOrWhiteSpace(artifacts))
+            {
+                Directory.CreateDirectory(artifacts);
+                image.Save(Path.Combine(artifacts, "civil-advanced-bread-compact.png"), PngBitmapEncoderOptions.Default);
+            }
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public async Task FirstAdvancedArrivalExplainsMissingBreadAndUsesNewProductionOnlyNextSecond()
+    {
+        var scenario = CivilGrowthScenario.CreateLegacyForBenchmarks();
+        var initial = GameSession.Create(scenario).Snapshot();
+        var store = new MemoryStore
+        {
+            Snapshot = initial with
+            {
+                Population = 16,
+                GrowthProgressSeconds = 59,
+                Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("food", 30m), ("flour", 1m), ("water", 1m)),
+                Buildings = [.. initial.Buildings.Select(item => item.BuildingId switch
+                {
+                    "small-house" => item with { Count = 2 },
+                    "large-house" => item with { Count = 1 },
+                    "farm" => item with { Count = 2 },
+                    "well" or "mill" => item with { Count = 1 },
+                    "bakery" => item with { Count = 1, AssignedWorkers = 1 },
+                    _ => item
+                })]
+            }
+        };
+        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
+        await viewModel.InitializeAsync();
+        Assert.False(viewModel.HasAdvancedResidents);
+        Assert.True(viewModel.ShowBreadSupplyStatus);
+        Assert.Equal(BreadSupplyState.FirstAdvancedArrivalNeedsStock, viewModel.View.BreadSupply.State);
+        Assert.Contains("Manca pane", viewModel.GrowthStatus);
+        Assert.Contains("primo residente avanzato", viewModel.BreadSupplyStatus);
+
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false);
+        try
+        {
+            window.Show();
+            var supply = window.FindControl<TextBlock>("BreadSupplyStatusText")!;
+            Assert.True(supply.IsEffectivelyVisible);
+            Assert.Contains("primo residente avanzato", supply.Text!);
+
+            viewModel.TogglePauseCommand.Execute(null);
+            viewModel.Advance(TimeSpan.FromSeconds(1));
+            Assert.Equal(16, viewModel.View.Population);
+            Assert.Equal(59, viewModel.View.PopulationState.ProgressSeconds);
+            Assert.Equal(3m, viewModel.View.Resources.Single(item => item.Id == "bread").Quantity);
+            Assert.Equal(29.84m, viewModel.View.Resources.Single(item => item.Id == "food").Quantity);
+            Assert.False(viewModel.ShowBreadSupplyStatus);
+
+            viewModel.Advance(TimeSpan.FromSeconds(1));
+            Assert.Equal(17, viewModel.View.Population);
+            Assert.Equal(0, viewModel.View.PopulationState.ProgressSeconds);
+            Assert.Equal(3m, viewModel.View.Resources.Single(item => item.Id == "bread").Quantity);
+            Assert.True(viewModel.ShowBreadSupplyStatus);
+            Assert.Contains("input insufficienti", viewModel.BreadSupplyStatus);
+
+            viewModel.Advance(TimeSpan.FromSeconds(1));
+            Assert.Equal(17, viewModel.View.Population);
+            Assert.Equal(2.985m, viewModel.View.Resources.Single(item => item.Id == "bread").Quantity);
+            Assert.Equal(29.51m, viewModel.View.Resources.Single(item => item.Id == "food").Quantity);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public async Task SelectedStructureExplainsTheSpecificResourceBlockingProduction()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "fisher");
+        viewModel.ConstructCommand.Execute(null);
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "food-store");
+        viewModel.ConstructCommand.Execute(null);
+        Assert.Contains("Assegna", viewModel.Selected.Diagnosis);
+        viewModel.AssignCommand.Execute(null);
+
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false);
+        try
+        {
+            window.Show();
+            Assert.Contains("Pesce", viewModel.Selected.Diagnosis);
+            var detail = window.FindControl<TextBlock>("ProductionDiagnosisText")!;
+            Assert.True(detail.IsEffectivelyVisible);
+            Assert.Contains("Pesce", detail.Text!);
+        }
+        finally { window.CloseWithoutSaving(); }
     }
 
     [AvaloniaFact]

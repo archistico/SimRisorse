@@ -18,7 +18,7 @@ public sealed class CivilGrowthTests
     [Fact]
     public void ProjectedResourceBalancesMatchEverySecondIncludingPopulationArrivals()
     {
-        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var runtime = new GameRuntime(CivilGrowthScenario.CreateLegacyForBenchmarks());
         BuildAndStaffFood(runtime);
         new SetPauseHandler(runtime).Handle(new(false));
         var read = new GetGameStateHandler(runtime);
@@ -52,7 +52,7 @@ public sealed class CivilGrowthTests
     [Fact]
     public void InitialMaterialsCanStartFoodAndHousingWithoutStoppingBaseProduction()
     {
-        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var runtime = new GameRuntime(CivilGrowthScenario.CreateLegacyForBenchmarks());
         BuildAndStaffFood(runtime);
         var read = new GetGameStateHandler(runtime);
         Assert.Equal(3, read.Handle().AvailableWorkers);
@@ -82,7 +82,7 @@ public sealed class CivilGrowthTests
     [Fact]
     public void InvestingInHousingFirstAndRunningOutOfFoodIsRecoverable()
     {
-        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var runtime = new GameRuntime(CivilGrowthScenario.CreateLegacyForBenchmarks());
         Assert.True(new ConstructBuildingsHandler(runtime).Handle(new("small-house", 1)).Succeeded);
         new SetPauseHandler(runtime).Handle(new(false));
         var advance = new AdvanceTimeHandler(runtime);

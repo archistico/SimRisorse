@@ -25,6 +25,9 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 | [0008](0008-avalonia-12.md) | Avalonia 12 per il desktop | Accettato | Avalonia 12.1.4, xUnit 3 headless e provider SQLite aggiornati e verificati |
 | [0009](0009-civil-growth-and-save-generations.md) | Crescita civile e generazioni di salvataggio | Accettato | Primo scenario civile, snapshot/file v2 e compatibilità v1 verificati |
 | [0010](0010-storage-capacity-and-rules-conversion.md) | Capacità di magazzino e conversione esplicita delle regole | Accettato | Magazzino, `civil-growth-2`, conversione da `civil-growth-1` e copia di sicurezza verificati |
+| [0011](0011-advanced-housing-and-bread-rations.md) | Pane separato e razione degli abitanti avanzati | Accettato | `civil-growth-4` implementato, gate Windows e benchmark pendenti |
+| [0012](0012-retro-8bit-desktop-visual-language.md) | Identità visiva retro 8-bit essenziale | Accettato | Progettazione soltanto; futura GUI pixel art non ancora implementata |
+| [0013](0013-accelerated-housing-and-fractional-growth.md) | Case che accelerano gli arrivi, frazioni e compatibilità SQLite v2 | Accettato | `civil-growth-5` implementato; gate Windows v24 da eseguire |
 
 ## Come aggiungere una decisione
 

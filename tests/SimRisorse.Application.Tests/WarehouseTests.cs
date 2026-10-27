@@ -35,7 +35,8 @@ public sealed class WarehouseTests
 
         var built = new ConstructBuildingsHandler(runtime).Handle(new("warehouse", 1));
         Assert.True(built.Succeeded);
-        Assert.All(built.View.Resources, item => Assert.Equal(1500m, item.Capacity));
+        Assert.All(built.View.Resources.Where(item => item.Id != "bread"), item => Assert.Equal(1500m, item.Capacity));
+        Assert.Equal(600m, Resource(built.View, "bread").Capacity);
         Assert.Equal(900m, Resource(built.View, "planks").Quantity);
         Assert.Equal(940m, Resource(built.View, "stone").Quantity);
         Assert.Equal(1, built.View.Buildings.Single(item => item.Id == "stonecutter").RunnableWorkers);
@@ -53,6 +54,7 @@ public sealed class WarehouseTests
     [Theory]
     [InlineData("civil-growth-1")]
     [InlineData("civil-growth-2")]
+    [InlineData("civil-growth-3")]
     public async Task PreviousCivilCheckpointIsConvertedOnLoadKeepingProgress(string rules)
     {
         var scenario = CivilGrowthScenario.Create();
@@ -60,7 +62,8 @@ public sealed class WarehouseTests
         game.Construct("small-house", 1);
         game.Resume();
         game.Advance(TimeSpan.FromMilliseconds(59500));
-        var current = game.Snapshot();
+        // Exercise conversion of a whole-second legacy checkpoint.
+        var current = game.Snapshot() with { GrowthProgressSeconds = 59, GrowthRemainderTwentieths = 0 };
         var previous = Older(current, rules);
         Assert.True(previous.Buildings.Length < current.Buildings.Length);
         var runtime = new GameRuntime(scenario);
@@ -69,9 +72,11 @@ public sealed class WarehouseTests
         Assert.Equal(rules, result.UpgradedFromRules);
         Assert.Equal(CivilGrowthScenario.RulesVersion, result.View.RulesVersion);
         Assert.True(result.View.IsPaused);
-        foreach (var id in new[] { "warehouse", "farm", "well", "mill", "bakery" })
+        foreach (var id in CivilGrowthScenario.Changes.SkipWhile(item => item.From != rules).SelectMany(item => item.AddedBuildings))
             Assert.Equal(0, result.View.Buildings.Single(item => item.Id == id).Count);
         Assert.Equal(1000m, Resource(result.View, "flour").Capacity);
+        Assert.Equal(100m, Resource(result.View, "bread").Capacity);
+        Assert.Equal(0m, Resource(result.View, "bread").Quantity);
         Assert.Equal(59, result.View.PopulationState.ProgressSeconds);
         Assert.Equal(current.ElapsedTicks, result.View.ElapsedTicks);
         foreach (var resource in result.View.Resources)
@@ -95,7 +100,7 @@ public sealed class WarehouseTests
         var otherScenario = await new LoadGameHandler(runtime,
             new SnapshotStore(Older(current, "civil-growth-1") with { ScenarioId = "economy-foundation" })).HandleAsync();
         Assert.Equal(GameSaveError.IncompatibleRules, otherScenario.Error);
-        foreach (var rules in new[] { "civil-growth-1", "civil-growth-2" })
+        foreach (var rules in new[] { "civil-growth-1", "civil-growth-2", "civil-growth-3" })
         {
             var alreadyHasNewBuildings = await new LoadGameHandler(runtime,
                 new SnapshotStore(current with { RulesVersion = rules })).HandleAsync();
@@ -103,6 +108,10 @@ public sealed class WarehouseTests
             Assert.Null(alreadyHasNewBuildings.UpgradedFromRules);
             Assert.Equal(2, alreadyHasNewBuildings.View.Buildings.Single(item => item.Id == "small-house").Count);
         }
+        var breadBeforeItsIntroduction = await new LoadGameHandler(runtime,
+            new SnapshotStore(Older(current, "civil-growth-3") with
+            { Resources = ResourceBundle.Create(("bread", 1m)) })).HandleAsync();
+        Assert.Equal(GameSaveError.IncompatibleRules, breadBeforeItsIntroduction.Error);
     }
 
     /// <summary>Rebuilds the shape an older rules version would have saved, by removing later building types.</summary>

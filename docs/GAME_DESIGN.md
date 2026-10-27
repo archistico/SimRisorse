@@ -1,6 +1,6 @@
 # Game design
 
-Data di riferimento: 2026-10-26. Questo documento distingue requisiti confermati, proposte e questioni da risolvere; gli screenshot sono evidenze di un riferimento, non una specifica da copiare integralmente.
+Data di riferimento: 2026-10-27. Questo documento distingue requisiti confermati, proposte e questioni da risolvere; gli screenshot sono evidenze di un riferimento, non una specifica da copiare integralmente. L'ordine operativo delle scelte è nella [roadmap](ROADMAP.md).
 
 ## Visione e ciclo di gioco
 
@@ -9,6 +9,8 @@ Il giocatore costruisce un'economia partendo da materiali di base. Investimenti 
 Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento, organizzare il lavoro, far avanzare la simulazione, raggiungere nuovi sblocchi e correggere i colli di bottiglia. La visione comprende soldati, castelli e missioni di conquista delle isole.
 
 ## Requisiti confermati
+
+**Decisione D0.1 del 2026-10-27:** l'utente ha scelto la prima campagna con i [22 tipi di edificio elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): i 12 civili presenti, cinque tipi di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere navale e Castello. Gli altri 21 tipi dei riferimenti sono fuori dalla prima campagna, inclusi Cacciatore, Allevamento, piantagioni e decorazioni. Questa scelta definisce il perimetro dei contenuti futuri; non approva prezzi, ricette, condizioni esatte di vittoria, meccaniche militari/navali o migrazioni. Il catalogo eseguibile rimane di 12 tipi fino agli incrementi M5 autorizzati e verificati.
 
 | ID | Requisito | Conseguenza |
 | --- | --- | --- |
@@ -21,6 +23,7 @@ Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento,
 | G-07 | Il gioco si ferma durante la pausa e quando non si gioca | Nessuna produzione a gioco chiuso o recupero del tempo trascorso |
 | G-08 | Classifica basata sul tempo di gioco | Serve una misura del tempo separata dall'orologio del calendario |
 | G-09 | Partita molto efficiente di circa 8 ore; strategie meno efficaci anche oltre 32 ore | Obiettivo da misurare, non durata già garantita |
+| G-10 | GUI definitiva in pixel art retro 8-bit essenziale | Stile grafico confermato, da introdurre senza sacrificare la leggibilità |
 
 Le otto ore indicano tempo effettivamente avanzato nella simulazione. Il tempo speso a riflettere in pausa non viene conteggiato. Il rapporto iniziale tra tempo reale e simulato resta in Q-04.
 
@@ -47,7 +50,7 @@ M3 rende giocabile lo scenario ridotto: ordini da 1, 5 o 10 unità, viste Edific
 - Un bacino condiviso tra abitanti disponibili, lavoratori, reclute e soldati.
 - Reclutamento che sottrae persone all'economia civile e addestramento che richiede tempo e risorse.
 - Abitazioni con capacità e possibile crescita della popolazione; eventuale dotazione immediata di abitanti trattata come effetto separato.
-- Cibo come vincolo di mantenimento. Soglie, consumatori e conseguenze delle carenze non sono ancora decisi.
+- Cibo come vincolo di mantenimento. Per lo scenario civile M4 è adottata una prima politica esplicita; per soldati e gioco completo soglie e conseguenze restano aperte.
 
 Le persone sono conteggi interi. Un tasso di crescita frazionario può accumulare avanzamento senza rappresentare una frazione di lavoratore assegnabile. Non è deciso come gestire eventuali rientri, congedi o perdite.
 
@@ -63,6 +66,7 @@ Il legame obbligatorio tra conquiste e vittoria non è ancora confermato. Caserm
 
 ### Interfaccia
 
+- **Direzione confermata il 2026-10-27:** pixel art retro 8-bit essenziale, con gestione degli edifici sempre per elenchi/schede e informazioni numeriche leggibili. Il [contratto grafico](PIXEL_ART_UI.md) descrive le proposte operative; v25 introduce un **primo prototipo** (pittogrammi 8×8 originali e pannelli squadrati), ancora da verificare a video. La GUI definitiva non è approvata.
 - Riepilogo persistente di risorse, tempo e stato della partita.
 - Elenco filtrabile con quantità, personale, produttività e motivi di blocco.
 - Scheda di dettaglio con costo, consumo, produzione, requisiti ed effetti dell'acquisto.
@@ -86,7 +90,36 @@ Il legame obbligatorio tra conquiste e vittoria non è ancora confermato. Caserm
 
 Non tutte le domande bloccano il primo prototipo. Per l'economia minima bastano Q-03, Q-06 e Q-07, una dotazione iniziale e una regola esplicita di avanzamento del tempo. Le altre vanno risolte prima della funzionalità interessata.
 
-Per Q-05 è implementata una prima risposta nello [scenario Civil Growth](scenarios/CIVIL_GROWTH.md): case con 8 posti, un arrivo ogni 60 secondi nutriti con spazio disponibile, consumo di 0,010 cibo per abitante/s e carenze che fermano soltanto la crescita. Pescatore e deposito alimentare avviano la filiera pesce→cibo; fattoria, pozzo, mulino e forno aggiungono una seconda fonte dello stesso cibo, più efficiente per lavoratore (scelta provvisoria, da confermare). Sono regole provvisorie di scenario, non un bilanciamento definitivo o una scelta sul futuro mantenimento dei soldati. La [proposta originaria](scenarios/CIVIL_GROWTH_DRAFT.md) rimane come riferimento storico; Economy Foundation è ancora eseguibile con le proprie regole.
+Per Q-05 è implementata una prima risposta nello [scenario Civil Growth](scenarios/CIVIL_GROWTH.md): Casa piccola con 8 posti, Casa grande con 32 posti e prerequisito Forno, un arrivo ogni **60 secondi validi al ritmo base**, accelerabile dalle case aggiuntive fino a **uno ogni 30 secondi** con `civil-growth-5` quando ci sono spazio e risorse. Tutti consumano 0,010 Cibo/abitante/s; i residenti oltre la capacità complessiva delle Case piccole consumano anche 0,015 Pane/abitante/s. La filiera pescatore→deposito alimentare produce Cibo; fattoria, pozzo, mulino e forno producono Pane distinto, necessario a far crescere la popolazione avanzata. Le carenze fermano la crescita senza decessi, senza cancellare il progresso già accumulato e senza consumi a gioco chiuso. Sono valori provvisori approvati per M4, non una decisione sul futuro mantenimento dei soldati. L'[audit M4.13](scenarios/HOUSING_INCENTIVE_AUDIT.md) verifica l'effetto del limite 2× e il costo dei posti senza sostituire i benchmark. La [proposta originaria](scenarios/CIVIL_GROWTH_DRAFT.md) rimane un riferimento storico; Economy Foundation conserva le proprie regole.
+
+Per Q-08 è disponibile uno [studio di demolizione](scenarios/DEMOLITION_M4_REVIEW.md) con esempi di rimborsi e controlli su abitanti, lavoratori e magazzini. Il rimborso del 25% è una **proposta, non una regola approvata**; la demolizione resta assente.
+
+## Gate di design prima della milestone M5
+
+**Stato: D0.1 approvata, altre decisioni D0 aperte; contenuti M5 non implementati.** Prima di aggiungere le filiere industriali e militari occorre definire un obiettivo completo e realizzabile. La [matrice decisionale D0](design/PRE_M5_DECISION_GATE.md) conserva i 43 riferimenti; la [scheda prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md) distingue il catalogo dei 22 tipi scelto dall'utente dalle proposte di vittoria e isole. La [scheda operativa](design/D0_DECISION_BOARD.md) ne organizza le scelte. Le preferenze non confermate rimangono proposte; il perimetro del catalogo non approva da solo ricette o costi.
+
+| Decisione | Cosa fissare | Perché condiziona M5/M6 |
+| --- | --- | --- |
+| **Catalogo finito — D0.1 scelta** | 22 tipi nella prima campagna, altri 21 riferimenti fuori; regole dei dieci tipi nuovi da dimensionare | Consente un grafo di dipendenze e un criterio di vittoria misurabile |
+| **Q-01: vittoria** | Possesso simultaneo, costruzione storica o traguardo finale; effetto di eventuali demolizioni | Determina cosa si deve testare e quando fermare il tempo |
+| **Q-02: isole** | Conquiste obbligatorie/facoltative, risorse esclusive, ricompense e requisiti | Impedisce che la navigazione sia decorativa oppure blocchi involontariamente la vittoria |
+| **Q-09: militari** | Bacino reclute/lavoratori, durata addestramento, armi, cibo, costi, perdite e congedi | Evita che l'esercito superi la popolazione effettivamente disponibile |
+| **Tempo e difficoltà** | Regole del gioco completo a 1:1 o accelerate; effetto sulla classifica | Rende confrontabili i tempi e le strategie di riferimento |
+| **Schede dei contenuti** | Per tipo: costo, prerequisiti, lavoratori, input/output, capacità e funzione | Permette cataloghi raggiungibili e simulazioni ripetibili |
+
+I [diagrammi di riferimento](references/RESOURCE_AND_PRODUCTION_CHAINS.md) contengono **43 tipi strutturali distinti**, incluse decorazioni; il catalogo attuale `civil-growth-5` ne implementa **12**. I 43 sono **riferimenti da vagliare**, non l'obbligo automatico di costruirli tutti. Navi, soldati, isole e missioni richiedono contratti propri.
+
+**Vincolo per il bilanciamento:** con 8 persone iniziali e un arrivo ogni 60 secondi validi, le regole **storiche** `civil-growth-4` avrebbero un tetto di **488 persone** dopo otto ore. Con `civil-growth-5` e il bonus già a **2× dal tempo zero**, il nuovo limite *puramente aritmetico* è **968 persone** dopo otto ore; nessuna strategia iniziale può disporre gratuitamente di tutta la capienza, del Pane e delle filiere necessarie. Sono limiti ideali, **non** risultati giocati. Per condividere popolazione civile e militare occorre dimostrare che almeno una sequenza di vittoria efficiente resti raggiungibile. La durata obiettivo di circa 8 ore non è ancora stata validata per il gioco completo.
+
+Per il primo blocco successivo al gate è disponibile uno [studio quantitativo M5.1 su ferro, carbone e oro](design/M5_1_INDUSTRY_PREFEASIBILITY.md). Distingue quanto compare nei riferimenti dalle **ipotesi A/B** di costi e produzione, suggerisce incrementi piccoli e identifica le scelte di migrazione dei salvataggi. **Nessuno di questi numeri è parte delle regole approvate.**
+
+Il successivo [studio M5.2 su Forgia, Zecca, Spade e Monete](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) valuta l'utilizzo dell'industria prima di introdurre Caserma e Cantiere navale. Una miniera di Carbone ipotetica da 2/s non riuscirebbe a sostenere simultaneamente quattro trasformatori che richiedono in totale 4/s, ma una **produzione organizzata per fasi** potrebbe ridurre il numero di miniere necessarie. È un'alternativa strategica da misurare, non una nuova regola. Rimane aperto se le Monete siano una risorsa spendibile in azioni specifiche o una valuta generale, e se le Spade vengano consumate dal reclutamento o restino in dotazione.
+
+Il [dossier M5.3 su Caserma, reclute e soldati](design/M5_3_ARMY_PREFEASIBILITY.md) distingue quattro stati della popolazione e propone il controllo di bilancio `totale = impiegati + liberi + reclute + soldati`. Confronta reclutamento immediato, coda di addestramento e posti simultanei di Caserma. **Si tratta di proposte, non di nuove meccaniche:** razioni, tempi, perdite, congedo, capienza e destino delle Spade richiedono una scelta esplicita nel gate D0.4/D0.8. La UI finale resta pixel art 8-bit per schede, senza mappa di posizionamento.
+
+Il [dossier M5.4 su Cantiere navale e flotta](design/M5_4_NAVAL_PREFEASIBILITY.md) separa il costo della struttura da quello della nave, confronta tre modelli di mezzo e documenta identità persistenti, acquisti atomici e trasporto con capacità ancora da scegliere. La Zecca potrebbe fornire le Monete per la **prima nave**, evitando il circolo vizioso di finanziarla soltanto con una colonia non ancora raggiunta; anche questo percorso va approvato e misurato. **Nessuna nave, capacità, durata o rotta è implementata.** Le missioni appartengono a M5.5, le conquiste a M5.6.
+
+Il gate è chiuso soltanto quando **l'utente avrà approvato** la classificazione degli edifici, la condizione di vittoria, i requisiti delle isole e il modello militare di base, con una prima verifica di raggiungibilità. La progettazione della GUI 8-bit può progredire in parallelo, senza trasformare l'estetica in regole di gioco.
 
 ## Obiettivi di bilanciamento
 

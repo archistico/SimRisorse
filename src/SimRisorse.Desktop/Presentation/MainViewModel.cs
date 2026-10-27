@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using SimRisorse.Application;
 using SimRisorse.Application.Features.Construction.ConstructBuildings;
 using SimRisorse.Application.Features.Persistence.LoadGame;
@@ -19,6 +20,7 @@ namespace SimRisorse.Desktop.Presentation;
 
 public sealed class MainViewModel : ObservableObject
 {
+    private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
     private readonly GameRuntime _runtime;
     private readonly GetGameStateHandler _read;
     private readonly SaveGameHandler _save;
@@ -68,7 +70,8 @@ public sealed class MainViewModel : ObservableObject
 
     public Action? SynchronizeTime { get; set; }
     public ObservableCollection<ResourceRow> Resources { get; }
-    public IEnumerable<ResourceRow> ResourceHighlights => HasPopulationGrowth
+    public IEnumerable<ResourceRow> ResourceHighlights => HasAdvancedResidents
+        ? Resources.Where(item => item.Id is "food" or "bread" or "planks") : HasPopulationGrowth
         ? Resources.Where(item => item.Id is "food" or "planks" or "stone") : Resources.Take(3);
     public ObservableCollection<BuildingRow> Buildings { get; }
     public IReadOnlyList<int> BatchSizes { get; } = Array.AsReadOnly(new[] { 1, 5, 10 });
@@ -91,6 +94,9 @@ public sealed class MainViewModel : ObservableObject
     public string PlayState => IsPaused ? "IN PAUSA" : "IN CORSO";
     public string PauseAction => IsPaused ? "Avvia produzione" : "Metti in pausa";
     public bool HasPopulationGrowth => _view.PopulationState.IntervalSeconds > 0;
+    public bool HasAdvancedHousingRules => _view.PopulationState.BreadResourceId is not null;
+    public bool HasAdvancedResidents => _view.PopulationState.AdvancedResidents > 0;
+    public bool ShowBreadSupplyStatus => _view.BreadSupply.State != BreadSupplyState.Hidden;
     public string ScenarioName => HasPopulationGrowth ? "Crescita civile" : "Economia di base";
     public string Population => HasPopulationGrowth
         ? $"{_view.Population} / {_view.PopulationState.HousingCapacity} abitanti · {_view.AvailableWorkers} liberi"
@@ -98,12 +104,60 @@ public sealed class MainViewModel : ObservableObject
     public string GrowthStatus => _view.PopulationState.BlockReason switch
     {
         GrowthBlockReason.MissingFood => "Manca cibo: crescita sospesa",
+        GrowthBlockReason.MissingBread => "Manca pane: crescita avanzata sospesa",
         GrowthBlockReason.HousingFull => "Case piene: costruisci abitazioni",
-        GrowthBlockReason.None => $"Prossimo abitante: {_view.PopulationState.ProgressSeconds} / {_view.PopulationState.IntervalSeconds} s",
+        GrowthBlockReason.None => GrowthActiveStatus(),
         _ => "Popolazione fissa"
     };
+    private string GrowthActiveStatus()
+    {
+        var growth = _view.PopulationState;
+        var progress = growth.ProgressSeconds + growth.GrowthRemainderTwentieths / (decimal)HousingGrowthRules.UnitsPerSecond;
+        var speed = growth.GrowthRateTwentieths / (decimal)HousingGrowthRules.UnitsPerSecond;
+        var remainingUnits = (long)(growth.IntervalSeconds - growth.ProgressSeconds) * HousingGrowthRules.UnitsPerSecond - growth.GrowthRemainderTwentieths;
+        var seconds = (long)Math.Ceiling(remainingUnits / (decimal)growth.GrowthRateTwentieths);
+        var position = $"{progress.ToString("0.##", Italian)} / {growth.IntervalSeconds} s";
+        return speed == 1m ? $"Prossimo abitante: {position}" :
+            $"Abitante: {position} · ×{speed.ToString("0.##", Italian)} · ~{seconds}s";
+    }
     public string FoodRequirement => $"{_view.PopulationState.RequiredFoodPerSecond:0.###} cibo/s";
-    public double GrowthPercent => HasPopulationGrowth ? 100d * _view.PopulationState.ProgressSeconds / _view.PopulationState.IntervalSeconds : 0d;
+    public string BreadRequirement => $"{_view.PopulationState.RequiredBreadPerSecond:0.###} pane/s · {_view.PopulationState.AdvancedResidents} residenti avanzati";
+    public string BreadSupplyStatus
+    {
+        get
+        {
+            var diagnosis = _view.BreadSupply.State switch
+            {
+                BreadSupplyState.Hidden => string.Empty,
+                BreadSupplyState.FirstAdvancedArrivalNeedsStock =>
+                    "Serve Pane in scorta per il primo residente avanzato. Controlla Forno, filiera e lavoratori.",
+                BreadSupplyState.NominalCapacityInsufficient =>
+                    $"Capacità nominale dei Forni insufficiente: −{_view.BreadSupply.NominalShortfallPerSecond.ToString("0.###", Italian)} Pane/s" +
+                    (_view.BreadSupply.AdditionalAssignedWorkers is int workers && workers > 0
+                        ? $" · +{workers} {(workers == 1 ? "addetto" : "addetti")}"
+                        : string.Empty),
+                BreadSupplyState.SufficientNextSecond => "Produzione Pane sufficiente nel prossimo secondo",
+                BreadSupplyState.MissingInputs => "Filiera Pane limitata: input insufficienti",
+                BreadSupplyState.StorageFull => "Forno in attesa: deposito quasi pieno",
+                _ => "Filiera Pane limitata nel prossimo secondo"
+            };
+            return _view.BreadSupply.ReserveSecondsWithoutProduction is { } seconds
+                ? $"{diagnosis}\nScorta senza produzione: {FormatReserve(seconds)} (consumo attuale)"
+                : diagnosis;
+        }
+    }
+
+    private static string FormatReserve(decimal seconds)
+    {
+        if (seconds < 60m) return $"{seconds:0} s";
+        var minutes = decimal.Floor(seconds / 60m);
+        if (minutes < 60m) return $"{minutes:0} min {seconds - minutes * 60m:0} s";
+        var hours = decimal.Floor(minutes / 60m);
+        return $"{hours:0} h {minutes - hours * 60m:0} min";
+    }
+    public double GrowthPercent => HasPopulationGrowth
+        ? 100d * (_view.PopulationState.ProgressSeconds + _view.PopulationState.GrowthRemainderTwentieths / (double)HousingGrowthRules.UnitsPerSecond) /
+          _view.PopulationState.IntervalSeconds : 0d;
     public string BusyState => _loading ? "Caricamento in corso…" : _busy ? "Salvataggio in corso…" :
         _autoSaveAllowed ? "Salvataggio ogni minuto e alla chiusura" : "Salvataggio automatico sospeso";
     public string SelectedCost => BuildingRow.Format(Selected.View.Cost, BatchSize);
@@ -193,7 +247,8 @@ public sealed class MainViewModel : ObservableObject
                 _autoSaveAllowed = true;
                 _closeFailure = false;
                 _message = !load ? "Partita salvata." : result.UpgradedFromRules is { } previous
-                    ? $"Partita ripresa in pausa e aggiornata dalle regole {previous} a {result.View.RulesVersion}: le nuove strutture partono da zero. " +
+                    ? $"Partita ripresa in pausa e aggiornata dalle regole {previous} a {result.View.RulesVersion}: " +
+                      "le nuove strutture e le nuove risorse partono da zero; le vecchie scorte restano invariate. " +
                       "Al prossimo salvataggio il file originale viene conservato come copia accanto alla partita."
                     : "Partita ripresa in pausa. Il tempo trascorso a gioco chiuso non viene conteggiato.";
             }

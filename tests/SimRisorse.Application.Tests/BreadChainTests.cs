@@ -16,7 +16,7 @@ public sealed class BreadChainTests
     [Fact]
     public void MillAndBakeryRequireTheirSuppliers()
     {
-        var game = GameSession.Create(CivilGrowthScenario.Create());
+        var game = GameSession.Create(CivilGrowthScenario.CreateLegacyForBenchmarks());
         Assert.Equal(GameError.MissingPrerequisite, game.Construct("mill", 1).Error);
         Assert.Equal(GameError.MissingPrerequisite, game.Construct("bakery", 1).Error);
         Assert.True(game.Construct("farm", 1).Succeeded);
@@ -32,9 +32,9 @@ public sealed class BreadChainTests
     }
 
     [Fact]
-    public void BreadChainStartsInOrderAndAddsThreeFoodPerSecond()
+    public void BreadChainStartsInOrderAndAddsThreeBreadPerSecond()
     {
-        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var runtime = new GameRuntime(CivilGrowthScenario.CreateLegacyForBenchmarks());
         Build(runtime, "fisher", 1);
         Build(runtime, "food-store", 1);
         new SetPauseHandler(runtime).Handle(new(false));
@@ -66,13 +66,29 @@ public sealed class BreadChainTests
         }
         Assert.Equal([(0, 0), (1, 0), (1, 1)], runnable.Take(3));
         var running = read.Handle();
-        Assert.Equal(4m, Resource(running, "food").ProductionPerSecond);
+        Assert.Equal(1m, Resource(running, "food").ProductionPerSecond);
+        Assert.Equal(3m, Resource(running, "bread").ProductionPerSecond);
+        Assert.True(Resource(running, "bread").Quantity > 0m);
         Assert.Equal(2m, Resource(running, "grain").Quantity);
         Assert.Equal(1m, Resource(running, "flour").Quantity);
         Assert.Equal(2m, Resource(running, "water").Quantity);
         foreach (var id in new[] { "grain", "flour", "water" })
             Assert.Equal(0m, Resource(running, id).NetPerSecond);
         Assert.Equal(ProductionBlockReason.None, Building(running, "bakery").BlockReason);
+    }
+
+    [Fact]
+    public void ReadModelNamesTheStarvedInputResource()
+    {
+        var runtime = new GameRuntime(CivilGrowthScenario.CreateLegacyForBenchmarks());
+        Assert.True(new ConstructBuildingsHandler(runtime).Handle(new("fisher", 1)).Succeeded);
+        Assert.True(new ConstructBuildingsHandler(runtime).Handle(new("food-store", 1)).Succeeded);
+        Assert.True(new AssignWorkersHandler(runtime).Handle(new("food-store", 1)).Succeeded);
+
+        var building = Building(new GetGameStateHandler(runtime).Handle(), "food-store");
+        Assert.Equal(new[] { "Pesce" }, building.MissingInputNames);
+        Assert.Empty(building.FullOutputNames);
+        Assert.Equal(0, building.RunnableWorkers);
     }
 
     private static void Build(GameRuntime runtime, string id, int count)

@@ -38,6 +38,7 @@ internal static class TestScenarios
         Assert.Equal(expected.ElapsedTicks, actual.ElapsedTicks);
         Assert.Equal(expected.Population, actual.Population);
         Assert.Equal(expected.GrowthProgressSeconds, actual.GrowthProgressSeconds);
+        Assert.Equal(expected.GrowthRemainderTwentieths, actual.GrowthRemainderTwentieths);
         Assert.Equal(expected.Resources, actual.Resources);
         Assert.Equal(expected.Buildings.ToArray(), actual.Buildings.ToArray());
     }

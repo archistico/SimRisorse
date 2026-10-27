@@ -115,7 +115,7 @@ Una classifica locale può usare i risultati salvati. Un'eventuale classifica pu
 
 ## Transizione dalla bozza
 
-La soluzione storica è in [legacy/winforms](../legacy/winforms/README.md). I suoi file restano leggibili ed eseguibili con l'ambiente appropriato. La nuova soluzione non dovrà riferire i progetti legacy.
+La soluzione storica Windows Forms appartiene alla cartella `legacy/winforms` del repository originario, non inclusa nell'archivio di lavoro corrente. La nuova soluzione non fa riferimento ai progetti legacy.
 
 Si riusano idee e riferimenti di contenuto, verificandone le regole; non si trasferiscono automaticamente l'algoritmo di `Magazzino` o l'orologio per edificio. La sostituzione procede per funzionalità verificabili, iniziando da risorse, costruzioni e lavoratori.
 

@@ -21,6 +21,7 @@ public sealed class GameSession
         ElapsedTicks = snapshot.ElapsedTicks;
         Population = snapshot.Population;
         GrowthProgressSeconds = snapshot.GrowthProgressSeconds ?? 0;
+        GrowthRemainderTwentieths = snapshot.GrowthRemainderTwentieths;
         _buildings = snapshot.Buildings.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
     }
 
@@ -30,6 +31,7 @@ public sealed class GameSession
     public bool IsPaused { get; private set; } = true;
     public int Population { get; private set; }
     public int GrowthProgressSeconds { get; private set; }
+    public int GrowthRemainderTwentieths { get; private set; }
     public int HousingCapacity => Scenario.HousingCapacity(_buildings.Values);
     public ResourceBundle StorageCapacity => Scenario.StorageCapacity(_buildings.Values);
     public int AvailableWorkers => Population - checked((int)_buildings.Values.Sum(item => (long)item.AssignedWorkers));
@@ -59,10 +61,12 @@ public sealed class GameSession
         if (scenario.PopulationRules is { } rules)
         {
             if (snapshot.Population > scenario.HousingCapacity(snapshot.Buildings) || snapshot.GrowthProgressSeconds is not { } progress ||
-                progress < 0 || progress >= rules.GrowthIntervalSeconds)
+                progress < 0 || progress >= rules.GrowthIntervalSeconds ||
+                snapshot.GrowthRemainderTwentieths is < 0 or >= HousingGrowthRules.UnitsPerSecond ||
+                (rules.HousingGrowth is null && snapshot.GrowthRemainderTwentieths != 0))
                 throw new ArgumentException("Invalid population or growth progress.", nameof(snapshot));
         }
-        else if (snapshot.Population != scenario.Population || snapshot.GrowthProgressSeconds is not null)
+        else if (snapshot.Population != scenario.Population || snapshot.GrowthProgressSeconds is not null || snapshot.GrowthRemainderTwentieths != 0)
             throw new ArgumentException("Fixed population snapshots cannot contain growth.", nameof(snapshot));
         return new(scenario, snapshot);
     }
@@ -70,14 +74,19 @@ public sealed class GameSession
     public GameSnapshot Snapshot() => new(Scenario.PopulationRules is null ? 1 : SnapshotFormatVersion, Scenario.Id, Scenario.Catalog.RulesVersion,
         ElapsedTicks, Population, Resources,
         Scenario.Catalog.Buildings.Select(item => _buildings[item.Id]).ToImmutableArray(),
-        Scenario.PopulationRules is null ? null : GrowthProgressSeconds);
+        Scenario.PopulationRules is null ? null : GrowthProgressSeconds, GrowthRemainderTwentieths);
 
-    private PopulationForecast PopulationPlan() => PopulationPlanner.Plan(Scenario.PopulationRules, Population, HousingCapacity, GrowthProgressSeconds, Resources);
+    private PopulationForecast PopulationPlan() => PopulationPlanner.Plan(Scenario.PopulationRules, Population, HousingCapacity,
+        Scenario.BasicHousingCapacity(_buildings.Values), GrowthProgressSeconds, GrowthRemainderTwentieths,
+        Scenario.PopulationRules?.HousingGrowth is { } growth
+            ? growth.Rate(_buildings[growth.SmallHouseId].Count, _buildings[growth.LargeHouseId].Count)
+            : HousingGrowthRules.UnitsPerSecond, Resources);
 
     public EconomyForecast ForecastEconomy()
     {
         var population = PopulationPlan();
-        var production = ProductionPlanner.Plan(Scenario.Catalog, Resources, StorageCapacity, _buildings, PopulationPlanner.Consumption(population));
+        var production = ProductionPlanner.Plan(Scenario.Catalog, Resources, StorageCapacity, _buildings,
+            PopulationPlanner.Consumption(population), includeDiagnostics: true);
         return new(production.Buildings, population);
     }
 
@@ -144,10 +153,18 @@ public sealed class GameSession
         {
             var population = PopulationPlan();
             Resources = ProductionPlanner.Plan(Scenario.Catalog, Resources, capacity, _buildings, PopulationPlanner.Consumption(population)).Resources;
-            if (population.BlockReason == GrowthBlockReason.None && ++GrowthProgressSeconds == population.IntervalSeconds)
+            if (population.BlockReason == GrowthBlockReason.None)
             {
-                Population++;
-                GrowthProgressSeconds = 0;
+                var accrued = (long)GrowthProgressSeconds * HousingGrowthRules.UnitsPerSecond +
+                    GrowthRemainderTwentieths + population.GrowthRateTwentieths;
+                var threshold = (long)population.IntervalSeconds * HousingGrowthRules.UnitsPerSecond;
+                if (accrued >= threshold)
+                {
+                    Population++;
+                    accrued -= threshold;
+                }
+                GrowthProgressSeconds = (int)(accrued / HousingGrowthRules.UnitsPerSecond);
+                GrowthRemainderTwentieths = (int)(accrued % HousingGrowthRules.UnitsPerSecond);
             }
         }
         ElapsedTicks = nextTicks;
