@@ -1,145 +1,93 @@
 # SimRisorse
 
-Gioco gestionale in cui si parte da materiali di base e si sviluppano filiere produttive, popolazione e capacità militare per arrivare a costruire tutti i tipi di edificio previsti dallo scenario.
+![SimRisorse: menu laterale, card delle scorte e dettaglio del Taglialegna](docs/screenshots/colonia.png)
 
-La scelta centrale è come investire risorse e lavoratori: espandere la produzione adesso oppure risparmiare per il prossimo sblocco. Soldati, castelli e missioni di conquista delle isole fanno parte della visione di gioco.
+Gioco gestionale in cui sviluppi una colonia investendo materiali e lavoratori nelle filiere produttive. Parti da tronchi, legno lavorato e pietra, fai crescere la popolazione e sblocchi alimentazione e industria.
 
-## Stato del progetto
+Il progetto è in sviluppo. La prima campagna prevede **22 tipi di edifici**: per vincere occorrerà possederli tutti, costruendo per ultimo il Castello, sbloccato da una conquista obbligatoria. Militari, navi, conquista e vittoria devono ancora essere implementati.
 
-**27 ottobre 2026: M0–M4 completate; M5.1b Oro verificata su Windows con 204/204 test.** La [soluzione](SimRisorse.slnx) comprende motore, GUI, salvataggi SQLite e simulatore. `.\validate.cmd` completa build senza avvisi/errori, 16 cronologie più la prova di crescita, quattro benchmark, 17 render e prove native di entrambi gli scenari. [Risultati M5.1b](docs/validation/M5_1B_GOLD.md).
+## Stato attuale
 
-Lo scenario `civil-growth-7` ha **17 tipi di edifici e 14 risorse**. La Casa grande sblocca le miniere di ferro, carbone e oro; le rispettive miniere sbloccano le due fonderie. L'utente ha scelto i parametri A del Ferro e poi dell'Oro, mantenendo **S1**, conversione e backup. Il Ferro ha priorità con carbone scarso; una seconda miniera sostiene più lavorazioni. Crescita, Cibo/Pane, formato SQLite v2 e GUI retro **Consolas monospace** sono conservati. Carne fuori dalla prima campagna e demolizione rinviata.
+**27 ottobre 2026 — M0–M4 completate, M5.1a Ferro e M5.1b Oro verificate su Windows.** Lo scenario corrente è `civil-growth-7`, con **17 tipi di edifici e 14 risorse**.
 
-**Prima campagna scelta:** [22 tipi](docs/design/FIRST_CAMPAIGN_PROPOSAL.md), di cui 17 presenti e 5 futuri. Per vincere occorrerà possederli tutti, con il Castello conclusivo sbloccato da una conquista obbligatoria. Vittoria e missioni sono contratti scelti, ancora da implementare. Prezzi di Forgia/Zecca e regole militari/navali restano decisioni separate.
+- Crescita civile con Case piccole e grandi, Cibo e Pane, Magazzini e capacità delle scorte.
+- Miniere di ferro, carbone e oro, due fonderie e priorità del Ferro quando il Carbone scarseggia.
+- Interfaccia retro con font monospace, icone pixel, menu laterale Edifici/Risorse e card di abitanti e scorte.
+- Dettaglio con descrizione, costi in elenco, produzione e consumi. Ordini da **1, 5 o 10** unità; assegnazioni manuali dei lavoratori.
+- Pausa, salvataggio manuale e automatico, ripresa senza produzione a gioco chiuso.
+- Conversione dei vecchi salvataggi civili con backup dell'originale; formato SQLite v2.
 
-La [roadmap](docs/ROADMAP.md) conserva la progressione M4 e distingue M5.1a verificata dagli incrementi futuri. I benchmark abitativi `civil-growth-4` e `-5` restano riproducibili. I dossier [M5.2](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md), [M5.3](docs/design/M5_3_ARMY_PREFEASIBILITY.md) e [M5.4](docs/design/M5_4_NAVAL_PREFEASIBILITY.md) preparano regole ancora da scegliere: esercito, navi, isole e vittoria non sono ancora implementati.
+Ultima validazione completa: **206/206 test superati**, build senza avvisi/errori, simulazioni, quattro benchmark e prove native di entrambi gli scenari. Verificati i layout **1040×740 e 1240×850**. [Risultati e limiti della verifica](docs/validation/DESKTOP_UI.md).
 
-L'impostazione tecnica adottata è un monolite modulare con funzionalità verticali e un motore indipendente dall'interfaccia. **C#/.NET 10, Avalonia 12.1.4/MVVM e SQLite sono lo stack desktop**, con Microsoft.Data.Sqlite 10.0.14. Core e Application usano solo il framework e i riferimenti interni previsti. Windows è verificato, Linux/macOS non ancora. Compatibilità dei salvataggi e controllo puntuale delle dipendenze sono descritti nel [report della migrazione](docs/validation/AVALONIA_12.md); l'audit CLI dell'ambiente incontra ancora un errore TLS.
+Il prossimo incremento è **M5.1c**, confronto di scala e contesa del Carbone. Forgia, Zecca, Caserma, Cantiere e Castello restano futuri; prezzi e contratti militari/navali richiedono le rispettive scelte. Carne fuori dalla prima campagna e demolizione rinviata. L'obiettivo di circa **8 ore** con una strategia efficiente e **32 ore o più** con strategie lente riguarda il gioco completo e non è ancora una durata dimostrata.
 
-## Scelte di gioco confermate
+## Avvio su Windows
 
-- Edifici gestiti tramite elenco e schede, senza collocamento su una mappa.
-- Identità grafica: **pixel art retro 8-bit essenziale**, con prototipo monospace approvato e verificato; rifiniture e DPI fisici da ampliare.
-- Produzione e progressione dipendenti dalle quantità di edifici e dall'impiego dei lavoratori.
-- Presenza di soldati e progressione verso castelli e missioni di conquista delle isole.
-- Partite sospendibili: nessun avanzamento durante la pausa o quando non si gioca.
-- Classifica basata sul tempo di gioco necessario a completare l'obiettivo.
-- Obiettivo di bilanciamento: circa **8 ore** per una strategia molto efficiente; **32 ore o più** con decisioni meno efficaci. Non è ancora un risultato misurato né un minimo teorico dimostrato.
+Servono il **.NET SDK 10** indicato in [global.json](global.json) e l'accesso alle sorgenti NuGet per il primo ripristino. Dalla radice del repository:
 
-La definizione esatta di vittoria, il ruolo obbligatorio delle isole e le formule economiche restano da precisare in [Game design](docs/GAME_DESIGN.md).
+```powershell
+.\validate.cmd
+.\run-game.cmd
+```
+
+La validazione ripristina i pacchetti con lock, compila, esegue test e simulazioni, pubblica il desktop e ne verifica il ciclo nativo con salvataggi privati. Gli artefatti sono in `.local-cache/m4/`, esclusa da Git. Con una cache completa è disponibile anche il ripristino offline:
+
+```powershell
+.\validate.cmd -OfflinePackageSource .local-cache/nuget
+```
+
+Il percorso offline non esegue l'audit delle dipendenze. Comandi, benchmark e modalità di verifica sono nella [guida di sviluppo](docs/DEVELOPMENT.md).
+
+## Come si gioca oggi
+
+La partita parte **in pausa** e tenta di riprendere il salvataggio esistente. Dal menu laterale puoi passare tra Edifici e Risorse; le card di abitanti, posti, lavoratori liberi e scorte restano visibili.
+
+Seleziona una struttura per leggere costi, produzione per addetto e secondo, consumi e prerequisiti. Scegli la quantità, costruisci e assegna i lavoratori. Gli ordini sono consentiti anche in pausa; il pulsante **Avvia produzione** fa avanzare la simulazione. L'hover ocra distingue i pulsanti disponibili da quelli disabilitati in grigio.
+
+Le Case piccole offrono **8 posti** e le grandi **32**, con prerequisito Forno. Con spazio e alimentazione disponibili arriva un abitante ogni **60 secondi validi** al ritmo base; le case aggiuntive accelerano gli arrivi fino a **2×**. Tutti consumano Cibo, mentre i residenti oltre la capacità delle Case piccole richiedono anche Pane. La barra Crescita segnala carenze e blocchi. I valori correnti sono regole di sviluppo, non bilanciamento finale.
+
+Il salvataggio avviene ogni minuto e alla chiusura ordinata, oltre al comando manuale. Su Windows la partita civile usa `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`. Il vecchio scenario mantiene il proprio slot ed è disponibile con `run-game.cmd --scenario economy-foundation`. [Formato, conversioni e recupero](docs/SAVE_FORMAT.md).
+
+Per eseguire il motore senza finestre dopo la validazione:
+
+```powershell
+dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy gold --seconds 1502
+```
+
+I quattro benchmark abitativi e del Pane si possono leggere senza ripetere le simulazioni con `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\report-m4.ps1`. [Guida ai risultati](docs/validation/M4_BENCHMARK_READER.md).
+
+## Stack e struttura
+
+**C#/.NET 10, Avalonia 12.1.4/MVVM e SQLite**, con Microsoft.Data.Sqlite 10.0.14. Monolite modulare: il motore resta indipendente dall'interfaccia. Windows è verificato; Linux/macOS e DPI fisici differenti restano da verificare.
+
+| Cartella | Responsabilità |
+| --- | --- |
+| `src/SimRisorse.Core/` | Stato e regole della simulazione |
+| `src/SimRisorse.Application/` | Casi d'uso, scenari e modelli di lettura |
+| `src/SimRisorse.Infrastructure/` | Salvataggi SQLite |
+| `src/SimRisorse.Desktop/` | Interfaccia Avalonia |
+| `tests/` | Test dei quattro livelli |
+| `tools/SimRisorse.Simulation/` | Scenari e benchmark senza finestre |
+| `experiments/` | Prove separate dalla soluzione principale |
+| `docs/` | Design, decisioni, verifiche e screenshot |
 
 ## Documentazione
 
 | Documento | Contenuto |
 | --- | --- |
-| [Game design](docs/GAME_DESIGN.md) | Visione, regole confermate, proposte, questioni aperte e glossario |
-| [Architettura](docs/ARCHITECTURE.md) | Confini, dipendenze e struttura prevista |
-| [ADR](docs/adr/README.md) | Decisioni architetturali con stato e motivazioni |
-| [Roadmap](docs/ROADMAP.md) | Stato verificato, M4.6–M4.9, gate prima di M5, M5–M7, dipendenze e criteri di completamento |
-| [Sviluppo](docs/DEVELOPMENT.md) | Convenzioni, verifiche e gestione dei cambiamenti |
-| [Handoff](docs/HANDOFF.md) | Stato operativo e prossimo lavoro da riprendere |
-| [Dossier pre-M5 / D0](docs/design/PRE_M5_DECISION_GATE.md) | Inventario dei 43 riferimenti, 12 equivalenti presenti, opzioni di vittoria, isole, militari e criteri di scelta |
-| [Scheda operativa D0](docs/design/D0_DECISION_BOARD.md) | Scelte ricevute e parametri residui; regole correnti v6, continuità S1 e prossimi incrementi |
-| [Prima campagna](docs/design/FIRST_CAMPAIGN_PROPOSAL.md) | Catalogo dei 22 tipi scelto dall'utente; proposta separata di vittoria, prima conquista e casi di accettazione |
-| [Prova industriale A/B](experiments/industry-probe/README.md) | Esperimento opzionale eseguito: ferro/oro, prezzi ipotetici e politiche di acquisto; regole separate dalla partita |
-| [Prefattibilità M5.1](docs/design/M5_1_INDUSTRY_PREFEASIBILITY.md) | Ferro/carbone, oro, contesa, due ipotesi di prezzi, capacità, migrazioni e gate di verifica (nessun codice M5) |
-| [Prefattibilità M5.2](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md) | Forgia e Zecca, Spade e Monete, limite del Carbone, strategie a fasi/continua e decisioni economiche aperte (nessun codice M5) |
-| [Prefattibilità M5.3](docs/design/M5_3_ARMY_PREFEASIBILITY.md) | Caserma, reclute, soldati, popolazione condivisa, addestramento, salvataggi e decisioni militari aperte (nessun codice M5) |
-| [Prefattibilità M5.4](docs/design/M5_4_NAVAL_PREFEASIBILITY.md) | Cantiere, navi, flotta persistente/monouso, primo viaggio, trasporto, salvataggi e scelte navali ancora da approvare |
-| [Changelog](CHANGELOG.md) | Modifiche effettivamente realizzate |
-| [Riferimenti visivi](docs/references/README.md) | Screenshot originali e analisi delle evidenze |
-| [Scenario della prova](docs/scenarios/ECONOMY_PROBE.md) | Valori e regole provvisorie del primo ciclo economico |
-| [Verifica dello stack](docs/validation/M1_STACK_PROBE.md) | Ambiente, 23 test, pubblicazione e limiti della prova |
-| [Scenario del Core](docs/scenarios/ECONOMY_FOUNDATION.md) | Catalogo, dotazione e regole attualmente eseguibili |
-| [Verifica del motore](docs/validation/M2_CORE.md) | 45 test, simulazioni lunghe e limiti dell'audit |
-| [Salvataggi](docs/SAVE_FORMAT.md) | Percorso, formato, checkpoint e comportamento in caso di errore |
-| [Verifica del desktop](docs/validation/M3_DESKTOP.md) | 82 test, rendering e avvio nativo Windows |
-| [Migrazione Avalonia 12](docs/validation/AVALONIA_12.md) | Baseline dei pacchetti, compatibilità dei checkpoint e dipendenze |
-| [Scenario civile M4](docs/scenarios/CIVIL_GROWTH.md) | Regole eseguibili di abitazioni, crescita, alimentazione e recupero |
-| [Confronto abitazioni M4](docs/scenarios/HOUSING_BENCHMARK.md) | Tre strategie riproducibili e criteri per valutare costi, carenze e tempi |
-| [Audit incentivi case M4.13](docs/scenarios/HOUSING_INCENTIVE_AUDIT.md) | Vantaggio 2×, quattro combinazioni a costo minimo, capienza e domanda alimentare teorica |
-| [Scala Pane M4](docs/scenarios/BREAD_SCALE_BENCHMARK.md) | Quattro strategie da 220 abitanti, gate v17 riferito superato, misure grezze non disponibili |
-| [Stress Pane alta densità M4.8](docs/scenarios/BREAD_HIGH_DENSITY_BENCHMARK.md) | Confronto da 320 a 350 abitanti, ipotesi, indicatori e gate riferito superato con v21 (report grezzi assenti) |
-| [Capacità filiera Pane M4](docs/scenarios/BREAD_CHAIN_CAPACITY.md) | Limiti teorici dei quattro anelli e confronto tra potenziamento completo e snello |
-| [Direzione grafica 8-bit](docs/PIXEL_ART_UI.md) | Stile scelto, requisiti di leggibilità e piano del prototipo futuro |
-| [Valutazione filiera Carne](docs/scenarios/MEAT_DESIGN_REVIEW.md) | Alternative e decisioni ancora aperte, senza introdurre meccaniche non approvate |
-| [Studio demolizione M4](docs/scenarios/DEMOLITION_M4_REVIEW.md) | Confronto dei rimborsi e condizioni per non perdere capacità, persone o scorte |
-| [Verifiche M4](docs/validation/M4_CIVIL_GROWTH.md) | Cronologia delle verifiche; gate corrente superato con 177/177 test |
-| [Verifica M5.1a](docs/validation/M5_1A_IRON.md) | Ferro/carbone giocabili, conversione S1, 191 test e misure da nuova partita |
-| [Verifica M5.1b](docs/validation/M5_1B_GOLD.md) | Oro giocabile, priorità sul carbone, conversione v6→v7, 204 test e misure |
-| [Risultati misurati M4](docs/validation/M4_MEASURED_RESULTS.md) | Quattro benchmark letti, nove render ispezionati, provenienza e decisioni residue |
-| [Lettura benchmark M4](docs/validation/M4_BENCHMARK_READER.md) | Utility v26, quattro JSON storici/accelerati, confronti misurati e limiti della prova |
+| [Indice completo](docs/README.md) | Documentazione corrente, studi e rapporti storici |
+| [Game design](docs/GAME_DESIGN.md) | Regole confermate e questioni aperte |
+| [Roadmap](docs/ROADMAP.md) | Milestone completate e prossimi incrementi |
+| [Handoff](docs/HANDOFF.md) | Punto operativo da cui continuare |
+| [Architettura e ADR](docs/ARCHITECTURE.md) | Confini del codice e decisioni tecniche |
+| [Sviluppo](docs/DEVELOPMENT.md) | Comandi, convenzioni e verifiche |
+| [Salvataggi](docs/SAVE_FORMAT.md) | Formato, backup e compatibilità |
+| [Interfaccia retro](docs/PIXEL_ART_UI.md) | Layout, icone, font e stati dei controlli |
+| [Ultima verifica dell'interfaccia](docs/validation/DESKTOP_UI.md) | Gate da 206 test, render e limiti |
+| [Changelog](CHANGELOG.md) | Modifiche realizzate |
 
-## Struttura attuale
-
-```text
-README.md
-CHANGELOG.md
-LICENSE.txt
-docs/
-  adr/
-  references/screenshots/
-experiments/
-  stack-probe/
-scripts/
-src/
-  SimRisorse.Core/
-  SimRisorse.Application/
-  SimRisorse.Infrastructure/
-  SimRisorse.Desktop/
-tests/
-  SimRisorse.Core.Tests/
-  SimRisorse.Application.Tests/
-  SimRisorse.Infrastructure.Tests/
-  SimRisorse.Desktop.Tests/
-tools/
-  SimRisorse.Simulation/
-SimRisorse.slnx
-validate.cmd
-run-game.cmd
-```
-
-Nessun progetto della soluzione definitiva dipende dalla bozza storica Windows Forms o da `experiments/`. La cartella `legacy/winforms/`, citata nei documenti storici, non era inclusa nell'archivio sorgente ricevuto per questa lavorazione.
-
-Le cache locali sono state raccolte in `.local-cache/`, esclusa da Git. Le immagini di riferimento sono state trasferite dalla precedente cartella `screnshot/`, mantenendo nomi e contenuto.
-
-## Esecuzione
-
-Per validare la soluzione definitiva con sorgenti NuGet accessibili:
-
-```powershell
-.\validate.cmd
-```
-
-Con la cache completa del workspace si può usare `validate.cmd -OfflinePackageSource .local-cache/nuget`; è possibile indicare un'altra cache purché contenga le versioni correnti. Lo script compila, esegue i test, controlla simulazioni di 60 secondi, 8 e 32 ore e pubblica/avvia il desktop su Windows con un salvataggio privato di verifica. Il percorso offline non esegue l'audit delle dipendenze.
-
-Quando saranno disponibili i quattro JSON del gate, si potranno **leggere senza ripetere simulazioni** con `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\report-m4.ps1`. Il comando stampa un rapporto Markdown con le misure effettive; la [guida](docs/validation/M4_BENCHMARK_READER.md) spiega come conservarlo e quali conclusioni non permette.
-
-Per aprire il gioco dopo la validazione:
-
-```powershell
-.\run-game.cmd
-```
-
-Le viste Edifici e Risorse mostrano quantità, capacità, costi, personale e flussi previsti al secondo. Puoi impartire ordini da 1, 5 o 10 unità. Il gioco parte in pausa e tenta di riprendere il salvataggio esistente.
-
-Per i residenti avanzati, la barra Crescita include una diagnosi del rifornimento di Pane: differenzia capacità nominale dei Forni, input insufficienti e deposito quasi pieno, con un'autonomia indicativa della scorta senza nuove forniture. Il gate v17 comprendente questa diagnostica è stato riferito superato dall'utente; i dettagli visivi e i relativi screenshot non sono allegati.
-
-La diagnosi proviene dal modello di lettura di Application, indipendente dalla grafica. Se Cibo e Pane mancano insieme vengono segnalate entrambe le necessità. Miniere e fonderie spiegano prerequisiti, input e capacità mancanti. Gate corrente **204/204 test superati**; avvisi sopra Costruisci, geometria hover e layout industriali verificati alle due risoluzioni. La base grafica è accettata; DPI fisici da ampliare.
-
-Nel nuovo scenario le Case piccole offrono 8 posti, le Case grandi 32 e richiedono un Forno già costruito. Con spazio, Cibo e Pane quando necessario, il ritmo base è di un abitante ogni 60 secondi validi, accelerato dalle case aggiuntive fino a 2×. Tutti consumano 0,010 Cibo/s a persona; oltre la capienza delle Case piccole serve anche 0,015 Pane/s a persona avanzata. Le carenze fermano la crescita senza rimuovere abitanti. I valori sono provvisori per lo sviluppo, non il bilanciamento finale.
-
-Salvataggio ogni minuto e alla chiusura ordinata, oltre al comando manuale. Il nuovo scenario usa `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3` su Windows. Il vecchio checkpoint `game.sqlite3` rimane separato e si riprende con `run-game.cmd --scenario economy-foundation`. La ripresa conserva la crescita parziale e non produce risorse per il tempo trascorso a gioco chiuso. Dettagli nel [formato dei salvataggi](docs/SAVE_FORMAT.md).
-
-Dopo la validazione, per eseguire il nuovo motore senza finestre:
-
-```powershell
-dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --seconds 60
-dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy bootstrap --seconds 121
-```
-
-L'esperimento iniziale si avvia ancora con `scripts/run-stack-probe.cmd`, dopo la sua validazione separata: vedere il [README M1](experiments/stack-probe/README.md). La bozza storica Windows Forms non è la nuova applicazione e non è inclusa in questo archivio.
+Lo screenshot iniziale è un render dell'applicazione attuale, conservato nel repository. [Provenienza e aggiornamento](docs/screenshots/README.md).
 
 ## Licenza
 
-Il repository contiene il testo della GNU Affero General Public License v3 in [LICENSE.txt](LICENSE.txt), conservato senza modifiche.
+Il repository contiene la GNU Affero General Public License v3 in [LICENSE.txt](LICENSE.txt).

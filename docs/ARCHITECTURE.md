@@ -4,6 +4,8 @@ Stato: Core, Application, Infrastructure, Desktop e Simulation implementati e co
 
 M5.1a/b aggiungono Ferro, Carbone e Oro come contenuti Application usando il pianificatore economico esistente. Corrente `civil-growth-7`; S1 preserva slot e SQLite v2 con conversione/backup. V4/v5 restano ai benchmark e v6 alle verifiche di compatibilità. [Decisione S1](adr/0014-first-iron-industry-and-civil-save-upgrade.md) e [ultima verifica](validation/M5_1B_GOLD.md).
 
+Le rifiniture correnti del Desktop non cambiano le regole: `PixelGlyph` contiene i pittogrammi, `ResourceDetailLine` e il template condiviso presentano costi e produzione, `MainViewModel` espone i riepiloghi. Colori e font sono risorse del tema; la navigazione laterale seleziona le pagine senza duplicare i dati. [Contratto grafico](PIXEL_ART_UI.md) e [gate corrente da 206 test](validation/DESKTOP_UI.md).
+
 Il desktop corrente usa Avalonia 12.1.4 e Microsoft.Data.Sqlite 10.0.14: [ADR 0008](adr/0008-avalonia-12.md). Il nuovo [scenario civile](scenarios/CIVIL_GROWTH.md) usa snapshot/file v2 e uno slot separato, mantenendo quello M3 disponibile in v1: [ADR 0009](adr/0009-civil-growth-and-save-generations.md).
 
 ## Impostazione

@@ -4,6 +4,13 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-10-27 — Riordino della documentazione e screenshot nel README
+
+- README riscritto con screenshot dell'applicazione subito dopo il titolo, avvio rapido, funzionalità presenti e limiti della campagna. PNG copiato integralmente dal render 1240×850 dell'ultimo gate in `docs/screenshots/colonia.png`, con provenienza e istruzioni di aggiornamento.
+- Nuovo indice `docs/README.md`, handoff corrente sintetico e archivio dei punti di ripresa precedenti. Guida grafica allineata a sidebar da 240 px, card, icone, costi/produzione e hover ocra.
+- Allineati roadmap, sviluppo, architettura e decisioni ai **206 test** dell'ultimo gate. Nuovo rapporto `docs/validation/DESKTOP_UI.md`; i conteggi e risultati dei gate storici restano conservati nei rispettivi rapporti. Nessuna modifica al codice applicativo o alle regole.
+- Verificati **62 file Markdown e 468 collegamenti locali**, incluse le ancore, senza errori. Controllati formato, dimensioni, identità SHA-256 e inclusione in Git dello screenshot.
+
 ### 2026-10-27 — Hover ocra dei pulsanti
 
 - Hover dei pulsanti primari e secondari nello stesso ocra della struttura selezionata (`#E6D5AC`), con testo scuro. Colore condiviso nel tema e applicato anche al contenuto del pulsante Fluent; disabilitazione grigia e geometria stabile preservate.

@@ -1,10 +1,10 @@
 # SimRisorse — D0: scheda operativa delle decisioni prima di M5
 
-Data: 2026-10-27 · aggiornamento M5.1a · **Scheda delle scelte ricevute e delle proposte ancora aperte.**
+Data: 2026-10-27 · aggiornamento M5.1b e interfaccia · **Scheda delle scelte ricevute e delle proposte ancora aperte.**
 
 **Decisioni successive registrate:** M4 chiusa; prototipo monospace approvato, demolizione rinviata. D0.2: possedere tutti i 22 tipi, Castello conclusivo; D0.3: una conquista obbligatoria sblocca il Castello. Scelta **S1** e configurazione **A per la sola M5.1a**, ora [implementata e verificata](../validation/M5_1A_IRON.md). Restano aperti i parametri delle fasi successive, senza riaprire le decisioni già ricevute.
 
-**M5.1b successiva:** configurazione **A dell'Oro scelta separatamente e verificata**, con Ferro prioritario sul carbone scarso. Corrente `civil-growth-7`, 17 edifici / 14 risorse e **204/204 test**. [Report Oro](../validation/M5_1B_GOLD.md). Le scelte già ricevute non si riaprono; il confronto esteso di scala M5.1c precede i nuovi contratti di Forgia/Zecca.
+**M5.1b successiva:** configurazione **A dell'Oro scelta separatamente e verificata**, con Ferro prioritario sul carbone scarso. Corrente `civil-growth-7`, 17 edifici / 14 risorse; gate di integrazione Oro da **204 test** e [gate corrente dell'interfaccia da **206 test**](../validation/DESKTOP_UI.md). [Report Oro](../validation/M5_1B_GOLD.md). Le scelte già ricevute non si riaprono; il confronto esteso di scala M5.1c precede i nuovi contratti di Forgia/Zecca.
 
 Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo D0](PRE_M5_DECISION_GATE.md) conserva l'inventario dei 43 riferimenti e le alternative ragionate; qui sono raccolti ordine, responsabilità e condizioni per iniziare il codice. Le preferenze tecniche sottostanti **non sono risposte già fornite dall'utente**.
 
@@ -12,14 +12,14 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 
 ## 1. Dove siamo davvero
 
-| Elemento | Stato alla v29 | Conseguenza |
+| Elemento | Stato e riferimento storico | Conseguenza |
 | --- | --- | --- |
 | M0–M3 | Completate; test confermati nei rispettivi checkpoint | Baseline da preservare |
 | M4 fino a v24/M4.10 | **Gate Windows riferito superato dall'utente**, 174 xUnit attesi; nessun TRX/JSON disponibile qui | Ultima conferma utilizzabile |
 | Prototipo 8-bit e monospace | **Gate verificato e giudizio utente positivo** | Base grafica accettata; prove DPI fisici da ampliare in rifinitura |
 | v26/M4.12 | Lettore PowerShell **eseguito**, quattro benchmark consolidati | [Misure e limiti](../validation/M4_MEASURED_RESULTS.md), input conservati nel run |
 | v27/M4.13 | Audit matematico delle Case, **non benchmark eseguito** | Confrontare poi con dati reali |
-| v28/M4.14 | Questa scheda e allineamento documentale | Gate tecnico verificato; decisioni D0 ancora aperte |
+| v28/M4.14 | Introduzione di questa scheda e allineamento documentale | Le scelte successive sono registrate sotto; contratti militari/navali ancora aperti |
 | v29/M4.15 | Prefattibilità navale M5.4; **solo documentazione** | Decisioni e test futuri, nessuna nave introdotta |
 | Regole e dati | `civil-growth-7` attiva; snapshot SQLite v2, 17 tipi di edifici e 14 risorse | S1 e backup verificati; cataloghi v4/v5/v6 preservati |
 | Catalogo della prima campagna | **22 tipi scelti dall'utente**, di cui 17 implementati e 5 futuri; altri 21 riferimenti fuori | Vittoria e ruolo della conquista scelti; parametri successivi da fissare |
@@ -39,7 +39,7 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 | **D0.7** Interfaccia 8-bit | **Base approvata dall'utente**, incluso il font monospace | Conservare elenchi/schede, pittogramma più testo e geometria stabile | Gate tecnico e giudizio positivo acquisiti; DPI fisici nella rifinitura |
 | **D0.8** Spade/Monete | Le **Spade si consumano** all'arruolamento o equipaggiano i soldati? Le **Monete sono risorsa per comandi specifici** o valuta di tutta l'economia? | Primo modello più contenuto da valutare: Spade consumate, Monete come scorta mirata | Contratti di pagamento atomico, annullamento e save; richiesto prima di M5.2–M5.4 |
 
-**Non risolto con questa tabella:** prezzi, ricette, addetti, durata addestramento, rimborso della demolizione, ruolo della Carne, numero delle isole, probabilità di fallimento, uso coloniale delle Monete. Vanno scelti con i dossier specifici, senza inferirli dalle illustrazioni.
+**Non risolto con questa tabella:** prezzi, ricette e addetti delle fasi future, durata addestramento, eventuale rimborso della demolizione rinviata, numero/parametri delle isole, probabilità di fallimento e uso coloniale delle Monete. Vanno scelti con i dossier specifici, senza inferirli dalle illustrazioni. La Carne è già fuori dalla prima campagna.
 
 ## 3. Ordine di approvazione e dipendenze
 
@@ -47,7 +47,7 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 2. **D0.1–D0.3 scelti nel loro perimetro:** catalogo da 22, possesso al termine e Castello dopo una conquista obbligatoria. Dimensionare le singole fasi senza introdurre automaticamente altri contenuti.
 3. **Contratti trasversali, D0.4, D0.5 e D0.8:** conservazione popolazione, tempo, consumi militari e significato delle Monete. Servono per progettare interfacce e persistenza corrette; non implicano già Caserma, Forgia o Zecca.
 4. **Fattibilità incrementale D0.6:** M5.1a ha un percorso giocato da risorse iniziali a primo ferro in 1.102 s. La raggiungibilità della campagna completa richiederà i parametri militari/navali successivi. Il linguaggio visivo è accettato.
-5. **S1 scelta e verificata:** estensione di `civil-growth`, versione `-6`, conversione e backup. File/snapshot v2 conservati; eventuali nuovi stati militari/navali richiederanno valutazioni e test propri.
+5. **S1 scelta e verificata:** estensione di `civil-growth`, introdotta con `-6` e ora a `-7`, conversione e backup. File/snapshot v2 conservati; eventuali nuovi stati militari/navali richiederanno valutazioni e test propri.
 
 ### Contratto dei salvataggi: non ripetere il numero di versione
 
@@ -60,9 +60,9 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 
 ## 4. Sequenza realizzativa *dopo* le approvazioni
 
-| Fase futura | Aggiunte **candidate**, non approvate | Gate per passare alla successiva |
+| Fase | Aggiunte adottate o proposte secondo lo stato | Gate per passare alla successiva |
 | --- | --- | --- |
-| **M5.1a — Verificata** | Configurazione A scelta: miniera ferro, miniera carbone, fonderia; **15 edifici / 12 risorse** correnti | 191/191 test, primo ferro, deposito pieno, backup e ripresa verificati |
+| **M5.1a — Verificata** | Configurazione A scelta: miniera ferro, miniera carbone, fonderia; **15 edifici / 12 risorse** al relativo gate | 191/191 test, primo ferro, deposito pieno, backup e ripresa verificati |
 | **M5.1b — Verificata** | Oro configurazione A, due nuovi edifici e due risorse | 204/204 test, contesa, backup e ripresa verificati |
 | **M5.1c — Prossima** | Confronto esteso di scala e contesa del carbone | Strategie reali, contatori riconciliati, nessun parametro nuovo implicito |
 | **M5.2a–c** | Forgia, Zecca, Spade, Monete (**+2/+2**), utilizzo da definire | D0.8 approvata, transazioni e produzione a fasi/contemporanea confrontate, mai saldo negativo |

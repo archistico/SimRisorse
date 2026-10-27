@@ -12,9 +12,11 @@ Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento,
 
 **Decisione D0.1 del 2026-10-27:** prima campagna con i [22 tipi elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): 12 civili, cinque di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere e Castello. Gli altri 21 riferimenti sono fuori dalla prima campagna. Con M5.1b **17 tipi sono implementati e 5 restano futuri**.
 
-**Decisioni successive esplicite:** vittoria con possesso di tutti i 22 tipi e Castello conclusivo; una conquista obbligatoria sblocca il Castello. Gli edifici iniziali contano già. M4 chiusa dopo giudizio positivo sul prototipo monospace e rinvio della demolizione. Scelta **S1** per continuare le partite con conversione/backup e **configurazione A per la sola prima filiera ferro/carbone**. M5.1a verificata nelle regole **`civil-growth-6`**, 15 edifici e 12 risorse: [parametri e risultati](validation/M5_1A_IRON.md). Le regole operative militari/navali, l'oro e la funzione di vittoria restano da implementare nei rispettivi incrementi.
+**Decisioni successive esplicite:** vittoria con possesso di tutti i 22 tipi e Castello conclusivo; una conquista obbligatoria sblocca il Castello. Gli edifici iniziali contano già. M4 chiusa dopo giudizio positivo sul prototipo monospace e rinvio della demolizione. Scelta **S1** per continuare le partite con conversione/backup e **configurazione A per la prima filiera ferro/carbone**. M5.1a verificata inizialmente nelle regole **`civil-growth-6`**, 15 edifici e 12 risorse: [parametri e risultati](validation/M5_1A_IRON.md). Le regole operative militari/navali e la funzione di vittoria restano da implementare; l'Oro è stato aggiunto nell'incremento successivo.
 
 **Scelta successiva M5.1b:** approvata separatamente la configurazione A dell'Oro: Miniera 180/120 legno/pietra, 1 minerale/s; Fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s; un addetto ciascuna, capacità 1.000 +500 per Magazzino, scorte iniziali zero. Ferro prioritario con carbone scarso. **M5.1b verificata**, `civil-growth-7`, 17 edifici / 14 risorse e 204/204 test: [report](validation/M5_1B_GOLD.md). Forgia, Zecca e relativi usi rimangono futuri.
+
+**Verifica corrente dopo le rifiniture UI:** **206/206 test**, regole e salvataggi invariati. Menu laterale, card abitanti/scorte, dettaglio con costi prima della produzione e hover ocra sono implementati e approvati. [Interfaccia](PIXEL_ART_UI.md) e [risultati](validation/DESKTOP_UI.md).
 
 | ID | Requisito | Conseguenza |
 | --- | --- | --- |
@@ -100,13 +102,13 @@ Per Q-08 è disponibile uno [studio di demolizione](scenarios/DEMOLITION_M4_REVI
 
 ## Gate di design prima della milestone M5
 
-**Stato: M4 chiusa; D0.1, D0.2, ruolo D0.3, base D0.7, S1 e configurazione A M5.1a scelti. M5.1a verificata.** La [scheda prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md) raccoglie catalogo e vittoria; la [scheda operativa](design/D0_DECISION_BOARD.md) distingue le scelte ricevute dai parametri militari/navali ancora aperti. Le preferenze non confermate rimangono proposte. Ogni fase successiva deve dimostrare il proprio percorso raggiungibile; il primo ferro è verificato da nuova partita a 1.102 s.
+**Stato: M4 chiusa; D0.1, D0.2, ruolo D0.3, base D0.7, S1 e configurazioni A di M5.1a/b scelte. Ferro e Oro verificati.** La [scheda prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md) raccoglie catalogo e vittoria; la [scheda operativa](design/D0_DECISION_BOARD.md) distingue le scelte ricevute dai parametri militari/navali ancora aperti. Le preferenze non confermate rimangono proposte. Ogni fase successiva deve dimostrare il proprio percorso raggiungibile; primo Ferro a 1.102 s e primo Oro a 1.502 s nelle cronologie di riferimento.
 
 | Decisione | Cosa fissare | Perché condiziona M5/M6 |
 | --- | --- | --- |
 | **Catalogo finito — D0.1 scelta** | 22 tipi nella prima campagna, altri 21 riferimenti fuori; regole dei dieci tipi nuovi da dimensionare | Consente un grafo di dipendenze e un criterio di vittoria misurabile |
-| **Q-01: vittoria** | Possesso simultaneo, costruzione storica o traguardo finale; effetto di eventuali demolizioni | Determina cosa si deve testare e quando fermare il tempo |
-| **Q-02: isole** | Conquiste obbligatorie/facoltative, risorse esclusive, ricompense e requisiti | Impedisce che la navigazione sia decorativa oppure blocchi involontariamente la vittoria |
+| **Q-01: vittoria — scelta** | Possedere tutti i 22 tipi, Castello conclusivo; implementare e verificare il contratto | Determina cosa si deve testare e quando fermare il tempo |
+| **Q-02: isole — ruolo scelto** | Una conquista obbligatoria sblocca il Castello; restano identità, costi, forze, durata ed esiti | Impedisce che la navigazione blocchi involontariamente la vittoria |
 | **Q-09: militari** | Bacino reclute/lavoratori, durata addestramento, armi, cibo, costi, perdite e congedi | Evita che l'esercito superi la popolazione effettivamente disponibile |
 | **Tempo e difficoltà** | Regole del gioco completo a 1:1 o accelerate; effetto sulla classifica | Rende confrontabili i tempi e le strategie di riferimento |
 | **Schede dei contenuti** | Per tipo: costo, prerequisiti, lavoratori, input/output, capacità e funzione | Permette cataloghi raggiungibili e simulazioni ripetibili |

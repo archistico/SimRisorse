@@ -2,11 +2,11 @@
 
 Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** il lettore dei benchmark; **M4.13** l'audit aritmetico delle abitazioni; **M4.14** la [scheda decisionale D0](design/D0_DECISION_BOARD.md); **M4.15** la [prefattibilità M5.4 navale](design/M5_4_NAVAL_PREFEASIBILITY.md). Il gate Windows e la lettura quantitativa sono ora eseguiti. Questo documento distingue implementazione, verifica e decisioni aperte. Lo storico è nel [changelog](../CHANGELOG.md); il punto di ripresa è in [HANDOFF.md](HANDOFF.md).
 
-**Ultimo esito verificato su Windows:** `.\validate.cmd` superato con **204/204 test**, zero avvisi/errori, benchmark e prove native di entrambi gli scenari completati. M4 chiusa; M5.1b Oro integrata. [Report corrente](validation/M5_1B_GOLD.md). Gli stati pendenti nelle sezioni storiche descrivono le fasi precedenti.
+**Ultimo esito verificato su Windows:** `.\validate.cmd` superato con **206/206 test**, zero avvisi/errori, benchmark e prove native di entrambi gli scenari completati. M4 chiusa; M5.1b Oro integrata e rifiniture dell'interfaccia verificate. [Report corrente](validation/DESKTOP_UI.md). Gli stati pendenti nelle sezioni storiche descrivono le fasi precedenti.
 
 ## 1. Stato attuale
 
-**Aggiornamento corrente:** M4 chiusa; D0.1/D0.2/ruolo D0.3, S1 e base grafica scelti. Configurazioni A di Ferro e Oro approvate con risposte distinte. **M5.1b verificata**, `civil-growth-7`, **17 edifici / 14 risorse**, **204/204 test**, 17 render e smoke superati. Prossima M5.1c scala/contesa; Forgia e Zecca richiedono i loro parametri e contratti.
+**Aggiornamento corrente:** M4 chiusa; D0.1/D0.2/ruolo D0.3, S1 e base grafica scelti. Configurazioni A di Ferro e Oro approvate con risposte distinte. **M5.1b verificata**, `civil-growth-7`, **17 edifici / 14 risorse**, **206/206 test**, 19 render e smoke superati. Menu laterale da 240 px, card abitanti, dettaglio costi/produzione e hover ocra adottati. Prossima M5.1c scala/contesa; Forgia e Zecca richiedono i loro parametri e contratti.
 
 | Milestone | Risultato | Stato |
 | --- | --- | --- |
@@ -21,11 +21,11 @@ Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 
 **Baseline corrente:** C#/.NET 10, Avalonia 12.1.4, SQLite v2; regole `civil-growth-7`, **17 tipi di edifici**, **14 risorse**. GUI retro monospace accettata; costruzioni tramite elenco o schede, **senza mappa di posizionamento**.
 
-**Validazione corrente:** esecuzione Windows `326e28fa96b14ecb83a1dc8d4433d547`, SDK 10.0.201, **204 test superati** (Core 67, Application 61, Infrastructure 30, Desktop 46), zero avvisi/errori, 17 render generati e smoke nativi superati. I precedenti gate restano nello storico.
+**Validazione corrente:** esecuzione Windows `899f6ff3e8ff41288330c3d26b4c4ea7`, SDK 10.0.201, **206 test superati** (Core 67, Application 61, Infrastructure 30, Desktop 48), zero avvisi/errori, 17 render standard più due del dettaglio e smoke nativi superati. I precedenti gate restano nello storico; i 204 test del [rapporto Oro](validation/M5_1B_GOLD.md) descrivono il gate di integrazione precedente.
 
 **Scelte ricevute:** [prima campagna con 22 tipi](design/FIRST_CAMPAIGN_PROPOSAL.md), 17 presenti e 5 futuri; altri 21 riferimenti fuori. Possesso dei 22 tipi e Castello dopo una conquista obbligatoria. Base grafica approvata, demolizione rinviata, S1 e configurazioni A di Ferro/Oro scelte. Parametri di Forgia/Zecca e contratti militari/navali restano distinti.
 
-**Evidenza preparatoria M5.1:** [prova industriale A/B separata](../experiments/industry-probe/README.md) eseguita: otto confronti con acquisti in blocco/progressivi, due modalità di avanzamento, saturazione e ripresa delle fonderie. Ipotesi misurate in una colonia sintetica, senza integrazione nel desktop o approvazione dei parametri. Nuovo gate principale `4c51d35a1c924fdca6656687e8f21e0e`: **177/177 test**, simulazioni e smoke superati.
+**Evidenza preparatoria M5.1:** [prova industriale A/B separata](../experiments/industry-probe/README.md) eseguita: otto confronti con acquisti in blocco/progressivi, due modalità di avanzamento, saturazione e ripresa delle fonderie. Ipotesi misurate in una colonia sintetica, separate dai parametri poi scelti per il gioco. Gate preparatorio di allora `4c51d35a1c924fdca6656687e8f21e0e`: **177/177 test**, simulazioni e smoke superati.
 
 ## 2. Regole di pianificazione
 
@@ -34,7 +34,7 @@ Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 3. **Tre stati distinti:** *proposto*, *implementato ma da validare*, *verificato*. Un test scritto non è un test superato; una proposta tecnica non è una regola approvata.
 4. **Versioni delle regole esplicite:** una modifica economica o di compatibilità richiede una nuova versione e una politica di conversione dei checkpoint. Le analisi e i read model non richiedono una nuova versione.
 5. **Bilanciamento progressivo:** misurare costi, tempi e carenze a ogni nuova filiera, poi misurare la durata complessiva in M6. Le **8 ore efficienti / 32+ ore inefficienti** sono obiettivi del gioco completo, non certificazioni di M4.
-6. **GUI progressiva:** progettare una schermata 8-bit dopo il gate M4, estendere il linguaggio grafico durante M5–M6, rifinire in M7. La GUI non replica formule economiche del Core.
+6. **GUI progressiva:** estendere la base 8-bit già approvata durante M5–M6, rifinire in M7. La GUI non replica formule economiche del Core.
 7. **Salvataggi protetti:** test e benchmark non toccano le partite personali; le conversioni sono verificabili e preservano l'originale secondo le regole già adottate.
 
 ## 3. M0–M3 — Baseline completata
@@ -233,12 +233,12 @@ La **regola** della vittoria viene approvata nel gate di design; in M6 la rendia
 
 ## 8. Traccia parallela — GUI pixel art 8-bit
 
-La scelta stilistica è **confermata**, ma dimensioni e asset finali non sono approvati. Conservare l'impostazione per elenchi, schede e numeri leggibili.
+La base retro monospace è **implementata, verificata e approvata**. Il layout corrente include menu laterale da 240 px, card comuni, icona abitanti, costi e produzione con icone e hover ocra. Il [contratto grafico](PIXEL_ART_UI.md) distingue questi elementi dalle rifiniture future.
 
 | Quando | Incremento grafico | Gate |
 | --- | --- | --- |
-| Dopo la stabilizzazione M4 | **Un prototipo** con Case, Forno, Cibo, Pane, lavoratori e blocchi | Esaminare 1040×740, 1240×850 e DPI diversi |
-| Durante M5 | Aggiungere icone e sezioni per industria, esercito, navi e isole | Ogni comando essenziale raggiungibile; nessuna formula duplicata |
+| M4 e prima industria — completate | Prototipo, monospace, icone civili/industriali, menu, card e dettaglio compatti | Verificati 1040×740 e 1240×850; DPI fisici da ampliare |
+| Durante M5 — prossime fasi | Aggiungere icone e sezioni per esercito, navi e isole | Ogni comando essenziale raggiungibile; nessuna formula duplicata |
 | Durante M6 | Migliorare priorità visiva di costi, produzione, missioni e obiettivi | Prove di comprensibilità con scenari complessi |
 | M7 | Rifinitura estetica e accessibilità | Sprite nitidi, contrasto, tastiera, ridimensionamento |
 

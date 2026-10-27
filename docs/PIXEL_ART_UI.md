@@ -1,82 +1,81 @@
-# Direzione grafica — pixel art retro 8-bit essenziale
+# Interfaccia retro 8-bit
 
-Decisione confermata il 2026-10-27 dall'utente. **Stato: prototipo verificato su Windows; tipografia monospace applicata su richiesta dell'utente.** La finestra Avalonia attuale rimane una base funzionale: pittogrammi e pannelli retro sono sperimentali; non cambiano motore, ricette, bilanciamento o salvataggi.
+Aggiornata il **2026-10-27**. La base grafica è **implementata, verificata su Windows e approvata dall'utente**. La finestra Avalonia usa pittogrammi originali, monospace e pannelli compatti. [Ultima verifica](validation/DESKTOP_UI.md), [decisione stilistica](adr/0012-retro-8bit-desktop-visual-language.md).
 
-## Identità e priorità
+![Interfaccia corrente della colonia](screenshots/colonia.png)
 
-- Stile **retro 8-bit essenziale**: icone quadrate, contorni netti, pochi colori ben differenziati e pannelli discreti, senza texture complesse o decorazioni isometriche obbligatorie.
-- Il valore principale della schermata rimane **capire subito cosa produce, cosa manca e cosa conviene costruire**. La grafica non deve nascondere quantità, unità `/s`, assegnazioni e costi.
-- Edifici selezionati da **elenco o schede per categoria**: nessun posizionamento su una mappa. Un futuro panorama dell'isola, se approvato separatamente, sarà decorativo e non vincolerà le regole del gioco.
-- Evitare la copia di icone o sprite dagli screenshot di riferimento: servono risorse grafiche originali o con licenza compatibile e attribuzione verificata.
-- **Stabilità geometrica degli stati:** hover, pressione, focus e disabilitazione non devono cambiare dimensioni, padding o spessore dei bordi di pulsanti e schede. Cambiano soltanto colore, contrasto e altri elementi che non spostano i vicini. Il difetto osservato in v22 sul pulsante Costruisci viene coperto da un test geometrico v23.
-- **Hover dei pulsanti:** ocra `#E6D5AC`, condiviso con la struttura selezionata tramite `SelectionBackground`, e testo scuro `#263349`. Vale per pulsanti primari e secondari; il grigio dei disabilitati prevale anche quando il puntatore resta sopra il controllo.
+## Obiettivo
 
-## Vocabolario visivo candidato
+Far leggere subito costi, produzione, lavoratori e motivi di blocco. Il colore accompagna il testo; non sostituisce quantità, unità o spiegazioni. Le strutture si gestiscono da elenco, senza posizionamento su una mappa.
 
-| Elemento | Dimensione base proposta | Utilizzo |
-| --- | --- | --- |
-| Risorsa | 16 × 16 pixel | Barra delle scorte, costi, input e output; ingrandimento intero 2× o 3× |
-| Edificio | 32 × 32 pixel | Elenco costruzioni; ingrandimento fino a 64 × 64 o 96 × 96 nel dettaglio |
-| Indicatori di stato | 8 × 8 o 16 × 16 pixel | Attivo, senza lavoratori, mancano input, deposito pieno |
-| Bordi dei pannelli | Moduli a multipli di 8 pixel | Griglie, pulsanti e schede con spaziatura regolare |
+La grafica è sviluppata progressivamente con i contenuti. Le sezioni militari, navali, isole e obiettivi arriveranno con i rispettivi incrementi; non devono apparire come funzioni già disponibili.
 
-Le dimensioni sono **ipotesi da verificare con un prototipo**, non vincoli delle regole. Preferire PNG con trasparenza e scala a multipli interi; per gli sprite pixelati impostare l'interpolazione bitmap di Avalonia a `None` e controllare monitor con DPI differenti.
+## Layout attuale
 
-### Tipografia monospace
+- **Sidebar da 240 px:** marchio, menu Edifici/Risorse e riquadro Crescita civile con progresso e fabbisogni. Il contenuto lungo può scorrere.
+- **Testata compatta:** titolo, cronometro, stato e pausa sulla stessa riga.
+- **Card comuni alle due pagine:** abitanti/posti, lavoratori liberi e tre scorte principali. Quando ci sono residenti avanzati, il Pane entra nel riepilogo. Le barre di capienza si adattano alla larghezza disponibile.
+- **Edifici:** elenco con icona, quantità, personale e stato; dettaglio a destra.
+- **Risorse:** tabella con quantità, capacità, produzione, consumo e saldo al secondo. Scorrimento interno alla finestra; nomi leggibili anche nel layout minimo.
+- **Footer:** messaggi, stato dei salvataggi, nuova partita, caricamento e salvataggio.
 
-L'utente ha richiesto un font monospace o pixel per rafforzare l'aspetto retrogaming. L'interfaccia usa ora **Consolas**, con alternative **DejaVu Sans Mono, Liberation Mono, Courier New** in ordine di fallback. La risorsa Avalonia `ContentControlThemeFontFamily` in `App.axaml` è condivisa dalla finestra e dai controlli Fluent: titoli, cifre, tabelle, schede e pulsanti mantengono la stessa famiglia. Sono font di sistema; non vengono aggiunti pacchetti o file di font al progetto.
+Le dimensioni verificate sono **1040×740** e **1240×850**. Non ridurre i pulsanti o nascondere le diagnosi per guadagnare spazio.
 
-Verificati su Windows i test geometrici esistenti e i render civili a **1040×740** e **1240×850**, inclusi Risorse e lo stato avanzato del Pane in formato compatto. La scelta mantiene accenti italiani, simboli dei saldi e testi lunghi leggibili nei render osservati. I fallback su altre piattaforme e i DPI fisici restano da verificare.
+## Dettaglio della struttura
 
-Palette candidata, da validare con sprite e contrasti reali: sfondo blu notte `#1B1B2F`, pannelli ardesia `#303B50`, testo crema `#F2D49B`, funzionamento verde `#6AA85C`, avvisi corallo `#D66A57`, selezione azzurro `#66BED0`. Il colore non basta a spiegare un errore: usare sempre un'etichetta o una descrizione.
+Ordine di lettura:
 
-## Struttura delle schermate
+1. Nome e descrizione.
+2. **Costi di costruzione in elenco**, una riga per risorsa, con icona e quantità.
+3. **Produzione per addetto e secondo**, con icona della risorsa; per case e magazzini si mostra l'effetto dell'edificio.
+4. Eventuali consumi della ricetta.
 
-### Disposizione compatta richiesta dall'utente (2026-10-27)
+I costi seguono la quantità scelta (**+1/+5/+10**); la produzione descrive sempre il singolo addetto. Costi e produzione usano lo stesso modello `ResourceDetailTemplate`: testo normale da **12 px**, icona da **14 px**, distanza icona/testo di 7 px.
 
-- Colonna sinistra ampliata da 185 a **240 pixel** (prima revisione: 215), con navigazione **Edifici / Risorse** sopra il pannello Crescita civile. Il menu non occupa più una riga sopra le scorte.
-- Fascia comune alle due pagine con quattro card: **abitanti/posti e lavoratori liberi**, poi le tre scorte principali. Testata con orologio e pausa sulla stessa riga; barre di capienza adattate alla larghezza delle card.
-- Dettaglio in ordine di lettura: nome, descrizione, **costi in elenco con icone**, produzione per addetto e secondo (oppure effetto dell'edificio), eventuali consumi. I costi seguono la quantità selezionata: +1/+5/+10; la ricetta resta per singolo addetto.
-- Icona pixel originale degli abitanti nella relativa card. Costi e produzione condividono lo stesso modello visivo: icona risorsa da 14 px e testo monospace normale da 12 px, con una riga per risorsa.
-- Diagnosi, quantità, costruzione e assegnazione restano nel fondo fisso del dettaglio. Verifica delle due dimensioni 1040×740 e 1240×850, con click sul menu laterale e aggiornamento delle card dopo costruzione/assegnazione.
+Diagnosi, quantità, Costruisci e assegnazioni restano nel fondo fisso. Prerequisiti mancanti e altri avvisi sono visibili sopra i comandi senza scorrere il dettaglio; la descrizione può scorrere quando necessario.
 
-Le seguenti voci conservano i criteri generali del prototipo e i riferimenti alle precedenti fasi.
+## Tipografia e pittogrammi
 
-1. **Sempre visibile:** abitanti/posti, lavoratori liberi, tempo di gioco, pausa e salvataggio; scorte principali con variazione netta `/s`.
-2. **Edifici:** categorie, icona, quantità costruite, lavoratori impiegati, output del prossimo secondo e motivo di inattività. Acquisto e assegnazioni multipli accessibili senza aprire altre finestre.
-3. **Dettaglio edificio:** figura ingrandita, costo totale per `+1/+5/+10`, prerequisiti, posti di lavoro, input/output per lavoratore, benefici di abitazione o magazzino e avvisi precisi.
-4. **Risorse:** tutte le nove risorse M4 con quantità, capacità, produzione, consumo e saldo; nessuna informazione affidata esclusivamente a icone.
-5. **Crescita M4:** capacità Case piccole/grandi, residenti avanzati, Cibo/Pane, progresso e differenza fra input del Forno mancanti e deposito pieno. Non perdere la diagnosi dello sblocco 16→17 abitanti.
-6. **Estensioni future:** spazi di navigazione per Esercito, Navi, Isole e Obiettivi, disabilitati o assenti fino a M5/M6; non rappresentarli come funzionalità già presenti.
+Unica famiglia condivisa `ContentControlThemeFontFamily` in `App.axaml`: **Consolas**, poi **DejaVu Sans Mono, Liberation Mono, Courier New**. Titoli, cifre, tabelle e controlli Fluent usano questa risorsa. Sono font di sistema; non viene distribuito un font aggiuntivo.
 
-### Miglioria ergonomica già introdotta nella GUI provvisoria (v22)
+`PixelGlyph` disegna matrici originali **8×8** con rettangoli. Sono coperti **17 edifici, 14 risorse e l'indicatore degli abitanti**. Le chiavi seguono gli ID del catalogo, più `population` per la card; la grafica resta nel Desktop.
 
-Il prototipo definitivo 8-bit non è ancora sviluppato, ma la segnalazione dell'utente ha introdotto **tre requisiti pratici da preservare**:
+| Utilizzo | Dimensione del controllo |
+| --- | ---: |
+| Riepilogo risorse e abitanti | 16 × 16 px |
+| Tabella Risorse | 20 × 20 px |
+| Elenco edifici | 24 × 24 px |
+| Costi e produzione nel dettaglio | 14 × 14 px |
 
-- Il pulsante **Costruisci** deve mostrare stati nettamente diversi: disponibile, hover, premuto e disabilitato; lo stato disabilitato non deve sembrare un semplice hover.
-- Il messaggio **«Per costruire servono prima…»** (e le altre diagnosi di blocco) deve stare in un riquadro visibile **senza scorrere il dettaglio**, immediatamente sopra i comandi di acquisto. La descrizione dell'edificio può invece scorrere.
-- Margini, card, elenco e footer devono essere abbastanza compatti per lasciare posto a informazioni future, senza nascondere testo o ridurre i pulsanti a bersagli difficili da usare.
+I pennelli della palette sono immutabili, per consentire l'inizializzazione del tipo anche fuori dal thread UI. I pittogrammi sono codice del progetto; non derivano dagli sprite delle immagini di riferimento. Nessuna dipendenza grafica esterna.
 
-L'implementazione Avalonia v22 applica questi criteri alla **GUI attuale**, non alla futura palette pixel art. Due test geometrici a 1040×740 e 1240×850 e un test dello stato hover/disabilitato sono predisposti, **non ancora eseguiti su Windows**. Ripetere gli stessi controlli sul prototipo 8-bit.
+## Palette e stati dei controlli
 
-## Identità delle risorse grafiche
+| Elemento | Colore |
+| --- | --- |
+| Sfondo principale | `#EAE8DC` |
+| Sidebar, testo principale e contorni | `#263349` |
+| Riquadro Crescita | `#303B50` |
+| Card ed elenco | `#FFFDF4` |
+| Dettaglio struttura | `#DFE7E3` |
+| Struttura selezionata e hover pulsanti | **`#E6D5AC`**, risorsa condivisa `SelectionBackground` |
+| Pulsante primario e menu attivo | `#176858` |
+| Costruisci disabilitato / testo | `#B8C2BC` / `#5D6C64` |
 
-Usare gli identificatori del catalogo come chiavi stabili per la scelta dello sprite, indipendentemente dai nomi italiani visibili. Prime nove icone: `logs`, `planks`, `stone`, `fish`, `food`, `grain`, `water`, `flour`, `bread`. Per gli edifici: prima prova su `small-house`, `large-house`, `farm`, `mill`, `bakery` e un produttore di Cibo. Separare un eventuale atlas grafico dai contenuti `GameCatalog`: le immagini non appartengono a Core o allo snapshot.
+L'hover dei pulsanti abilitati usa l'ocra della selezione con testo scuro `#263349` e bordo `#9A6947`. Vale per primari e secondari, compreso il presenter del tema Fluent. I disabilitati restano grigi anche con il puntatore fermo sul controllo. La pressione ha uno stato distinto dall'hover.
 
-Per il Pane avanzato la UI riceve già `GameView.BreadSupply` da Application, con stati `Hidden`, `FirstAdvancedArrivalNeedsStock`, `NominalCapacityInsufficient`, `SufficientNextSecond`, `MissingInputs`, `StorageFull` e `LimitedNextSecond`. Ogni stato potrà avere un piccolo simbolo pixel art più una descrizione; la GUI non deve ripetere il calcolo. Anche quando mancano contemporaneamente Cibo e Pane prima del primo arrivo avanzato, l'avviso sul Pane resta visibile.
+**Geometria stabile:** hover, pressione, focus e disabilitazione non cambiano dimensioni, padding o spessore dei bordi. Il pulsante Costruisci mantiene un bordo da 1 px.
 
-La proiezione espone inoltre domanda, **capacità nominale dei lavoratori assegnati**, **produzione realmente prevista nel prossimo secondo**, deficit nominale e, quando esiste una sola ricetta produttrice di Pane, numero minimo/addizionale di lavoratori necessari. La futura GUI 8-bit potrà affiancare una cifra a un'icona di carenza senza reinterpretare ricette e produttività. Il numero di lavoratori è una stima **nominale**: non dimostra che ci siano edifici/posti di lavoro disponibili né che Farina, Acqua e deposito sostengano la produzione. Prima del primo abitante avanzato la domanda attuale è zero e queste stime sono intenzionalmente nascoste.
+## Diagnostica della crescita e della produzione
 
-Per la **filiera completa**, `BreadSupply.ChainCapacity` fornisce anche gli anelli produttivi Grano, Acqua, Farina e Pane, con fabbisogno, capacità nominale e deficit di ciascuno, più il limite teorico medio della catena. I quattro indicatori possono diventare piccole schede 8-bit; vanno distinti dal forecast effettivo del prossimo secondo. Il [modello e i limiti](scenarios/BREAD_CHAIN_CAPACITY.md) sono documentati senza anticipare la nuova grafica.
+Le formule e le previsioni provengono da Application. La GUI non ricalcola ricette, priorità, capacità o razioni.
 
-## Prototipo e criteri di accettazione
+La crescita mostra Cibo, Pane dei residenti avanzati e blocchi. La diagnosi Pane distingue capacità nominale insufficiente, input mancanti, scorte quasi piene e autonomia senza nuove forniture; la descrizione deve restare utile anche senza colori. Se mancano Cibo e Pane insieme, entrambe le necessità sono segnalate.
 
-- **v25/M4.11:** la schermata civile impiega `PixelGlyph`, un insieme originale di 21 pittogrammi codificati in matrici 8×8 e disegnati con quadrati a scala intera nei controlli da 16/20/24 pixel. Copre **12 edifici e 9 risorse** tramite gli ID di catalogo, senza bitmap esterne o estensioni Avalonia. La palette di partenza è più netta (blu notte, crema, azzurro, verdi e ocra); testi e numeri rimangono affiancati ai simboli.
-- Nella UI il pittogramma dell'edificio sostituisce le iniziali decorative. Gli ID e i dati sono invariati; liste, colonne delle risorse, diagnosi fissa e pulsante Costruisci restano gli stessi componenti funzionali. Non è ancora stato approvato un set artistico definitivo.
-- Preparare **una sola schermata rappresentativa** con Casa grande, Forno, lavoratori, Cibo e Pane prima di produrre tutti gli sprite.
-- Testare almeno 1240×850 e 1040×740, oltre al ridimensionamento e alle impostazioni DPI comuni su Windows: nessun testo sovrapposto, tutti i comandi principali raggiungibili, icone nitide.
-- Verificare tre stati distinti: produzione regolare; Forno senza Farina/Acqua; Forno fermo a deposito Pane pieno. Il giocatore deve riconoscerli anche senza colori.
-- Aggiungere animazioni solo dopo aver verificato chiarezza e prestazioni; niente movimento obbligatorio per capire i valori economici.
-- Mantenere invariate API Application, regole economiche e compatibilità dei salvataggi durante il rifacimento estetico.
+Le stime nominali della filiera Pane non dimostrano la disponibilità di edifici, addetti o materiali: vedere il [modello di capacità](scenarios/BREAD_CHAIN_CAPACITY.md). Per miniere e fonderie sono esposti prerequisiti, input mancanti, spazio e priorità del Ferro sul Carbone.
 
-**Sequenza di sviluppo:** l'utente ha riferito superati i gate fino a **v24/M4.10**; il **prototipo v25 deve ancora essere compilato, renderizzato e verificato su Windows**. Durante **M5** aggiungere per gruppi industria, esercito, navi e isole; durante **M6** provare il flusso completo e gli obiettivi; in **M7** rifinire asset e accessibilità. La grafica viene sviluppata **progressivamente**. Le fasi e i gate sono nella [roadmap operativa](ROADMAP.md); l'[ADR 0012](adr/0012-retro-8bit-desktop-visual-language.md) registra la scelta stilistica già confermata.
+## Verifica e rifiniture successive
+
+Il gate corrente comprende **206 test**, di cui **48 Desktop**, con render, click sul menu, aggiornamento delle card, ordini multipli, diagnosi fisse e controlli geometrici. I test di hover controllano i colori effettivi del presenter di Costruisci e Salva, il contrasto e il passaggio allo stato disabilitato. [Evidenze](validation/DESKTOP_UI.md).
+
+Restano da ampliare le prove su DPI fisici, fallback dei font, Linux/macOS, tastiera e accessibilità. Animazioni e nuovi asset si valutano dopo la leggibilità; eventuali bitmap future richiederanno interpolazione adatta al pixel art. Regole economiche e compatibilità dei salvataggi rimangono indipendenti dalle rifiniture visive.
