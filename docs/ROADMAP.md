@@ -1,12 +1,12 @@
 # Roadmap operativa di SimRisorse
 
-Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** il lettore dei benchmark; **M4.13** l'audit aritmetico delle abitazioni; **M4.14** la [scheda decisionale D0](design/D0_DECISION_BOARD.md); **M4.15** la [prefattibilità M5.4 navale](design/M5_4_NAVAL_PREFEASIBILITY.md). Il gate Windows e la lettura quantitativa sono ora eseguiti. Questo documento distingue implementazione, verifica e decisioni aperte. Lo storico è nel [changelog](../CHANGELOG.md); il punto di ripresa è in [HANDOFF.md](HANDOFF.md).
+Aggiornata il **2026-10-28**. **M4.11** introduce il prototipo 8-bit; **M4.12** il lettore dei benchmark; **M4.13** l'audit aritmetico delle abitazioni; **M4.14** la [scheda decisionale D0](design/D0_DECISION_BOARD.md); **M4.15** la [prefattibilità M5.4 navale](design/M5_4_NAVAL_PREFEASIBILITY.md). Il gate Windows e la lettura quantitativa storici sono eseguiti. Questo documento distingue implementazione, verifica e decisioni aperte. Lo storico è nel [changelog](../CHANGELOG.md); il punto di ripresa è in [HANDOFF.md](HANDOFF.md).
 
-**Ultimo esito verificato su Windows:** `.\validate.cmd` superato con **206/206 test**, zero avvisi/errori, benchmark e prove native di entrambi gli scenari completati. M4 chiusa; M5.1b Oro integrata e rifiniture dell'interfaccia verificate. [Report corrente](validation/DESKTOP_UI.md). Gli stati pendenti nelle sezioni storiche descrivono le fasi precedenti.
+**Evidenze Windows:** ultimo gate corredato di dettagli: `.\validate.cmd` con **206/206 test**, zero avvisi/errori e smoke nativi. **Il 28/10 l'utente ha confermato «test passati» per la v33**, che comprende due nuovi casi Desktop (totale xUnit atteso: **208**) e il benchmark M5.1c nel validatore; **non abbiamo ricevuto il log per distinguerne singolarmente i risultati**. [Report storico](validation/DESKTOP_UI.md) e [protocollo M5.1c](validation/M5_1C_INDUSTRY_SCALE.md). Gli stati pendenti nelle sezioni precedenti sono storici.
 
 ## 1. Stato attuale
 
-**Aggiornamento corrente:** M4 chiusa; D0.1/D0.2/ruolo D0.3, S1 e base grafica scelti. Configurazioni A di Ferro e Oro approvate con risposte distinte. **M5.1b verificata**, `civil-growth-7`, **17 edifici / 14 risorse**, **206/206 test**, 19 render e smoke superati. Menu laterale da 240 px, card abitanti, dettaglio costi/produzione e hover ocra adottati. Prossima M5.1c scala/contesa; Forgia e Zecca richiedono i loro parametri e contratti.
+**Aggiornamento corrente:** M4 chiusa; D0.1/D0.2/ruolo D0.3, S1 e base grafica scelti. Configurazioni A di Ferro e Oro approvate con risposte distinte. **M5.1b verificata**, `civil-growth-7`, **17 edifici / 14 risorse**, **206/206 test** nell'ultimo gate con evidenze dettagliate. V33 con ordinamento alfabetico Risorse e due test aggiunti: **conferma utente positiva**, output non acquisito. La **v36** aggiunge scrollbar separate, selezione ocra delle risorse e regressioni alla v35: **211 test attesi**, da verificare. **M5.1c inclusa nel validatore v33, dettaglio del gate da acquisire se disponibile**. Il **contratto A Forgia/Zecca è approvato nel design**, non ancora implementato.
 
 | Milestone | Risultato | Stato |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 | **M2** | Motore economico indipendente dalla GUI | **Completata e verificata** |
 | **M3** | Prima partita desktop salvabile | **Completata e verificata** |
 | **M4** | Crescita civile, abitazioni e Pane | **Chiusa e verificata; demolizione rinviata** |
-| **M5** | Economia avanzata, esercito e isole | **M5.1a Ferro e M5.1b Oro verificate; prossima scala/contesa** |
+| **M5** | Economia avanzata, esercito e isole | **M5.1a/b verificate; v33 confermata dall'utente, log M5.1c non acquisito; M5.2 in prova isolata** |
 | **M6** | Vittoria, risultati e bilanciamento globale | **Da avviare dopo M5** |
 | **M7** | Qualità finale e distribuzione | **Da avviare dopo M6** |
 
@@ -23,7 +23,7 @@ Aggiornata il **2026-10-27**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 
 **Validazione corrente:** esecuzione Windows `899f6ff3e8ff41288330c3d26b4c4ea7`, SDK 10.0.201, **206 test superati** (Core 67, Application 61, Infrastructure 30, Desktop 48), zero avvisi/errori, 17 render standard più due del dettaglio e smoke nativi superati. I precedenti gate restano nello storico; i 204 test del [rapporto Oro](validation/M5_1B_GOLD.md) descrivono il gate di integrazione precedente.
 
-**Scelte ricevute:** [prima campagna con 22 tipi](design/FIRST_CAMPAIGN_PROPOSAL.md), 17 presenti e 5 futuri; altri 21 riferimenti fuori. Possesso dei 22 tipi e Castello dopo una conquista obbligatoria. Base grafica approvata, demolizione rinviata, S1 e configurazioni A di Ferro/Oro scelte. Parametri di Forgia/Zecca e contratti militari/navali restano distinti.
+**Scelte ricevute:** [prima campagna con 22 tipi](design/FIRST_CAMPAIGN_PROPOSAL.md), 17 presenti e 5 futuri; altri 21 riferimenti fuori. Possesso dei 22 tipi e Castello dopo una conquista obbligatoria. Base grafica approvata, demolizione rinviata, S1 e configurazioni A di Ferro/Oro scelte. **Contratto M5.2 A Forgia/Zecca scelto il 28/10** (costi, ricette, addetti, priorità, capacità e ruolo Spade/Monete); contratti militari/navali a valle restano distinti.
 
 **Evidenza preparatoria M5.1:** [prova industriale A/B separata](../experiments/industry-probe/README.md) eseguita: otto confronti con acquisti in blocco/progressivi, due modalità di avanzamento, saturazione e ripresa delle fonderie. Ipotesi misurate in una colonia sintetica, separate dai parametri poi scelti per il gioco. Gate preparatorio di allora `4c51d35a1c924fdca6656687e8f21e0e`: **177/177 test**, simulazioni e smoke superati.
 
@@ -143,36 +143,40 @@ Il profilo da 220 abitanti arriva al massimo a 250, ancora sotto il punto in cui
 
 ### M4.14 — Decisioni pronte per confronto (v28)
 
+*Nota storica:* i tre punti seguenti descrivono il checkpoint v28, **prima** delle approvazioni e dell'introduzione dell'industria. Lo stato corrente è nelle sezioni 1, 5 e 6.
+
 - La [scheda operativa D0](design/D0_DECISION_BOARD.md) separa otto domande e proposte da conferme dell'utente e collega ciascuna ai propri gate.
 - Gli studi M5.1–M5.3 sono ora coerenti con la regola **attuale `civil-growth-5`**: l'eventuale `civil-growth-6` è soltanto un futuro nome candidato con scelta S1 approvata; l'alternativa S2 richiede un nuovo ID di scenario e import esplicito.
 - Il **gate v28 resta da eseguire** (177 xUnit attesi, UI 8-bit, benchmark reali). Nessuna filiera, regola o migrazione M5 è stata implementata.
 
 ### M4.15 — Prevenire cicli e duplicazioni nel trasporto (v29)
 
+*Nota storica:* stato del checkpoint v29, precedente alle M5.1a/b. Il riferimento a 177 test non è il conteggio della suite corrente.
+
 - Nuovo [studio M5.4](design/M5_4_NAVAL_PREFEASIBILITY.md): separa Cantiere, acquisto della nave, flotta salvabile e missione futura. Confronta navi monouso, riutilizzabili e capacità astratta, lasciando costi, equipaggio e capienza all'approvazione.
 - Il primo viaggio **non** può dipendere da Monete disponibili solo dopo una conquista: la Zecca M5.2 è una fonte candidata precoloniale. Comandi e ID nave devono essere atomici, senza consumi o prenotazioni duplicate.
 - **Solo progettazione**, stesso codice eseguibile di v25; il gate di riferimento è ora **v29**, sempre 177 test xUnit attesi e controllo dei render.
 
-## 5. Gate di design del gioco completo — Prima di M5
+## 5. Decisioni di design acquisite e contratti residui
 
-**Stato: dossier preparatorio D0 redatto, decisioni da affrontare insieme all'utente; nessuna scelta aggiuntiva è approvata.** La [matrice completa dei 43 riferimenti e dei 12 edifici esistenti](design/PRE_M5_DECISION_GATE.md) presenta opzioni, dipendenze e rischi. La [scheda v28](design/D0_DECISION_BOARD.md) ne organizza le otto approvazioni con i rispettivi gate e la scelta S1/S2 dei salvataggi. Questo gate anticipa le decisioni di prodotto, senza anticipare l'implementazione di M6.
+**Stato corrente:** diverse decisioni D0 sono state **approvate e implementate** dopo il dossier iniziale. La [matrice storica dei 43 riferimenti e dei 12 edifici dell'epoca](design/PRE_M5_DECISION_GATE.md) resta utile per tracciabilità; il gioco ha **17 edifici** ora, **22 tipi scelti** per la prima campagna, di cui cinque futuri. La [scheda D0](design/D0_DECISION_BOARD.md) distingue conferme e dettagli ancora aperti.
 
-1. **Catalogo finito:** fissare tutti i tipi di edificio previsti e separarli in obbligatori, alternativi, facoltativi e decorativi. I riferimenti originali suggeriscono **43 tipi strutturali**, ma non sono un elenco definitivo approvato. Gli edifici implementati sono 12.
-2. **Condizione di vittoria (Q-01):** decidere se possedere contemporaneamente ogni tipo obbligatorio, averlo costruito almeno una volta o ottenere anche un traguardo finale. Definire cosa succede dopo demolizioni e cariche precedenti.
-3. **Ruolo delle isole (Q-02):** scegliere quali esplorazioni/conquiste siano necessarie, quali risorse o edifici sblocchino e quali siano opzionali.
-4. **Popolazione militare (Q-09):** reclutamento, addestramento, costi, mantenimento, eventuali perdite, congedo e rapporto con il bacino dei lavoratori.
-5. **Tempo e difficoltà:** chiarire se il gioco completo resta a velocità 1:1 o offrirà accelerazione; stabilire effetti su punteggio e recuperabilità degli errori.
-6. **Contratto dei contenuti:** definire una tabella per ogni nuovo edificio/risorsa: prerequisiti, costo, addetti, input/output, capacità, benefici, fase di sblocco e ragione strategica.
+1. **D0.1, catalogo:** scelti i **22 tipi** della [prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md), tutti necessari per vincere; altri **21 riferimenti esclusi**. I cinque tipi ancora da realizzare sono Forgia, Zecca, Caserma, Cantiere e Castello.
+2. **D0.2, vittoria:** possesso contemporaneo di tutti i tipi previsti, **Castello come ultimo edificio**; demolizione rinviata.
+3. **D0.3, conquista:** almeno **una conquista obbligatoria** per sbloccare il Castello. Rimangono da definire caratteristiche e requisiti delle missioni e delle isole.
+4. **S1, continuità:** stessa partita civile con conversioni dichiarate e backup; l'aggiornamento a `civil-growth-7` è già introdotto.
+5. **M5.1a/b, industria:** prezzi e ricette **A** del Ferro e dell'Oro approvati separatamente; la priorità del Ferro sul Carbone resta fissa.
+6. **Dettagli futuri:** Spade/Monete e Forgia/Zecca, popolazione militare, durata/difficoltà, trasporti e missioni richiedono ancora un contratto verificabile prima dei relativi incrementi.
 
 **Vincolo aritmetico aggiornato:** con ritmo iniziale di 60 s, limite superiore di **un arrivo ogni 30 s** e otto abitanti iniziali, in otto ore si possono avere **al massimo teorico 968 abitanti** soltanto assumendo fin dall'inizio case, Pane e Cibo sufficienti e accelerazione al tetto. È un limite ideale, non una strategia praticabile né una misura: i primi edifici e le scorte reali riducono il numero. M5 dovrà misurare il bilancio fra manodopera e reclute con le nuove regole.
 
-**Criterio di uscita:** specifica approvata del catalogo, grafo delle dipendenze e della vittoria, più almeno una prima cronologia teoricamente raggiungibile. Non avviare grandi nuove filiere industriali prima di questo gate.
+**Criterio per le fasi future:** specificare ogni nuovo contratto di produzione, personale, salvataggio e sblocco e provarne la raggiungibilità prima di implementare la relativa filiera. Non riaprire le scelte già approvate.
 
-**Preparazione prima del codice M5:** confrontare la classificazione candidata delle 43 strutture, le tre opzioni di vittoria, il ruolo delle isole e il bilancio civile/militare nel [dossier D0](design/PRE_M5_DECISION_GATE.md). Gli studi [M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md) e [M5.2](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) rendono verificabili alcune alternative industriali, senza approvarle. Il gate M4.8 è riferito superato; i JSON reali restano utili per la valutazione finale di M4.
+**Materiale preparatorio storico:** il [dossier D0](design/PRE_M5_DECISION_GATE.md) e gli studi [M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md)/[M5.2](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) conservano alternative proposte *prima* delle approvazioni. Si applicano le scelte successive registrate qui e nell'[handoff](HANDOFF.md).
 
 ## 6. M5 — Economia avanzata, esercito e isole
 
-**Stato: non iniziata.** Gli incrementi seguenti sono una proposta organizzativa; possono essere modificati dal gate di design.
+**Stato: in corso.** M5.1a Ferro e M5.1b Oro sono integrate e verificate nel progetto locale; **M5.1c** è un nuovo benchmark di scala, **ancora da compilare ed eseguire su Windows**. M5.2–M5.7 restano fasi future subordinate alle scelte mancanti.
 
 | Fase | Contenuto | Verifica per chiuderla |
 | --- | --- | --- |
@@ -195,25 +199,37 @@ Regole da seguire in M5:
 
 **Criterio di uscita M5:** una partita può avanzare da materiali e popolazione civili fino a un esercito equipaggiato, un viaggio, una conquista e la relativa ricompensa, essere sospesa durante una missione e riprendere senza duplicazioni.
 
-### Preparazione tecnica di M5.1, senza anticipare il gate M4
+### M5.1 — Ferro e Oro integrate; confronto di scala in verifica
 
-Il [dossier M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md) propone **M5.1a ferro/carbone**, **M5.1b oro** e **M5.1c confronto di scala/contesa**. Una base numerica candidata (non adottata) prevede il primo ferro da tre strutture per **450 legno lavorato / 320 pietra**, tre lavoratori e limite di **1 ferro/s**; una seconda variante con prezzi 1,5× consente di progettare un confronto. Sono esplicitati deposito, prerequisiti, capacità di carbone condivisa, test di bilancio e due possibili politiche per il passaggio dei salvataggi M4 → M5.
+Il [dossier M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md) conserva la comparazione preparatoria dei prezzi e delle strategie. **È stata adottata la configurazione A**: 450 Tavole / 320 Pietra e tre lavoratori per costruire l'intera filiera iniziale del Ferro (Miniera Fe 120/80, Miniera Carbone 130/90, Fonderia Fe 200/150), con massimo 1 Ferro/s. La filiera Oro è anch'essa implementata con i costi A, risorse e versione `civil-growth-7`; conversione e backup S1 sono attivi.
 
-**Fermo di progettazione:** i prezzi, le ricette e la strategia di migrazione non sono approvati; il codice M5.1 non deve partire prima del gate decisionale **D0** e della chiusura formale di M4. Il gate tecnico M4.8 è già riferito superato dall'utente, ma il solo esito non approva automaticamente i contenuti industriali.
+**Benchmark M5.1c preparato:** [protocollo](validation/M5_1C_INDUSTRY_SCALE.md) con cinque profili e due modalità temporali, nessun cambiamento delle regole. Le quantità pubblicate sono **valori teorici attesi** finché il gate Windows non le conferma. Il contratto A di M5.2 è stato nel frattempo **approvato**, ma la sua implementazione resta successiva al gate.
 
 ### Preparazione di M5.2: Forgia, Zecca e carbone condiviso
 
-Il [dossier M5.2](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) propone, **solo per un confronto futuro**, Forgia (240/180, 1 Ferro + 1 Carbone → 2 Spade/s) e Zecca (210/160, 1 Oro + 1 Carbone → 3 Monete/s), con un addetto ciascuna. Assumendo anche i valori A di M5.1, le **due fonderie e i due trasformatori** richiederebbero **4 Carbone/s**: una miniera da 2/s non li mantiene tutti attivi contemporaneamente. Sono individuate due possibili strategie: **produzione a fasi con una miniera**, oppure **seconda miniera per sovrapporre le filiere**. Costi cumulativi teorici: **1.300/950** per l'insieme con una miniera, **1.430/1.040** con due. Non sono valori adottati né tempi misurati.
+Il [dossier M5.2](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) ha confrontato Forgia (240/180, 1 Ferro + 1 Carbone → 2 Spade/s) e Zecca (210/160, 1 Oro + 1 Carbone → 3 Monete/s), con un addetto ciascuna: **l'utente ha scelto questo contratto A il 28/10**. Assumendo anche i valori A di M5.1, le **due fonderie e i due trasformatori** richiederebbero **4 Carbone/s**: una miniera da 2/s non li mantiene tutti attivi contemporaneamente. Sono individuate due possibili strategie: **produzione a fasi con una miniera**, oppure **seconda miniera per sovrapporre le filiere**. Costi cumulativi teorici: **1.300/950** per l'insieme con una miniera, **1.430/1.040** con due. I prezzi sono **approvati nel design ma non implementati**; i tempi non sono misurati.
 
-Occorre definire anche il *significato* di Spade e Monete, inclusa la possibile moneta ottenuta dai commerci coloniali: una risorsa consumabile per specifici comandi non equivale a un sistema monetario applicato a tutti gli edifici. Questo punto entra nel gate D0, perché influisce sul reclutamento, sulle navi e sui salvataggi. **M5.2 non entra nel codice** prima di M5.1 verificata e delle decisioni sul modello economico.
+**Preparazione v31, esclusivamente documentale:** per un obiettivo comparabile di **240 Spade + 360 Monete** sono stati ricostruiti **241 secondi ideali** con un'unica miniera e personale riassegnato per fasi, oppure **122 secondi ideali** con due miniere e sovrapposizione. I numeri escludono la raccolta dei materiali e i tempi per costruire, presuppongono minerali già presenti e ricette candidate: non sono misure .NET né tempi della campagna. Il dossier aggiornato elenca decisioni ancora necessarie, test F1–F10 e distinzione tra conversione S1 unica (`-7→-8`) e due versioni successive (`-7→-8→-9`) se si rilasciano separatamente Forgia e Zecca.
+
+**Preparazione v32, solo esperimento:** aggiunto [ForgeMintProbe](../experiments/forge-mint-probe/README.md), separato dalla soluzione e dalla validazione, per confrontare con `GameSession` sei profili (ipotesi A/B × tre strategie), bilancio delle risorse a ogni secondo, costi e snapshot dei replay. **Il codice dell'esperimento non è ancora stato eseguito su .NET**. All'epoca nessun valore era approvato; in seguito il contratto A è stato scelto senza introdurre migrazione, interfaccia o meccaniche nuove; M5.1c resta in attesa del gate completo.
+
+**Preparazione v34, ancora fuori dal gioco:** [ForgeMintProbe](../experiments/forge-mint-probe/README.md) aggiunge **sei verifiche F8/F9** su blocchi da deposito, lotti che entrano esattamente e precedenza delle fonderie con Carbone scarso, ripetute per prezzi A/B e per passi interi/frazionari. L'utente ha confermato i test della v33, ma il nuovo esperimento v34 è **da eseguire in .NET**. Le decisioni A su ricette e uso futuro delle Spade/Monete sono state poi approvate nel design.
+
+**Rifinitura v33, solo Desktop:** nell'elenco Risorse la ricerca visiva è agevolata dall'ordinamento alfabetico per nome italiano. L'ordine delle card di sintesi non cambia, così come catalogo e risultati numerici. Due casi di regressione aggiunti ai test Desktop: **esecuzione Windows ancora in attesa**, insieme a M5.1c e alla prova separata M5.2.
+
+**Rifinitura v35, solo Desktop:** la tabella Risorse mostra saldo, colonne numeriche allineate a destra, quantità arrotondata solo in tabella e tempo di riempimento indicativo; il dettaglio Edifici rende i consumi in elenco icona/testo come costi e produzioni. Il saldo previsto dal ReadModel è usato solo per il tempo stimato, senza modificare le regole. Nuovo caso xUnit e casi visuali estesi: **209 test attesi, non ancora eseguiti in Windows**. Catalogo, file di salvataggio e prove M5.2 immutati.
+
+**Rifinitura v36, solo Desktop:** tabella Risorse convertita a `ListBox` per selezione ocra al clic; le righe Risorse ed Edifici riservano **20 px** dalla scrollbar verticale. Due casi UI addizionali verificano separazione geometrica e selezione a 1040×740 e 1240×850. **211 test attesi, da verificare in Windows**; regole e salvataggi invariati.
+
+**Significato approvato:** Spade come risorsa consumata durante l'arruolamento e Monete come scorta per comandi espliciti, non sistema monetario applicato a tutti gli edifici. La produzione coloniale alternativa di Monete, **le quantità per reclute/navi** e i contratti di pagamento restano futuri. **M5.2 non entra nel codice** prima del gate M5.1c e dei test sulla nuova filiera; il contratto economico di base ora è definito.
 
 ### Preparazione di M5.3: Caserma e popolazione condivisa
 
-Il [dossier M5.3](design/M5_3_ARMY_PREFEASIBILITY.md) porta il requisito *Spade + abitanti → Caserma → Soldati* in un contratto verificabile, senza fissare valori non presenti nei riferimenti. L'invariante proposto distingue **civili impiegati, civili liberi, reclute e soldati**, senza duplicare persone. Confronta arruolamento immediato, coda temporizzata e capacità per Caserma; propone M5.3a arruolamento atomico, M5.3b addestramento e persistenza e M5.3c confronto dell'impatto civile. Restano **da approvare D0.4/D0.8**: consumo o dotazione delle Spade, tempi, cancellazione/congedo, razioni, capienza e perdite. Nessun soldato è stato aggiunto all'attuale `civil-growth-5`.
+Il [dossier M5.3](design/M5_3_ARMY_PREFEASIBILITY.md) porta il requisito *Spade + abitanti → Caserma → Soldati* in un contratto verificabile, senza fissare valori non presenti nei riferimenti. L'invariante proposto distingue **civili impiegati, civili liberi, reclute e soldati**, senza duplicare persone. Confronta arruolamento immediato, coda temporizzata e capacità per Caserma; propone M5.3a arruolamento atomico, M5.3b addestramento e persistenza e M5.3c confronto dell'impatto civile. **D0.8 ha stabilito che le Spade si consumano all'arruolamento**; restano da approvare **D0.4**, quantità per recluta, tempi, cancellazione/congedo, razioni, capienza e perdite. Nessun soldato è stato aggiunto all'attuale `civil-growth-7`.
 
 ### Preparazione di M5.4: Cantiere navale e flotta
 
-Il [dossier M5.4](design/M5_4_NAVAL_PREFEASIBILITY.md) confronta nave monouso, entità persistente e capacità astratta, senza adottare un modello. Propone **M5.4a** primo Cantiere/acquisto atomico, **M5.4b** flotta con ID e salvataggi, **M5.4c** preflight di trasporto senza far partire missioni. Tavole e Monete compaiono nel riferimento, **non** i loro prezzi, le capienze, la durata della costruzione o la necessità di equipaggio. M5.5 si occuperà di spedizioni, M5.6 di conquiste/colonie. Servono D0, S1/S2, economia e Caserma approvate e validate prima di scrivere codice.
+Il [dossier M5.4](design/M5_4_NAVAL_PREFEASIBILITY.md) confronta nave monouso, entità persistente e capacità astratta, senza adottare un modello. Propone **M5.4a** primo Cantiere/acquisto atomico, **M5.4b** flotta con ID e salvataggi, **M5.4c** preflight di trasporto senza far partire missioni. Tavole e Monete compaiono nel riferimento, **non** i loro prezzi, le capienze, la durata della costruzione o la necessità di equipaggio. M5.5 si occuperà di spedizioni, M5.6 di conquiste/colonie. S1 è già scelta; restano da approvare contratti navali, risorse/Monete ed economia militare prima di scrivere codice.
 
 ## 7. M6 — Vittoria, risultati e bilanciamento complessivo
 
@@ -283,4 +299,4 @@ Ogni incremento futuro deve comunicare sempre questi cinque elementi, anche quan
 
 Lo stato deve usare esplicitamente **Proposto / Implementato non validato / Verificato / Rinviato**. Una conferma dell'utente sui test è un gate riferito dall'utente; il report numerico locale non va inventato. I documenti da allineare sono [game design](GAME_DESIGN.md), [handoff](HANDOFF.md), [changelog](../CHANGELOG.md) e gli ADR pertinenti. Le regole nuove richiedono una scelta dell'utente; un piano o uno studio non autorizza ad applicarle.
 
-**Prossima sequenza:** contesa/scala M5.1c → contratti Spade/Monete e M5.2 Forgia/Zecca → regole di reclutamento e M5.3 Caserma → parametri navali e M5.4 Cantiere/flotta → M5.5–M5.7 missioni, conquista obbligatoria e Castello → M6 vittoria/classifica. M4, catalogo/vittoria/ruolo della conquista/S1 e parametri A di M5.1a/b sono acquisiti; non richiedono nuova conferma.
+**Prossima sequenza:** **validare** contesa/scala M5.1c → contratti Spade/Monete e M5.2 Forgia/Zecca → regole di reclutamento e M5.3 Caserma → parametri navali e M5.4 Cantiere/flotta → M5.5–M5.7 missioni, conquista obbligatoria e Castello → M6 vittoria/classifica. M4, catalogo/vittoria/ruolo della conquista/S1 e parametri A di M5.1a/b sono acquisiti; non richiedono nuova conferma.

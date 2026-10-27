@@ -285,6 +285,33 @@ try {
         throw 'High-density bread progression did not distinguish lean and full chains as expected.'
     }
     $highOutput | Set-Content -LiteralPath (Join-Path $artifacts 'bread-high-density-benchmark.json') -Encoding UTF8
+    $industryScaleOutput = & dotnet $simulation --benchmark-industry-scale
+    if ($LASTEXITCODE -ne 0) { $industryScaleOutput; throw 'Industry coal-allocation benchmark failed.' }
+    $industryScale = $industryScaleOutput | ConvertFrom-Json
+    if ($industryScale.ScenarioId -ne 'civil-growth' -or $industryScale.RulesVersion -ne 'civil-growth-7' -or
+        $industryScale.StartPopulation -ne 40 -or $industryScale.HorizonSeconds -ne 180 -or
+        $industryScale.Profiles.Count -ne 5) { throw 'Unexpected industry scale benchmark shape.' }
+    $industryExpected = @{
+        'A-balanced'        = @{ Iron = 179; Gold = 179; Coal = 2; Planks = 850; Stone = 610; GoldBlocked = 1 }
+        'B-iron-priority'   = @{ Iron = 358; Gold = 0; Coal = 2; Planks = 1050; Stone = 760; GoldBlocked = 180 }
+        'C-coal-recovery'   = @{ Iron = 358; Gold = 179; Coal = 183; Planks = 1180; Stone = 850; GoldBlocked = 1 }
+        'D-gold-contention' = @{ Iron = 179; Gold = 179; Coal = 2; Planks = 1070; Stone = 780; GoldBlocked = 181 }
+        'E-full-supply'     = @{ Iron = 358; Gold = 358; Coal = 4; Planks = 1400; Stone = 1020; GoldBlocked = 2 }
+    }
+    foreach ($id in $industryExpected.Keys) {
+        $matches = @($industryScale.Profiles | Where-Object Id -eq $id)
+        $expected = $industryExpected[$id]
+        if ($matches.Count -ne 1) { throw "Missing or duplicate industry scale profile: $id." }
+        $actual = $matches[0]
+        if ($actual.IronProduced -ne $expected.Iron -or $actual.GoldProduced -ne $expected.Gold -or
+            $actual.CoalRemaining -ne $expected.Coal -or $actual.PlanksSpent -ne $expected.Planks -or
+            $actual.StoneSpent -ne $expected.Stone -or $actual.GoldMissingCoalWorkerSeconds -ne $expected.GoldBlocked -or
+            $actual.ReconciledSeconds -ne 180 -or
+            $actual.CoalProduced -ne ($actual.CoalConsumed + $actual.CoalRemaining)) {
+            throw "Industry scale production, costs or accounting differ for $id."
+        }
+    }
+    $industryScaleOutput | Set-Content -LiteralPath (Join-Path $artifacts 'industry-scale-benchmark.json') -Encoding UTF8
     $publish = Join-Path $artifacts 'publish'
     Invoke-Dotnet -Arguments @('publish', 'src/SimRisorse.Desktop/SimRisorse.Desktop.csproj', '--no-restore', '--no-build',
         '-c', 'Release', '--self-contained', 'false', '--output', $publish, '--verbosity', 'minimal')
@@ -335,6 +362,7 @@ try {
         housingBenchmark = (Join-Path $artifacts 'housing-benchmark.json')
         breadScaleBenchmark = (Join-Path $artifacts 'bread-scale-benchmark.json')
         breadHighDensityBenchmark = (Join-Path $artifacts 'bread-high-density-benchmark.json')
+        industryScaleBenchmark = (Join-Path $artifacts 'industry-scale-benchmark.json')
         screenshots = @($screenshots | ForEach-Object { Join-Path $screenshotDirectory $_ })
     }
     $report | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $artifacts 'validation.json') -Encoding UTF8

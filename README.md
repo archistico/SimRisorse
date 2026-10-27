@@ -8,18 +8,18 @@ Il progetto è in sviluppo. La prima campagna prevede **22 tipi di edifici**: pe
 
 ## Stato attuale
 
-**27 ottobre 2026 — M0–M4 completate, M5.1a Ferro e M5.1b Oro verificate su Windows.** Lo scenario corrente è `civil-growth-7`, con **17 tipi di edifici e 14 risorse**.
+**28 ottobre 2026 — M0–M4 completate, M5.1a Ferro e M5.1b Oro verificate nel progetto locale su Windows.** Lo scenario corrente è `civil-growth-7`, con **17 tipi di edifici e 14 risorse**. Il benchmark **M5.1c** è incluso nel validatore; per la v33 l'utente ha confermato «test passati», senza allegare il riepilogo del gate.
 
 - Crescita civile con Case piccole e grandi, Cibo e Pane, Magazzini e capacità delle scorte.
 - Miniere di ferro, carbone e oro, due fonderie e priorità del Ferro quando il Carbone scarseggia.
-- Interfaccia retro con font monospace, icone pixel, menu laterale Edifici/Risorse e card di abitanti e scorte.
-- Dettaglio con descrizione, costi in elenco, produzione e consumi. Ordini da **1, 5 o 10** unità; assegnazioni manuali dei lavoratori.
+- Interfaccia retro con font monospace, icone pixel, menu laterale Edifici/Risorse, **tabella delle risorse ordinata alfabeticamente** con stima del tempo di riempimento (`hh:mm:ss`), cifre allineate a destra e quantità arrotondate all'unità. Le card mantengono la precisione precedente.
+- Dettaglio con descrizione, costi, produzioni e consumi **in elenchi con icone**. Ordini da **1, 5 o 10** unità; assegnazioni manuali dei lavoratori.
 - Pausa, salvataggio manuale e automatico, ripresa senza produzione a gioco chiuso.
 - Conversione dei vecchi salvataggi civili con backup dell'originale; formato SQLite v2.
 
-Ultima validazione completa: **206/206 test superati**, build senza avvisi/errori, simulazioni, quattro benchmark e prove native di entrambi gli scenari. Verificati i layout **1040×740 e 1240×850**. [Risultati e limiti della verifica](docs/validation/DESKTOP_UI.md).
+Ultima validazione completa con **rapporto dettagliato** nell'archivio locale: **206/206 test superati**, build senza avvisi/errori, simulazioni, quattro benchmark e prove native di entrambi gli scenari. Verificati i layout **1040×740 e 1240×850**. Il 28/10 l'utente ha confermato che **i test della v33 sono passati** (208 casi xUnit attesi dopo i due nuovi test Desktop); l'output del gate non è stato fornito. **La v36 aggiunge due casi UI sulle scrollbar e sulla selezione ocra alle prove v35: 211 casi attesi, ancora da eseguire su Windows.** [Risultati della verifica precedente](docs/validation/DESKTOP_UI.md) e [protocollo M5.1c](docs/validation/M5_1C_INDUSTRY_SCALE.md).
 
-Il prossimo incremento è **M5.1c**, confronto di scala e contesa del Carbone. Forgia, Zecca, Caserma, Cantiere e Castello restano futuri; prezzi e contratti militari/navali richiedono le rispettive scelte. Carne fuori dalla prima campagna e demolizione rinviata. L'obiettivo di circa **8 ore** con una strategia efficiente e **32 ore o più** con strategie lente riguarda il gioco completo e non è ancora una durata dimostrata.
+Il prossimo passo sul gioco, **dopo il gate Windows**, è **implementare il contratto M5.2 A approvato dall'utente il 28/10**. Il [dossier M5.2](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md) registra prezzi, ricette, addetti, destinazione delle Spade/Monete, priorità e deposito, più due strategie per il Carbone e un confronto teorico. Una [prova M5.2 separata](experiments/forge-mint-probe/README.md) contiene sei profili A/B **più sei controlli dei limiti di deposito/priorità**, ancora da eseguire con .NET. **Non sono state introdotte le relative regole nel gioco.** Forgia, Zecca, Caserma, Cantiere e Castello restano futuri; rimangono da decidere i quantitativi di arruolamento, i prezzi navali e gli altri contratti militari. Carne fuori dalla prima campagna e demolizione rinviata. L'obiettivo di circa **8 ore** con una strategia efficiente e **32 ore o più** con strategie lente riguarda il gioco completo e non è ancora una durata dimostrata.
 
 ## Avvio su Windows
 
@@ -54,7 +54,7 @@ Per eseguire il motore senza finestre dopo la validazione:
 dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy gold --seconds 1502
 ```
 
-I quattro benchmark abitativi e del Pane si possono leggere senza ripetere le simulazioni con `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\report-m4.ps1`. [Guida ai risultati](docs/validation/M4_BENCHMARK_READER.md).
+I quattro benchmark abitativi e del Pane si possono leggere senza ripetere le simulazioni con `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\report-m4.ps1`. Il quinto, industriale, si esegue con `dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-industry-scale`. [Guida ai benchmark M4](docs/validation/M4_BENCHMARK_READER.md); [M5.1c](docs/validation/M5_1C_INDUSTRY_SCALE.md).
 
 ## Stack e struttura
 
@@ -84,6 +84,7 @@ I quattro benchmark abitativi e del Pane si possono leggere senza ripetere le si
 | [Salvataggi](docs/SAVE_FORMAT.md) | Formato, backup e compatibilità |
 | [Interfaccia retro](docs/PIXEL_ART_UI.md) | Layout, icone, font e stati dei controlli |
 | [Ultima verifica dell'interfaccia](docs/validation/DESKTOP_UI.md) | Gate da 206 test, render e limiti |
+| [M5.1c — benchmark industriale](docs/validation/M5_1C_INDUSTRY_SCALE.md) | Cinque profili di contesa del Carbone; gate Windows ancora pendente |
 | [Changelog](CHANGELOG.md) | Modifiche realizzate |
 
 Lo screenshot iniziale è un render dell'applicazione attuale, conservato nel repository. [Provenienza e aggiornamento](docs/screenshots/README.md).

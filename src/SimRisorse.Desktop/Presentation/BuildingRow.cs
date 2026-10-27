@@ -42,7 +42,8 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     public IEnumerable<ResourceDetailLine> OutputLines => _view.OutputPerWorker.Select(output =>
         new ResourceDetailLine(output.ResourceId, Format([output])));
     public bool HasInputs => !_view.InputPerWorker.IsEmpty;
-    public string Consumption => "Consuma: " + Format(_view.InputPerWorker) + " /s";
+    public IEnumerable<ResourceDetailLine> ConsumptionLines => _view.InputPerWorker.Select(input =>
+        new ResourceDetailLine(input.ResourceId, Format([input])));
     public string Recipe => _view.HousingPerBuilding > 0 ? $"+{_view.HousingPerBuilding} posti abitativi per edificio" :
         IsStorage ? $"{StorageEffect(1)} per edificio" :
         (_view.InputPerWorker.IsEmpty ? string.Empty : Format(_view.InputPerWorker) + " → ") + Format(_view.OutputPerWorker);

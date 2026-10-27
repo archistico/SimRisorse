@@ -93,8 +93,8 @@
             <Grid x:Name="BuildingWorkspace" ColumnDefinitions="*,310" ColumnSpacing="12">
               <Border Background="#FFFDF4" BorderBrush="#303B50" BorderThickness="1" CornerRadius="0" Padding="8,10">
                 <Grid RowDefinitions="Auto,*" RowSpacing="6">
-                  <Grid ColumnDefinitions="*,62,82" Margin="13,0,8,0"><TextBlock Text="STRUTTURA" Classes="label" /><TextBlock Grid.Column="1" Text="EDIFICI" Classes="label" /><TextBlock Grid.Column="2" Text="PERSONALE" Classes="label" /></Grid>
-                  <ListBox x:Name="BuildingsList" Grid.Row="1" ItemsSource="{Binding Buildings}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0">
+                  <Grid ColumnDefinitions="*,62,82" Margin="13,0,28,0"><TextBlock Text="STRUTTURA" Classes="label" /><TextBlock Grid.Column="1" Text="EDIFICI" Classes="label" /><TextBlock Grid.Column="2" Text="PERSONALE" Classes="label" /></Grid>
+                  <ListBox x:Name="BuildingsList" Classes="gutter-list" Grid.Row="1" ItemsSource="{Binding Buildings}" SelectedItem="{Binding Selected, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate><DataTemplate x:DataType="vm:BuildingRow">
                       <Grid ColumnDefinitions="34,*,55,76" RowDefinitions="Auto,Auto" Margin="3,6" ColumnSpacing="6" RowSpacing="4">
                         <Border Grid.RowSpan="2" Background="#E8E4D6" BorderBrush="#697787" BorderThickness="1" Width="32" Height="34" CornerRadius="0" VerticalAlignment="Top"><pixel:PixelGlyph Key="{Binding Id}" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
@@ -118,7 +118,10 @@
                       <TextBlock Text="{Binding Selected.OutputHeading}" Classes="label" FontSize="11" />
                       <ItemsControl x:Name="ProductionOutputList" ItemsSource="{Binding Selected.OutputLines}" IsVisible="{Binding Selected.IsProducer}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
                       <TextBlock Text="{Binding Selected.Output}" IsVisible="{Binding !Selected.IsProducer}" TextWrapping="Wrap" FontSize="12" />
-                      <TextBlock Text="{Binding Selected.Consumption}" IsVisible="{Binding Selected.HasInputs}" TextWrapping="Wrap" Classes="label" />
+                      <StackPanel Spacing="4" IsVisible="{Binding Selected.HasInputs}">
+                        <TextBlock Text="CONSUMA PER ADDETTO / S" Classes="label" FontSize="11" />
+                        <ItemsControl x:Name="ProductionInputList" ItemsSource="{Binding Selected.ConsumptionLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
+                      </StackPanel>
                     </StackPanel>
                   </StackPanel></ScrollViewer>
                   <StackPanel Grid.Row="1" Spacing="6">
@@ -140,19 +143,17 @@
             <TextBlock Text="Scorte e flussi del prossimo secondo. In pausa le quantità restano ferme." FontSize="12" TextWrapping="Wrap" Foreground="#66766E" />
             <Border Grid.Row="1" Background="#FFFDF4" BorderBrush="#303B50" BorderThickness="1" CornerRadius="0" Padding="12">
               <Grid RowDefinitions="Auto,*" RowSpacing="13">
-                <Grid ColumnDefinitions="*,120,100,115,115,90"><TextBlock Text="Risorsa" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Quantità" FontWeight="SemiBold" /><TextBlock Grid.Column="2" Text="Capacità" FontWeight="SemiBold" /><TextBlock Grid.Column="3" Text="Produzione /s" FontWeight="SemiBold" /><TextBlock Grid.Column="4" Text="Consumo /s" FontWeight="SemiBold" /><TextBlock Grid.Column="5" Text="Saldo /s" FontWeight="SemiBold" /></Grid>
-                <ScrollViewer x:Name="ResourcesScroll" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                  <ItemsControl x:Name="ResourcesTable" ItemsSource="{Binding Resources}">
-                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:ResourceRow">
-                      <Grid ColumnDefinitions="*,120,100,115,115,90" Margin="0,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding Quantity}" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" /><TextBlock Grid.Column="3" Text="{Binding Production}" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" FontWeight="SemiBold" Foreground="{Binding NetForeground}" />
+                <Grid x:Name="ResourceTableHeader" ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,0,20,0"><TextBlock Text="Risorsa" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Quantità" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="Capacità" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="Produzione /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="Consumo /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="Saldo /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="6" Text="Si riempie tra" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /></Grid>
+                <ListBox x:Name="ResourcesTable" Classes="gutter-list" Grid.Row="1" ItemsSource="{Binding Resources}" SelectedItem="{Binding SelectedResource, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate><DataTemplate x:DataType="vm:ResourceRow">
+                      <Grid ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
                       </Grid>
-                    </DataTemplate></ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </ScrollViewer>
+                    </DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
               </Grid>
             </Border>
-            <TextBlock Grid.Row="2" Text="Il saldo considera lavoratori, fabbisogno degli abitanti, input disponibili, spazio e priorità delle filiere." Classes="label" TextWrapping="Wrap" />
+            <TextBlock Grid.Row="2" Text="Il saldo considera lavoratori, abitanti, materiali, spazio e priorità. Il riempimento è una stima a saldo costante; — indica saldo nullo o negativo." Classes="label" TextWrapping="Wrap" />
           </Grid>
         </TabItem>
       </TabControl>

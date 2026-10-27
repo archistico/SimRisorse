@@ -1,12 +1,12 @@
 # SimRisorse — D0: scheda operativa delle decisioni prima di M5
 
-Data: 2026-10-27 · aggiornamento M5.1b e interfaccia · **Scheda delle scelte ricevute e delle proposte ancora aperte.**
+Data: 2026-10-28 · contratto M5.2 approvato per il design, non ancora implementato · **Scheda delle scelte ricevute e delle proposte ancora aperte.**
 
 **Decisioni successive registrate:** M4 chiusa; prototipo monospace approvato, demolizione rinviata. D0.2: possedere tutti i 22 tipi, Castello conclusivo; D0.3: una conquista obbligatoria sblocca il Castello. Scelta **S1** e configurazione **A per la sola M5.1a**, ora [implementata e verificata](../validation/M5_1A_IRON.md). Restano aperti i parametri delle fasi successive, senza riaprire le decisioni già ricevute.
 
-**M5.1b successiva:** configurazione **A dell'Oro scelta separatamente e verificata**, con Ferro prioritario sul carbone scarso. Corrente `civil-growth-7`, 17 edifici / 14 risorse; gate di integrazione Oro da **204 test** e [gate corrente dell'interfaccia da **206 test**](../validation/DESKTOP_UI.md). [Report Oro](../validation/M5_1B_GOLD.md). Le scelte già ricevute non si riaprono; il confronto esteso di scala M5.1c precede i nuovi contratti di Forgia/Zecca.
+**M5.1b successiva:** configurazione **A dell'Oro scelta separatamente e verificata**, con Ferro prioritario sul carbone scarso. Corrente `civil-growth-7`, 17 edifici / 14 risorse; gate di integrazione Oro da **204 test** e [ultimo gate dell'interfaccia da **206 test**](../validation/DESKTOP_UI.md). [Report Oro](../validation/M5_1B_GOLD.md). **M5.1c preparata, gate completo da acquisire**; il 28/10 l'utente ha **approvato la proposta completa A di M5.2** descritta nel [dossier](M5_2_FORGE_MINT_PREFEASIBILITY.md), senza introdurre nuovi contenuti nel gioco.
 
-Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo D0](PRE_M5_DECISION_GATE.md) conserva l'inventario dei 43 riferimenti e le alternative ragionate; qui sono raccolti ordine, responsabilità e condizioni per iniziare il codice. Le preferenze tecniche sottostanti **non sono risposte già fornite dall'utente**.
+Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo D0](PRE_M5_DECISION_GATE.md) conserva l'inventario dei 43 riferimenti e le alternative ragionate; qui sono raccolti ordine, responsabilità e condizioni per iniziare il codice. Le proposte ancora indicate come tali **non sono risposte già fornite dall'utente**.
 
 **D0.1 approvata il 2026-10-27:** prima campagna con i **22 tipi scelti** nella [scheda del catalogo e della vittoria](FIRST_CAMPAIGN_PROPOSAL.md), altri 21 riferimenti fuori. Dopo M5.1b sono **17 tipi presenti e 5 futuri**. Vittoria, S1 e parametri A di Ferro e Oro sono stati scelti con risposte distinte.
 
@@ -37,15 +37,15 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 | **D0.5** Tempo | Velocità 1:1 o accelerabile? Come contano pause, riprese, livello difficoltà e punteggio? | Cronometrare **solo secondi simulati validi**; scegliere esplicitamente eventuale accelerazione | Cronologie riproducibili, classifica confrontabile, niente avanzamento offline |
 | **D0.6** Raggiungibilità | Quale percorso di materiali, addetti, capacità e sblocchi rende possibile il primo obiettivo e la vittoria? | Grafo senza cicli, prova dei primi lotti a scorte nuove zero | Almeno una cronologia fattibile per costi, magazzini, cibo e forza lavoro; precede M5.1 |
 | **D0.7** Interfaccia 8-bit | **Base approvata dall'utente**, incluso il font monospace | Conservare elenchi/schede, pittogramma più testo e geometria stabile | Gate tecnico e giudizio positivo acquisiti; DPI fisici nella rifinitura |
-| **D0.8** Spade/Monete | Le **Spade si consumano** all'arruolamento o equipaggiano i soldati? Le **Monete sono risorsa per comandi specifici** o valuta di tutta l'economia? | Primo modello più contenuto da valutare: Spade consumate, Monete come scorta mirata | Contratti di pagamento atomico, annullamento e save; richiesto prima di M5.2–M5.4 |
+| **D0.8** Spade/Monete | **Approvata per M5.2:** Spade risorsa da consumare nell'arruolamento futuro; Monete scorta per acquisti specifici, non valuta generale | Un lotto intero per ricetta, depositi ordinari, priorità fisse; quantità d'impiego rinviate a M5.3/M5.4 | Verificare F1–F10, pagamenti atomici nei moduli futuri, annullamento e salvataggio |
 
-**Non risolto con questa tabella:** prezzi, ricette e addetti delle fasi future, durata addestramento, eventuale rimborso della demolizione rinviata, numero/parametri delle isole, probabilità di fallimento e uso coloniale delle Monete. Vanno scelti con i dossier specifici, senza inferirli dalle illustrazioni. La Carne è già fuori dalla prima campagna.
+**Ancora da decidere:** prezzi, ricette e addetti **dopo M5.2**, quantità di Spade per recluta e Monete per nave, durata addestramento, eventuale rimborso della demolizione rinviata, numero/parametri delle isole, probabilità di fallimento e uso coloniale delle Monete. Prezzi, ricette, addetti, priorità e capienza **di Forgia e Zecca sono approvati nel contratto M5.2**; non ancora nel gioco. La Carne è già fuori dalla prima campagna.
 
 ## 3. Ordine di approvazione e dipendenze
 
 1. **M4 chiusa:** gate tecnico, benchmark e revisione dei render acquisiti; giudizio utente positivo sul monospace, Carne fuori dalla prima campagna e demolizione rinviata. La chiusura non approva il rimborso del 25% o nuove ricette.
 2. **D0.1–D0.3 scelti nel loro perimetro:** catalogo da 22, possesso al termine e Castello dopo una conquista obbligatoria. Dimensionare le singole fasi senza introdurre automaticamente altri contenuti.
-3. **Contratti trasversali, D0.4, D0.5 e D0.8:** conservazione popolazione, tempo, consumi militari e significato delle Monete. Servono per progettare interfacce e persistenza corrette; non implicano già Caserma, Forgia o Zecca.
+3. **Contratti trasversali:** D0.8 è ora approvata nel perimetro M5.2; D0.4 e D0.5 e i quantitativi dei consumi militari restano da scegliere. Non implicano già Caserma, Forgia o Zecca nel catalogo.
 4. **Fattibilità incrementale D0.6:** M5.1a ha un percorso giocato da risorse iniziali a primo ferro in 1.102 s. La raggiungibilità della campagna completa richiederà i parametri militari/navali successivi. Il linguaggio visivo è accettato.
 5. **S1 scelta e verificata:** estensione di `civil-growth`, introdotta con `-6` e ora a `-7`, conversione e backup. File/snapshot v2 conservati; eventuali nuovi stati militari/navali richiederanno valutazioni e test propri.
 
@@ -64,8 +64,8 @@ Questa pagina serve a prendere le decisioni una alla volta. Il [dossier completo
 | --- | --- | --- |
 | **M5.1a — Verificata** | Configurazione A scelta: miniera ferro, miniera carbone, fonderia; **15 edifici / 12 risorse** al relativo gate | 191/191 test, primo ferro, deposito pieno, backup e ripresa verificati |
 | **M5.1b — Verificata** | Oro configurazione A, due nuovi edifici e due risorse | 204/204 test, contesa, backup e ripresa verificati |
-| **M5.1c — Prossima** | Confronto esteso di scala e contesa del carbone | Strategie reali, contatori riconciliati, nessun parametro nuovo implicito |
-| **M5.2a–c** | Forgia, Zecca, Spade, Monete (**+2/+2**), utilizzo da definire | D0.8 approvata, transazioni e produzione a fasi/contemporanea confrontate, mai saldo negativo |
+| **M5.1c — Preparata, test pendenti** | Benchmark con 5 profili, contabilità per secondo e replay frazionari | Gate Windows prima di chiudere M5.1 e avviare codice M5.2 |
+| **M5.2a–c** | Forgia, Zecca, Spade, Monete (**+2/+2**), ricette A approvate, impieghi futuri ancora senza quantità | Contratto di design acquisito; transazioni e produzione a fasi/contemporanea da verificare, mai saldo negativo |
 | **M5.3a–c** | Caserma, arruolamento, addestramento, conservazione persone | D0.4 approvata, code deterministiche, nessuna duplicazione su salvataggio/congedo |
 | **M5.4** | Cantiere, navi e trasporto: [prefattibilità](M5_4_NAVAL_PREFEASIBILITY.md); costi, riutilizzo e capienza **non approvati** | Primo acquisto raggiungibile, nave salvabile, preflight senza doppio impiego, nessuna missione anticipata |
 | **M5.5–M5.7** | Esplorazioni, isole, colonie, castelli e strutture avanzate **solo se scelti** | Missioni a tempo simulato, obiettivi e ricompense idempotenti, scenario completo salvabile |
@@ -76,9 +76,9 @@ Le matrici tecniche estese per [M5.1](M5_1_INDUSTRY_PREFEASIBILITY.md), [M5.2](M
 
 ## 5. Cosa chiedere all'utente quando può rivedere il progetto
 
-- **Adesso**, confronto di scala M5.1c; i prezzi A di Ferro e Oro sono già adottati.
-- **Prima di M5.2**, ruolo di Spade e Monete e relativi contratti.
+- **Adesso**, eseguire quando possibile il gate Windows di M5.1c; i prezzi A di Ferro e Oro sono già adottati.
+- **Contratto M5.2 deciso il 28/10:** prezzi/ricette A Forgia e Zecca, ruolo di Spade e Monete, priorità e deposito. Il [dossier aggiornato](M5_2_FORGE_MINT_PREFEASIBILITY.md) registra la scelta e confronta **241/122 s teorici** per uno stesso lotto di 240 Spade e 360 Monete. Non si tratta ancora di risultati .NET o regole implementate.
 - **Prima di M5.3–M5.6**, popolazione militare, reclutamento, trasporto, durata ed esiti della conquista già scelta come obbligatoria.
 - **A ogni incremento**, raggiungibilità e compatibilità S1; completare la politica temporale e di classifica prima della funzione di vittoria.
 
-Prossimo lavoro: confronto di scala M5.1c. Vittoria, conquista, base grafica, rinvio demolizione, S1 e parametri A di Ferro/Oro sono già scelti. Contratti militari/navali e Spade/Monete vanno definiti prima delle rispettive implementazioni.
+Prossimo lavoro: acquisire il gate M5.1c e verificare la v36 UI quando l'utente può testare; poi implementare per incrementi **M5.2a Forgia** e **M5.2b Zecca**, con test di produzione, capienza e salvataggi. Vittoria, conquista, base grafica, rinvio demolizione, S1 e parametri A di Ferro/Oro/Forgia/Zecca sono già scelti e **non vanno richiesti nuovamente**.

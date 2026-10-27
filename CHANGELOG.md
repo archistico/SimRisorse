@@ -4,6 +4,56 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-10-28 — v36: scrollbar separate dalle colonne e selezione ocra nelle Risorse
+
+- Le righe degli elenchi **Risorse** ed **Edifici** riservano un margine destro di 20 px alla scrollbar verticale. Anche l'evidenziazione della riga si ferma prima di quel margine; le intestazioni sono arretrate per evitare che l'ultima colonna finisca dietro alla barra.
+- La tabella Risorse passa da `ScrollViewer` + `ItemsControl` a un `ListBox` con scorrimento interno: al clic, la risorsa resta selezionata in **ocra** (`#E6D5AC`), usando lo stesso stile dell'elenco Edifici. Il ViewModel conserva la riga selezionata durante gli aggiornamenti delle quantità.
+- Due nuovi casi xUnit Desktop, a **1040×740** e **1240×850**, controllano geometria delle due liste, selezione al clic, colore e persistenza della selezione dopo l'avanzamento: **211 casi attesi**, da compilare e verificare su Windows; non si attribuisce loro l'esito dei test v33 dichiarati superati.
+- **Decisione ricevuta M5.2:** approvata l'opzione A completa (prezzi e ricette Forgia/Zecca, un addetto per struttura, destinazione futura di Spade/Monete, priorità 100/101, capacità ordinaria e lotti interi). Registrata nel [dossier](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md); **Forgia e Zecca non sono ancora implementate**, né sono stati decisi i quantitativi di reclutamento e acquisto navi. Nessun cambiamento a simulazione, catalogo e salvataggi in v36.
+
+### 2026-10-28 — v35: stima riempimento e uniformità delle risorse nel Desktop
+
+- La tabella **Risorse** aggiunge **Si riempie tra** in ore:minuti:secondi, calcolata da spazio residuo e saldo netto previsto per il prossimo secondo. Se già piena mostra `00:00:00`; se il saldo è nullo/negativo o la capacità non è positiva mostra `—`. È una stima a tassi costanti, non una previsione degli eventi futuri.
+- Allineate a destra intestazioni e celle numeriche di **Quantità, Capacità, Produzione, Consumo e Saldo**, insieme al nuovo tempo; mantenuta la lettura alla larghezza minima di 1040 px con colonne più compatte.
+- **Solo la colonna Quantità della tabella** visualizza unità intere (arrotondamento a metà verso l'alto); le card mantengono fino a tre decimali e il gioco conserva tutti i decimali per simulazione, confronti e salvataggi.
+- Nel dettaglio **Edifici** i consumi per addetto/secondo sono un elenco di righe con icona, carattere e dimensioni identici a costi e produzioni.
+- Aggiunto un test xUnit per quantità e stime (saldo positivo, nullo, negativo, deposito pieno e tempi oltre 24 ore); estesi i test UI per allineamento delle colonne e dettagli dei consumi alle due risoluzioni. **209 casi attesi**, nuova suite da eseguire su Windows; l'ultimo gate dichiarato superato dall'utente resta la v33 (208 casi attesi). Nessuna modifica a regole, catalogo, SQLite o all'esperimento M5.2.
+
+### 2026-10-28 — v34: prove M5.2 sui limiti di deposito e sulle priorità
+
+- Conferma dell'utente: i test della **v33 sono passati**. L'esito è riferito dall'utente, senza allegato del log/TRX; i conteggi **206/206** nel rapporto storico restano attribuiti al gate precedente e i **208** della v33 sono il totale atteso dei casi xUnit.
+- Esteso **solo** l'[esperimento M5.2](experiments/forge-mint-probe/README.md), ancora esterno alla soluzione e al validatore, con tre guardie per ciascuna delle ipotesi prezzo A/B: deposito quasi pieno, riempimento esatto con lotti interi e contesa sul Carbone con precedenza alle fonderie.
+- I nuovi casi impiegano `GameSession.Construct`, `AssignWorkers`, `ForecastEconomy` e `Advance`, controllano blocchi/consumi e confrontano ciascuno il replay 1 s con 250+750 ms, incluse le immagini dello stato serializzato.
+- **Ancora da eseguire in .NET** il nuovo esperimento; non sono cambiate le regole giocabili, il catalogo, le partite, il motore, la GUI o i test xUnit della v33. Prezzi, ricette e destinazioni di Spade/Monete restano da approvare.
+
+### 2026-10-27 — v33: elenco Risorse in ordine alfabetico
+
+- La tabella **Risorse** di Avalonia è ora ordinata per **nome visibile in italiano**, ignorando le differenze tra maiuscole e minuscole e con ID come criterio secondario deterministico. L'ordinamento viene definito all'inizializzazione, senza riordinamenti durante gli aggiornamenti delle quantità.
+- I tre indicatori delle scorte sulla schermata principale conservano l'ordine precedente. Catalogo, priorità di produzione, salvataggi e simulatore non cambiano.
+- Aggiunti due casi xUnit Desktop (scenario base e civile): ordine alfabetico, proiezione economica immutata, ordine delle card, identità delle righe e aggiornamento dopo l'avanzamento.
+- **Alla preparazione:** non era disponibile il compilatore .NET. **Aggiornamento 28/10:** l'utente ha confermato «test passati» sulla v33; il relativo log non è stato acquisito qui. ForgeMintProbe resta esterno al gate ordinario.
+
+### 2026-10-27 — v32: prova isolata M5.2, senza nuove regole attive
+
+- Creato il [progetto sperimentale ForgeMintProbe](experiments/forge-mint-probe/README.md), fuori dalla soluzione e dal validatore: costruisce in memoria uno scenario derivato da `civil-growth-7`, aggiungendo **solo in ipotesi** Forgia/Zecca, Spade/Monete e priorità 100/101.
+- Sei profili indipendenti **A/B × (produzione a fasi, due miniere parallele, tutte le macchine presidiate con una miniera)**; acquistano le strutture con `GameSession`, riconciliano consumi e output secondo per secondo, confrontano replay da 1 s e 250+750 ms e controllano gli oracoli 241/122 s, scorte e costi.
+- Conservati `src/`, `tests/`, `tools/`, `scripts/`, progetto principale e salvataggi senza modifiche. Allineati dossier M5.2, roadmap, handoff, indice e guida di sviluppo; nessun parametro M5.2 considerato approvato.
+- **Stato:** calcoli numerici controllati separatamente, ma **nessuna compilazione .NET né esecuzione dell'esperimento in questo ambiente**. Anche M5.1c rimane in attesa di `validate.cmd` su Windows. L'esperimento non costituisce il superamento di un gate.
+
+### 2026-10-27 — v31: contratto preliminare M5.2, senza cambiamenti al gioco
+
+- Ampliato il [dossier Forgia/Zecca](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md) senza approvare ricette o prezzi: modello candidate A/B, significato Spade/Monete, priorità dei quattro trasformatori e capienza a lotti indivisibili.
+- Confrontate aritmeticamente due politiche sullo **stesso obiettivo di 240 Spade + 360 Monete** con minerali già pronti: **241 s** con una miniera a fasi e **122 s** con due miniere sovrapposte, a condizioni sintetiche ideali e con priorità proposte. Sono **calcoli teorici**, non output eseguiti da .NET e non tempi dalla nuova partita.
+- Aggiunti i casi di accettazione F8–F10: deposito quasi pieno, priorità deterministica, conversioni S1. Esplicitata la differenza tra rilascio congiunto `civil-growth-8` e rilasci separati `-8/-9` per evitare di cambiare catalogo lasciando invariato un ID di regole già persistito.
+- Aggiornati la scheda D0, la roadmap, l'handoff e il README. **Solo documenti**: il codice e il validatore della v30 sono invariati; M5.1c resta da verificare su Windows e M5.2 resta da approvare.
+
+### 2026-10-27 — Consolidamento locale e M5.1c (codice preparato)
+
+- Assunta come nuova baseline la revisione locale `civil-growth-7` dell'utente, **senza riscrivere** Core, Desktop, test, prezzi o salvataggi. Conservati gli esiti Windows **206/206 test** come *evidenza riferita dai documenti dell'archivio*, non come nuova esecuzione.
+- Aggiunto al simulatore il benchmark `--benchmark-industry-scale`: **cinque profili sintetici** con una/due Miniere di carbone, fonderie di Ferro e Oro in concorrenza, 180 secondi ciascuno. Acquisti e assegnazioni reali, riconciliazione delle scorte ogni secondo, confronto di replay interi/frazionari e verifica degli snapshot finali.
+- Esteso `scripts/validate.ps1` con un quinto benchmark, controllo dei risultati attesi e `industry-scale-benchmark.json`. [Protocollo, assunzioni e tabella teorica](docs/validation/M5_1C_INDUSTRY_SCALE.md).
+- Corrette le parti normative obsolete di roadmap, handoff e indice: D0 e M5.1a/b non risultano più «da iniziare». **Nessuna build o esecuzione .NET effettuata in questo ambiente**: M5.1c rimane da validare su Windows.
+
 ### 2026-10-27 — Riordino della documentazione e screenshot nel README
 
 - README riscritto con screenshot dell'applicazione subito dopo il titolo, avvio rapido, funzionalità presenti e limiti della campagna. PNG copiato integralmente dal render 1240×850 dell'ultimo gate in `docs/screenshots/colonia.png`, con provenienza e istruzioni di aggiornamento.

@@ -21,12 +21,14 @@ namespace SimRisorse.Desktop.Presentation;
 public sealed class MainViewModel : ObservableObject
 {
     private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
+    private static readonly StringComparer ResourceNameComparer = StringComparer.Create(Italian, ignoreCase: true);
     private readonly GameRuntime _runtime;
     private readonly GetGameStateHandler _read;
     private readonly SaveGameHandler _save;
     private readonly LoadGameHandler _load;
     private GameView _view;
     private BuildingRow _selected;
+    private ResourceRow? _selectedResource;
     private string _message = "La colonia è in pausa. Organizza i lavoratori e avvia la produzione quando vuoi.";
     private bool _busy, _loading, _closing, _initialized, _autoSaveAllowed;
     private bool _newGameConfirmation, _closeFailure;
@@ -40,7 +42,8 @@ public sealed class MainViewModel : ObservableObject
         _save = new(runtime, store);
         _load = new(runtime, store);
         _view = _read.Handle();
-        Resources = new(_view.Resources.Select(item => new ResourceRow(item)));
+        Resources = new(_view.Resources.OrderBy(item => item.Name, ResourceNameComparer)
+            .ThenBy(item => item.Id, StringComparer.Ordinal).Select(item => new ResourceRow(item)));
         Buildings = new(_view.Buildings.Select(item => new BuildingRow(item)));
         _selected = Buildings[0];
         TogglePauseCommand = new(() =>
@@ -70,10 +73,17 @@ public sealed class MainViewModel : ObservableObject
 
     public Action? SynchronizeTime { get; set; }
     public ObservableCollection<ResourceRow> Resources { get; }
+    // The table is alphabetical by its Italian labels; summary cards retain their established order.
+    private IEnumerable<ResourceRow> ResourcesInCatalogOrder => Resources.OrderBy(item => item.Id, StringComparer.Ordinal);
     public IEnumerable<ResourceRow> ResourceHighlights => HasAdvancedResidents
-        ? Resources.Where(item => item.Id is "food" or "bread" or "planks") : HasPopulationGrowth
-        ? Resources.Where(item => item.Id is "food" or "planks" or "stone") : Resources.Take(3);
+        ? ResourcesInCatalogOrder.Where(item => item.Id is "food" or "bread" or "planks") : HasPopulationGrowth
+        ? ResourcesInCatalogOrder.Where(item => item.Id is "food" or "planks" or "stone") : ResourcesInCatalogOrder.Take(3);
     public ObservableCollection<BuildingRow> Buildings { get; }
+    public ResourceRow? SelectedResource
+    {
+        get => _selectedResource;
+        set { if (_selectedResource != value) { _selectedResource = value; Notify(); } }
+    }
     public IReadOnlyList<int> BatchSizes { get; } = Array.AsReadOnly(new[] { 1, 5, 10 });
     public BuildingRow Selected { get => _selected; set { if (value is not null && value != _selected) { _selected = value; Refresh(); } } }
     public int BatchSize { get => _batchSize; set { if (BatchSizes.Contains(value)) { _batchSize = value; Refresh(); } } }

@@ -15,11 +15,11 @@ La grafica è sviluppata progressivamente con i contenuti. Le sezioni militari, 
 - **Sidebar da 240 px:** marchio, menu Edifici/Risorse e riquadro Crescita civile con progresso e fabbisogni. Il contenuto lungo può scorrere.
 - **Testata compatta:** titolo, cronometro, stato e pausa sulla stessa riga.
 - **Card comuni alle due pagine:** abitanti/posti, lavoratori liberi e tre scorte principali. Quando ci sono residenti avanzati, il Pane entra nel riepilogo. Le barre di capienza si adattano alla larghezza disponibile.
-- **Edifici:** elenco con icona, quantità, personale e stato; dettaglio a destra.
-- **Risorse:** tabella con quantità, capacità, produzione, consumo e saldo al secondo. Scorrimento interno alla finestra; nomi leggibili anche nel layout minimo.
+- **Edifici:** elenco con icona, quantità, personale e stato; dettaglio a destra. Le righe riservano 20 px a destra per non sovrapporsi alla scrollbar verticale.
+- **Risorse:** tabella con quantità, capacità, produzione, consumo, saldo al secondo e **«Si riempie tra»** (`hh:mm:ss`), **ordinata alfabeticamente secondo i nomi italiani visibili** (parità risolta dall'ID). Le intestazioni e le celle numeriche sono allineate a destra; solo la quantità in tabella è arrotondata all'unità, lasciando invariati i valori precisi delle card e della simulazione. Lo scorrimento usa il `ListBox` direttamente, con selezione **ocra** della risorsa cliccata, mantenuta al cambiare dei numeri. Anche queste righe hanno 20 px a destra prima della scrollbar. L'ordine del catalogo e le priorità produttive restano invariati.
 - **Footer:** messaggi, stato dei salvataggi, nuova partita, caricamento e salvataggio.
 
-Le dimensioni verificate sono **1040×740** e **1240×850**. Non ridurre i pulsanti o nascondere le diagnosi per guadagnare spazio.
+Le dimensioni di riferimento sono **1040×740** e **1240×850**. Le correzioni di v36 su scrollbar e selezione sono **in attesa di verifica Windows** a entrambe le risoluzioni. Non ridurre i pulsanti o nascondere le diagnosi per guadagnare spazio.
 
 ## Dettaglio della struttura
 
@@ -28,9 +28,11 @@ Ordine di lettura:
 1. Nome e descrizione.
 2. **Costi di costruzione in elenco**, una riga per risorsa, con icona e quantità.
 3. **Produzione per addetto e secondo**, con icona della risorsa; per case e magazzini si mostra l'effetto dell'edificio.
-4. Eventuali consumi della ricetta.
+4. **Consumi per addetto e secondo**, una riga per risorsa con lo stesso formato e pittogramma dei costi e della produzione.
 
-I costi seguono la quantità scelta (**+1/+5/+10**); la produzione descrive sempre il singolo addetto. Costi e produzione usano lo stesso modello `ResourceDetailTemplate`: testo normale da **12 px**, icona da **14 px**, distanza icona/testo di 7 px.
+I costi seguono la quantità scelta (**+1/+5/+10**); produzione e consumi descrivono sempre il singolo addetto. Costi, produzione e consumi usano lo stesso modello `ResourceDetailTemplate`: testo normale da **12 px**, icona da **14 px**, distanza icona/testo di 7 px.
+
+**Tempo al riempimento:** la GUI calcola `ceil((capacità − quantità esatta) / saldo netto positivo)` in secondi, basandosi sul flusso stimato per il secondo successivo. `00:00:00` significa che la risorsa è già a capacità, `—` che non sta aumentando (o non ha capacità positiva); le ore totali possono superare 24. La stima cambia se intervengono nuove strutture, addetti, consumi, carenze, priorità o limiti dei magazzini. I decimali rimangono nel calcolo anche se Quantità viene mostrata come intero.
 
 Diagnosi, quantità, Costruisci e assegnazioni restano nel fondo fisso. Prerequisiti mancanti e altri avvisi sono visibili sopra i comandi senza scorrere il dettaglio; la descrizione può scorrere quando necessario.
 
@@ -45,7 +47,7 @@ Unica famiglia condivisa `ContentControlThemeFontFamily` in `App.axaml`: **Conso
 | Riepilogo risorse e abitanti | 16 × 16 px |
 | Tabella Risorse | 20 × 20 px |
 | Elenco edifici | 24 × 24 px |
-| Costi e produzione nel dettaglio | 14 × 14 px |
+| Costi, produzione e consumi nel dettaglio | 14 × 14 px |
 
 I pennelli della palette sono immutabili, per consentire l'inizializzazione del tipo anche fuori dal thread UI. I pittogrammi sono codice del progetto; non derivano dagli sprite delle immagini di riferimento. Nessuna dipendenza grafica esterna.
 
@@ -76,6 +78,6 @@ Le stime nominali della filiera Pane non dimostrano la disponibilità di edifici
 
 ## Verifica e rifiniture successive
 
-Il gate corrente comprende **206 test**, di cui **48 Desktop**, con render, click sul menu, aggiornamento delle card, ordini multipli, diagnosi fisse e controlli geometrici. I test di hover controllano i colori effettivi del presenter di Costruisci e Salva, il contrasto e il passaggio allo stato disabilitato. [Evidenze](validation/DESKTOP_UI.md).
+L'ultimo gate con report dettagliato comprende **206 test**, di cui **48 Desktop**, con render, click sul menu, aggiornamento delle card, ordini multipli, diagnosi fisse e controlli geometrici. L'utente ha poi confermato la v33 (**208 casi attesi**, log non acquisito). La v35 introduce un nuovo caso Desktop e amplia i test grafici delle due risoluzioni (**209 casi attesi**, ancora da eseguire). I test di hover precedentemente confermati controllano colori, contrasto e disabilitazione. [Evidenze precedenti](validation/DESKTOP_UI.md).
 
 Restano da ampliare le prove su DPI fisici, fallback dei font, Linux/macOS, tastiera e accessibilità. Animazioni e nuovi asset si valutano dopo la leggibilità; eventuali bitmap future richiederanno interpolazione adatta al pixel art. Regole economiche e compatibilità dei salvataggi rimangono indipendenti dalle rifiniture visive.

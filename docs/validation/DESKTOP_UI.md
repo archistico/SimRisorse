@@ -2,6 +2,14 @@
 
 Data: **2026-10-27**. Stato: **verificata su Windows**. Questo rapporto aggiorna la verifica della presentazione dopo [M5.1b Oro](M5_1B_GOLD.md); catalogo `civil-growth-7`, parametri economici e formato dei salvataggi restano quelli già adottati.
 
+**Nota successiva (v33, non ancora verificata):** il nuovo ordinamento alfabetico della tabella Risorse e i due casi di test aggiunti **non fanno parte del gate descritto qui**. Il rapporto continua a documentare soltanto i 206 test realmente confermati; il prossimo `validate.cmd` dovrà verificare anche i nuovi casi e M5.1c.
+
+**Aggiornamento 28/10:** l'utente ha successivamente confermato «test passati» per la v33. Non sono stati forniti TRX o log; non cambiamo retroattivamente i 206 test documentati in questo rapporto. L'esperimento M5.2 non rientra nel validatore ordinario.
+
+**Modifica v35, ancora da verificare:** nella tabella Risorse aggiunti il tempo stimato al riempimento, l'allineamento destro e la quantità intera visualizzata (non cambia il valore in memoria); i consumi del dettaglio Edifici condividono ora il template con icone, carattere e dimensioni di costi/produzione. Nuovo test sulle stime di capienza, più verifiche nelle prove esistenti su colonne e dettaglio grafico a **1040×740 e 1240×850**: **209 casi xUnit attesi**, nessuno di questi cambiamenti fa parte del gate da 206 descritto sotto. Serve validazione Windows e ispezione dei due render aggiornati.
+
+**Correzione v36, ancora da verificare:** negli elenchi Edifici e Risorse riservato un margine di **20 px** a destra delle righe per separarle dalla scrollbar verticale; Risorse usa ora un `ListBox` e la selezione ocra della riga al clic. Aggiunti due casi xUnit Desktop, rispettivamente **1040×740 e 1240×850**, con controllo geometrico delle due liste, colore della riga selezionata e persistenza dopo l'avanzamento. **211 casi xUnit attesi**: nessun nuovo esito Windows può essere dedotto da questo rapporto storico. Quando possibile verificare visivamente che «Si riempie tra», «PERSONALE» e il fondo ocra terminino prima della scrollbar, anche durante lo scorrimento.
+
 ## Esecuzione di riferimento
 
 Comando: `.\validate.cmd`, terminato con **codice 0**. Run `899f6ff3e8ff41288330c3d26b4c4ea7`, SDK **10.0.201**, Avalonia **12.1.4**, Microsoft.Data.Sqlite **10.0.14**. Build Release con **zero avvisi e zero errori**.

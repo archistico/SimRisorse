@@ -19,6 +19,7 @@ if (args is ["--help"])
     Console.WriteLine("SimRisorse.Simulation --benchmark-housing: historical M4 comparison; --benchmark-housing-accelerated: new M4.10 comparison.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-bread-scale: compares one, two full, a delayed full and a lean bread chain at 220 residents.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-bread-high-density: stress comparison at 320 residents with sufficient housing and food.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-industry-scale: five controlled coal-allocation profiles under civil-growth-7.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
@@ -40,6 +41,11 @@ if (args is ["--benchmark-bread-scale"])
 if (args is ["--benchmark-bread-high-density"])
 {
     try { Console.WriteLine(JsonSerializer.Serialize(BreadScaleBenchmark.RunHighDensity(), json)); return 0; }
+    catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
+}
+if (args is ["--benchmark-industry-scale"])
+{
+    try { Console.WriteLine(JsonSerializer.Serialize(IndustryScaleBenchmark.Run(), json)); return 0; }
     catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
 }
 if (args is ["--check-catalog", .. var checkArguments])

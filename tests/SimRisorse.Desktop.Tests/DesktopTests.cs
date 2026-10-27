@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -32,6 +34,60 @@ public static class TestAppBuilder
 
 public sealed class DesktopTests
 {
+    [Fact]
+    public void ResourceTableRoundsOnlyDisplayedQuantityAndEstimatesTimeToFullFromNetRate()
+    {
+        var row = new ResourceRow(new ResourceView("logs", "Tronchi", 12.5m, 100m, 2m, 0.5m));
+        Assert.Equal("13", row.QuantityRounded);
+        Assert.Equal("12,5", row.Quantity);
+        Assert.Equal("100", row.Capacity);
+        Assert.Equal("00:00:59", row.TimeToFull); // (100 - 12,5) / 1,5 = 58,33... s
+
+        row.Update(new ResourceView("logs", "Tronchi", 99.5m, 100m, 0.75m, 0m));
+        Assert.Equal("100", row.QuantityRounded);
+        Assert.Equal("00:00:01", row.TimeToFull);
+        row.Update(new ResourceView("logs", "Tronchi", 100m, 100m, 0m, 0m));
+        Assert.Equal("00:00:00", row.TimeToFull);
+        row.Update(new ResourceView("logs", "Tronchi", 20m, 100m, 1m, 1m));
+        Assert.Equal("—", row.TimeToFull);
+        row.Update(new ResourceView("logs", "Tronchi", 20m, 100m, 0.5m, 1m));
+        Assert.Equal("—", row.TimeToFull);
+        row.Update(new ResourceView("logs", "Tronchi", 0m, 0m, 1m, 0m));
+        Assert.Equal("—", row.TimeToFull);
+        row.Update(new ResourceView("logs", "Tronchi", 0m, 100m, 0.001m, 0m));
+        Assert.Equal("27:46:40", row.TimeToFull); // Le ore totali non si azzerano dopo 24h.
+        row.Update(new ResourceView("logs", "Tronchi", 1234.5m, 2000m, 0m, 0m));
+        Assert.Equal("1.235", row.QuantityRounded);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ResourceTableIsAlphabeticalByItalianNameWithoutChangingHighlightsOrUpdates(bool civil)
+    {
+        var scenario = civil ? CivilGrowthScenario.Create() : EconomyFoundationScenario.Create();
+        var viewModel = new MainViewModel(new GameRuntime(scenario), new MemoryStore());
+        await viewModel.InitializeAsync();
+
+        var italian = StringComparer.Create(CultureInfo.GetCultureInfo("it-IT"), ignoreCase: true);
+        var expected = scenario.Catalog.Resources.OrderBy(item => item.Name, italian)
+            .ThenBy(item => item.Id, StringComparer.Ordinal).Select(item => item.Id).ToArray();
+        Assert.Equal(expected, viewModel.Resources.Select(item => item.Id));
+        Assert.Equal(scenario.Catalog.Resources.Select(item => item.Id), viewModel.View.Resources.Select(item => item.Id));
+        string[] expectedHighlights = civil ? ["food", "planks", "stone"] : ["logs", "planks", "stone"];
+        Assert.Equal(expectedHighlights, viewModel.ResourceHighlights.Select(item => item.Id));
+
+        var rows = viewModel.Resources.ToDictionary(item => item.Id, StringComparer.Ordinal);
+        var initialQuantities = rows.ToDictionary(item => item.Key, item => item.Value.Quantity, StringComparer.Ordinal);
+        viewModel.TogglePauseCommand.Execute(null);
+        viewModel.Advance(TimeSpan.FromSeconds(2));
+        viewModel.Pause();
+
+        Assert.Equal(expected, viewModel.Resources.Select(item => item.Id));
+        Assert.All(viewModel.Resources, row => Assert.Same(rows[row.Id], row));
+        Assert.Contains(viewModel.Resources, row => row.Quantity != initialQuantities[row.Id]);
+    }
+
     [AvaloniaTheory]
     [InlineData(1040, 740)]
     [InlineData(1240, 850)]
@@ -58,6 +114,27 @@ public sealed class DesktopTests
             Assert.Equal(costText.FontSize, OutputText().FontSize);
             Assert.Equal(costText.FontWeight, OutputText().FontWeight);
             Assert.Equal("logs", Assert.Single(output.GetVisualDescendants().OfType<PixelGlyph>()).Key);
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "iron-smelter");
+            Dispatcher.UIThread.RunJobs();
+            var inputs = window.FindControl<ItemsControl>("ProductionInputList")!;
+            var inputTexts = inputs.GetVisualDescendants().OfType<TextBlock>().ToArray();
+            var inputGlyphs = inputs.GetVisualDescendants().OfType<PixelGlyph>().ToArray();
+            Assert.True(inputs.IsEffectivelyVisible);
+            Assert.Equal(viewModel.Selected.View.InputPerWorker.Length, inputTexts.Length);
+            Assert.Equal(viewModel.Selected.View.InputPerWorker.Select(item => item.ResourceId), inputGlyphs.Select(item => item.Key));
+            Assert.All(inputTexts, item =>
+            {
+                Assert.Equal(costText.FontFamily, item.FontFamily);
+                Assert.Equal(costText.FontSize, item.FontSize);
+                Assert.Equal(costText.FontWeight, item.FontWeight);
+            });
+            Assert.All(inputGlyphs, item =>
+            {
+                Assert.Equal(14d, item.Width);
+                Assert.Equal(14d, item.Height);
+            });
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "tree-feller");
+            Dispatcher.UIThread.RunJobs();
             Assert.True(window.FindControl<PixelGlyph>("PopulationGlyph")!.IsEffectivelyVisible);
             Assert.True(description.TranslatePoint(default, window)!.Value.Y + description.Bounds.Height <=
                 costs.TranslatePoint(default, window)!.Value.Y);
@@ -104,7 +181,13 @@ public sealed class DesktopTests
                 Assert.Equal(index, window.FindControl<TabControl>("Sections")!.SelectedIndex);
                 Assert.True(population.IsEffectivelyVisible);
                 Assert.True(resources.IsEffectivelyVisible);
-                if (index == 1) Assert.True(window.FindControl<ItemsControl>("ResourcesTable")!.IsEffectivelyVisible);
+                if (index == 1)
+                {
+                    Assert.True(window.FindControl<ItemsControl>("ResourcesTable")!.IsEffectivelyVisible);
+                    var header = window.FindControl<Grid>("ResourceTableHeader")!;
+                    Assert.Equal(7, header.ColumnDefinitions.Count);
+                    Assert.True(header.Bounds.Width <= ResourceScroll(window).Bounds.Width);
+                }
             }
             using var image = window.CaptureRenderedFrame();
             Assert.NotNull(image);
@@ -180,7 +263,7 @@ public sealed class DesktopTests
             Assert.Equal(14, viewModel.Resources.Count);
             if (section == 1)
             {
-                var scroll = window.FindControl<ScrollViewer>("ResourcesScroll")!;
+                var scroll = ResourceScroll(window);
                 Assert.InRange(scroll.TranslatePoint(default, window)!.Value.Y + scroll.Bounds.Height, 0, window.ClientSize.Height);
             }
             using var image = window.CaptureRenderedFrame();
@@ -690,7 +773,7 @@ public sealed class DesktopTests
             if (section == 1)
             {
                 // Eight resources no longer fit at the compact size: the table must scroll inside the window.
-                var scroll = window.FindControl<ScrollViewer>("ResourcesScroll")!;
+                var scroll = ResourceScroll(window);
                 Assert.InRange(scroll.TranslatePoint(default, window)!.Value.Y + scroll.Bounds.Height, 0, window.ClientSize.Height);
             }
             var growthBar = window.FindControl<ProgressBar>("GrowthProgressBar")!;
@@ -768,12 +851,75 @@ public sealed class DesktopTests
             window.FindControl<TabControl>("Sections")!.SelectedIndex = 1;
             Dispatcher.UIThread.RunJobs();
             Assert.True(window.FindControl<ItemsControl>("ResourcesTable")!.IsEffectivelyVisible);
+            var header = window.FindControl<Grid>("ResourceTableHeader")!;
+            var row = window.FindControl<ItemsControl>("ResourcesTable")!.GetVisualDescendants()
+                .OfType<Grid>().First(item => item.ColumnDefinitions.Count == 7 &&
+                    item.GetVisualDescendants().OfType<PixelGlyph>().Any());
+            Assert.Equal(7, header.ColumnDefinitions.Count);
+            foreach (var grid in new[] { header, row })
+            {
+                var numericCells = grid.Children.OfType<TextBlock>().Where(item => Grid.GetColumn(item) > 0).ToArray();
+                Assert.Equal(6, numericCells.Length);
+                Assert.All(numericCells, cell =>
+                {
+                    Assert.Equal(Avalonia.Layout.HorizontalAlignment.Right, cell.HorizontalAlignment);
+                    Assert.Equal(TextAlignment.Right, cell.TextAlignment);
+                });
+            }
+            Assert.Contains(row.Children.OfType<TextBlock>(), cell => Grid.GetColumn(cell) == 6 &&
+                cell.Text == viewModel.Resources.First().TimeToFull);
+            Assert.Contains(row.Children.OfType<TextBlock>(), cell => Grid.GetColumn(cell) == 1 &&
+                cell.Text == viewModel.Resources.First().QuantityRounded);
             Assert.Equal("+2 /s", viewModel.Resources.Single(item => item.Id == "logs").NetRate);
             Assert.Equal("±0 /s", viewModel.Resources.Single(item => item.Id == "planks").NetRate);
             viewModel.TogglePauseCommand.Execute(null);
             viewModel.Advance(TimeSpan.FromSeconds(1));
             Assert.Equal("±0 /s", viewModel.Resources.Single(item => item.Id == "logs").NetRate);
             Assert.Equal("+1 /s", viewModel.Resources.Single(item => item.Id == "planks").NetRate);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task ResourcesCanBeSelectedInOchreAndBothListsKeepCellsAwayFromScrollbars(int width, int height)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var buildings = window.FindControl<ListBox>("BuildingsList")!;
+            Assert.Same(viewModel.Selected, buildings.SelectedItem);
+            AssertListGutter(window, buildings);
+
+            window.FindControl<TabControl>("Sections")!.SelectedIndex = 1;
+            Dispatcher.UIThread.RunJobs();
+            var resources = window.FindControl<ListBox>("ResourcesTable")!;
+            var firstRow = viewModel.Resources.First();
+            var item = resources.GetVisualDescendants().OfType<ListBoxItem>()
+                .First(candidate => ReferenceEquals(candidate.DataContext, firstRow));
+
+            var point = item.TranslatePoint(new Point(item.Bounds.Width / 2, item.Bounds.Height / 2), window)!.Value;
+            window.MouseDown(point, MouseButton.Left);
+            window.MouseUp(point, MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Same(firstRow, viewModel.SelectedResource);
+            Assert.Same(firstRow, resources.SelectedItem);
+            Assert.True(item.IsSelected);
+            var presenter = item.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>()
+                .First(control => control.Name == "PART_ContentPresenter");
+            Assert.Equal(Color.Parse("#E6D5AC"), Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Background).Color);
+            AssertListGutter(window, resources);
+
+            viewModel.TogglePauseCommand.Execute(null);
+            viewModel.Advance(TimeSpan.FromSeconds(2));
+            Assert.Same(firstRow, viewModel.SelectedResource);
+            Assert.True(item.IsSelected);
         }
         finally { window.CloseWithoutSaving(); }
     }
@@ -956,6 +1102,28 @@ public sealed class DesktopTests
     }
 
     private static MainViewModel Create(IGameSaveStore store) => new(new GameRuntime(EconomyFoundationScenario.Create()), store);
+    private static ScrollViewer ResourceScroll(MainWindow window) => window.FindControl<ListBox>("ResourcesTable")!
+        .GetVisualDescendants().OfType<ScrollViewer>().First();
+    private static void AssertListGutter(MainWindow window, ListBox list)
+    {
+        var scroll = list.GetVisualDescendants().OfType<ScrollViewer>().First();
+        var first = list.GetVisualDescendants().OfType<ListBoxItem>().First(item => item.Bounds.Width > 0);
+        var right = first.TranslatePoint(new Point(first.Bounds.Width, 0), window)!.Value.X;
+        var scrollbar = scroll.GetVisualDescendants().OfType<ScrollBar>()
+            .FirstOrDefault(item => item.Orientation == Avalonia.Layout.Orientation.Vertical &&
+                item.IsEffectivelyVisible && item.Bounds.Width > 0);
+        var limit = scrollbar is null
+            ? scroll.TranslatePoint(new Point(scroll.Bounds.Width - 18, 0), window)!.Value.X
+            : scrollbar.TranslatePoint(default, window)!.Value.X - 2;
+        Assert.True(right <= limit, $"La riga termina a {right:0.##}, oltre il limite della scrollbar {limit:0.##}.");
+        if (list.Name == "ResourcesTable")
+        {
+            var header = window.FindControl<Grid>("ResourceTableHeader")!;
+            var headerRight = header.TranslatePoint(new Point(header.Bounds.Width, 0), window)!.Value.X;
+            Assert.True(headerRight <= limit,
+                $"L'intestazione 'Si riempie tra' termina a {headerRight:0.##}, oltre il limite della scrollbar {limit:0.##}.");
+        }
+    }
     private static void Click(Window window, string name)
     {
         Dispatcher.UIThread.RunJobs();

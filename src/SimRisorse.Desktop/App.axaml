@@ -30,6 +30,12 @@
       <Setter Property="BorderBrush" Value="#B8C2BC" />
     </Style>
     <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="#66766E" /><Setter Property="FontSize" Value="12" /></Style>
+    <!-- Le celle restano prima della scrollbar verticale; anche la selezione si ferma al margine riservato. -->
+    <Style Selector="ListBox.gutter-list ListBoxItem">
+      <Setter Property="Margin" Value="0,0,20,0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
     <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="#EFE6CF" /></Style>
     <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{StaticResource SelectionBackground}" /></Style>
     <Style Selector="ListBox.navigation ListBoxItem">
