@@ -1,6 +1,6 @@
 # Interfaccia retro 8-bit
 
-Aggiornata il **2026-10-27**. La base grafica è **implementata, verificata su Windows e approvata dall'utente**. La finestra Avalonia usa pittogrammi originali, monospace e pannelli compatti. [Ultima verifica](validation/DESKTOP_UI.md), [decisione stilistica](adr/0012-retro-8bit-desktop-visual-language.md).
+Aggiornata il **2026-11-02**, v40. La base grafica è implementata, verificata su Windows e approvata dall’utente. Pittogrammi originali, monospace e pannelli compatti; [ultimo gate M5.2c](validation/M5_2C_FORGE_MINT.md), [stato corrente](HANDOFF.md), [decisione stilistica](adr/0012-retro-8bit-desktop-visual-language.md). Zecca/Monete aggiungono icone originali; gli effetti v38 conservano il template condiviso con costi, produzione e consumi.
 
 ![Interfaccia corrente della colonia](screenshots/colonia.png)
 
@@ -19,7 +19,7 @@ La grafica è sviluppata progressivamente con i contenuti. Le sezioni militari, 
 - **Risorse:** tabella con quantità, capacità, produzione, consumo, saldo al secondo e **«Si riempie tra»** (`hh:mm:ss`), **ordinata alfabeticamente secondo i nomi italiani visibili** (parità risolta dall'ID). Le intestazioni e le celle numeriche sono allineate a destra; solo la quantità in tabella è arrotondata all'unità, lasciando invariati i valori precisi delle card e della simulazione. Lo scorrimento usa il `ListBox` direttamente, con selezione **ocra** della risorsa cliccata, mantenuta al cambiare dei numeri. Anche queste righe hanno 20 px a destra prima della scrollbar. L'ordine del catalogo e le priorità produttive restano invariati.
 - **Footer:** messaggi, stato dei salvataggi, nuova partita, caricamento e salvataggio.
 
-Le dimensioni di riferimento sono **1040×740** e **1240×850**. Le correzioni di v36 su scrollbar e selezione sono **in attesa di verifica Windows** a entrambe le risoluzioni. Non ridurre i pulsanti o nascondere le diagnosi per guadagnare spazio.
+Le dimensioni di riferimento sono **1040×740** e **1240×850**. Scrollbar e selezione v36 sono verificate nei gate del 02/11; gli effetti v38 sono acquisiti e ora inclusi anche nel manifest completo. M5.2b supera 61/61 test Desktop e aggiunge quattro render Zecca/Risorse ispezionati alle due risoluzioni. Non ridurre i pulsanti o nascondere le diagnosi per guadagnare spazio.
 
 ## Dettaglio della struttura
 
@@ -27,10 +27,10 @@ Ordine di lettura:
 
 1. Nome e descrizione.
 2. **Costi di costruzione in elenco**, una riga per risorsa, con icona e quantità.
-3. **Produzione per addetto e secondo**, con icona della risorsa; per case e magazzini si mostra l'effetto dell'edificio.
+3. **Produzione per addetto e secondo**, con icona della risorsa; per case e magazzini si mostrano gli **effetti in elenco con icone**, nello stesso formato dei costi: icona abitanti e +8/+32 posti abitativi per casa; icona Magazzino e +500 capacità per ogni risorsa per magazzino.
 4. **Consumi per addetto e secondo**, una riga per risorsa con lo stesso formato e pittogramma dei costi e della produzione.
 
-I costi seguono la quantità scelta (**+1/+5/+10**); produzione e consumi descrivono sempre il singolo addetto. Costi, produzione e consumi usano lo stesso modello `ResourceDetailTemplate`: testo normale da **12 px**, icona da **14 px**, distanza icona/testo di 7 px.
+I costi seguono la quantità scelta (**+1/+5/+10**); produzione e consumi descrivono sempre il singolo addetto e gli effetti descrivono il singolo edificio, anche negli ordini multipli. Costi, produzione, consumi ed effetti usano lo stesso modello `ResourceDetailTemplate`: medesimo font monospace, testo normale da **12 px**, icona da **14 px**, distanza icona/testo di 7 px.
 
 **Tempo al riempimento:** la GUI calcola `ceil((capacità − quantità esatta) / saldo netto positivo)` in secondi, basandosi sul flusso stimato per il secondo successivo. `00:00:00` significa che la risorsa è già a capacità, `—` che non sta aumentando (o non ha capacità positiva); le ore totali possono superare 24. La stima cambia se intervengono nuove strutture, addetti, consumi, carenze, priorità o limiti dei magazzini. I decimali rimangono nel calcolo anche se Quantità viene mostrata come intero.
 

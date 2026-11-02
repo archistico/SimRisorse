@@ -1,6 +1,6 @@
 # Game design
 
-Data di riferimento: 2026-10-27. Questo documento distingue requisiti confermati, proposte e questioni da risolvere; gli screenshot sono evidenze di un riferimento, non una specifica da copiare integralmente. L'ordine operativo delle scelte è nella [roadmap](ROADMAP.md).
+Data di riferimento: **2026-11-02**. Questo documento distingue requisiti confermati, proposte e questioni da risolvere. L’ordine operativo è nella [roadmap](ROADMAP.md).
 
 ## Visione e ciclo di gioco
 
@@ -10,13 +10,15 @@ Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento,
 
 ## Requisiti confermati
 
-**Decisione D0.1 del 2026-10-27:** prima campagna con i [22 tipi elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): 12 civili, cinque di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere e Castello. Gli altri 21 riferimenti sono fuori dalla prima campagna. Con M5.1b **17 tipi sono implementati e 5 restano futuri**.
+**Decisione D0.1 del 2026-10-27:** prima campagna con i [22 tipi elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): 12 civili, cinque di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere e Castello. Gli altri 21 riferimenti sono fuori dalla prima campagna. Con M5.2b **19 tipi sono implementati e 3 restano futuri**.
 
 **Decisioni successive esplicite:** vittoria con possesso di tutti i 22 tipi e Castello conclusivo; una conquista obbligatoria sblocca il Castello. Gli edifici iniziali contano già. M4 chiusa dopo giudizio positivo sul prototipo monospace e rinvio della demolizione. Scelta **S1** per continuare le partite con conversione/backup e **configurazione A per la prima filiera ferro/carbone**. M5.1a verificata inizialmente nelle regole **`civil-growth-6`**, 15 edifici e 12 risorse: [parametri e risultati](validation/M5_1A_IRON.md). Le regole operative militari/navali e la funzione di vittoria restano da implementare; l'Oro è stato aggiunto nell'incremento successivo.
 
-**Scelta successiva M5.1b:** approvata separatamente la configurazione A dell'Oro: Miniera 180/120 legno/pietra, 1 minerale/s; Fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s; un addetto ciascuna, capacità 1.000 +500 per Magazzino, scorte iniziali zero. Ferro prioritario con carbone scarso. **M5.1b verificata**, `civil-growth-7`, 17 edifici / 14 risorse e 204/204 test: [report](validation/M5_1B_GOLD.md). Forgia, Zecca e relativi usi rimangono futuri.
+**Scelta successiva M5.1b:** approvata separatamente la configurazione A dell'Oro: Miniera 180/120 legno/pietra, 1 minerale/s; Fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s; un addetto ciascuna, capacità 1.000 +500 per Magazzino, scorte iniziali zero. Ferro prioritario con carbone scarso. **M5.1b verificata**, `civil-growth-7`, 17 edifici / 14 risorse e 204/204 test: [report](validation/M5_1B_GOLD.md). Questa è la verifica storica dell’Oro; Forgia e Spade sono state aggiunte in M5.2a.
 
-**Verifica corrente dopo le rifiniture UI:** **206/206 test**, regole e salvataggi invariati. Menu laterale, card abitanti/scorte, dettaglio con costi prima della produzione e hover ocra sono implementati e approvati. [Interfaccia](PIXEL_ART_UI.md) e [risultati](validation/DESKTOP_UI.md).
+**M5.2a Verificato:** contratto A scelto il 28/10 e Forgia implementata in `civil-growth-8`: costo 240 Legno lavorato/180 Pietra, 1 addetto, Fonderia di ferro posseduta, **1 Ferro + 1 Carbone → 2 Spade/s**, priorità 100 dopo le fonderie. Scorte iniziali zero, capacità 1.000 +500 per Magazzino, lotti indivisibili. Spade inventariate per il futuro arruolamento; nessun soldato introdotto. Conversione S1 da v1–v7 con backup, SQLite v2. **235/235 test**, cinque benchmark e smoke Windows superati. [Report](validation/M5_2A_FORGE.md). La Zecca è stata implementata e verificata nell’incremento seguente, descritto sotto.
+
+**M5.2b Verificato:** Zecca/Monete in `civil-growth-9`, **19 edifici / 16 risorse**, **258/258 test** e gate Windows completo. Zecca 210 Legno lavorato/160 Pietra, 1 addetto, Fonderia d’oro posseduta, **1 Oro +1 Carbone → 3 Monete/s**, priorità 101 dopo Forgia 100. Monete iniziali zero, capacità 1.000 +500 per Magazzino e lotti indivisibili: con 1–2 posti residui non si consumano input. Monete per pagamenti espliciti futuri, non valuta generale. Conversione S1 v8→v9 concatenata dalle precedenti, scorte Spade e personale preservati, SQLite v2; [report](validation/M5_2B_MINT.md). **M5.2c è ora Verificata**: nove profili sul catalogo corrente, quattro guardie e percorso integrato dalla nuova partita; [risultati](validation/M5_2C_FORGE_MINT.md). Quantità per reclute/navi da scegliere nelle rispettive fasi.
 
 | ID | Requisito | Conseguenza |
 | --- | --- | --- |

@@ -98,7 +98,7 @@ public sealed class WarehouseTests
         var runtime = new GameRuntime(scenario);
         Assert.True(new ConstructBuildingsHandler(runtime).Handle(new("small-house", 1)).Succeeded);
 
-        var unknown = await new LoadGameHandler(runtime, new SnapshotStore(current with { RulesVersion = "civil-growth-9" })).HandleAsync();
+        var unknown = await new LoadGameHandler(runtime, new SnapshotStore(current with { RulesVersion = "civil-growth-999" })).HandleAsync();
         Assert.Equal(GameSaveError.IncompatibleRules, unknown.Error);
         var otherScenario = await new LoadGameHandler(runtime,
             new SnapshotStore(Older(current, "civil-growth-1") with { ScenarioId = "economy-foundation" })).HandleAsync();

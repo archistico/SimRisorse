@@ -8,7 +8,7 @@ Il progetto è in sviluppo. La prima campagna prevede **22 tipi di edifici**: pe
 
 ## Stato attuale
 
-**28 ottobre 2026 — M0–M4 completate, M5.1a Ferro e M5.1b Oro verificate nel progetto locale su Windows.** Lo scenario corrente è `civil-growth-7`, con **17 tipi di edifici e 14 risorse**. Il benchmark **M5.1c** è incluso nel validatore; per la v33 l'utente ha confermato «test passati», senza allegare il riepilogo del gate.
+**2 novembre 2026 — M5.2 completata e verificata.** Regole `civil-growth-9`, **19 tipi di edifici e 16 risorse**. Filiere Forgia/Zecca, confronto delle strategie e percorso integrato verificati; restano Caserma, Cantiere e Castello. Prossimo passo: contratto di reclutamento M5.3.
 
 - Crescita civile con Case piccole e grandi, Cibo e Pane, Magazzini e capacità delle scorte.
 - Miniere di ferro, carbone e oro, due fonderie e priorità del Ferro quando il Carbone scarseggia.
@@ -17,9 +17,9 @@ Il progetto è in sviluppo. La prima campagna prevede **22 tipi di edifici**: pe
 - Pausa, salvataggio manuale e automatico, ripresa senza produzione a gioco chiuso.
 - Conversione dei vecchi salvataggi civili con backup dell'originale; formato SQLite v2.
 
-Ultima validazione completa con **rapporto dettagliato** nell'archivio locale: **206/206 test superati**, build senza avvisi/errori, simulazioni, quattro benchmark e prove native di entrambi gli scenari. Verificati i layout **1040×740 e 1240×850**. Il 28/10 l'utente ha confermato che **i test della v33 sono passati** (208 casi xUnit attesi dopo i due nuovi test Desktop); l'output del gate non è stato fornito. **La v36 aggiunge due casi UI sulle scrollbar e sulla selezione ocra alle prove v35: 211 casi attesi, ancora da eseguire su Windows.** [Risultati della verifica precedente](docs/validation/DESKTOP_UI.md) e [protocollo M5.1c](docs/validation/M5_1C_INDUSTRY_SCALE.md).
+Ultima validazione completa Windows: **260/260 test**, build senza avvisi/errori, **23 cronologie più crescita accelerata**, **sei benchmark**, pubblicazione e smoke nativi dei due scenari. Generati **33 render**. M5.2c confronta nove profili e quattro guardie con replay e contabilità per secondo; [risultati e limiti](docs/validation/M5_2C_FORGE_MINT.md).
 
-Il prossimo passo sul gioco, **dopo il gate Windows**, è **implementare il contratto M5.2 A approvato dall'utente il 28/10**. Il [dossier M5.2](docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md) registra prezzi, ricette, addetti, destinazione delle Spade/Monete, priorità e deposito, più due strategie per il Carbone e un confronto teorico. Una [prova M5.2 separata](experiments/forge-mint-probe/README.md) contiene sei profili A/B **più sei controlli dei limiti di deposito/priorità**, ancora da eseguire con .NET. **Non sono state introdotte le relative regole nel gioco.** Forgia, Zecca, Caserma, Cantiere e Castello restano futuri; rimangono da decidere i quantitativi di arruolamento, i prezzi navali e gli altri contratti militari. Carne fuori dalla prima campagna e demolizione rinviata. L'obiettivo di circa **8 ore** con una strategia efficiente e **32 ore o più** con strategie lente riguarda il gioco completo e non è ancora una durata dimostrata.
+La **Forgia** costa 240 Legno lavorato/180 Pietra e trasforma **1 Ferro +1 Carbone → 2 Spade/s**; la **Zecca** costa 210/160 e trasforma **1 Oro +1 Carbone → 3 Monete/s**, con un addetto ciascuna. Le fonderie hanno priorità sul Carbone, poi Forgia e Zecca. Spade per il futuro arruolamento e Monete per pagamenti espliciti; nessuna valuta generale. **M5.2c è verificata:** obiettivo 240 Spade/360 Monete in **241 s a fasi /122 s in parallelo** nel confronto sintetico; **2.320 s dalla nuova partita** con la strategia integrata `crafting`. La [prova isolata storica](experiments/forge-mint-probe/README.md) resta distinta dalle nuove misure sul catalogo corrente. Quantità di reclutamento e prezzi navali saranno scelti in M5.3/M5.4; le circa **8 ore efficienti / 32+ ore lente** restano obiettivi della campagna completa.
 
 ## Avvio su Windows
 
@@ -84,7 +84,10 @@ I quattro benchmark abitativi e del Pane si possono leggere senza ripetere le si
 | [Salvataggi](docs/SAVE_FORMAT.md) | Formato, backup e compatibilità |
 | [Interfaccia retro](docs/PIXEL_ART_UI.md) | Layout, icone, font e stati dei controlli |
 | [Ultima verifica dell'interfaccia](docs/validation/DESKTOP_UI.md) | Gate da 206 test, render e limiti |
-| [M5.1c — benchmark industriale](docs/validation/M5_1C_INDUSTRY_SCALE.md) | Cinque profili di contesa del Carbone; gate Windows ancora pendente |
+| [M5.1c — benchmark industriale](docs/validation/M5_1C_INDUSTRY_SCALE.md) | Cinque profili di contesa del Carbone verificati |
+| [M5.2c — Filiere integrate](docs/validation/M5_2C_FORGE_MINT.md) | Gate corrente da 260 test, confronto strategie e percorso dalla nuova partita |
+| [M5.2b — Zecca](docs/validation/M5_2B_MINT.md) | Gate storico da 258 test, Monete e conversione v8→v9 |
+| [M5.2a — Forgia](docs/validation/M5_2A_FORGE.md) | Gate storico da 235 test, Spade e conversione v7→v8 |
 | [Changelog](CHANGELOG.md) | Modifiche realizzate |
 
 Lo screenshot iniziale è un render dell'applicazione attuale, conservato nel repository. [Provenienza e aggiornamento](docs/screenshots/README.md).

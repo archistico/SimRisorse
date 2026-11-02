@@ -4,6 +4,40 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-11-02 — v40 / M5.2c: confronto delle filiere e percorso integrato verificati
+
+- **M5.2 chiusa e Verificata**, senza nuove regole o migrazioni: catalogo `civil-growth-9`, 19 edifici/16 risorse, prezzi A invariati.
+- Nuovo `--benchmark-forge-mint` su catalogo corrente: nove profili (tre controlli più tre politiche a 1.800 s/otto ore), quattro guardie su capienza/priorità. Contabilità di ogni risorsa a ogni secondo, diagnostica per addetto, replay interi/250+750 ms con ripristino frazionario e snapshot uguali.
+- Obiettivo controllato 240 Spade/360 Monete: **241 s a fasi** con una miniera, **122 s paralleli** con due. Costi 1.300/950 contro 1.430/1.040; con estrazione attiva picco 5/8 addetti industriali. Una miniera con tutto attivo produce 0/0 a 30 minuti; primi lotti a 2.002 s dopo saturazione dei metalli, obiettivo a 2.240 s. Tutti i profili sostenuti raggiungono 2.000 Spade/1.998 Monete a otto ore nella capienza sintetica di due Magazzini.
+- Strategia `crafting` dalla nuova partita: seconda miniera/Forgia/Zecca a 2.200 s, primi lotti a 2.201 s, **240/360 a 2.320 s**, 1.000/999 a otto ore. Test del replay integrato e SQLite con entrambi i prodotti e Carbone scarso a metà secondo.
+- **Gate Windows 260/260**, zero avvisi/errori, 23 cronologie più crescita accelerata, **sei benchmark**, 33 PNG e smoke dei due scenari. Nuovo confronto e tre cronologie conservati anche per run. [Report](docs/validation/M5_2C_FORGE_MINT.md).
+- Prossimo passo: contratto militare **M5.3 Caserma**, aggiornato alle decisioni già ricevute; non riaprire consumo delle Spade, prezzi industriali o S1. Restano da scegliere quantità per recluta, prezzo/prerequisiti Caserma, tempi/capienza, alloggi/razioni e congedo. Nessun soldato o pagamento navale introdotto.
+
+### 2026-11-02 — v39 / M5.2b: Zecca e Monete verificate
+
+- Regole **`civil-growth-9`**, **19 edifici / 16 risorse**. Zecca secondo il contratto A approvato: 210 Legno lavorato/160 Pietra, 1 addetto, Fonderia d'oro posseduta, **1 Oro +1 Carbone → 3 Monete/s**, priorità 101 dopo Forgia 100. Monete per pagamenti espliciti futuri, senza valuta generale.
+- Capacità 1.000 +500 per Magazzino, lotti indivisibili; con 1–2 posti liberi la Zecca si ferma senza consumi. Test di primo lotto, carenze, priorità dei quattro trasformatori, riassegnazione, pause e replay frazionari.
+- Conversione S1 v8→v9 concatenata da v1, Monete/Zecca a zero; preserva Spade frazionarie, Forgia e addetto, scorte, popolazione, tempo e frazioni. SQLite/snapshot v2, stesso slot e backup prima della prima scrittura. Catalogo v8 fissato per compatibilità.
+- Icone originali Zecca/Monete e dettagli nel template comune. Strategia `mint`: acquisto Zecca a 1.800 s, primo lotto a **1.801 s**; a otto ore **999 Monete**, lotto successivo bloccato da capienza.
+- **Verificato:** `validate.cmd`, **258/258 test** (67 Core, 96 Application, 34 Infrastructure, 61 Desktop), zero avvisi/errori, 20 cronologie più crescita accelerata, cinque benchmark e smoke Windows dei due scenari. **33 PNG** (31 richiesti, inclusi sei effetti v38, più due dettagli); quattro render Zecca ispezionati. [Report](docs/validation/M5_2B_MINT.md).
+- Prossimo incremento **M5.2c**, confronto nel gioco corrente di produzione a fasi/parallela e cronologia integrata. Reclutamento, navi e quantità d'impiego restano nelle rispettive fasi; l'esperimento storico separato non viene dichiarato rieseguito.
+
+### 2026-11-02 — v38: effetti degli edifici nello stesso elenco di costi e ricette
+
+- Il dettaglio **EFFETTO** usa ora il template condiviso di costi, produzione e consumi: font monospace normale da 12 px, icona da 14 px e medesime spaziature.
+- Magazzino: icona Magazzino e **+500 capacità per ogni risorsa per magazzino**; Casa piccola/grande: icona abitanti e **+8/+32 posti abitativi per casa**. Gli effetti indicano il singolo edificio anche selezionando ordini da 5 o 10.
+- Estese le regressioni grafiche esistenti per font, icone, testo, ordine di lettura e ordini multipli; **57/57 test Desktop superati**, sei render degli effetti ispezionati a 1040×740 e 1240×850. Run UI `d1d84fdc8e0a4fd2b0900228ef33f987`, artefatti in `.local-cache/ui-effects/`.
+- Solo presentazione e documenti; regole `civil-growth-8` e salvataggi v2 invariati. Il gate completo precedente resta M5.2a, **235/235**, distinto da questa verifica Desktop.
+
+### 2026-11-02 — v37 / M5.2a: Forgia e Spade verificate
+
+- Nuove regole **`civil-growth-8`**, **18 edifici / 15 risorse**: Forgia 240 Legno lavorato/180 Pietra, 1 addetto, prerequisito Fonderia di ferro; **1 Ferro + 1 Carbone → 2 Spade/s**, priorità 100. Contratto A già approvato; Spade per il futuro arruolamento, ancora assente.
+- Deposito ordinario 1.000 +500 per Magazzino, lotti interi; conversioni S1 v1–v7→v8 senza cambiare SQLite/snapshot v2. Backup dell’originale alla prima scrittura, scorte/lavoratori/tempo/frazioni preservati.
+- Icone originali e dettaglio Forgia nel Desktop, quattro render aggiuntivi. Strategia `forge` nel simulatore e due cronologie nel validatore: primo lotto a **1.401 s**, Spade 1.000 e popolazione 48 a otto ore.
+- Corretti pennelli statici mutabili di `ResourceRow` e confronto dei font con una riga costi già rimossa dal visual tree. Baseline v36/M5.1c verificata prima dell’incremento: **211/211**.
+- Catalogo storico v7 conservato per M5.1c e ForgeMintProbe. Esperimento isolato eseguito: sei profili A/B e sei guardie F8/F9; **241/122 s** confermati nel checkpoint sintetico, distinti dalle misure di campagna.
+- **Verificato su Windows:** `validate.cmd`, **235/235 test** (67 Core, 79 Application, 32 Infrastructure, 57 Desktop), zero avvisi/errori, 18 cronologie più crescita accelerata, cinque benchmark, 23 PNG e smoke dei due scenari. [Report](docs/validation/M5_2A_FORGE.md). Prossima **M5.2b Zecca/Monete**, contratto già approvato e nuova versione v9.
+
 ### 2026-10-28 — v36: scrollbar separate dalle colonne e selezione ocra nelle Risorse
 
 - Le righe degli elenchi **Risorse** ed **Edifici** riservano un margine destro di 20 px alla scrollbar verticale. Anche l'evidenziazione della riga si ferma prima di quel margine; le intestazioni sono arretrate per evitare che l'ultima colonna finisca dietro alla barra.

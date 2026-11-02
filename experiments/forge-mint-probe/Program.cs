@@ -29,7 +29,7 @@ catch (InvalidOperationException error)
 }
 
 /// <summary>
-/// An isolated, unapproved M5.2 hypothesis. Does not change the active game catalog,
+/// An isolated M5.2 A/B comparison on the historical gold catalog. Does not change the active game catalog,
 /// register new rules versions, migrate saves, or write to the user's game directory.
 /// </summary>
 internal static class ForgeMintProbe
@@ -98,11 +98,11 @@ internal static class ForgeMintProbe
             }
         }
 
-        return new("UNAPPROVED_EXPERIMENT", "M5.2 hypothetical A/B prices and recipes on the current civil-growth-7 core",
+        return new("ISOLATED_EXPERIMENT", "M5.2 A/B comparison on the historical civil-growth-7 catalog",
             "forge-mint-probe",
             ["40 residents and 40 housing capacity; ore preloaded and ore mines unstaffed",
              "All required buildings prepaid, 1000 food/bread and two warehouses; not a new-game strategy",
-             "Forge priority 100 and mint 101 are unapproved; real content and save formats unchanged"],
+             "A prices, recipes and priorities 100/101 approved on 2026-10-28; B prices remain experimental; no saves modified"],
             ["whole 1s", "250ms + 750ms per second, identical result and final snapshot"],
             results.ToArray(), guards.ToArray());
     }
@@ -307,7 +307,7 @@ internal static class ForgeMintProbe
 
     private static GameScenario CreateHypotheticalScenario(string pricing, ResourceBundle? extraStocks = null)
     {
-        var original = CivilGrowthScenario.Create();
+        var original = CivilGrowthScenario.CreateGoldForBenchmarks();
         var warehouseExtras = ResourceBundle.Create(("swords", 500m), ("coins", 500m));
         ResourceDefinition[] hypotheticalResources = [new("swords", "Spade"), new("coins", "Monete")];
         var resources = original.Catalog.Resources.Concat(hypotheticalResources);

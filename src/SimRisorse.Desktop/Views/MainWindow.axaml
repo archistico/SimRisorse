@@ -117,7 +117,7 @@
                     <StackPanel Spacing="4" Margin="0,4,0,0">
                       <TextBlock Text="{Binding Selected.OutputHeading}" Classes="label" FontSize="11" />
                       <ItemsControl x:Name="ProductionOutputList" ItemsSource="{Binding Selected.OutputLines}" IsVisible="{Binding Selected.IsProducer}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
-                      <TextBlock Text="{Binding Selected.Output}" IsVisible="{Binding !Selected.IsProducer}" TextWrapping="Wrap" FontSize="12" />
+                      <ItemsControl x:Name="BuildingEffectList" ItemsSource="{Binding Selected.EffectLines}" IsVisible="{Binding !Selected.IsProducer}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
                       <StackPanel Spacing="4" IsVisible="{Binding Selected.HasInputs}">
                         <TextBlock Text="CONSUMA PER ADDETTO / S" Classes="label" FontSize="11" />
                         <ItemsControl x:Name="ProductionInputList" ItemsSource="{Binding Selected.ConsumptionLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />

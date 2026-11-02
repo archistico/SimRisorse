@@ -1,12 +1,12 @@
 # M5.3 — Caserma, reclutamento e addestramento: prefattibilità
 
-Data: 2026-10-27, allineamento M4.14/v28. **Stato: studio preparatorio, non approvato e non implementato.** La base eseguibile attuale è **`civil-growth-5`**: il gate v24/M4.10 è riferito superato dall'utente (174 casi xUnit attesi); il prototipo 8-bit v25 e gli incrementi v26–v28 attendono la verifica Windows (177 casi attesi). Si applicano le decisioni della [scheda D0](D0_DECISION_BOARD.md) **solo dopo approvazione**. Questo dossier **non** cambia catalogo, comandi, risorse, popolazione, SQLite o regole.
+Aggiornato il **2026-11-02**, dopo **M5.2 completata e Verificata**. **M5.3 resta proposta, non approvata né implementata.** Baseline `civil-growth-9`, 19 edifici/16 risorse, **260/260 test**; [ultimo report](../validation/M5_2C_FORGE_MINT.md). Si applicano le decisioni già acquisite in [D0](D0_DECISION_BOARD.md); questo dossier non introduce meccaniche militari. Prezzo, tempi, quantità e politiche di reclutamento richiedono una scelta prima del codice.
 
 ## 1. Fonte e confine del requisito
 
 Il [diagramma militare originale](../references/RESOURCE_AND_PRODUCTION_CHAINS.md) collega **Spade + abitanti → Caserma → Soldati**. Non specifica il rapporto fra persone e spade, il prezzo della Caserma, i tempi di addestramento, il mantenimento, gli alloggi, le perdite o le condizioni di congedo. Caserma, sede iniziale, torre e castello sono disegnati, ma **non esiste un ordine obbligatorio documentato** tra questi ultimi edifici.
 
-La visione generale prevede un bacino comune di popolazione e un esercito impiegabile nelle isole, con **tempo di gioco**, salvataggi, interfaccia a schede e stile finale pixel art 8-bit. M5.3 deve fermarsi alla formazione di soldati disponibili; navi e spedizioni appartengono a **M5.4–M5.5**. Anche Spade e Monete dipendono dalle decisioni **D0.8** e dalle filiere M5.1–M5.2, tuttora proposte.
+La visione generale prevede un bacino comune di popolazione e un esercito impiegabile nelle isole, con **tempo di gioco**, salvataggi, interfaccia a schede e stile finale pixel art 8-bit. M5.3 deve fermarsi alla formazione di soldati disponibili; navi e spedizioni appartengono a **M5.4–M5.5**. **Spade e Monete sono già implementate e verificate**: D0.8 ha scelto Spade consumate all’arruolamento e Monete per pagamenti espliciti futuri. Restano da scegliere le quantità per recluta/nave, senza riaprire il ruolo delle risorse o i prezzi industriali.
 
 ## 2. Invariante fondamentale: nessuna persona duplicata
 
@@ -44,7 +44,7 @@ Per esempio, con **220 persone** e **15 civili impiegati**, si potrebbero avere 
 | **M5.3b** | Addestramento sul tempo simulato, code e blocchi leggibili | Passi grandi/piccoli, pausa, ripresa e salvataggio equivalenti |
 | **M5.3c** | Bilanciamento di contingenti piccoli/grandi e integrazione preparatoria con le missioni | Impatto misurato sul lavoro civile e sulle razioni; nessuna spedizione implementata in anticipo |
 
-Le sottofasi sono una proposta di implementazione, non meccaniche autorizzate. Anche la quantità delle Spade e il loro destino (consumo al reclutamento o equipaggiamento persistente) restano a D0.8.
+Le sottofasi sono una proposta di implementazione, non meccaniche autorizzate. La quantità di Spade per recluta resta da scegliere; **il consumo all’arruolamento è già approvato**. Non introdurre equipaggiamento persistente come alternativa implicita.
 
 ## 4. Decisioni da chiudere prima di scrivere la prima classe militare
 
@@ -55,7 +55,7 @@ Le sottofasi sono una proposta di implementazione, non meccaniche autorizzate. A
 | **D0.4c** | Reclutamento immediato, coda temporizzata o posti simultanei di Caserma? | Definisce stato persistente e progressione del tempo |
 | **D0.4d** | Si possono annullare l'addestramento e congedare soldati? Che cosa viene restituito? | Serve rollback economico e contabile atomico |
 | **D0.4e** | Le missioni possono causare perdite permanenti? | Richiede regole di diminuzione della popolazione e recupero |
-| **D0.8a** | Le Spade si consumano all'arruolamento oppure restano associate ai soldati? | Modello di risorsa contro inventario/equipaggiamento |
+| **Quantità Spade** | Quante Spade consuma ciascuna recluta? Il consumo all’arruolamento è già deciso | Prezzo atomico del reclutamento, senza dotazione persistente implicita |
 | **D0.4f** | Qual è il ruolo della Caserma: sblocco, capacità di formazione o entrambe? | Costo, prerequisiti, utile strategico e catalogo |
 
 Finché non sono risolte, **non è corretto scegliere un costo o una durata “plausibile” e codificarli**. Le risposte possono essere accompagnate da due benchmark alternativi, ma restano scelte dell'utente.
@@ -88,4 +88,4 @@ Finché non sono risolte, **non è corretto scegliere un costo o una durata “p
 
 ## 7. Conclusione e collegamento con la roadmap
 
-Il passaggio più delicato non è la Caserma come edificio, ma la **conservazione delle persone** mentre cambiano ruolo. Questo dossier definisce l'invariante e le prove necessarie; lascia deliberatamente aperti prezzi, durate, razioni, perdite, armi e capienza. Il suo uso corretto è sostenere la discussione **D0.4/D0.8** dopo il gate tecnico M4, poi implementare M5.3 soltanto dopo M5.1–M5.2 approvate e validate. Le missioni appartengono a **M5.5** e le isole a **M5.6**.
+Il passaggio più delicato non è la Caserma come edificio, ma la **conservazione delle persone** mentre cambiano ruolo. Questo dossier definisce l'invariante e le prove necessarie; lascia deliberatamente aperti prezzi, durate, razioni, perdite, armi e capienza. M5.1–M5.2 sono approvate e verificate. Il prossimo passo è definire **D0.4 e la quantità di Spade per recluta**, poi implementare M5.3 per incrementi. Il consumo delle Spade e S1 sono già acquisiti. Le missioni appartengono a **M5.5** e le isole a **M5.6**.

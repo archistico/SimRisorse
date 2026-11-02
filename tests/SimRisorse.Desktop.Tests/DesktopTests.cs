@@ -116,6 +116,8 @@ public sealed class DesktopTests
             Assert.Equal("logs", Assert.Single(output.GetVisualDescendants().OfType<PixelGlyph>()).Key);
             viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "iron-smelter");
             Dispatcher.UIThread.RunJobs();
+            // Selection rebuilds the detail rows; compare against a cost row still attached to the window.
+            costText = costs.GetVisualDescendants().OfType<TextBlock>().First();
             var inputs = window.FindControl<ItemsControl>("ProductionInputList")!;
             var inputTexts = inputs.GetVisualDescendants().OfType<TextBlock>().ToArray();
             var inputGlyphs = inputs.GetVisualDescendants().OfType<PixelGlyph>().ToArray();
@@ -150,6 +152,46 @@ public sealed class DesktopTests
             Assert.Equal("COSTO PER 5 EDIFICI", window.FindControl<TextBlock>("ConstructionCostText")!.Text);
             Assert.Equal("2 tronchi", OutputText().Text);
             window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
+            foreach (var (id, icon, text) in new[]
+            {
+                ("warehouse", "warehouse", "+500 capacità per ogni risorsa per magazzino"),
+                ("small-house", "population", "+8 posti abitativi per casa"),
+                ("large-house", "population", "+32 posti abitativi per casa")
+            })
+            {
+                viewModel.Selected = viewModel.Buildings.Single(item => item.Id == id);
+                Dispatcher.UIThread.RunJobs();
+                var effects = window.FindControl<ItemsControl>("BuildingEffectList")!;
+                Assert.True(effects.IsEffectivelyVisible);
+                Assert.False(output.IsEffectivelyVisible);
+                var effectText = Assert.Single(effects.GetVisualDescendants().OfType<TextBlock>());
+                var effectGlyph = Assert.Single(effects.GetVisualDescendants().OfType<PixelGlyph>());
+                costText = costs.GetVisualDescendants().OfType<TextBlock>().First();
+                Assert.Equal(text, effectText.Text);
+                Assert.Equal(costText.FontFamily, effectText.FontFamily);
+                Assert.Equal(12d, effectText.FontSize);
+                Assert.Equal(costText.FontWeight, effectText.FontWeight);
+                Assert.Equal(icon, effectGlyph.Key);
+                Assert.Equal(14d, effectGlyph.Width);
+                Assert.Equal(14d, effectGlyph.Height);
+                Assert.True(costs.TranslatePoint(default, window)!.Value.Y + costs.Bounds.Height <=
+                    effects.TranslatePoint(default, window)!.Value.Y);
+                Assert.True(effects.TranslatePoint(default, window)!.Value.Y + effects.Bounds.Height <
+                    window.FindControl<ComboBox>("BatchSelector")!.TranslatePoint(default, window)!.Value.Y);
+                window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 5;
+                Dispatcher.UIThread.RunJobs();
+                Assert.Equal(text, Assert.Single(effects.GetVisualDescendants().OfType<TextBlock>()).Text);
+                window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
+                Dispatcher.UIThread.RunJobs();
+                var effectArtifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+                if (!string.IsNullOrWhiteSpace(effectArtifacts))
+                {
+                    Directory.CreateDirectory(effectArtifacts);
+                    using var effectImage = window.CaptureRenderedFrame();
+                    Assert.NotNull(effectImage);
+                    effectImage.Save(Path.Combine(effectArtifacts, $"effects-{id}-{width}.png"), PngBitmapEncoderOptions.Default);
+                }
+            }
             viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
             Click(window, "BuildButton");
             Assert.Equal("8 / 16", window.FindControl<TextBlock>("PopulationCountText")!.Text);
@@ -260,11 +302,91 @@ public sealed class DesktopTests
                 var point = button.TranslatePoint(default, window)!.Value;
                 Assert.InRange(point.Y, 0, window.ClientSize.Height - button.Bounds.Height);
             }
-            Assert.Equal(14, viewModel.Resources.Count);
+            Assert.Equal(scenario.Catalog.Resources.Length, viewModel.Resources.Count);
             if (section == 1)
             {
                 var scroll = ResourceScroll(window);
                 Assert.InRange(scroll.TranslatePoint(default, window)!.Value.Y + scroll.Bounds.Height, 0, window.ClientSize.Height);
+            }
+            using var image = window.CaptureRenderedFrame();
+            Assert.NotNull(image);
+            var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+            if (!string.IsNullOrWhiteSpace(artifacts))
+            {
+                Directory.CreateDirectory(artifacts);
+                image.Save(Path.Combine(artifacts, file), PngBitmapEncoderOptions.Default);
+            }
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740, 0, "forge-buildings-compact.png", false)]
+    [InlineData(1240, 850, 0, "forge-buildings.png", false)]
+    [InlineData(1040, 740, 1, "forge-resources-compact.png", false)]
+    [InlineData(1240, 850, 1, "forge-resources.png", false)]
+    [InlineData(1040, 740, 0, "mint-buildings-compact.png", true)]
+    [InlineData(1240, 850, 0, "mint-buildings.png", true)]
+    [InlineData(1040, 740, 1, "mint-resources-compact.png", true)]
+    [InlineData(1240, 850, 1, "mint-resources.png", true)]
+    public async Task CraftingCommandsExplainInputsAndShowStocksInBothLayouts(int width, int height, int section, string file, bool mint)
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var buildingId = mint ? "mint" : "forge";
+        var resourceId = mint ? "coins" : "swords";
+        var initial = GameSession.Create(scenario).Snapshot();
+        var store = new MemoryStore { Snapshot = initial with
+        {
+            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m), ("bread", 100m)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" ? item with { Count = 1 } : item)]
+        } };
+        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == buildingId);
+        Assert.Contains(mint ? "Fonderia d'oro" : "Fonderia di ferro", viewModel.Selected.Diagnosis);
+        Assert.False(viewModel.ConstructCommand.CanExecute(null));
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            foreach (var id in mint ? new[] { "gold-mine", "coal-mine", "gold-smelter", "mint" }
+                : new[] { "iron-mine", "coal-mine", "iron-smelter", "forge" })
+            {
+                viewModel.Selected = viewModel.Buildings.Single(item => item.Id == id);
+                Assert.True(viewModel.ConstructCommand.CanExecute(null));
+                viewModel.ConstructCommand.Execute(null);
+                Assert.Contains("Assegna", viewModel.Selected.Diagnosis);
+                viewModel.AssignCommand.Execute(null);
+            }
+            Assert.Contains("Carbone", viewModel.Selected.Diagnosis);
+            Assert.Contains(mint ? "Oro" : "Ferro", viewModel.Selected.Diagnosis);
+            Dispatcher.UIThread.RunJobs();
+            var inputs = window.FindControl<ItemsControl>("ProductionInputList")!;
+            Assert.Equal(new[] { "coal", mint ? "gold" : "iron" }, inputs.GetVisualDescendants().OfType<PixelGlyph>().Select(item => item.Key));
+            Assert.Equal(resourceId, Assert.Single(window.FindControl<ItemsControl>("ProductionOutputList")!
+                .GetVisualDescendants().OfType<PixelGlyph>()).Key);
+            viewModel.TogglePauseCommand.Execute(null);
+            viewModel.Advance(TimeSpan.FromSeconds(3));
+            viewModel.Pause();
+            Assert.Equal(mint ? 3m : 2m, viewModel.View.Resources.Single(item => item.Id == resourceId).Quantity);
+            Assert.Equal("Pronto a produrre", viewModel.Selected.Status);
+            Assert.Equal(mint ? "00:05:33" : "00:08:19", viewModel.Resources.Single(item => item.Id == resourceId).TimeToFull);
+            window.FindControl<ListBox>("BuildingsList")!.ScrollIntoView(viewModel.Selected);
+            window.FindControl<TabControl>("Sections")!.SelectedIndex = section;
+            Dispatcher.UIThread.RunJobs();
+            foreach (var name in section == 0 ? new[] { "BuildButton", "AssignButton", "PauseButton", "SaveButton" }
+                : new[] { "PauseButton", "SaveButton" })
+            {
+                var button = window.FindControl<Button>(name)!;
+                Assert.True(button.IsEffectivelyVisible);
+                Assert.InRange(button.TranslatePoint(default, window)!.Value.Y, 0, window.ClientSize.Height - button.Bounds.Height);
+            }
+            if (section == 1)
+            {
+                var list = window.FindControl<ListBox>("ResourcesTable")!;
+                list.ScrollIntoView(viewModel.Resources.Single(item => item.Id == resourceId));
+                Dispatcher.UIThread.RunJobs();
+                AssertListGutter(window, list);
             }
             using var image = window.CaptureRenderedFrame();
             Assert.NotNull(image);

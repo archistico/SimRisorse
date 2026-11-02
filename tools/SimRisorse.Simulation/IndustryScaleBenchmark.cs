@@ -7,7 +7,7 @@ using SimRisorse.Core.Sessions;
 namespace SimRisorse.Simulation;
 
 /// <summary>
-/// M5.1c: five fixed, synthetic coal-allocation experiments against the current catalog.
+/// M5.1c: five fixed, synthetic coal-allocation experiments against the historical v7 catalog.
 /// Ore is seeded to isolate coal; purchases, staffing and per-second production use GameSession.
 /// This is not a new campaign strategy and does not modify any gameplay parameters.
 /// </summary>
@@ -50,7 +50,7 @@ internal static class IndustryScaleBenchmark
                 $"The {setup.Id} replay differs between whole and fractional seconds.");
             results.Add(whole.Result);
         }
-        var scenario = CivilGrowthScenario.Create();
+        var scenario = CivilGrowthScenario.CreateGoldForBenchmarks();
         return new(scenario.Id, scenario.Catalog.RulesVersion, StartingPopulation, HorizonSeconds,
             "Synthetic colony: 40/40 housing, 2 warehouses, 1700 planks and stone, 1000 of each raw ore, " +
             "100 food and bread, zero coal/metals; purchased smelters and coal mines, ore mines present but unstaffed",
@@ -61,7 +61,7 @@ internal static class IndustryScaleBenchmark
 
     private static (ProfileResult Result, string Snapshot) RunProfile(Setup setup, bool split)
     {
-        var scenario = CivilGrowthScenario.Create();
+        var scenario = CivilGrowthScenario.CreateGoldForBenchmarks();
         var original = GameSession.Create(scenario).Snapshot();
         var game = GameSession.Restore(scenario, original with
         {

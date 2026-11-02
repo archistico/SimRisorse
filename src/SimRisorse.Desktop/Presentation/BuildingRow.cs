@@ -33,6 +33,8 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
         "iron-smelter" => "Fonde il minerale di ferro usando carbone. Le due miniere devono essere costruite; i materiali estratti sono utilizzabili dal secondo successivo.",
         "gold-mine" => "Estrae minerale d'oro. Richiede una Casa grande costruita e un lavoratore assegnato.",
         "gold-smelter" => "Fonde il minerale d'oro usando carbone. Condivide il carbone con il ferro, che ha priorità quando le scorte non bastano.",
+        "forge" => "Trasforma ferro e carbone in lotti di 2 Spade. Le fonderie hanno priorità sul carbone. Le Spade sono scorte per il futuro arruolamento.",
+        "mint" => "Trasforma oro e carbone in lotti di 3 Monete. Fonderie e Forgia hanno priorità sul carbone. Le Monete sono scorte per futuri pagamenti espliciti.",
         _ => "Assegna persone e controlla materiali e spazio per far lavorare la struttura."
     };
     public bool IsProducer => !_view.BlockReason.HasFlag(ProductionBlockReason.NotProducer);
@@ -41,6 +43,16 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     public string Output => IsProducer ? Format(_view.OutputPerWorker) : Recipe;
     public IEnumerable<ResourceDetailLine> OutputLines => _view.OutputPerWorker.Select(output =>
         new ResourceDetailLine(output.ResourceId, Format([output])));
+    public IEnumerable<ResourceDetailLine> EffectLines
+    {
+        get
+        {
+            if (_view.HousingPerBuilding > 0)
+                yield return new("population", $"+{_view.HousingPerBuilding} posti abitativi per casa");
+            if (IsStorage)
+                yield return new("warehouse", $"{StorageEffect(1)} per magazzino");
+        }
+    }
     public bool HasInputs => !_view.InputPerWorker.IsEmpty;
     public IEnumerable<ResourceDetailLine> ConsumptionLines => _view.InputPerWorker.Select(input =>
         new ResourceDetailLine(input.ResourceId, Format([input])));

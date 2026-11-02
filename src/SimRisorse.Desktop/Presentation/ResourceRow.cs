@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using SimRisorse.Application.ReadModels;
 
 namespace SimRisorse.Desktop.Presentation;
@@ -8,8 +9,9 @@ public sealed class ResourceRow(ResourceView view) : ObservableObject
 {
     private ResourceView _view = view;
     private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
-    private static readonly IBrush SurplusBrush = new SolidColorBrush(Color.Parse("#176858"));
-    private static readonly IBrush DeficitBrush = new SolidColorBrush(Color.Parse("#A44732"));
+    // Rows can be created outside the dispatcher; shared colors must be safe to render on the UI thread.
+    private static readonly IBrush SurplusBrush = new ImmutableSolidColorBrush(Color.Parse("#176858"));
+    private static readonly IBrush DeficitBrush = new ImmutableSolidColorBrush(Color.Parse("#A44732"));
     public string Id => _view.Id;
     public string Name => _view.Name;
     public string Quantity => _view.Quantity.ToString("#,0.###", Italian);

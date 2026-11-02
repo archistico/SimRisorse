@@ -34,7 +34,7 @@ La modalità `--smoke-test` usa sempre un percorso di prova, fornito dal validat
 | `PRAGMA user_version` | `1` | `2` |
 | Versione del contratto snapshot | `1` | `2` |
 | Scenario | `economy-foundation` | `civil-growth` |
-| Regole | `economy-foundation-1` | `civil-growth-7` (converte `civil-growth-1…-6`) |
+| Regole | `economy-foundation-1` | `civil-growth-9` (converte `civil-growth-1…-8`) |
 
 La versione del file è distinta dalla versione del contratto e dal bilanciamento. Il loader rifiuta file estranei, versioni non supportate e regole che non corrispondono allo scenario attivo, salvo le conversioni esplicite elencate sotto. Non sono presenti migrazioni di formato o fingerprint del catalogo.
 
@@ -48,6 +48,10 @@ Le conversioni dichiarate sono elencate in `CivilGrowthScenario.Changes` e si ap
 - `civil-growth-4 → civil-growth-5`: aggiunge il bonus di velocità per abitazione, senza nuove strutture o risorse. I secondi maturati rimangono identici; la nuova parte frazionaria in ventesimi parte a zero. Il ritmo viene ricalcolato dalle case presenti. Nessun arrivo retroattivo.
 - `civil-growth-5 → civil-growth-6`: aggiunge Miniera ferro, Miniera carbone e Fonderia ferro a quantità/personale zero; Minerale ferro, Carbone e Ferro partono da zero, con capacità base 1.000 e +500 per Magazzino già posseduto. Conserva tempo, scorte civili, persone, edifici e frazione di crescita. Vecchi checkpoint che dichiarano già risorse industriali positive o righe industriali incompatibili sono rifiutati. Politica **S1 scelta dall'utente**, [ADR 0014](adr/0014-first-iron-industry-and-civil-save-upgrade.md).
 - `civil-growth-6 → civil-growth-7`: aggiunge Miniera e Fonderia d'oro a quantità/personale zero; Minerale d'oro e Oro a zero, capacità 1.000 +500 per Magazzino già posseduto. **Ferro, Carbone, lavoratori e progresso già esistenti si conservano**. Rifiuta scorte d'oro positive antecedenti alla loro introduzione. SQLite v2 e politica S1 invariati; [verifica su checkpoint v6](validation/M5_1B_GOLD.md).
+
+- `civil-growth-7 → civil-growth-8`: Forgia a quantità/personale zero, Spade a zero e capacità 1.000 +500 per Magazzino esistente. Conserva scorte industriali/civili, persone, lavoratori, tempo e frazioni; rifiuta Spade positive e righe Forgia incompatibili precedenti all’introduzione. SQLite/snapshot v2, slot e backup S1 invariati; [ADR 0015](adr/0015-forge-swords-and-v7-save-upgrade.md).
+
+- `civil-growth-8 → civil-growth-9`: Zecca a quantità/personale zero, Monete zero e capacità 1.000 +500 per Magazzino esistente. Preserva Spade frazionarie, Forgia e addetto, tutte le altre scorte, persone, lavoratori, tempo e frazioni. Rifiuta Monete positive o righe Zecca incompatibili antecedenti all’introduzione. SQLite/snapshot v2, stesso slot e backup S1; [ADR 0016](adr/0016-mint-coins-and-v8-save-upgrade.md).
 
 Il convertitore rifiuta un checkpoint che dichiara `civil-growth-3` ma possiede già Casa grande o una scorta positiva di Pane. Il caricamento non applica una nuova simulazione per il passato. Formato file e snapshot restano **v2**: ogni edificio è una riga in `building_stock`, mentre le nuove risorse a zero non hanno righe. La capacità di Pane è 100 unità di base (+500 per Magazzino), le altre capacità di base restano 1.000. Le capacità sono calcolate dagli edifici, non salvate. Decisioni negli [ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md) e [0011](adr/0011-advanced-housing-and-bread-rations.md).
 
@@ -108,4 +112,4 @@ Round trip, precisione, ricaricamento in pausa, rifiuto di versioni future e dat
 
 Non sono ancora implementati più slot per scenario, selezione grafica degli scenari, gestione delle copie dalla UI, migrazioni di formato, conversioni non dichiarate in `CivilGrowthScenario.Changes` o validazione competitiva per una classifica pubblica. Un arresto forzato può perdere il progresso successivo all'ultimo checkpoint; non è stato simulato uno spegnimento elettrico.
 
-**Futuro M5 non implementato:** lo [studio sulle prime filiere industriali](design/M5_1_INDUSTRY_PREFEASIBILITY.md) confronta l'estensione versionata di `civil-growth` con un nuovo scenario campagna che importi esplicitamente una partita civile. È una decisione da approvare **prima** di cambiare catalogo o database: al momento **non** esistono nuove migrazioni, risorse industriali, colonne SQLite o conversioni automatiche verso M5.
+**Stato M5 corrente:** Ferro, Oro, Forgia/Spade e Zecca/Monete sono implementati e verificati in `civil-growth-9`; [report M5.2c](validation/M5_2C_FORGE_MINT.md). M5.2c verifica anche prodotti simultanei e priorità del Carbone su un checkpoint SQLite frazionario, senza cambiare formato. La conversione v8→v9 aggiunge soltanto Zecca/Monete, senza cambiare formato o slot. Militari, flotta e missioni restano futuri; non aggiungere nuovi contenuti mantenendo un ID di regole già persistito.

@@ -13,13 +13,14 @@ using SimRisorse.Simulation;
 
 if (args is ["--help"])
 {
-    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced|industry|gold]");
+    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting]");
     Console.WriteLine("Maximum 168 hours; default 60 seconds. Civil growth defaults to bootstrap; foundation has no strategy.");
     Console.WriteLine("SimRisorse.Simulation --check-catalog [--scenario economy-foundation|civil-growth]: exit 1 if an unlock is unreachable.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-housing: historical M4 comparison; --benchmark-housing-accelerated: new M4.10 comparison.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-bread-scale: compares one, two full, a delayed full and a lean bread chain at 220 residents.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-bread-high-density: stress comparison at 320 residents with sufficient housing and food.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-industry-scale: five controlled coal-allocation profiles under civil-growth-7.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint: nine controlled/sustained comparisons and four storage/priority guards under current rules.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
@@ -46,6 +47,11 @@ if (args is ["--benchmark-bread-high-density"])
 if (args is ["--benchmark-industry-scale"])
 {
     try { Console.WriteLine(JsonSerializer.Serialize(IndustryScaleBenchmark.Run(), json)); return 0; }
+    catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
+}
+if (args is ["--benchmark-forge-mint"])
+{
+    try { Console.WriteLine(JsonSerializer.Serialize(ForgeMintBenchmark.Run(), json)); return 0; }
     catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
 }
 if (args is ["--check-catalog", .. var checkArguments])
@@ -85,13 +91,13 @@ for (var index = 0; index < args.Length; index += 2)
 }
 if (scenarioId is not ("economy-foundation" or "civil-growth") ||
     (legacyCivilRules && scenarioId != "civil-growth") ||
-    ((strategy is "industry" or "gold") && legacyCivilRules) ||
-    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced" or "industry" or "gold")))) return Usage();
+    ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting") && legacyCivilRules) ||
+    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting")))) return Usage();
 if (scenarioId == "civil-growth") strategy ??= "bootstrap";
 
 static int Usage()
 {
-    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced|industry|gold for civil-growth. Industry and gold require current rules.");
+    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting for civil-growth. Industry, gold, forge, mint and crafting require current rules.");
     return 2;
 }
 
@@ -151,28 +157,46 @@ try
         }
         // bread follows bootstrap, then starts the whole grain/water/flour chain at second 600.
         var breadTicks = 600L * TimeSpan.TicksPerSecond;
-        if ((strategy is "bread" or "advanced" or "industry" or "gold") && ticks >= breadTicks)
+        if ((strategy is "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting") && ticks >= breadTicks)
         {
             AdvanceTo(breadTicks);
             foreach (var id in new[] { "farm", "farm", "well", "mill", "bakery" }) Build(runtime, id, staff: true);
         }
         var largeHouseTicks = 760L * TimeSpan.TicksPerSecond;
-        if ((strategy is "advanced" or "industry" or "gold") && ticks >= largeHouseTicks)
+        if ((strategy is "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting") && ticks >= largeHouseTicks)
         {
             AdvanceTo(largeHouseTicks);
             Build(runtime, "large-house");
         }
         var industryTicks = 1100L * TimeSpan.TicksPerSecond;
-        if ((strategy is "industry" or "gold") && ticks >= industryTicks)
+        if ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting") && ticks >= industryTicks)
         {
             AdvanceTo(industryTicks);
             foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter" }) Build(runtime, id, staff: true);
         }
+        var forgeTicks = 1400L * TimeSpan.TicksPerSecond;
+        if (strategy == "forge" && ticks >= forgeTicks)
+        {
+            AdvanceTo(forgeTicks);
+            Build(runtime, "forge", staff: true);
+        }
         var goldTicks = 1500L * TimeSpan.TicksPerSecond;
-        if (strategy == "gold" && ticks >= goldTicks)
+        if ((strategy is "gold" or "mint" or "crafting") && ticks >= goldTicks)
         {
             AdvanceTo(goldTicks);
             foreach (var id in new[] { "gold-mine", "gold-smelter" }) Build(runtime, id, staff: true);
+        }
+        var mintTicks = 1800L * TimeSpan.TicksPerSecond;
+        if (strategy == "mint" && ticks >= mintTicks)
+        {
+            AdvanceTo(mintTicks);
+            Build(runtime, "mint", staff: true);
+        }
+        var craftingTicks = 2200L * TimeSpan.TicksPerSecond;
+        if (strategy == "crafting" && ticks >= craftingTicks)
+        {
+            AdvanceTo(craftingTicks);
+            foreach (var id in new[] { "coal-mine", "forge", "mint" }) Build(runtime, id, staff: true);
         }
     }
     AdvanceTo((long)ticks);

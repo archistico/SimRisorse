@@ -29,6 +29,8 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 | [0012](0012-retro-8bit-desktop-visual-language.md) | Identità visiva retro 8-bit essenziale | Accettato | Progettazione soltanto; futura GUI pixel art non ancora implementata |
 | [0013](0013-accelerated-housing-and-fractional-growth.md) | Case che accelerano gli arrivi, frazioni e compatibilità SQLite v2 | Accettato | `civil-growth-5` implementato; gate Windows v24 da eseguire |
 | [0014](0014-first-iron-industry-and-civil-save-upgrade.md) | Prima industria del ferro, regole v6 e continuità S1 | Accettato | M5.1a verificata: 191 test, conversione v5→v6 e backup, benchmark v4/v5 preservati |
+| [0015](0015-forge-swords-and-v7-save-upgrade.md) | Forgia, Spade e conversione v7→v8 | Accettato | M5.2a verificata: 235 test, SQLite v2 e backup, catalogo v7 conservato |
+| [0016](0016-mint-coins-and-v8-save-upgrade.md) | Zecca, Monete e conversione v8→v9 | Accettato | M5.2b verificata: 258 test, lotti interi, SQLite v2 e backup, catalogo v8 conservato |
 
 ## Come aggiungere una decisione
 

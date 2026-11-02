@@ -14,7 +14,7 @@ public sealed record RulesChange(string From, string To, ImmutableArray<string> 
 public static class CivilGrowthScenario
 {
     public const string Id = "civil-growth";
-    public const string RulesVersion = "civil-growth-7";
+    public const string RulesVersion = "civil-growth-9";
 
     /// <summary>Every earlier rules version that can still be loaded, oldest first.</summary>
     public static ImmutableArray<RulesChange> Changes { get; } =
@@ -26,10 +26,12 @@ public static class CivilGrowthScenario
         new("civil-growth-3", "civil-growth-4", ["large-house"]),
         new("civil-growth-4", "civil-growth-5", []),
         new("civil-growth-5", "civil-growth-6", ["iron-mine", "coal-mine", "iron-smelter"]),
-        new("civil-growth-6", RulesVersion, ["gold-mine", "gold-smelter"])
+        new("civil-growth-6", "civil-growth-7", ["gold-mine", "gold-smelter"]),
+        new("civil-growth-7", "civil-growth-8", ["forge"]),
+        new("civil-growth-8", RulesVersion, ["mint"])
     ];
 
-    public static GameScenario Create() => CreateCore(RulesVersion, accelerated: true, industry: true, gold: true);
+    public static GameScenario Create() => CreateCore(RulesVersion, accelerated: true, industry: true, gold: true, forge: true, mint: true);
 
     /// <summary>Historical rules, retained for comparing the already published M4 benchmarks.</summary>
     public static GameScenario CreateLegacyForBenchmarks() => CreateCore("civil-growth-4", accelerated: false);
@@ -40,7 +42,13 @@ public static class CivilGrowthScenario
     /// <summary>The first iron industry remains available for compatibility checks.</summary>
     public static GameScenario CreateIronForBenchmarks() => CreateCore("civil-growth-6", accelerated: true, industry: true);
 
-    private static GameScenario CreateCore(string rulesVersion, bool accelerated, bool industry = false, bool gold = false)
+    /// <summary>The gold baseline remains fixed for coal-allocation comparisons and save conversion checks.</summary>
+    public static GameScenario CreateGoldForBenchmarks() => CreateCore("civil-growth-7", accelerated: true, industry: true, gold: true);
+
+    /// <summary>The forge baseline remains fixed for v8 save compatibility checks.</summary>
+    public static GameScenario CreateForgeForBenchmarks() => CreateCore("civil-growth-8", accelerated: true, industry: true, gold: true, forge: true);
+
+    private static GameScenario CreateCore(string rulesVersion, bool accelerated, bool industry = false, bool gold = false, bool forge = false, bool mint = false)
     {
         var foundation = EconomyFoundationScenario.Create();
         ResourceDefinition[] industrialResources = industry
@@ -49,6 +57,8 @@ public static class CivilGrowthScenario
         ResourceDefinition[] goldResources = gold
             ? [new("gold-ore", "Minerale d'oro"), new("gold", "Oro")]
             : [];
+        ResourceDefinition[] forgeResources = forge ? [new("swords", "Spade")] : [];
+        ResourceDefinition[] mintResources = mint ? [new("coins", "Monete")] : [];
         BuildingDefinition[] industrialBuildings = industry
             ? [
                 new("iron-mine", "Miniera di ferro", ResourceBundle.Create(("planks", 120m), ("stone", 80m)), 1,
@@ -69,11 +79,21 @@ public static class CivilGrowthScenario
                     91, ["gold-mine", "coal-mine"])
             ]
             : [];
+        BuildingDefinition[] forgeBuildings = forge
+            ? [new("forge", "Forgia", ResourceBundle.Create(("planks", 240m), ("stone", 180m)), 1,
+                new(ResourceBundle.Create(("iron", 1m), ("coal", 1m)), ResourceBundle.Create(("swords", 2m))),
+                100, ["iron-smelter"])]
+            : [];
+        BuildingDefinition[] mintBuildings = mint
+            ? [new("mint", "Zecca", ResourceBundle.Create(("planks", 210m), ("stone", 160m)), 1,
+                new(ResourceBundle.Create(("gold", 1m), ("coal", 1m)), ResourceBundle.Create(("coins", 3m))),
+                101, ["gold-smelter"])]
+            : [];
         ResourceDefinition[] resources =
         [
             .. foundation.Catalog.Resources, new("fish", "Pesce"), new("food", "Cibo"),
             new("grain", "Grano"), new("water", "Acqua"), new("flour", "Farina"), new("bread", "Pane"),
-            .. industrialResources, .. goldResources
+            .. industrialResources, .. goldResources, .. forgeResources, .. mintResources
         ];
         var catalog = new GameCatalog(rulesVersion, resources,
             [
@@ -96,12 +116,12 @@ public static class CivilGrowthScenario
                     new(ResourceBundle.Create(("grain", 2m)), ResourceBundle.Create(("flour", 1m))), 60, ["farm"]),
                 new("bakery", "Forno", ResourceBundle.Create(("planks", 150m), ("stone", 100m)), 1,
                     new(ResourceBundle.Create(("flour", 1m), ("water", 1m)), ResourceBundle.Create(("bread", 3m))), 70, ["mill", "well"]),
-                .. industrialBuildings, .. goldBuildings
+                .. industrialBuildings, .. goldBuildings, .. forgeBuildings, .. mintBuildings
             ]);
         return new(Id, catalog, 8,
             foundation.Capacity + ResourceBundle.Create(("fish", 1000m), ("food", 1000m), ("grain", 1000m),
                 ("water", 1000m), ("flour", 1000m), ("bread", 100m)) +
-                ResourceBundle.Create([.. industrialResources.Concat(goldResources).Select(item => (item.Id, 1000m))]),
+                ResourceBundle.Create([.. industrialResources.Concat(goldResources).Concat(forgeResources).Concat(mintResources).Select(item => (item.Id, 1000m))]),
             foundation.InitialResources + ResourceBundle.Create(("food", 30m)),
             [.. foundation.InitialBuildings, new("small-house", 1, 0)],
             new PopulationRules("food", ResourceAmount.FromUnits(0.010m), 60,
@@ -125,6 +145,10 @@ public static class CivilGrowthScenario
             snapshot.Resources["coal"] != ResourceAmount.Zero || snapshot.Resources["iron"] != ResourceAmount.Zero))
             return null;
         if (change.From == "civil-growth-6" && (snapshot.Resources["gold-ore"] != ResourceAmount.Zero || snapshot.Resources["gold"] != ResourceAmount.Zero))
+            return null;
+        if (change.From == "civil-growth-7" && snapshot.Resources["swords"] != ResourceAmount.Zero)
+            return null;
+        if (change.From == "civil-growth-8" && snapshot.Resources["coins"] != ResourceAmount.Zero)
             return null;
         // Rules -3 -> -4 changes the bakery recipe, not already stored stock.
         // Never guess whether old food originally came from the bakery or the fish chain.
