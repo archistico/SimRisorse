@@ -65,7 +65,10 @@ public sealed class PixelGlyph : Control
         ["gold-mine"] = ["..CCCC..", ".CCYYCC.", "CCYYYYCC", "CY####YC", "CY#YY#YC", "CY#YY#YC", "########", "........"],
         ["gold-smelter"] = [".....YY.", ".....YY.", ".######.", ".#CYYC#.", ".#RWWR#.", ".#YYYY#.", ".######.", "........"],
         ["forge"] = [".....RR.", "....RYY.", ".....T..", ".######.", "..#CC#..", "...##...", "..####..", ".######."],
-        ["mint"] = ["..YYYY..", ".YYYYYY.", "########", "#C#YY#C#", "#C#WW#C#", "#C#YY#C#", "########", "........"]
+        ["mint"] = ["..YYYY..", ".YYYYYY.", "########", "#C#YY#C#", "#C#WW#C#", "#C#YY#C#", "########", "........"],
+        ["barracks"] = ["...#RR..", "...#RRR.", "...#....", "#.#.#.#.", "########", "#CCCCCC#", "#CC##CC#", "########"],
+        ["recruits"] = ["..####..", "..#WW#..", "..#WW#..", "...##...", ".#TTTT#.", ".#TTTT#.", "..#..#..", "..#..#.."],
+        ["soldiers"] = ["..CCCC..", ".CCCCCC.", "..#WW#..", "...##..B", ".#RRRR#B", ".#RRRR#B", "..#..#T.", "..#..#.."]
     };
 
     static PixelGlyph() => AffectsRender<PixelGlyph>(KeyProperty);

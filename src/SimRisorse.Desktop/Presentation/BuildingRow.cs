@@ -7,7 +7,10 @@ namespace SimRisorse.Desktop.Presentation;
 public sealed class BuildingRow(BuildingView view) : ObservableObject
 {
     private BuildingView _view = view;
+    private MilitaryView? _military;
     public BuildingView View => _view;
+    /// <summary>The barracks trains recruits instead of producing resources or housing.</summary>
+    public bool IsBarracks => _military is { } military && military.BarracksBuildingId == Id;
     public string Id => _view.Id;
     public string Name => _view.Name;
     public int Count => _view.Count;
@@ -35,6 +38,7 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
         "gold-smelter" => "Fonde il minerale d'oro usando carbone. Condivide il carbone con il ferro, che ha priorità quando le scorte non bastano.",
         "forge" => "Trasforma ferro e carbone in lotti di 2 Spade. Le fonderie hanno priorità sul carbone. Le Spade sono scorte per il futuro arruolamento.",
         "mint" => "Trasforma oro e carbone in lotti di 3 Monete. Fonderie e Forgia hanno priorità sul carbone. Le Monete sono scorte per futuri pagamenti espliciti.",
+        "barracks" => "Addestra in Soldati gli abitanti liberi che arruoli: le Spade si spendono subito e ogni Caserma forma una recluta alla volta. Reclute e soldati restano residenti e consumano Cibo e Pane. Non impiega lavoratori.",
         _ => "Assegna persone e controlla materiali e spazio per far lavorare la struttura."
     };
     public bool IsProducer => !_view.BlockReason.HasFlag(ProductionBlockReason.NotProducer);
@@ -51,6 +55,12 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
                 yield return new("population", $"+{_view.HousingPerBuilding} posti abitativi per casa");
             if (IsStorage)
                 yield return new("warehouse", $"{StorageEffect(1)} per magazzino");
+            if (IsBarracks && _military is { } military)
+            {
+                yield return new("recruits", military.TrainingPlacesPerBarracks == 1 ? "1 recluta alla volta per caserma"
+                    : $"{military.TrainingPlacesPerBarracks} reclute alla volta per caserma");
+                yield return new("soldiers", $"1 soldato ogni {military.TrainingSeconds} s per posto occupato");
+            }
         }
     }
     public bool HasInputs => !_view.InputPerWorker.IsEmpty;
@@ -59,7 +69,8 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     public string Recipe => _view.HousingPerBuilding > 0 ? $"+{_view.HousingPerBuilding} posti abitativi per edificio" :
         IsStorage ? $"{StorageEffect(1)} per edificio" :
         (_view.InputPerWorker.IsEmpty ? string.Empty : Format(_view.InputPerWorker) + " → ") + Format(_view.OutputPerWorker);
-    public string Activity => !IsProducer ? (IsStorage ? "Capacità disponibile appena costruito. Nessun lavoratore richiesto." :
+    public string Activity => IsBarracks ? "Nessun lavoratore richiesto: arruola abitanti liberi con le Spade." :
+        !IsProducer ? (IsStorage ? "Capacità disponibile appena costruito. Nessun lavoratore richiesto." :
         $"+{_view.HousingPerBuilding} posti per edificio. Nessun lavoratore richiesto.") :
         $"{_view.RunnableWorkers} di {Workers} lavoratori possono produrre nel prossimo secondo.";
     public string Diagnosis
@@ -83,6 +94,8 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     public bool HasDiagnosis => Diagnosis.Length > 0;
     public string Status => _view.BlockReason.HasFlag(ProductionBlockReason.NotConstructed) ? "Da costruire" :
         IsStorage ? StorageEffect(Count) :
+        IsBarracks && _military is { } military ? $"{military.TrainingRecruits}/{military.TrainingPlaces} in addestramento · " +
+            (military.Soldiers == 1 ? "1 soldato" : $"{military.Soldiers} soldati") :
         !IsProducer ? $"{(long)Count * _view.HousingPerBuilding} posti abitativi" :
         _view.BlockReason.HasFlag(ProductionBlockReason.NoWorkers) ? "Nessun lavoratore" :
         _view.RunnableWorkers > 0 && _view.RunnableWorkers < Workers ? $"Produzione parziale: {_view.RunnableWorkers}/{Workers}" :
@@ -94,5 +107,10 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     private string StorageEffect(int count) => _view.StoragePerBuilding.Select(item => item.Quantity).Distinct().Count() == 1
         ? "+" + (_view.StoragePerBuilding[0].Quantity * count).ToString("#,0.###", CultureInfo.GetCultureInfo("it-IT")) + " capacità per ogni risorsa"
         : "+" + Format(_view.StoragePerBuilding, count) + " di capacità";
-    public void Update(BuildingView updated) { _view = updated; Notify(string.Empty); }
+    public void Update(BuildingView updated, MilitaryView? military = null)
+    {
+        _view = updated;
+        _military = military;
+        Notify(string.Empty);
+    }
 }

@@ -58,11 +58,12 @@ try {
         @{ Name = 'mint-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'mint', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
         @{ Name = 'crafting-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--seconds', '2201'); Ticks = 2201 * [TimeSpan]::TicksPerSecond },
         @{ Name = 'crafting-target'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--seconds', '2320'); Ticks = 2320 * [TimeSpan]::TicksPerSecond },
-        @{ Name = 'crafting-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour }
+        @{ Name = 'crafting-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
+        @{ Name = 'military-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'military', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour }
     )
     foreach ($case in $cases) {
         # Historical trajectories remain reproducible under civil-growth-4;
-        # the active civil-growth-9 rules are checked by the industrial and accelerated probes.
+        # the active civil-growth-10 rules are checked by the industrial and accelerated probes.
         $arguments = @($simulation) + $case.Arguments
         if ($case.Name -like 'civil-*') { $arguments += @('--rules', 'legacy') }
         $name = $case.Name
@@ -105,7 +106,7 @@ try {
         elseif ($name -like 'industry-*') {
             $iron = $result.Resources | Where-Object Id -eq 'iron'
             $smelter = $result.Buildings | Where-Object Id -eq 'iron-smelter'
-            if ($result.RulesVersion -ne 'civil-growth-9' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
+            if ($result.RulesVersion -ne 'civil-growth-10' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
                 throw 'The industrial rules, construction or workforce differ.'
             }
             if ($name -eq 'industry-start' -and ($iron.Quantity -ne 1 -or
@@ -120,7 +121,7 @@ try {
         elseif ($name -like 'gold-*') {
             $gold = $result.Resources | Where-Object Id -eq 'gold'
             $smelter = $result.Buildings | Where-Object Id -eq 'gold-smelter'
-            if ($result.RulesVersion -ne 'civil-growth-9' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
+            if ($result.RulesVersion -ne 'civil-growth-10' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
                 throw 'The gold rules, construction or workforce differ.'
             }
             if ($name -eq 'gold-start' -and ($gold.Quantity -ne 1 -or
@@ -137,7 +138,7 @@ try {
         elseif ($name -like 'forge-*') {
             $swords = $result.Resources | Where-Object Id -eq 'swords'
             $forge = $result.Buildings | Where-Object Id -eq 'forge'
-            if ($result.RulesVersion -ne 'civil-growth-9' -or $forge.Count -ne 1 -or $forge.AssignedWorkers -ne 1 -or
+            if ($result.RulesVersion -ne 'civil-growth-10' -or $forge.Count -ne 1 -or $forge.AssignedWorkers -ne 1 -or
                 $swords.Capacity -ne 1000) { throw 'The forge rules, construction, workforce or capacity differ.' }
             if ($name -eq 'forge-start' -and $swords.Quantity -ne 2) { throw 'The first sword batch differs.' }
             if ($name -eq 'forge-8-hours' -and ($swords.Quantity -ne 1000 -or $result.Population -ne 48)) {
@@ -147,7 +148,7 @@ try {
         elseif ($name -like 'mint-*') {
             $coins = $result.Resources | Where-Object Id -eq 'coins'
             $mint = $result.Buildings | Where-Object Id -eq 'mint'
-            if ($result.RulesVersion -ne 'civil-growth-9' -or $mint.Count -ne 1 -or $mint.AssignedWorkers -ne 1 -or
+            if ($result.RulesVersion -ne 'civil-growth-10' -or $mint.Count -ne 1 -or $mint.AssignedWorkers -ne 1 -or
                 $coins.Capacity -ne 1000) { throw 'The mint rules, construction, workforce or capacity differ.' }
             if ($name -eq 'mint-start' -and $coins.Quantity -ne 3) { throw 'The first coin batch differs.' }
             if ($name -eq 'mint-8-hours' -and ($coins.Quantity -ne 999 -or $result.Population -ne 48 -or
@@ -163,10 +164,21 @@ try {
             $mint = $result.Buildings | Where-Object Id -eq 'mint'
             $expectedSwords = if ($name -eq 'crafting-start') { 2 } elseif ($name -eq 'crafting-target') { 240 } else { 1000 }
             $expectedCoins = if ($name -eq 'crafting-start') { 3 } elseif ($name -eq 'crafting-target') { 360 } else { 999 }
-            if ($result.RulesVersion -ne 'civil-growth-9' -or $coal.Count -ne 2 -or $coal.AssignedWorkers -ne 2 -or
+            if ($result.RulesVersion -ne 'civil-growth-10' -or $coal.Count -ne 2 -or $coal.AssignedWorkers -ne 2 -or
                 $forge.Count -ne 1 -or $forge.AssignedWorkers -ne 1 -or $mint.Count -ne 1 -or $mint.AssignedWorkers -ne 1 -or
                 $swords.Quantity -ne $expectedSwords -or $coins.Quantity -ne $expectedCoins) {
                 throw 'The integrated crafting timeline differs.'
+            }
+        }
+        elseif ($name -eq 'military-8-hours') {
+            $barracks = $result.Buildings | Where-Object Id -eq 'barracks'
+            $military = $result.Military
+            $employed = ($result.Buildings | Measure-Object -Property AssignedWorkers -Sum).Sum
+            if ($result.RulesVersion -ne 'civil-growth-10' -or $barracks.Count -ne 1 -or $barracks.AssignedWorkers -ne 0 -or
+                $military.Soldiers -ne 20 -or $military.QueuedRecruits -ne 0 -or $military.TrainingRemainingSeconds.Count -ne 0 -or
+                $military.TrainingPlaces -ne 1 -or $military.EmployedWorkers -ne $employed -or
+                ($employed + $result.AvailableWorkers + $military.Soldiers) -ne $result.Population) {
+                throw 'The recruitment timeline or the population balance differs.'
             }
         }
         if ($name -ne '60-seconds') {
@@ -175,14 +187,14 @@ try {
             }
         }
         $output | Set-Content -LiteralPath (Join-Path $artifacts ($name + '.json')) -Encoding UTF8
-        if ($name -like 'crafting-*') {
+        if ($name -like 'crafting-*' -or $name -like 'military-*') {
             $output | Set-Content -LiteralPath (Join-Path $runDirectory ($name + '.json')) -Encoding UTF8
         }
     }
     $acceleratedOutput = & dotnet $simulation --scenario civil-growth --strategy bootstrap --seconds 180
-    if ($LASTEXITCODE -ne 0) { $acceleratedOutput; throw 'Accelerated civil-growth-9 probe failed.' }
+    if ($LASTEXITCODE -ne 0) { $acceleratedOutput; throw 'Accelerated civil-growth-10 probe failed.' }
     $accelerated = $acceleratedOutput | ConvertFrom-Json
-    if ($accelerated.RulesVersion -ne 'civil-growth-9' -or $accelerated.Population -ne 10 -or
+    if ($accelerated.RulesVersion -ne 'civil-growth-10' -or $accelerated.Population -ne 10 -or
         $accelerated.PopulationState.GrowthRateTwentieths -ne 23 -or
         $accelerated.PopulationState.GrowthRemainderTwentieths -lt 0 -or
         $accelerated.PopulationState.GrowthRemainderTwentieths -ge 20) {
@@ -360,7 +372,7 @@ try {
     $forgeMintOutput = & dotnet $simulation --benchmark-forge-mint
     if ($LASTEXITCODE -ne 0) { $forgeMintOutput; throw 'Forge/mint comparison failed.' }
     $forgeMint = $forgeMintOutput | ConvertFrom-Json
-    if ($forgeMint.ScenarioId -ne 'civil-growth' -or $forgeMint.RulesVersion -ne 'civil-growth-9' -or
+    if ($forgeMint.ScenarioId -ne 'civil-growth' -or $forgeMint.RulesVersion -ne 'civil-growth-10' -or
         $forgeMint.TargetSwords -ne 240 -or $forgeMint.TargetCoins -ne 360 -or
         $forgeMint.Profiles.Count -ne 9 -or $forgeMint.Guards.Count -ne 4) { throw 'Unexpected forge/mint comparison shape.' }
     $craftingExpected = @{
@@ -448,7 +460,8 @@ try {
         'gold-resources.png', 'gold-resources-compact.png', 'forge-buildings.png', 'forge-buildings-compact.png',
         'forge-resources.png', 'forge-resources-compact.png', 'mint-buildings.png', 'mint-buildings-compact.png',
         'mint-resources.png', 'mint-resources-compact.png', 'effects-warehouse-1040.png', 'effects-warehouse-1240.png',
-        'effects-small-house-1040.png', 'effects-small-house-1240.png', 'effects-large-house-1040.png', 'effects-large-house-1240.png')
+        'effects-small-house-1040.png', 'effects-small-house-1240.png', 'effects-large-house-1040.png', 'effects-large-house-1240.png',
+        'barracks-buildings.png', 'barracks-buildings-compact.png')
     foreach ($screenshot in $screenshots) {
         $path = Join-Path $screenshotDirectory $screenshot
         if (-not (Test-Path -LiteralPath $path)) { throw "Missing render from this test run: $screenshot" }

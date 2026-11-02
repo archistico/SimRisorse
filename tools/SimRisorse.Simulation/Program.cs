@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using SimRisorse.Application;
 using SimRisorse.Application.Features.Construction.ConstructBuildings;
+using SimRisorse.Application.Features.Military.EnlistRecruits;
 using SimRisorse.Application.Features.Population.AssignWorkers;
 using SimRisorse.Application.Features.Sessions.AdvanceTime;
 using SimRisorse.Application.Features.Sessions.GetGameState;
@@ -13,7 +14,7 @@ using SimRisorse.Simulation;
 
 if (args is ["--help"])
 {
-    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting]");
+    Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting|military]");
     Console.WriteLine("Maximum 168 hours; default 60 seconds. Civil growth defaults to bootstrap; foundation has no strategy.");
     Console.WriteLine("SimRisorse.Simulation --check-catalog [--scenario economy-foundation|civil-growth]: exit 1 if an unlock is unreachable.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-housing: historical M4 comparison; --benchmark-housing-accelerated: new M4.10 comparison.");
@@ -91,13 +92,13 @@ for (var index = 0; index < args.Length; index += 2)
 }
 if (scenarioId is not ("economy-foundation" or "civil-growth") ||
     (legacyCivilRules && scenarioId != "civil-growth") ||
-    ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting") && legacyCivilRules) ||
-    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting")))) return Usage();
+    ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting" or "military") && legacyCivilRules) ||
+    (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting" or "military")))) return Usage();
 if (scenarioId == "civil-growth") strategy ??= "bootstrap";
 
 static int Usage()
 {
-    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting for civil-growth. Industry, gold, forge, mint and crafting require current rules.");
+    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting|military for civil-growth. Industry, gold, forge, mint, crafting and military require current rules.");
     return 2;
 }
 
@@ -157,19 +158,19 @@ try
         }
         // bread follows bootstrap, then starts the whole grain/water/flour chain at second 600.
         var breadTicks = 600L * TimeSpan.TicksPerSecond;
-        if ((strategy is "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting") && ticks >= breadTicks)
+        if ((strategy is "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting" or "military") && ticks >= breadTicks)
         {
             AdvanceTo(breadTicks);
             foreach (var id in new[] { "farm", "farm", "well", "mill", "bakery" }) Build(runtime, id, staff: true);
         }
         var largeHouseTicks = 760L * TimeSpan.TicksPerSecond;
-        if ((strategy is "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting") && ticks >= largeHouseTicks)
+        if ((strategy is "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting" or "military") && ticks >= largeHouseTicks)
         {
             AdvanceTo(largeHouseTicks);
             Build(runtime, "large-house");
         }
         var industryTicks = 1100L * TimeSpan.TicksPerSecond;
-        if ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting") && ticks >= industryTicks)
+        if ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting" or "military") && ticks >= industryTicks)
         {
             AdvanceTo(industryTicks);
             foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter" }) Build(runtime, id, staff: true);
@@ -181,7 +182,7 @@ try
             Build(runtime, "forge", staff: true);
         }
         var goldTicks = 1500L * TimeSpan.TicksPerSecond;
-        if ((strategy is "gold" or "mint" or "crafting") && ticks >= goldTicks)
+        if ((strategy is "gold" or "mint" or "crafting" or "military") && ticks >= goldTicks)
         {
             AdvanceTo(goldTicks);
             foreach (var id in new[] { "gold-mine", "gold-smelter" }) Build(runtime, id, staff: true);
@@ -193,10 +194,28 @@ try
             Build(runtime, "mint", staff: true);
         }
         var craftingTicks = 2200L * TimeSpan.TicksPerSecond;
-        if (strategy == "crafting" && ticks >= craftingTicks)
+        if ((strategy is "crafting" or "military") && ticks >= craftingTicks)
         {
             AdvanceTo(craftingTicks);
             foreach (var id in new[] { "coal-mine", "forge", "mint" }) Build(runtime, id, staff: true);
+        }
+        // military continues crafting: from the 240-sword checkpoint it buys the barracks as soon as it is affordable,
+        // then enlists one free civilian whenever five swords are in stock, up to 20 recruits. Times are measured, not fixed.
+        var militaryTicks = 2320L * TimeSpan.TicksPerSecond;
+        if (strategy == "military" && ticks >= militaryTicks)
+        {
+            AdvanceTo(militaryTicks);
+            var built = false;
+            var enlisted = 0;
+            var construct = new ConstructBuildingsHandler(runtime);
+            var enlist = new EnlistRecruitsHandler(runtime);
+            for (var second = militaryTicks; ; second += TimeSpan.TicksPerSecond)
+            {
+                if (!built) built = construct.Handle(new("barracks", 1)).Succeeded;
+                while (built && enlisted < 20 && enlist.Handle(new(1)).Succeeded) enlisted++;
+                if ((built && enlisted == 20) || second + TimeSpan.TicksPerSecond > (long)ticks) break;
+                AdvanceTo(second + TimeSpan.TicksPerSecond);
+            }
         }
     }
     AdvanceTo((long)ticks);

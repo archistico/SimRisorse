@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using SimRisorse.Application.Persistence;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Military;
 using SimRisorse.Core.Population;
 using SimRisorse.Core.Sessions;
 
@@ -81,7 +82,10 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             snapshot.GrowthRemainderTwentieths is < 0 or >= HousingGrowthRules.UnitsPerSecond ||
             (snapshot.FormatVersion == 1 && snapshot.GrowthRemainderTwentieths != 0) ||
             snapshot.Buildings.Any(item => item is null || string.IsNullOrWhiteSpace(item.BuildingId) || item.Count < 0 || item.AssignedWorkers < 0) ||
-            snapshot.Buildings.Select(item => item.BuildingId).Distinct(StringComparer.Ordinal).Count() != snapshot.Buildings.Length)
+            snapshot.Buildings.Select(item => item.BuildingId).Distinct(StringComparer.Ordinal).Count() != snapshot.Buildings.Length ||
+            (snapshot.Military is { } military && (snapshot.FormatVersion == 1 || military.TrainingProgressSeconds.IsDefault ||
+                military.QueuedRecruits < 0 || military.Soldiers < 0 || military.TrainingRecruits > MaximumEntries ||
+                military.TrainingProgressSeconds.Any(progress => progress < 0))))
             throw new GameSaveException(GameSaveError.InvalidData, "Snapshot cannot be written.");
         Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
         using var connection = Open(SqliteOpenMode.ReadWriteCreate);
@@ -151,6 +155,7 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
                 """);
             fraction.Parameters.AddWithValue("$fraction", snapshot.GrowthRemainderTwentieths);
             fraction.ExecuteNonQuery();
+            SaveMilitary(connection, transaction, snapshot.Military);
         }
         using (var clear = Command(connection, transaction, "DELETE FROM resource_stock WHERE slot=1; DELETE FROM building_stock WHERE slot=1;")) clear.ExecuteNonQuery();
         foreach (var (id, amount) in snapshot.Resources.Amounts)
@@ -169,6 +174,76 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             insert.ExecuteNonQuery();
         }
         transaction.Commit();
+    }
+
+    /// <summary>
+    /// Optional companion tables, like the growth fraction: the v2 file format is unchanged and checkpoints of rules
+    /// without recruitment have no row. Rows are replaced on every write, so a later civil-only save leaves none behind.
+    /// </summary>
+    private static void SaveMilitary(SqliteConnection connection, SqliteTransaction transaction, MilitaryState? military)
+    {
+        using (var schema = Command(connection, transaction, """
+            CREATE TABLE IF NOT EXISTS military_state (
+                slot INTEGER PRIMARY KEY CHECK(slot=1) REFERENCES game_save(slot),
+                queued_recruits INTEGER NOT NULL CHECK(queued_recruits>=0),
+                soldiers INTEGER NOT NULL CHECK(soldiers>=0)
+            ) STRICT;
+            CREATE TABLE IF NOT EXISTS military_training (
+                slot INTEGER NOT NULL REFERENCES game_save(slot), position INTEGER NOT NULL CHECK(position>=0),
+                progress_seconds INTEGER NOT NULL CHECK(progress_seconds>=0), PRIMARY KEY(slot,position)
+            ) STRICT;
+            DELETE FROM military_training WHERE slot=1;
+            DELETE FROM military_state WHERE slot=1;
+            """)) schema.ExecuteNonQuery();
+        if (military is null) return;
+        using (var state = Command(connection, transaction, "INSERT INTO military_state VALUES(1,$queued,$soldiers);"))
+        {
+            state.Parameters.AddWithValue("$queued", military.QueuedRecruits);
+            state.Parameters.AddWithValue("$soldiers", military.Soldiers);
+            state.ExecuteNonQuery();
+        }
+        for (var position = 0; position < military.TrainingRecruits; position++)
+        {
+            using var insert = Command(connection, transaction, "INSERT INTO military_training VALUES(1,$position,$progress);");
+            insert.Parameters.AddWithValue("$position", position);
+            insert.Parameters.AddWithValue("$progress", military.TrainingProgressSeconds[position]);
+            insert.ExecuteNonQuery();
+        }
+    }
+
+    private static MilitaryState? LoadMilitary(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using (var tables = Command(connection, transaction,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('military_state','military_training');"))
+        {
+            var count = Convert.ToInt64(tables.ExecuteScalar());
+            if (count == 0) return null;
+            if (count != 2) throw new GameSaveException(GameSaveError.InvalidData, "Military tables are incomplete.");
+        }
+        int? queued = null, soldiers = null;
+        using (var command = Command(connection, transaction, "SELECT queued_recruits,soldiers FROM military_state WHERE slot=1;"))
+        using (var reader = command.ExecuteReader())
+            if (reader.Read())
+            {
+                queued = checked((int)reader.GetInt64(0));
+                soldiers = checked((int)reader.GetInt64(1));
+            }
+        var training = ImmutableArray.CreateBuilder<int>();
+        using (var command = Command(connection, transaction,
+            $"SELECT position,progress_seconds FROM military_training WHERE slot=1 ORDER BY position LIMIT {MaximumEntries + 1};"))
+        using (var reader = command.ExecuteReader())
+            while (reader.Read())
+            {
+                if (reader.GetInt64(0) != training.Count)
+                    throw new GameSaveException(GameSaveError.InvalidData, "Training places are not contiguous.");
+                training.Add(checked((int)reader.GetInt64(1)));
+            }
+        if (training.Count > MaximumEntries || queued is null && training.Count > 0)
+            throw new GameSaveException(GameSaveError.InvalidData, "Military state is invalid.");
+        if (queued is not { } waiting || soldiers is not { } trained) return null;
+        if (waiting < 0 || trained < 0 || training.Any(progress => progress < 0))
+            throw new GameSaveException(GameSaveError.InvalidData, "Military state is invalid.");
+        return new(waiting, training.ToImmutable(), trained);
     }
 
     /// <summary>
@@ -266,8 +341,9 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
                 remainder = (int)units;
             }
         }
+        var military = version == 2 ? LoadMilitary(connection, transaction) : null;
         var snapshot = new GameSnapshot(version, scenario, rules, elapsed, population,
-            ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress, remainder);
+            ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress, remainder, military);
         transaction.Commit();
         return snapshot;
     }

@@ -5,6 +5,7 @@ using SimRisorse.Application.Features.Persistence.SaveGame;
 using SimRisorse.Application.Persistence;
 using SimRisorse.Application.Scenarios;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Military;
 using SimRisorse.Core.Sessions;
 using SimRisorse.Infrastructure.Persistence;
 using Xunit;
@@ -13,6 +14,105 @@ namespace SimRisorse.Infrastructure.Tests;
 
 public sealed class SaveStoreTests
 {
+    [Fact]
+    public void RecruitsInTrainingAndSoldiersSurviveAFractionalSQLiteCheckpoint()
+    {
+        using var database = new TestDatabase();
+        var scenario = CivilGrowthScenario.Create();
+        var game = Military(scenario);
+        Assert.True(game.Enlist(5).Succeeded);
+        game.Resume();
+        Assert.True(game.Advance(TimeSpan.FromMilliseconds(42500)).Succeeded);
+        Assert.Equal(new MilitaryState(1, [12, 12], 2), game.Military);
+        database.Store.Save(game.Snapshot());
+        var loaded = database.Store.Load();
+        Equal(game.Snapshot(), loaded);
+        var resumed = GameSession.Restore(scenario, loaded);
+        Assert.True(resumed.IsPaused);
+        Assert.True(resumed.Advance(TimeSpan.FromHours(1)).Succeeded);
+        Equal(game.Snapshot(), resumed.Snapshot());
+        resumed.Resume();
+        Assert.True(game.Advance(TimeSpan.FromMilliseconds(47500)).Succeeded);
+        Assert.True(resumed.Advance(TimeSpan.FromMilliseconds(47500)).Succeeded);
+        Assert.Equal(new MilitaryState(0, [], 5), resumed.Military);
+        Equal(game.Snapshot(), resumed.Snapshot());
+        database.Store.Save(resumed.Snapshot());
+        Equal(resumed.Snapshot(), database.Store.Load());
+    }
+
+    [Fact]
+    public async Task V9SqliteSaveGainsAnEmptyArmyAndKeepsTheOriginalAsBackup()
+    {
+        using var database = new TestDatabase();
+        var old = GameSession.Create(CivilGrowthScenario.CreateMintForBenchmarks()).Snapshot() with
+        {
+            Resources = ResourceBundle.Create(("food", 50m), ("swords", 12.345m)),
+            ElapsedTicks = 4321 * TimeSpan.TicksPerMillisecond
+        };
+        database.Store.Save(old);
+        var original = database.Store.Load();
+        Assert.Null(original.Military);
+        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var loaded = await new LoadGameHandler(runtime, database.Store).HandleAsync();
+        Assert.True(loaded.Succeeded);
+        Assert.Equal("civil-growth-9", loaded.UpgradedFromRules);
+        Assert.Equal(0, loaded.View.Military!.Recruits + loaded.View.Military.Soldiers);
+        Assert.Equal(12.345m, loaded.View.Resources.Single(item => item.Id == "swords").Quantity);
+        Assert.True((await new SaveGameHandler(runtime, database.Store).HandleAsync()).Succeeded);
+        var converted = database.Store.Load();
+        Assert.Equal(CivilGrowthScenario.RulesVersion, converted.RulesVersion);
+        Assert.Equal(MilitaryState.Empty, converted.Military);
+        var backup = Path.Combine(database.DirectoryName, "game.civil-growth-9.backup.sqlite3");
+        Equal(original, new SqliteGameSaveStore(backup).Load());
+    }
+
+    [Theory]
+    [InlineData("DROP TABLE military_training;")]
+    [InlineData("UPDATE military_training SET position=position+3;")]
+    [InlineData("PRAGMA ignore_check_constraints=ON; UPDATE military_state SET soldiers=-1;")]
+    [InlineData("PRAGMA ignore_check_constraints=ON; UPDATE military_training SET progress_seconds=-1;")]
+    [InlineData("DELETE FROM military_state;")]
+    public void InvalidMilitaryTablesAreReportedAsInvalidData(string change)
+    {
+        using var database = new TestDatabase();
+        var game = Military(CivilGrowthScenario.Create());
+        Assert.True(game.Enlist(3).Succeeded);
+        database.Store.Save(game.Snapshot());
+        database.Execute(change);
+        Assert.Equal(GameSaveError.InvalidData, Assert.Throws<GameSaveException>(() => database.Store.Load()).Error);
+    }
+
+    [Fact]
+    public void ACivilOnlySaveRemovesTheArmyRowsOfTheReplacedCheckpoint()
+    {
+        using var database = new TestDatabase();
+        var game = Military(CivilGrowthScenario.Create());
+        Assert.True(game.Enlist(3).Succeeded);
+        database.Store.Save(game.Snapshot());
+        var older = GameSession.Create(CivilGrowthScenario.CreateMintForBenchmarks()).Snapshot();
+        database.Store.Save(older);
+        var read = database.Store.Load();
+        Assert.Null(read.Military);
+        Equal(older, read);
+    }
+
+    /// <summary>A full-housing colony with two barracks: 40 residents, no arrivals while recruits train.</summary>
+    private static GameSession Military(SimRisorse.Core.Content.GameScenario scenario)
+    {
+        var initial = GameSession.Create(scenario).Snapshot();
+        return GameSession.Restore(scenario, initial with
+        {
+            Population = 40,
+            Resources = ResourceBundle.Create(("food", 100m), ("bread", 100m), ("swords", 100m)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId switch
+            {
+                "large-house" or "bakery" or "iron-smelter" or "forge" => item with { Count = 1 },
+                "barracks" => item with { Count = 2 },
+                _ => item
+            })]
+        });
+    }
+
     [Fact]
     public void SharedCoalPriorityAndBothCraftedStocksSurviveAFractionalSQLiteCheckpoint()
     {
@@ -635,6 +735,7 @@ public sealed class SaveStoreTests
         Assert.Equal(expected.GrowthRemainderTwentieths, actual.GrowthRemainderTwentieths);
         Assert.Equal(expected.Resources, actual.Resources);
         Assert.Equal(expected.Buildings.OrderBy(item => item.BuildingId).ToArray(), actual.Buildings.OrderBy(item => item.BuildingId).ToArray());
+        Assert.Equal(expected.Military, actual.Military);
     }
 
     private static void BuildAndStaff(GameSession game, string id)

@@ -20,6 +20,8 @@ Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento,
 
 **M5.2b Verificato:** Zecca/Monete in `civil-growth-9`, **19 edifici / 16 risorse**, **258/258 test** e gate Windows completo. Zecca 210 Legno lavorato/160 Pietra, 1 addetto, Fonderia d’oro posseduta, **1 Oro +1 Carbone → 3 Monete/s**, priorità 101 dopo Forgia 100. Monete iniziali zero, capacità 1.000 +500 per Magazzino e lotti indivisibili: con 1–2 posti residui non si consumano input. Monete per pagamenti espliciti futuri, non valuta generale. Conversione S1 v8→v9 concatenata dalle precedenti, scorte Spade e personale preservati, SQLite v2; [report](validation/M5_2B_MINT.md). **M5.2c è ora Verificata**: nove profili sul catalogo corrente, quattro guardie e percorso integrato dalla nuova partita; [risultati](validation/M5_2C_FORGE_MINT.md). Quantità per reclute/navi da scegliere nelle rispettive fasi.
 
+**M5.3 — contratto scelto il 03/11, implementato in `civil-growth-10`, da verificare su Windows:** Caserma 260 Legno lavorato/200 Pietra, 0 addetti, prerequisito Forgia; **5 Spade per recluta**; ogni Caserma addestra **1 recluta alla volta in 30 s validi**; reclute e soldati **restano residenti** (case, Cibo, Pane); **annullamento** con restituzione di persona e Spade (il tempo già svolto si perde); **congedo rinviato** alle missioni. Più Caserme addestrano in parallelo. Un lavoratore assegnato non viene arruolato implicitamente e un soldato non può lavorare. Perdite permanenti non decise. [ADR 0017](adr/0017-barracks-recruitment-and-v9-save-upgrade.md).
+
 | ID | Requisito | Conseguenza |
 | --- | --- | --- |
 | G-01 | Costruire tutti i tipi di edificio è il traguardo generale | Serve un insieme di obiettivi finito per ciascuno scenario |

@@ -31,6 +31,7 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 | [0014](0014-first-iron-industry-and-civil-save-upgrade.md) | Prima industria del ferro, regole v6 e continuità S1 | Accettato | M5.1a verificata: 191 test, conversione v5→v6 e backup, benchmark v4/v5 preservati |
 | [0015](0015-forge-swords-and-v7-save-upgrade.md) | Forgia, Spade e conversione v7→v8 | Accettato | M5.2a verificata: 235 test, SQLite v2 e backup, catalogo v7 conservato |
 | [0016](0016-mint-coins-and-v8-save-upgrade.md) | Zecca, Monete e conversione v8→v9 | Accettato | M5.2b verificata: 258 test, lotti interi, SQLite v2 e backup, catalogo v8 conservato |
+| [0017](0017-barracks-recruitment-and-v9-save-upgrade.md) | Caserma, reclutamento per posti e conversione v9→v10 | Accettato | M5.3a/b implementata, **da verificare su Windows** (308 test attesi) |
 
 ## Come aggiungere una decisione
 

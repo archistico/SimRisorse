@@ -123,6 +123,13 @@
                         <ItemsControl x:Name="ProductionInputList" ItemsSource="{Binding Selected.ConsumptionLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
                       </StackPanel>
                     </StackPanel>
+                    <StackPanel x:Name="MilitaryPanel" Spacing="4" Margin="0,4,0,0" IsVisible="{Binding IsBarracksSelected}">
+                      <TextBlock Text="RECLUTAMENTO" Classes="label" FontSize="11" />
+                      <ItemsControl x:Name="MilitaryStatusList" ItemsSource="{Binding MilitaryStatusLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
+                      <TextBlock x:Name="EnlistCostHeadingText" Text="{Binding EnlistCostHeading}" Classes="label" FontSize="11" Margin="0,4,0,0" />
+                      <ItemsControl x:Name="EnlistCostList" ItemsSource="{Binding EnlistCostLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
+                      <TextBlock x:Name="MilitaryNoteText" Text="{Binding MilitaryNote}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" />
+                    </StackPanel>
                   </StackPanel></ScrollViewer>
                   <StackPanel Grid.Row="1" Spacing="6">
                     <Border x:Name="BuildingDiagnosisPanel" Background="#F5EADB" BorderBrush="#9A6947" BorderThickness="1" CornerRadius="0" Padding="9,7" IsVisible="{Binding Selected.HasDiagnosis}">
@@ -131,7 +138,8 @@
                     <Border Background="#CBD7C9" Height="1" Margin="0,1" />
                     <Grid ColumnDefinitions="*,90"><TextBlock Text="Quantità per ordine" VerticalAlignment="Center" Classes="label" /><ComboBox x:Name="BatchSelector" Grid.Column="1" ItemsSource="{Binding BatchSizes}" SelectedItem="{Binding BatchSize, Mode=TwoWay}" HorizontalAlignment="Stretch" /></Grid>
                     <Button x:Name="BuildButton" Classes="primary build" Content="{Binding BuildLabel}" Command="{Binding ConstructCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="7"><Button x:Name="ReleaseButton" Content="− Lavoratori" Command="{Binding ReleaseCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /><Button x:Name="AssignButton" Grid.Column="1" Content="+ Lavoratori" Command="{Binding AssignCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /></Grid>
+                    <Grid x:Name="WorkerButtons" ColumnDefinitions="*,*" ColumnSpacing="7" IsVisible="{Binding !IsBarracksSelected}"><Button x:Name="ReleaseButton" Content="− Lavoratori" Command="{Binding ReleaseCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /><Button x:Name="AssignButton" Grid.Column="1" Content="+ Lavoratori" Command="{Binding AssignCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /></Grid>
+                    <Grid x:Name="RecruitButtons" ColumnDefinitions="*,*" ColumnSpacing="7" IsVisible="{Binding IsBarracksSelected}"><Button x:Name="CancelRecruitsButton" Content="{Binding CancelRecruitsLabel}" Command="{Binding CancelRecruitsCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /><Button x:Name="EnlistButton" Grid.Column="1" Content="{Binding EnlistLabel}" Command="{Binding EnlistCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /></Grid>
                     <TextBlock Text="{Binding Selected.Activity}" TextWrapping="Wrap" Classes="label" />
                   </StackPanel>
                 </Grid>

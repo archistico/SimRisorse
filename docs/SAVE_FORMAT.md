@@ -86,6 +86,15 @@ Le tre tabelle precedenti restano presenti. Il file v2 ha una tabella obbligator
 
 Il vecchio checkpoint SQLite v2 **senza la tabella `population_growth_fraction`** è ancora leggibile: il resto viene interpretato come zero. Se la tabella è presente, la riga per lo slot 1 è obbligatoria e controllata. Il nuovo writer la crea e salva assieme alle altre tabelle nella stessa transazione, senza cambiare `user_version=2`. Snapshot e Core espongono `GrowthRemainderTwentieths` (0–19); le regole storiche `civil-growth-4` richiedono resto zero. Nessun calcolo usa numeri a virgola mobile.
 
+Dalle regole `civil-growth-10` il writer aggiunge, sempre nella stessa transazione e senza cambiare `user_version=2`, due tabelle complementari `STRICT` per il reclutamento:
+
+| Tabella | Colonne | Responsabilità |
+| --- | --- | --- |
+| `military_state` | slot, queued_recruits, soldiers | Reclute in attesa di un posto e soldati addestrati |
+| `military_training` | slot, position, progress_seconds | Un posto di Caserma occupato per riga, posizioni contigue da 0, in ordine di progresso decrescente |
+
+Senza tabelle, o con le tabelle ma senza riga in `military_state`, il checkpoint appartiene a regole senza reclutamento (snapshot `Military = null`): i file v9 e precedenti restano leggibili e la conversione v9→v10 crea un esercito vuoto. Una sola delle due tabelle, posizioni non contigue, valori negativi o posti senza la riga di stato rendono il file non valido. Ogni scrittura sostituisce le righe: un checkpoint civile salvato dopo uno militare non lascia reclute residue. Il Core controlla poi posti, periodo di 30 s e bilancio `impiegati + reclute + soldati ≤ abitanti`. Decisione nell'[ADR 0017](adr/0017-barracks-recruitment-and-v9-save-upgrade.md).
+
 `game_save.population` conserva il numero effettivo delle persone, non soltanto la dotazione iniziale. Il Core verifica anche capacità abitativa, popolazione iniziale minima dello scenario senza decessi e assegnazioni. Il nuovo abitante, i relativi consumi e il progresso residuo non vengono ricalcolati dal tempo totale.
 
 Il formato limita a 10.000 le righe di risorse e quelle di edifici per checkpoint. Questo è un limite tecnico del primo adattatore, non un numero di strutture costruibili: il campo `count` aggrega molte costruzioni dello stesso tipo.

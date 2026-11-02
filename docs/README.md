@@ -1,6 +1,6 @@
 # Documentazione di SimRisorse
 
-Aggiornata il **2026-11-02**. **M5.2 completata e verificata**, `civil-growth-9`, 19 edifici/16 risorse, **260/260 test**, sei benchmark e smoke Windows. Confronti 241/122 s e percorso integrato dalla nuova partita a 2.320 s; [report M5.2c](validation/M5_2C_FORGE_MINT.md). Prossimo passo: contratto M5.3 Caserma. Il [README principale](../README.md) presenta il gioco e l’avvio.
+Aggiornata il **2026-11-03**. **M5.3a/b implementata, da verificare su Windows**: `civil-growth-10`, 20 edifici/16 risorse, Caserma e reclutamento per posti secondo il contratto scelto il 03/11; 308 test attesi, [rapporto](validation/M5_3A_BARRACKS.md). Ultimo gate verificato: **M5.2c, 260/260 test**, [report](validation/M5_2C_FORGE_MINT.md). Il [README principale](../README.md) presenta il gioco e l’avvio.
 
 ## Documenti correnti
 
@@ -27,7 +27,7 @@ Le pagine operative descrivono il presente. Le misure dei singoli gate nei rappo
 | [Dossier preparatorio D0](design/PRE_M5_DECISION_GATE.md) | Inventario dei 43 riferimenti e ragionamento sulle alternative |
 | [M5.1 Industria](design/M5_1_INDUSTRY_PREFEASIBILITY.md) | Studio iniziale; Ferro e Oro implementati, benchmark scala/contesa verificato |
 | [M5.2 Forgia e Zecca](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) | **Contratto A approvato il 28/10**, Forgia/Zecca e confronto M5.2c verificati; parametri militari ancora da scegliere; confronti A/B storici, test F1–F10 e salvataggi |
-| [M5.3 Esercito](design/M5_3_ARMY_PREFEASIBILITY.md) | Ipotesi su reclute, soldati, addestramento e conservazione della popolazione |
+| [M5.3 Esercito](design/M5_3_ARMY_PREFEASIBILITY.md) | **Contratto scelto il 03/11** (posti per Caserma, 5 Spade, 30 s, residenti, annullamento); implementato in v41, da verificare |
 | [M5.4 Navigazione](design/M5_4_NAVAL_PREFEASIBILITY.md) | Ipotesi su Cantiere, navi, trasporti e primo viaggio |
 | [Esperimento industriale A/B](../experiments/industry-probe/README.md) | Prova separata su colonia sintetica v5, senza cambiare i parametri del gioco |
 | [Esperimento M5.2 Forgia/Zecca](../experiments/forge-mint-probe/README.md) | Sei profili A/B e sei controlli F8/F9 su capienza/priorità, **eseguiti separatamente il 02/11**, 241/122 s misurati nel checkpoint sintetico |
@@ -47,6 +47,7 @@ Le pagine operative descrivono il presente. Le misure dei singoli gate nei rappo
 
 | Rapporto | Evidenza |
 | --- | --- |
+| [M5.3a/b Caserma](validation/M5_3A_BARRACKS.md) | **Da verificare:** 308 test attesi, cronologia `military-8-hours`, conversione v9→v10, render Caserma |
 | [M5.2c Filiere](validation/M5_2C_FORGE_MINT.md) | **260/260 test**, nove profili, quattro guardie, replay e percorso integrato |
 | [M5.2b Zecca](validation/M5_2B_MINT.md) | **258/258 test**, Monete, lotti interi, conversione v8→v9, render e smoke Windows |
 | [M5.2a Forgia](validation/M5_2A_FORGE.md) | **235/235 test**, primo lotto, conversione v7→v8, render e smoke Windows |

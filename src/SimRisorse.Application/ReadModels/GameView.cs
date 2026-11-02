@@ -58,6 +58,23 @@ public sealed record BreadSupplyView(BreadSupplyState State, decimal? ReserveSec
     int? MinimumAssignedWorkers = null, int? AdditionalAssignedWorkers = null,
     BreadChainCapacityView? ChainCapacity = null);
 
+/// <summary>
+/// Recruitment state. Recruits and soldiers are residents but not free workers:
+/// population = employed + free + queued + training + soldiers.
+/// </summary>
+/// <param name="TrainingRemainingSeconds">Whole valid seconds left for each recruit in training, soonest first.</param>
+/// <param name="MaximumEnlistable">Largest order allowed now by free civilians, equipment and owned barracks.</param>
+/// <param name="MaximumCancellable">Largest cancellation whose returned equipment fits in storage.</param>
+public sealed record MilitaryView(string BarracksBuildingId, string SwordsResourceId, string SwordsName, decimal SwordsPerRecruit,
+    int TrainingSeconds, int TrainingPlacesPerBarracks, int TrainingPlaces, int QueuedRecruits,
+    ImmutableArray<int> TrainingRemainingSeconds, int Soldiers, int EmployedWorkers, int MaximumEnlistable, int MaximumCancellable)
+{
+    public int TrainingRecruits => TrainingRemainingSeconds.IsDefault ? 0 : TrainingRemainingSeconds.Length;
+    public int Recruits => QueuedRecruits + TrainingRecruits;
+    /// <summary>Valid seconds until the last recruit already enlisted becomes a soldier; zero with no recruits.</summary>
+    public long SecondsUntilAllTrained { get; init; }
+}
+
 public sealed record GameView(string ScenarioId, string RulesVersion, long ElapsedTicks, bool IsPaused,
     int Population, int AvailableWorkers, ImmutableArray<ResourceView> Resources, ImmutableArray<BuildingView> Buildings,
-    PopulationView PopulationState, BreadSupplyView BreadSupply);
+    PopulationView PopulationState, BreadSupplyView BreadSupply, MilitaryView? Military = null);

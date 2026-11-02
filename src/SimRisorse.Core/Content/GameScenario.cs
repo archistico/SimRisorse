@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Military;
 using SimRisorse.Core.Population;
 
 namespace SimRisorse.Core.Content;
@@ -8,7 +9,8 @@ namespace SimRisorse.Core.Content;
 public sealed class GameScenario
 {
     public GameScenario(string id, GameCatalog catalog, int population, ResourceBundle capacity,
-        ResourceBundle initialResources, IEnumerable<BuildingState> initialBuildings, PopulationRules? populationRules = null)
+        ResourceBundle initialResources, IEnumerable<BuildingState> initialBuildings, PopulationRules? populationRules = null,
+        MilitaryRules? militaryRules = null)
     {
         ContentIdentifier.Validate(id, nameof(id));
         ArgumentNullException.ThrowIfNull(catalog);
@@ -34,6 +36,13 @@ public sealed class GameScenario
             (!catalog.BuildingsById.TryGetValue(growth.SmallHouseId, out var small) || small.HousingPerBuilding == 0 ||
              !catalog.BuildingsById.TryGetValue(growth.LargeHouseId, out var large) || large.HousingPerBuilding == 0))
             throw new ArgumentException("Accelerated growth requires two known housing building types.", nameof(populationRules));
+        if (militaryRules is not null &&
+            (populationRules is null || !catalog.ResourcesById.ContainsKey(militaryRules.SwordsResourceId) ||
+             !catalog.BuildingsById.TryGetValue(militaryRules.BarracksBuildingId, out var barracks) ||
+             barracks.Recipe is not null || barracks.WorkplacesPerBuilding != 0))
+            throw new ArgumentException("Recruitment requires growing population, a known equipment resource and a barracks without workplaces.",
+                nameof(militaryRules));
+        MilitaryRules = militaryRules;
         Capacity = capacity;
         InitialResources = initialResources;
         var byId = initial.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
@@ -47,6 +56,7 @@ public sealed class GameScenario
     public GameCatalog Catalog { get; }
     public int Population { get; }
     public PopulationRules? PopulationRules { get; }
+    public MilitaryRules? MilitaryRules { get; }
     /// <summary>Base storage before building effects; sessions use <see cref="StorageCapacity"/>.</summary>
     public ResourceBundle Capacity { get; }
     public ResourceBundle InitialResources { get; }

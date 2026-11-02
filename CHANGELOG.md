@@ -4,6 +4,14 @@ Questo file registra le modifiche realizzate. Le attività previste appartengono
 
 ## [Unreleased]
 
+### 2026-11-03 — v41 / M5.3a/b: Caserma, arruolamento e addestramento (implementati, da verificare)
+
+- **Contratto M5.3 scelto dall'utente:** modello **C, posti per Caserma** (1 recluta alla volta per Caserma, **30 s validi**); prezzi **A** (Caserma **260 Legno lavorato/200 Pietra**, 0 addetti, prerequisito Forgia; **5 Spade per recluta**); reclute e soldati **residenti** (case, Cibo, Pane); **annullamento** con restituzione di persona e Spade, tempo già svolto perso; **congedo rinviato**. Perdite non decise. [ADR 0017](docs/adr/0017-barracks-recruitment-and-v9-save-upgrade.md).
+- Regole **`civil-growth-10`**, **20 edifici / 16 risorse**. Core con `MilitaryRules`/`MilitaryState`, `Enlist` e `CancelRecruits` atomici, addestramento sul tempo simulato, popolazione unica `impiegati + liberi + reclute + soldati`; lavoratori mai arruolati implicitamente, soldati non assegnabili. Checkpoint militari normalizzati e validati al ripristino.
+- Conversione S1 **v9→v10** concatenata da v1, esercito vuoto e Spade preservate; vecchi checkpoint con reclute/soldati rifiutati. **SQLite/snapshot v2** invariati con tabelle complementari `military_state`/`military_training`; backup dell'originale alla prima scrittura. Catalogo v9 fissato (`CreateMintForBenchmarks`).
+- Desktop: Caserma con sezione RECLUTAMENTO, costo per 1/5/10 reclute, pulsanti Annulla/Arruola, tre icone originali. Simulatore: strategia `military`; validatore: cronologia `military-8-hours`, regole `civil-growth-10`, due render Caserma.
+- **48 nuovi casi xUnit** (Core 10, Application 28, Infrastructure 8, Desktop 2): **308 attesi**. **Nessuna build o esecuzione .NET in questo ambiente** (SDK e NuGet non raggiungibili): M5.3a/b **non è Verificata** finché `validate.cmd` non passa su Windows. [Rapporto](docs/validation/M5_3A_BARRACKS.md).
+
 ### 2026-11-02 — v40 / M5.2c: confronto delle filiere e percorso integrato verificati
 
 - **M5.2 chiusa e Verificata**, senza nuove regole o migrazioni: catalogo `civil-growth-9`, 19 edifici/16 risorse, prezzi A invariati.

@@ -6,7 +6,7 @@ Aggiornata il **2026-11-02**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 
 ## 1. Stato attuale
 
-**Aggiornamento corrente:** M4, M5.1 e **M5.2 Verificate**. Regole `civil-growth-9`, 19 edifici/16 risorse, gate 260/260. M5.2c conferma 241/122 s nel confronto e 2.320 s dalla nuova partita per 240 Spade/360 Monete. Prossimo passo **M5.3 Caserma**, dopo le scelte su reclutamento, alloggi/razioni, costi, durata e congedo; il consumo delle Spade è già deciso.
+**Aggiornamento corrente:** M4, M5.1 e **M5.2 Verificate**. **M5.3a/b implementata, da verificare su Windows** (v41): regole `civil-growth-10`, 20 edifici/16 risorse, Caserma con posti di addestramento secondo il contratto scelto il 03/11; 308 test attesi, [rapporto](validation/M5_3A_BARRACKS.md). Ultimo gate verificato: M5.2c, 260/260. Prossimo passo: `validate.cmd`, poi M5.3c (impatto civile).
 
 | Milestone | Risultato | Stato |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ Aggiornata il **2026-11-02**. **M4.11** introduce il prototipo 8-bit; **M4.12** 
 | **M2** | Motore economico indipendente dalla GUI | **Completata e verificata** |
 | **M3** | Prima partita desktop salvabile | **Completata e verificata** |
 | **M4** | Crescita civile, abitazioni e Pane | **Chiusa e verificata; demolizione rinviata** |
-| **M5** | Economia avanzata, esercito e isole | **M5.1 e M5.2 verificate; contratto M5.3 da definire** |
+| **M5** | Economia avanzata, esercito e isole | **M5.1 e M5.2 verificate; M5.3a/b implementata, da verificare** |
 | **M6** | Vittoria, risultati e bilanciamento globale | **Da avviare dopo M5** |
 | **M7** | Qualità finale e distribuzione | **Da avviare dopo M6** |
 
@@ -176,13 +176,14 @@ Il profilo da 220 abitanti arriva al massimo a 250, ancora sotto il punto in cui
 
 ## 6. M5 — Economia avanzata, esercito e isole
 
-**Stato: in corso.** **M5.1 e M5.2 Verificate**. Prima di M5.3 occorre definire il contratto militare: prezzo/prerequisiti Caserma, quantità di Spade per recluta, addestramento, alloggi/razioni e annullamento/congedo. M5.3–M5.7 restano future.
+**Stato: in corso.** **M5.1 e M5.2 Verificate.** Contratto M5.3 scelto il 03/11 ([ADR 0017](adr/0017-barracks-recruitment-and-v9-save-upgrade.md)); M5.3a/b (Caserma, arruolamento atomico, posti di addestramento, annullamento, salvataggi v10) implementata in v41 e **da verificare su Windows**. M5.3c e M5.4–M5.7 restano future.
 
 | Fase | Contenuto | Verifica per chiuderla |
 | --- | --- | --- |
 | **M5.1** | Miniere, ferro, carbone, oro e lavorazioni primarie | Input e costi raggiungibili, contesa e capacità provate |
 | **M5.2 — Verificata** | Forgia, Spade, Zecca e Monete; confronto a fasi/parallelo e percorso integrato | 260/260 test, nove profili, quattro guardie, 241/122 s e 2.320 s da nuova partita; impieghi militari/navali nelle fasi successive |
-| **M5.3** | Caserma, reclutamento e addestramento | Conteggi coerenti: civili, liberi, reclute e soldati; avanzamento/salvataggio |
+| **M5.3a/b — Implementata, da verificare** | Caserma, arruolamento atomico, posti di addestramento da 30 s, annullamento, conversione v9→v10 | 308 test attesi, cronologia `military-8-hours`, bilancio `impiegati + liberi + reclute + soldati`, render Caserma |
+| **M5.3c** | Impatto civile del reclutamento | Contingenti piccoli/grandi e reclutamento precoce/tardivo: lavoro civile perso, Cibo/Pane, tempi |
 | **M5.4** | Cantiere navale, navi e requisiti di trasporto | Costruzione, disponibilità e impiego dei mezzi verificati |
 | **M5.5** | Esplorazione e spedizioni temporizzate | Stessa cronologia con passi diversi; esito applicato una sola volta |
 | **M5.6** | Conquista di isole, ricompense, colonie/commercio se approvati | Sblocchi persistenti e nessun guadagno duplicato |

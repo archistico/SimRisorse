@@ -1,6 +1,8 @@
 # M5.3 — Caserma, reclutamento e addestramento: prefattibilità
 
-Aggiornato il **2026-11-02**, dopo **M5.2 completata e Verificata**. **M5.3 resta proposta, non approvata né implementata.** Baseline `civil-growth-9`, 19 edifici/16 risorse, **260/260 test**; [ultimo report](../validation/M5_2C_FORGE_MINT.md). Si applicano le decisioni già acquisite in [D0](D0_DECISION_BOARD.md); questo dossier non introduce meccaniche militari. Prezzo, tempi, quantità e politiche di reclutamento richiedono una scelta prima del codice.
+Aggiornato il **2026-11-03**. **Contratto scelto dall'utente il 03/11** e implementato in v41 (`civil-growth-10`), **da verificare su Windows**: Caserma 260 Legno lavorato/200 Pietra, 0 addetti, prerequisito Forgia; **5 Spade per recluta**; ogni Caserma addestra **1 recluta alla volta in 30 s validi**; reclute e soldati **restano residenti** (case, Cibo, Pane); **annullamento** con restituzione di persona e Spade (il tempo già svolto si perde); **congedo rinviato** alle missioni. [ADR 0017](../adr/0017-barracks-recruitment-and-v9-save-upgrade.md), [rapporto](../validation/M5_3A_BARRACKS.md).
+
+> Le sezioni seguenti conservano l'analisi preparatoria del 02/11. La preferenza tecnica B indicata al §3 è stata superata dalla scelta C dell'utente; le domande del §4 sono chiuse tranne D0.4e (perdite), rinviata alle missioni.
 
 ## 1. Fonte e confine del requisito
 

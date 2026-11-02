@@ -400,6 +400,106 @@ public sealed class DesktopTests
         finally { window.CloseWithoutSaving(); }
     }
 
+    [AvaloniaTheory]
+    [InlineData(1040, 740, "barracks-buildings-compact.png")]
+    [InlineData(1240, 850, "barracks-buildings.png")]
+    public async Task BarracksPanelEnlistsTrainsAndCancelsRecruitsInBothLayouts(int width, int height, string file)
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var initial = GameSession.Create(scenario).Snapshot();
+        var store = new MemoryStore { Snapshot = initial with
+        {
+            Population = 40,
+            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m),
+                ("bread", 100m), ("swords", 100m)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" or "iron-smelter" or "forge"
+                ? item with { Count = 1 } : item)]
+        } };
+        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
+        await viewModel.InitializeAsync();
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "barracks");
+        Assert.True(viewModel.IsBarracksSelected);
+        Assert.Equal("Da costruire", viewModel.Selected.Status);
+        Assert.Contains("Spade", viewModel.Selected.Description);
+        Assert.False(viewModel.EnlistCommand.CanExecute(null));
+        Assert.Contains("Costruisci la Caserma", viewModel.MilitaryNote);
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Assert.True(viewModel.ConstructCommand.CanExecute(null));
+            viewModel.ConstructCommand.Execute(null);
+            Assert.True(viewModel.EnlistCommand.CanExecute(null));
+            Assert.False(viewModel.CancelRecruitsCommand.CanExecute(null));
+            Assert.False(viewModel.AssignCommand.CanExecute(null));
+            window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 5;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal("Arruola +5", window.FindControl<Button>("EnlistButton")!.Content);
+            Assert.Equal("COSTO PER 5 RECLUTE", window.FindControl<TextBlock>("EnlistCostHeadingText")!.Text);
+            var cost = window.FindControl<ItemsControl>("EnlistCostList")!;
+            Assert.Equal(new[] { "swords", "population" }, cost.GetVisualDescendants().OfType<PixelGlyph>().Select(item => item.Key));
+            Assert.Equal(new[] { "25 spade", "5 abitanti liberi" }, cost.GetVisualDescendants().OfType<TextBlock>().Select(item => item.Text));
+            var effects = window.FindControl<ItemsControl>("BuildingEffectList")!;
+            Assert.Equal(new[] { "recruits", "soldiers" }, effects.GetVisualDescendants().OfType<PixelGlyph>().Select(item => item.Key));
+
+            viewModel.EnlistCommand.Execute(null);
+            Assert.Equal("Ordine completato.", viewModel.Message);
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(75m, viewModel.View.Resources.Single(item => item.Id == "swords").Quantity);
+            Assert.Equal("35 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
+            Assert.Contains("5 reclute · 0 soldati", viewModel.Population);
+            Assert.Equal("1/1 in addestramento · 0 soldati", viewModel.Selected.Status);
+            viewModel.TogglePauseCommand.Execute(null);
+            viewModel.Advance(TimeSpan.FromSeconds(30));
+            viewModel.Pause();
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal("1/1 in addestramento · 1 soldato", viewModel.Selected.Status);
+            Assert.Equal(new[] { "In coda: 3", "In addestramento: 1 / 1 posti", "Soldati: 1", "Prossimo tra 30 s · tutti tra 120 s" },
+                window.FindControl<ItemsControl>("MilitaryStatusList")!.GetVisualDescendants().OfType<TextBlock>().Select(item => item.Text));
+            Assert.Equal("35 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
+
+            window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(viewModel.CancelRecruitsCommand.CanExecute(null));
+            viewModel.CancelRecruitsCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(80m, viewModel.View.Resources.Single(item => item.Id == "swords").Quantity);
+            Assert.Equal(2, viewModel.View.Military!.QueuedRecruits);
+            Assert.Equal("36 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
+
+            Assert.True(window.FindControl<StackPanel>("MilitaryPanel")!.IsEffectivelyVisible);
+            Assert.True(window.FindControl<Grid>("RecruitButtons")!.IsEffectivelyVisible);
+            Assert.False(window.FindControl<Grid>("WorkerButtons")!.IsEffectivelyVisible);
+            foreach (var name in new[] { "BuildButton", "CancelRecruitsButton", "EnlistButton", "PauseButton", "SaveButton" })
+            {
+                var button = window.FindControl<Button>(name)!;
+                Assert.True(button.IsEffectivelyVisible);
+                Assert.InRange(button.TranslatePoint(default, window)!.Value.Y, 0, window.ClientSize.Height - button.Bounds.Height);
+            }
+            window.FindControl<ListBox>("BuildingsList")!.ScrollIntoView(viewModel.Selected);
+            Dispatcher.UIThread.RunJobs();
+            using (var image = window.CaptureRenderedFrame())
+            {
+                Assert.NotNull(image);
+                var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
+                if (!string.IsNullOrWhiteSpace(artifacts))
+                {
+                    Directory.CreateDirectory(artifacts);
+                    image.Save(Path.Combine(artifacts, file), PngBitmapEncoderOptions.Default);
+                }
+            }
+
+            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "forge");
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(viewModel.IsBarracksSelected);
+            Assert.False(window.FindControl<StackPanel>("MilitaryPanel")!.IsEffectivelyVisible);
+            Assert.True(window.FindControl<Grid>("WorkerButtons")!.IsEffectivelyVisible);
+            Assert.False(window.FindControl<Grid>("RecruitButtons")!.IsEffectivelyVisible);
+            Assert.False(viewModel.EnlistCommand.CanExecute(null));
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
     [Fact]
     public void OriginalRetroGlyphsCoverTheEntireCivilCatalog()
     {

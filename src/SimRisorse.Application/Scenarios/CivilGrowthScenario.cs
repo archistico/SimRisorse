@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Content;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Military;
 using SimRisorse.Core.Population;
 using SimRisorse.Core.Sessions;
 
@@ -14,7 +15,7 @@ public sealed record RulesChange(string From, string To, ImmutableArray<string> 
 public static class CivilGrowthScenario
 {
     public const string Id = "civil-growth";
-    public const string RulesVersion = "civil-growth-9";
+    public const string RulesVersion = "civil-growth-10";
 
     /// <summary>Every earlier rules version that can still be loaded, oldest first.</summary>
     public static ImmutableArray<RulesChange> Changes { get; } =
@@ -28,10 +29,13 @@ public static class CivilGrowthScenario
         new("civil-growth-5", "civil-growth-6", ["iron-mine", "coal-mine", "iron-smelter"]),
         new("civil-growth-6", "civil-growth-7", ["gold-mine", "gold-smelter"]),
         new("civil-growth-7", "civil-growth-8", ["forge"]),
-        new("civil-growth-8", RulesVersion, ["mint"])
+        new("civil-growth-8", "civil-growth-9", ["mint"]),
+        // Recruits and soldiers are introduced empty: every resident of an older checkpoint is a civilian.
+        new("civil-growth-9", RulesVersion, ["barracks"])
     ];
 
-    public static GameScenario Create() => CreateCore(RulesVersion, accelerated: true, industry: true, gold: true, forge: true, mint: true);
+    public static GameScenario Create() =>
+        CreateCore(RulesVersion, accelerated: true, industry: true, gold: true, forge: true, mint: true, barracks: true);
 
     /// <summary>Historical rules, retained for comparing the already published M4 benchmarks.</summary>
     public static GameScenario CreateLegacyForBenchmarks() => CreateCore("civil-growth-4", accelerated: false);
@@ -48,7 +52,15 @@ public static class CivilGrowthScenario
     /// <summary>The forge baseline remains fixed for v8 save compatibility checks.</summary>
     public static GameScenario CreateForgeForBenchmarks() => CreateCore("civil-growth-8", accelerated: true, industry: true, gold: true, forge: true);
 
-    private static GameScenario CreateCore(string rulesVersion, bool accelerated, bool industry = false, bool gold = false, bool forge = false, bool mint = false)
+    /// <summary>The mint baseline remains fixed for v9 save compatibility checks and the M5.2c benchmark.</summary>
+    public static GameScenario CreateMintForBenchmarks() =>
+        CreateCore("civil-growth-9", accelerated: true, industry: true, gold: true, forge: true, mint: true);
+
+    /// <summary>M5.3 contract: 5 swords per recruit, one recruit per barracks at a time, 30 valid seconds each.</summary>
+    public static MilitaryRules Recruitment { get; } = new("barracks", "swords", ResourceAmount.FromUnits(5m), 30);
+
+    private static GameScenario CreateCore(string rulesVersion, bool accelerated, bool industry = false, bool gold = false,
+        bool forge = false, bool mint = false, bool barracks = false)
     {
         var foundation = EconomyFoundationScenario.Create();
         ResourceDefinition[] industrialResources = industry
@@ -89,6 +101,9 @@ public static class CivilGrowthScenario
                 new(ResourceBundle.Create(("gold", 1m), ("coal", 1m)), ResourceBundle.Create(("coins", 3m))),
                 101, ["gold-smelter"])]
             : [];
+        BuildingDefinition[] militaryBuildings = barracks
+            ? [new("barracks", "Caserma", ResourceBundle.Create(("planks", 260m), ("stone", 200m)), 0, null, 110, ["forge"])]
+            : [];
         ResourceDefinition[] resources =
         [
             .. foundation.Catalog.Resources, new("fish", "Pesce"), new("food", "Cibo"),
@@ -116,7 +131,7 @@ public static class CivilGrowthScenario
                     new(ResourceBundle.Create(("grain", 2m)), ResourceBundle.Create(("flour", 1m))), 60, ["farm"]),
                 new("bakery", "Forno", ResourceBundle.Create(("planks", 150m), ("stone", 100m)), 1,
                     new(ResourceBundle.Create(("flour", 1m), ("water", 1m)), ResourceBundle.Create(("bread", 3m))), 70, ["mill", "well"]),
-                .. industrialBuildings, .. goldBuildings, .. forgeBuildings, .. mintBuildings
+                .. industrialBuildings, .. goldBuildings, .. forgeBuildings, .. mintBuildings, .. militaryBuildings
             ]);
         return new(Id, catalog, 8,
             foundation.Capacity + ResourceBundle.Create(("fish", 1000m), ("food", 1000m), ("grain", 1000m),
@@ -126,7 +141,8 @@ public static class CivilGrowthScenario
             [.. foundation.InitialBuildings, new("small-house", 1, 0)],
             new PopulationRules("food", ResourceAmount.FromUnits(0.010m), 60,
                 new AdvancedHousingRules("small-house", "bread", ResourceAmount.FromUnits(0.015m)),
-                accelerated ? new HousingGrowthRules("small-house", "large-house") : null));
+                accelerated ? new HousingGrowthRules("small-house", "large-house") : null),
+            barracks ? Recruitment : null);
     }
 
     /// <summary>
@@ -150,12 +166,15 @@ public static class CivilGrowthScenario
             return null;
         if (change.From == "civil-growth-8" && snapshot.Resources["coins"] != ResourceAmount.Zero)
             return null;
+        // Earlier rules had no recruits or soldiers: a checkpoint claiming them is not converted.
+        if (snapshot.Military is { IsEmpty: false }) return null;
         // Rules -3 -> -4 changes the bakery recipe, not already stored stock.
         // Never guess whether old food originally came from the bakery or the fish chain.
         return snapshot with
         {
             RulesVersion = change.To,
-            Buildings = [.. snapshot.Buildings, .. change.AddedBuildings.Select(id => new BuildingState(id, 0, 0))]
+            Buildings = [.. snapshot.Buildings, .. change.AddedBuildings.Select(id => new BuildingState(id, 0, 0))],
+            Military = change.To == RulesVersion ? MilitaryState.Empty : null
         };
     }
 }
