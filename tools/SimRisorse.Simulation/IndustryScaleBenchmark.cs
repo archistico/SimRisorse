@@ -7,7 +7,7 @@ using SimRisorse.Core.Sessions;
 namespace SimRisorse.Simulation;
 
 /// <summary>
-/// M5.1c: five fixed, synthetic coal-allocation experiments against the historical v7 catalog.
+/// M5.1c: five fixed, synthetic coal-allocation experiments against the frozen v7 gold catalog.
 /// Ore is seeded to isolate coal; purchases, staffing and per-second production use GameSession.
 /// This is not a new campaign strategy and does not modify any gameplay parameters.
 /// </summary>

@@ -16,12 +16,15 @@ if (args is ["--help"])
 {
     Console.WriteLine("SimRisorse.Simulation [--seconds N | --hours N] [--scenario economy-foundation|civil-growth] [--strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting|military]");
     Console.WriteLine("Maximum 168 hours; default 60 seconds. Civil growth defaults to bootstrap; foundation has no strategy.");
+    Console.WriteLine("--rules legacy: frozen civil-growth-4; --rules historical-v9: frozen civil-growth-9 for bootstrap/industry/gold reference trajectories.");
     Console.WriteLine("SimRisorse.Simulation --check-catalog [--scenario economy-foundation|civil-growth]: exit 1 if an unlock is unreachable.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-housing: historical M4 comparison; --benchmark-housing-accelerated: new M4.10 comparison.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-bread-scale: compares one, two full, a delayed full and a lean bread chain at 220 residents.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-bread-high-density: stress comparison at 320 residents with sufficient housing and food.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-industry-scale: five controlled coal-allocation profiles under civil-growth-7.");
-    Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint: nine controlled/sustained comparisons and four storage/priority guards under current rules.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-coal: three v9 coal strategies at 1800/3600 seconds, with replay and ledger checks.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-campaign: three real-start v9 routes to 240 swords/360 coins over 2400 seconds.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-military-capacity: controlled v13 comparison of 5/10/20 recruits and 1/2/4 barracks.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
@@ -50,9 +53,19 @@ if (args is ["--benchmark-industry-scale"])
     try { Console.WriteLine(JsonSerializer.Serialize(IndustryScaleBenchmark.Run(), json)); return 0; }
     catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
 }
-if (args is ["--benchmark-forge-mint"])
+if (args is ["--benchmark-forge-mint-coal"])
 {
-    try { Console.WriteLine(JsonSerializer.Serialize(ForgeMintBenchmark.Run(), json)); return 0; }
+    try { Console.WriteLine(JsonSerializer.Serialize(ForgeMintCoalBenchmark.Run(), json)); return 0; }
+    catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
+}
+if (args is ["--benchmark-forge-mint-campaign"])
+{
+    try { Console.WriteLine(JsonSerializer.Serialize(ForgeMintCampaignBenchmark.Run(), json)); return 0; }
+    catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
+}
+if (args is ["--benchmark-military-capacity"])
+{
+    try { Console.WriteLine(JsonSerializer.Serialize(MilitaryCapacityBenchmark.Run(), json)); return 0; }
     catch (InvalidOperationException exception) { Console.Error.WriteLine(exception.Message); return 1; }
 }
 if (args is ["--check-catalog", .. var checkArguments])
@@ -75,14 +88,14 @@ if (args is ["--check-catalog", .. var checkArguments])
 var seconds = 60m;
 var scenarioId = "economy-foundation";
 string? strategy = null;
-var legacyCivilRules = false;
+string? rulesPreset = null;
 var options = new HashSet<string>(StringComparer.Ordinal);
 for (var index = 0; index < args.Length; index += 2)
 {
     var option = args[index];
     if (index + 1 >= args.Length || !options.Add(option)) return Usage();
     var value = args[index + 1];
-    if (option == "--rules") { if (value != "legacy") return Usage(); legacyCivilRules = true; continue; }
+    if (option == "--rules") { if (value is not ("legacy" or "historical-v9")) return Usage(); rulesPreset = value; continue; }
     if (option == "--scenario") { scenarioId = value; continue; }
     if (option == "--strategy") { strategy = value; continue; }
     if (option is not ("--seconds" or "--hours") || (options.Contains("--hours") && options.Contains("--seconds")) ||
@@ -91,14 +104,15 @@ for (var index = 0; index < args.Length; index += 2)
     seconds = option == "--hours" ? duration * 3600m : duration;
 }
 if (scenarioId is not ("economy-foundation" or "civil-growth") ||
-    (legacyCivilRules && scenarioId != "civil-growth") ||
-    ((strategy is "industry" or "gold" or "forge" or "mint" or "crafting" or "military") && legacyCivilRules) ||
+    (rulesPreset is not null && scenarioId != "civil-growth") ||
+    (rulesPreset == "legacy" && strategy is ("industry" or "gold" or "forge" or "mint" or "crafting" or "military")) ||
+    (rulesPreset == "historical-v9" && strategy is not (null or "bootstrap" or "industry" or "gold")) ||
     (strategy is not null && (scenarioId != "civil-growth" || strategy is not ("bootstrap" or "recovery" or "storage" or "bread" or "advanced" or "industry" or "gold" or "forge" or "mint" or "crafting" or "military")))) return Usage();
 if (scenarioId == "civil-growth") strategy ??= "bootstrap";
 
 static int Usage()
 {
-    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth and optionally --strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting|military for civil-growth. Industry, gold, forge, mint, crafting and military require current rules.");
+    Console.Error.WriteLine("Use --seconds N or --hours N (maximum 168h), --scenario economy-foundation|civil-growth; optional --strategy bootstrap|recovery|storage|bread|advanced|industry|gold|forge|mint|crafting|military and --rules legacy|historical-v9. Historical-v9 supports bootstrap, industry and gold; military requires current rules.");
     return 2;
 }
 
@@ -122,7 +136,12 @@ if (ticks != decimal.Truncate(ticks))
     return 2;
 }
 var runtime = new GameRuntime(scenarioId == "civil-growth"
-    ? (legacyCivilRules ? CivilGrowthScenario.CreateLegacyForBenchmarks() : CivilGrowthScenario.Create())
+    ? rulesPreset switch
+    {
+        "legacy" => CivilGrowthScenario.CreateLegacyForBenchmarks(),
+        "historical-v9" => CivilGrowthScenario.CreateMintForBenchmarks(),
+        _ => CivilGrowthScenario.Create()
+    }
     : EconomyFoundationScenario.Create());
 new SetPauseHandler(runtime).Handle(new(false));
 var advance = new AdvanceTimeHandler(runtime);
@@ -199,8 +218,8 @@ try
             AdvanceTo(craftingTicks);
             foreach (var id in new[] { "coal-mine", "forge", "mint" }) Build(runtime, id, staff: true);
         }
-        // military continues crafting: from the 240-sword checkpoint it buys the barracks as soon as it is affordable,
-        // then enlists one free civilian whenever five swords are in stock, up to 20 recruits. Times are measured, not fixed.
+        // Recover the fork's deterministic military progression from real starting stock.
+        // Wait for the barracks to be affordable, then enlist up to 20 people as swords/civilians permit.
         var militaryTicks = 2320L * TimeSpan.TicksPerSecond;
         if (strategy == "military" && ticks >= militaryTicks)
         {

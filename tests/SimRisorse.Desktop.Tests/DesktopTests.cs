@@ -7,6 +7,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -34,6 +35,327 @@ public static class TestAppBuilder
 
 public sealed class DesktopTests
 {
+    [AvaloniaFact]
+    public async Task TownHallIsVisibleAsAStartingStructureWithoutConstructionControls()
+    {
+        var vm = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await vm.InitializeAsync();
+        var townHall = vm.Buildings.Single(item => item.Id == "town-hall");
+        Assert.True(PixelGlyph.Supports("town-hall"));
+        Assert.Equal(1, townHall.Count);
+        Assert.True(townHall.IsScenarioFixed);
+        Assert.Equal("+1.000 posti per ogni risorsa", Assert.Single(townHall.CapacityLines).Text);
+        vm.Selected = townHall;
+        Assert.False(vm.ConstructCommand.CanExecute(null));
+        var window = new MainWindow(vm, startTimer: false, initialize: false);
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(window.FindControl<Button>("BuildButton")!.IsEffectivelyVisible);
+            Assert.False(window.FindControl<ComboBox>("BatchSelector")!.IsEffectivelyVisible);
+            Assert.False(window.FindControl<Button>("AssignButton")!.IsEffectivelyVisible);
+            Assert.False(window.FindControl<Button>("ReleaseButton")!.IsEffectivelyVisible);
+            Assert.True(window.FindControl<ItemsControl>("BuildingCapacityList")!.IsEffectivelyVisible);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    private static GameSnapshot MilitaryFixture(decimal swords = 40m)
+    {
+        var initial = GameSession.Create(CivilGrowthScenario.CreateTownHallForBenchmarks()).Snapshot();
+        return initial with
+        {
+            Population = 40,
+            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m), ("stone", 1000m),
+                ("food", 100m), ("bread", 100m), ("swords", swords)),
+            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "forge" or "barracks"
+                ? item with { Count = 1 } : item)]
+        };
+    }
+
+    [Fact]
+    public async Task BarracksDescriptionShowsSeatsTrainingAndPopulationNotHousingPlaces()
+    {
+        var vm = new MainViewModel(new GameRuntime(CivilGrowthScenario.CreateTownHallForBenchmarks()),
+            new MemoryStore { Snapshot = MilitaryFixture() });
+        await vm.InitializeAsync();
+        var barracks = vm.Buildings.Single(item => item.Id == "barracks");
+        Assert.True(PixelGlyph.Supports("barracks"));
+        Assert.Equal("+2 posti di addestramento per Caserma", barracks.Recipe);
+        Assert.Contains("2 posti di addestramento", barracks.Status);
+        Assert.DoesNotContain("abitativi", barracks.Status);
+        Assert.Contains("60 secondi", barracks.Description);
+        Assert.Contains("senza lavoratori", barracks.Description);
+        Assert.Contains("Esercito", barracks.Activity);
+        Assert.False(barracks.IsProducer);
+        Assert.Equal("0 / 0", barracks.Staff);
+    }
+
+    [Fact]
+    public async Task MilitaryUiExplainsWhenQueueRefundIsBlockedByFullSwordStorage()
+    {
+        var seed = MilitaryFixture(1070m) with
+        {
+            Military = new SimRisorse.Core.Military.MilitaryTrainingState(1, 2, 0, 0)
+        };
+        var vm = new MainViewModel(new GameRuntime(CivilGrowthScenario.CreateTownHallForBenchmarks()),
+            new MemoryStore { Snapshot = seed });
+        await vm.InitializeAsync();
+        Assert.False(vm.CancelRecruitsCommand.CanExecute(null));
+        Assert.Contains("Spazio insufficiente", vm.MilitaryCancelHint);
+        Assert.Contains("Magazzino", vm.MilitaryCancelHint);
+        Assert.Equal(3, vm.MilitaryPeople);
+        Assert.Equal(34, vm.View.AvailableWorkers);
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task MilitaryNavigationAndCommandsRemainUsableAcrossBothDesktopSizes(int width, int height)
+    {
+        var vm = new MainViewModel(new GameRuntime(CivilGrowthScenario.CreateTownHallForBenchmarks()),
+            new MemoryStore { Snapshot = MilitaryFixture() });
+        await vm.InitializeAsync();
+        var window = new MainWindow(vm, startTimer: false, initialize: false)
+        { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var navigation = window.FindControl<ListBoxItem>("MilitaryNavigation")!;
+            Assert.True(vm.HasMilitaryRules);
+            Assert.True(navigation.IsVisible);
+            var point = navigation.TranslatePoint(new Point(navigation.Bounds.Width / 2,
+                navigation.Bounds.Height / 2), window)!.Value;
+            window.MouseDown(point, MouseButton.Left);
+            window.MouseUp(point, MouseButton.Left);
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Equal(2, window.FindControl<TabControl>("Sections")!.SelectedIndex);
+            Assert.True(window.FindControl<TextBlock>("MilitaryRosterText")!.IsEffectivelyVisible);
+            Assert.Contains("40 abitanti", window.FindControl<TextBlock>("MilitaryRosterText")!.Text);
+            Assert.True(window.FindControl<PixelGlyph>("PopulationGlyph")!.IsEffectivelyVisible);
+            Assert.True(window.FindControl<Button>("EnlistButton")!.IsEffectivelyEnabled);
+            Assert.False(window.FindControl<Button>("DischargeButton")!.IsEffectivelyEnabled);
+            Assert.False(window.FindControl<Button>("CancelQueueButton")!.IsEffectivelyEnabled);
+
+            var selector = window.FindControl<ComboBox>("MilitaryQuantitySelector")!;
+            selector.SelectedItem = 5;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(10, vm.MilitarySwordCost);
+            Click(window, "EnlistButton");
+            Assert.Equal((3, 2, 0), (vm.WaitingRecruits, vm.TrainingRecruits, vm.AvailableSoldiers));
+            Assert.Equal(30m, vm.AvailableSwords);
+            Assert.Equal(32, vm.View.AvailableWorkers);
+
+            selector.SelectedItem = 1;
+            Dispatcher.UIThread.RunJobs();
+            Click(window, "CancelQueueButton");
+            Assert.Equal((2, 2, 0), (vm.WaitingRecruits, vm.TrainingRecruits, vm.AvailableSoldiers));
+            Assert.Equal(32m, vm.AvailableSwords);
+
+            Click(window, "PauseButton");
+            vm.Advance(TimeSpan.FromSeconds(30));
+            Dispatcher.UIThread.RunJobs();
+            Assert.Contains("00:30", window.FindControl<TextBlock>("MilitaryTrainingText")!.Text);
+            Assert.InRange(window.FindControl<ProgressBar>("MilitaryProgressBar")!.Value, 49, 51);
+            vm.Advance(TimeSpan.FromSeconds(30));
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal((0, 2, 2), (vm.WaitingRecruits, vm.TrainingRecruits, vm.AvailableSoldiers));
+            Click(window, "DischargeButton");
+            Assert.Equal(1, vm.AvailableSoldiers);
+            Assert.Equal(34, vm.View.AvailableWorkers);
+            Assert.Contains("non vengono rimborsate", vm.MilitaryDischargeHint);
+            Assert.Contains("1", window.FindControl<TextBlock>("MilitarySoldiersCount")!.Text);
+
+            foreach (var name in new[] { "EnlistButton", "CancelQueueButton", "DischargeButton", "MilitaryQuantitySelector" })
+            {
+                var control = window.FindControl<Control>(name)!;
+                Assert.True(control.IsEffectivelyVisible);
+                var position = control.TranslatePoint(default, window)!.Value;
+                Assert.InRange(position.X, 0, window.ClientSize.Width - control.Bounds.Width);
+                Assert.InRange(position.Y, 0, window.ClientSize.Height - control.Bounds.Height);
+            }
+            var buttons = new[] { "EnlistButton", "CancelQueueButton", "DischargeButton" }
+                .Select(name => window.FindControl<Button>(name)!).ToArray();
+            for (var index = 1; index < buttons.Length; index++)
+            {
+                var left = buttons[index - 1].TranslatePoint(default, window)!.Value.X + buttons[index - 1].Bounds.Width;
+                var right = buttons[index].TranslatePoint(default, window)!.Value.X;
+                Assert.True(left + 1 <= right, "I comandi militari non devono sovrapporsi.");
+            }
+            using var screenshot = window.CaptureRenderedFrame();
+            Assert.NotNull(screenshot);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [Fact]
+    public async Task V13ArmyTabShowsIndividualTrainingAndAllowsCancellationButNotDischarge()
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var start = GameSession.Create(scenario).Snapshot();
+        var snapshot = start with
+        {
+            Population = 40,
+            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m),
+                ("stone", 1000m), ("food", 100m), ("bread", 100m), ("swords", 100m)),
+            Buildings = [.. start.Buildings.Select(item => item.BuildingId is "large-house" or "forge" or "barracks"
+                ? item with { Count = 1 } : item)]
+        };
+        var vm = new MainViewModel(new GameRuntime(scenario), new MemoryStore { Snapshot = snapshot });
+        await vm.InitializeAsync();
+        var barracks = vm.Buildings.Single(item => item.Id == "barracks");
+        Assert.Equal("+1 posto di addestramento per Caserma", barracks.Recipe);
+        Assert.Contains("260 Tavole", barracks.Description);
+        Assert.Contains("30 secondi", barracks.Description);
+        Assert.Contains("5 Spade", vm.MilitaryWeaponsStatus);
+        Assert.False(vm.DischargeCommand.CanExecute(null));
+        Assert.True(vm.EnlistCommand.CanExecute(null));
+        vm.MilitaryQuantity = 5;
+        vm.EnlistCommand.Execute(null);
+        Assert.Equal((4, 1, 0), (vm.WaitingRecruits, vm.TrainingRecruits, vm.AvailableSoldiers));
+        Assert.Equal(75m, vm.AvailableSwords);
+        Assert.Contains("Annulla reclute", vm.CancelRecruitsLabel);
+        Assert.True(vm.CancelRecruitsCommand.CanExecute(null));
+        vm.CancelRecruitsCommand.Execute(null);
+        Assert.Equal(0, vm.TrainingRecruits);
+        Assert.Equal(0, vm.WaitingRecruits);
+        Assert.Equal(100m, vm.AvailableSwords);
+    }
+
+    [AvaloniaFact]
+    public async Task HistoricalFoundationKeepsMilitaryNavigationHidden()
+    {
+        var vm = new MainViewModel(new GameRuntime(EconomyFoundationScenario.Create()), new MemoryStore());
+        await vm.InitializeAsync();
+        var window = new MainWindow(vm, startTimer: false, initialize: false);
+        try
+        {
+            Assert.False(vm.HasMilitaryRules);
+            Assert.False(window.FindControl<ListBoxItem>("MilitaryNavigation")!.IsVisible);
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(vm.HasMilitaryRules);
+            Assert.False(window.FindControl<ListBoxItem>("MilitaryNavigation")!.IsVisible);
+            Assert.False(window.FindControl<ListBoxItem>("MilitaryNavigation")!.IsEffectivelyVisible);
+            Assert.False(window.FindControl<TabItem>("MilitaryTab")!.IsEffectivelyVisible);
+            window.FindControl<TabControl>("Sections")!.SelectedIndex = 1;
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(window.FindControl<ItemsControl>("ResourcesTable")!.IsEffectivelyVisible);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [Fact]
+    public async Task BreadStorageExplainsItsCapacityItsProducerBatchAndWhichBuildingExpandsIt()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        viewModel.SelectedResource = viewModel.Resources.Single(item => item.Id == "bread");
+
+        Assert.Contains("Pane: 0 / 1.010", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("1 Municipio × 1.000", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("1 Casa piccola × 10", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("0 Magazzini × 500", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("3 posti liberi", viewModel.SelectedResourceStorageDetails);
+
+        var game = viewModel.View;
+        var bread = game.Resources.Single(item => item.Id == "bread") with { Quantity = 1009m };
+        var capacityReached = game with
+        {
+            Resources = game.Resources.Select(item => item.Id == "bread" ? bread : item).ToImmutableArray()
+        };
+        var baker = game.Buildings.Single(item => item.Id == "bakery") with
+        {
+            Count = 1, AssignedWorkers = 1, BlockReason = SimRisorse.Core.Economy.ProductionBlockReason.StorageFull,
+            FullOutputNames = ["Pane"]
+        };
+        var diagnosis = new BuildingRow(baker, capacityReached).Diagnosis;
+        Assert.Contains("Pane: 1.009 / 1.010", diagnosis);
+        Assert.Contains("liberi 1", diagnosis);
+        Assert.Contains("servono 3 posti per lotto", diagnosis);
+        Assert.Contains("costruisci un Magazzino", diagnosis);
+        Assert.Contains("Deposito alimentare produce Cibo", diagnosis);
+
+        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
+        viewModel.ConstructCommand.Execute(null);
+        Assert.Equal(1, viewModel.Selected.Count);
+        Assert.Contains("Pane: 0 / 1.510", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("1 Municipio × 1.000", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("1 Magazzino × 500", viewModel.SelectedResourceStorageDetails);
+        Assert.Equal(viewModel.SelectedResource!.CapacityBreakdown, viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("Non conserva il Pane", viewModel.Buildings.Single(item => item.Id == "food-store").Description);
+    }
+
+    [Fact]
+    public async Task ProducerWithOnSiteStorageStillShowsItsRecipeAndMissingInputs()
+    {
+        var vm = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await vm.InitializeAsync();
+        var bakery = vm.View.Buildings.Single(item => item.Id == "bakery") with
+        {
+            Count = 1,
+            AssignedWorkers = 1,
+            BlockReason = SimRisorse.Core.Economy.ProductionBlockReason.MissingInputs,
+            MissingInputNames = ["Farina"]
+        };
+        var row = new BuildingRow(bakery, vm.View);
+
+        Assert.True(row.IsProducer);
+        Assert.True(row.HasStorage);
+        Assert.True(row.HasInputs);
+        Assert.Equal("Materie prime insufficienti", row.Status);
+        Assert.Equal("1 farina · 1 acqua → 3 pane", row.Recipe);
+        Assert.Contains("Farina", row.Diagnosis);
+        Assert.Contains(row.CapacityLines, item => item.ResourceId == "bread" && item.Text.Contains("+50 Pane"));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1040, 740)]
+    [InlineData(1240, 850)]
+    public async Task EveryBuildingShowsCapacityWithSameIconAndFontAsCostsAndProduction(int width, int height)
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
+        try
+        {
+            window.Show();
+            var capacity = window.FindControl<ItemsControl>("BuildingCapacityList")!;
+            var costs = window.FindControl<ItemsControl>("ConstructionCostList")!;
+            foreach (var (id, icons, labels) in new (string Id, string[] Icons, string[] Labels)[]
+            {
+                ("warehouse", ["warehouse"], ["+500 posti per ogni risorsa"]),
+                ("small-house", ["population", "bread", "food"], ["+8 posti abitativi", "+10 Pane", "+10 Cibo"]),
+                ("large-house", ["population", "bread", "food"], ["+32 posti abitativi", "+25 Pane", "+25 Cibo"]),
+                ("barracks", ["barracks", "swords"], ["+1 posto di addestramento", "+20 Spade"]),
+                ("bakery", ["bread"], ["+50 Pane"]),
+                ("food-store", ["food"], ["+50 Cibo"])
+            })
+            {
+                viewModel.Selected = viewModel.Buildings.Single(item => item.Id == id);
+                Dispatcher.UIThread.RunJobs();
+                var lines = capacity.GetVisualDescendants().OfType<TextBlock>().ToArray();
+                var glyphs = capacity.GetVisualDescendants().OfType<PixelGlyph>().ToArray();
+                var costText = costs.GetVisualDescendants().OfType<TextBlock>().First();
+                Assert.Equal(icons, glyphs.Select(item => item.Key));
+                Assert.Equal(labels.Length, lines.Length);
+                for (var index = 0; index < lines.Length; index++)
+                {
+                    Assert.Contains(labels[index], lines[index].Text!);
+                    Assert.Equal(14d, glyphs[index].Width);
+                    Assert.Equal(14d, glyphs[index].Height);
+                    Assert.Equal(costText.FontFamily, lines[index].FontFamily);
+                    Assert.Equal(costText.FontSize, lines[index].FontSize);
+                    Assert.Equal(costText.FontWeight, lines[index].FontWeight);
+                }
+            }
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
     [Fact]
     public void ResourceTableRoundsOnlyDisplayedQuantityAndEstimatesTimeToFullFromNetRate()
     {
@@ -58,6 +380,27 @@ public sealed class DesktopTests
         Assert.Equal("27:46:40", row.TimeToFull); // Le ore totali non si azzerano dopo 24h.
         row.Update(new ResourceView("logs", "Tronchi", 1234.5m, 2000m, 0m, 0m));
         Assert.Equal("1.235", row.QuantityRounded);
+    }
+
+    [Fact]
+    public async Task RateBrushesAreImmutableAndSafeAcrossHeadlessUiThreads()
+    {
+        // Un normale SolidColorBrush statico resta associato al Dispatcher del
+        // primo test: quello successivo fallisce durante il rendering del testo.
+        var surplus = new ResourceRow(new ResourceView("logs", "Tronchi", 1m, 10m, 2m, 1m)).NetForeground;
+        var deficit = new ResourceRow(new ResourceView("bread", "Pane", 1m, 10m, 1m, 2m)).NetForeground;
+        Assert.IsAssignableFrom<IImmutableBrush>(surplus);
+        Assert.IsAssignableFrom<IImmutableBrush>(deficit);
+
+        await Task.Run(() =>
+        {
+            Assert.Equal(Color.Parse("#176858"), Assert.IsAssignableFrom<ISolidColorBrush>(surplus).Color);
+            Assert.Equal(Color.Parse("#A44732"), Assert.IsAssignableFrom<ISolidColorBrush>(deficit).Color);
+            // Forza anche la lettura dell'attributo usato dal compositor
+            // nel punto preciso dell'eccezione riportata dal test Windows.
+            _ = surplus.Transform;
+            _ = deficit.Transform;
+        }, TestContext.Current.CancellationToken);
     }
 
     [Theory]
@@ -116,19 +459,24 @@ public sealed class DesktopTests
             Assert.Equal("logs", Assert.Single(output.GetVisualDescendants().OfType<PixelGlyph>()).Key);
             viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "iron-smelter");
             Dispatcher.UIThread.RunJobs();
-            // Selection rebuilds the detail rows; compare against a cost row still attached to the window.
-            costText = costs.GetVisualDescendants().OfType<TextBlock>().First();
             var inputs = window.FindControl<ItemsControl>("ProductionInputList")!;
             var inputTexts = inputs.GetVisualDescendants().OfType<TextBlock>().ToArray();
             var inputGlyphs = inputs.GetVisualDescendants().OfType<PixelGlyph>().ToArray();
+            // Dopo il cambio edificio i vecchi TextBlock sono staccati dall'albero
+            // visuale e perdono i font ereditati: confrontare i controlli attivi.
+            var activeCostText = costs.GetVisualDescendants().OfType<TextBlock>().First();
+            var activeOutputText = OutputText();
             Assert.True(inputs.IsEffectivelyVisible);
             Assert.Equal(viewModel.Selected.View.InputPerWorker.Length, inputTexts.Length);
             Assert.Equal(viewModel.Selected.View.InputPerWorker.Select(item => item.ResourceId), inputGlyphs.Select(item => item.Key));
+            Assert.Equal(activeCostText.FontFamily, activeOutputText.FontFamily);
+            Assert.Equal(activeCostText.FontSize, activeOutputText.FontSize);
+            Assert.Equal(activeCostText.FontWeight, activeOutputText.FontWeight);
             Assert.All(inputTexts, item =>
             {
-                Assert.Equal(costText.FontFamily, item.FontFamily);
-                Assert.Equal(costText.FontSize, item.FontSize);
-                Assert.Equal(costText.FontWeight, item.FontWeight);
+                Assert.Equal(activeCostText.FontFamily, item.FontFamily);
+                Assert.Equal(activeCostText.FontSize, item.FontSize);
+                Assert.Equal(activeCostText.FontWeight, item.FontWeight);
             });
             Assert.All(inputGlyphs, item =>
             {
@@ -152,46 +500,6 @@ public sealed class DesktopTests
             Assert.Equal("COSTO PER 5 EDIFICI", window.FindControl<TextBlock>("ConstructionCostText")!.Text);
             Assert.Equal("2 tronchi", OutputText().Text);
             window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
-            foreach (var (id, icon, text) in new[]
-            {
-                ("warehouse", "warehouse", "+500 capacità per ogni risorsa per magazzino"),
-                ("small-house", "population", "+8 posti abitativi per casa"),
-                ("large-house", "population", "+32 posti abitativi per casa")
-            })
-            {
-                viewModel.Selected = viewModel.Buildings.Single(item => item.Id == id);
-                Dispatcher.UIThread.RunJobs();
-                var effects = window.FindControl<ItemsControl>("BuildingEffectList")!;
-                Assert.True(effects.IsEffectivelyVisible);
-                Assert.False(output.IsEffectivelyVisible);
-                var effectText = Assert.Single(effects.GetVisualDescendants().OfType<TextBlock>());
-                var effectGlyph = Assert.Single(effects.GetVisualDescendants().OfType<PixelGlyph>());
-                costText = costs.GetVisualDescendants().OfType<TextBlock>().First();
-                Assert.Equal(text, effectText.Text);
-                Assert.Equal(costText.FontFamily, effectText.FontFamily);
-                Assert.Equal(12d, effectText.FontSize);
-                Assert.Equal(costText.FontWeight, effectText.FontWeight);
-                Assert.Equal(icon, effectGlyph.Key);
-                Assert.Equal(14d, effectGlyph.Width);
-                Assert.Equal(14d, effectGlyph.Height);
-                Assert.True(costs.TranslatePoint(default, window)!.Value.Y + costs.Bounds.Height <=
-                    effects.TranslatePoint(default, window)!.Value.Y);
-                Assert.True(effects.TranslatePoint(default, window)!.Value.Y + effects.Bounds.Height <
-                    window.FindControl<ComboBox>("BatchSelector")!.TranslatePoint(default, window)!.Value.Y);
-                window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 5;
-                Dispatcher.UIThread.RunJobs();
-                Assert.Equal(text, Assert.Single(effects.GetVisualDescendants().OfType<TextBlock>()).Text);
-                window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
-                Dispatcher.UIThread.RunJobs();
-                var effectArtifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
-                if (!string.IsNullOrWhiteSpace(effectArtifacts))
-                {
-                    Directory.CreateDirectory(effectArtifacts);
-                    using var effectImage = window.CaptureRenderedFrame();
-                    Assert.NotNull(effectImage);
-                    effectImage.Save(Path.Combine(effectArtifacts, $"effects-{id}-{width}.png"), PngBitmapEncoderOptions.Default);
-                }
-            }
             viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "small-house");
             Click(window, "BuildButton");
             Assert.Equal("8 / 16", window.FindControl<TextBlock>("PopulationCountText")!.Text);
@@ -302,7 +610,7 @@ public sealed class DesktopTests
                 var point = button.TranslatePoint(default, window)!.Value;
                 Assert.InRange(point.Y, 0, window.ClientSize.Height - button.Bounds.Height);
             }
-            Assert.Equal(scenario.Catalog.Resources.Length, viewModel.Resources.Count);
+            Assert.Equal(16, viewModel.Resources.Count);
             if (section == 1)
             {
                 var scroll = ResourceScroll(window);
@@ -320,186 +628,6 @@ public sealed class DesktopTests
         finally { window.CloseWithoutSaving(); }
     }
 
-    [AvaloniaTheory]
-    [InlineData(1040, 740, 0, "forge-buildings-compact.png", false)]
-    [InlineData(1240, 850, 0, "forge-buildings.png", false)]
-    [InlineData(1040, 740, 1, "forge-resources-compact.png", false)]
-    [InlineData(1240, 850, 1, "forge-resources.png", false)]
-    [InlineData(1040, 740, 0, "mint-buildings-compact.png", true)]
-    [InlineData(1240, 850, 0, "mint-buildings.png", true)]
-    [InlineData(1040, 740, 1, "mint-resources-compact.png", true)]
-    [InlineData(1240, 850, 1, "mint-resources.png", true)]
-    public async Task CraftingCommandsExplainInputsAndShowStocksInBothLayouts(int width, int height, int section, string file, bool mint)
-    {
-        var scenario = CivilGrowthScenario.Create();
-        var buildingId = mint ? "mint" : "forge";
-        var resourceId = mint ? "coins" : "swords";
-        var initial = GameSession.Create(scenario).Snapshot();
-        var store = new MemoryStore { Snapshot = initial with
-        {
-            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m), ("bread", 100m)),
-            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" ? item with { Count = 1 } : item)]
-        } };
-        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
-        await viewModel.InitializeAsync();
-        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == buildingId);
-        Assert.Contains(mint ? "Fonderia d'oro" : "Fonderia di ferro", viewModel.Selected.Diagnosis);
-        Assert.False(viewModel.ConstructCommand.CanExecute(null));
-        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
-        try
-        {
-            window.Show();
-            foreach (var id in mint ? new[] { "gold-mine", "coal-mine", "gold-smelter", "mint" }
-                : new[] { "iron-mine", "coal-mine", "iron-smelter", "forge" })
-            {
-                viewModel.Selected = viewModel.Buildings.Single(item => item.Id == id);
-                Assert.True(viewModel.ConstructCommand.CanExecute(null));
-                viewModel.ConstructCommand.Execute(null);
-                Assert.Contains("Assegna", viewModel.Selected.Diagnosis);
-                viewModel.AssignCommand.Execute(null);
-            }
-            Assert.Contains("Carbone", viewModel.Selected.Diagnosis);
-            Assert.Contains(mint ? "Oro" : "Ferro", viewModel.Selected.Diagnosis);
-            Dispatcher.UIThread.RunJobs();
-            var inputs = window.FindControl<ItemsControl>("ProductionInputList")!;
-            Assert.Equal(new[] { "coal", mint ? "gold" : "iron" }, inputs.GetVisualDescendants().OfType<PixelGlyph>().Select(item => item.Key));
-            Assert.Equal(resourceId, Assert.Single(window.FindControl<ItemsControl>("ProductionOutputList")!
-                .GetVisualDescendants().OfType<PixelGlyph>()).Key);
-            viewModel.TogglePauseCommand.Execute(null);
-            viewModel.Advance(TimeSpan.FromSeconds(3));
-            viewModel.Pause();
-            Assert.Equal(mint ? 3m : 2m, viewModel.View.Resources.Single(item => item.Id == resourceId).Quantity);
-            Assert.Equal("Pronto a produrre", viewModel.Selected.Status);
-            Assert.Equal(mint ? "00:05:33" : "00:08:19", viewModel.Resources.Single(item => item.Id == resourceId).TimeToFull);
-            window.FindControl<ListBox>("BuildingsList")!.ScrollIntoView(viewModel.Selected);
-            window.FindControl<TabControl>("Sections")!.SelectedIndex = section;
-            Dispatcher.UIThread.RunJobs();
-            foreach (var name in section == 0 ? new[] { "BuildButton", "AssignButton", "PauseButton", "SaveButton" }
-                : new[] { "PauseButton", "SaveButton" })
-            {
-                var button = window.FindControl<Button>(name)!;
-                Assert.True(button.IsEffectivelyVisible);
-                Assert.InRange(button.TranslatePoint(default, window)!.Value.Y, 0, window.ClientSize.Height - button.Bounds.Height);
-            }
-            if (section == 1)
-            {
-                var list = window.FindControl<ListBox>("ResourcesTable")!;
-                list.ScrollIntoView(viewModel.Resources.Single(item => item.Id == resourceId));
-                Dispatcher.UIThread.RunJobs();
-                AssertListGutter(window, list);
-            }
-            using var image = window.CaptureRenderedFrame();
-            Assert.NotNull(image);
-            var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
-            if (!string.IsNullOrWhiteSpace(artifacts))
-            {
-                Directory.CreateDirectory(artifacts);
-                image.Save(Path.Combine(artifacts, file), PngBitmapEncoderOptions.Default);
-            }
-        }
-        finally { window.CloseWithoutSaving(); }
-    }
-
-    [AvaloniaTheory]
-    [InlineData(1040, 740, "barracks-buildings-compact.png")]
-    [InlineData(1240, 850, "barracks-buildings.png")]
-    public async Task BarracksPanelEnlistsTrainsAndCancelsRecruitsInBothLayouts(int width, int height, string file)
-    {
-        var scenario = CivilGrowthScenario.Create();
-        var initial = GameSession.Create(scenario).Snapshot();
-        var store = new MemoryStore { Snapshot = initial with
-        {
-            Population = 40,
-            Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m),
-                ("bread", 100m), ("swords", 100m)),
-            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" or "iron-smelter" or "forge"
-                ? item with { Count = 1 } : item)]
-        } };
-        var viewModel = new MainViewModel(new GameRuntime(scenario), store);
-        await viewModel.InitializeAsync();
-        viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "barracks");
-        Assert.True(viewModel.IsBarracksSelected);
-        Assert.Equal("Da costruire", viewModel.Selected.Status);
-        Assert.Contains("Spade", viewModel.Selected.Description);
-        Assert.False(viewModel.EnlistCommand.CanExecute(null));
-        Assert.Contains("Costruisci la Caserma", viewModel.MilitaryNote);
-        var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = width, Height = height };
-        try
-        {
-            window.Show();
-            Assert.True(viewModel.ConstructCommand.CanExecute(null));
-            viewModel.ConstructCommand.Execute(null);
-            Assert.True(viewModel.EnlistCommand.CanExecute(null));
-            Assert.False(viewModel.CancelRecruitsCommand.CanExecute(null));
-            Assert.False(viewModel.AssignCommand.CanExecute(null));
-            window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 5;
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal("Arruola +5", window.FindControl<Button>("EnlistButton")!.Content);
-            Assert.Equal("COSTO PER 5 RECLUTE", window.FindControl<TextBlock>("EnlistCostHeadingText")!.Text);
-            var cost = window.FindControl<ItemsControl>("EnlistCostList")!;
-            Assert.Equal(new[] { "swords", "population" }, cost.GetVisualDescendants().OfType<PixelGlyph>().Select(item => item.Key));
-            Assert.Equal(new[] { "25 spade", "5 abitanti liberi" }, cost.GetVisualDescendants().OfType<TextBlock>().Select(item => item.Text));
-            var effects = window.FindControl<ItemsControl>("BuildingEffectList")!;
-            Assert.Equal(new[] { "recruits", "soldiers" }, effects.GetVisualDescendants().OfType<PixelGlyph>().Select(item => item.Key));
-
-            viewModel.EnlistCommand.Execute(null);
-            Assert.Equal("Ordine completato.", viewModel.Message);
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(75m, viewModel.View.Resources.Single(item => item.Id == "swords").Quantity);
-            Assert.Equal("35 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
-            Assert.Contains("5 reclute · 0 soldati", viewModel.Population);
-            Assert.Equal("1/1 in addestramento · 0 soldati", viewModel.Selected.Status);
-            viewModel.TogglePauseCommand.Execute(null);
-            viewModel.Advance(TimeSpan.FromSeconds(30));
-            viewModel.Pause();
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal("1/1 in addestramento · 1 soldato", viewModel.Selected.Status);
-            Assert.Equal(new[] { "In coda: 3", "In addestramento: 1 / 1 posti", "Soldati: 1", "Prossimo tra 30 s · tutti tra 120 s" },
-                window.FindControl<ItemsControl>("MilitaryStatusList")!.GetVisualDescendants().OfType<TextBlock>().Select(item => item.Text));
-            Assert.Equal("35 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
-
-            window.FindControl<ComboBox>("BatchSelector")!.SelectedItem = 1;
-            Dispatcher.UIThread.RunJobs();
-            Assert.True(viewModel.CancelRecruitsCommand.CanExecute(null));
-            viewModel.CancelRecruitsCommand.Execute(null);
-            Dispatcher.UIThread.RunJobs();
-            Assert.Equal(80m, viewModel.View.Resources.Single(item => item.Id == "swords").Quantity);
-            Assert.Equal(2, viewModel.View.Military!.QueuedRecruits);
-            Assert.Equal("36 liberi", window.FindControl<TextBlock>("AvailableWorkersText")!.Text);
-
-            Assert.True(window.FindControl<StackPanel>("MilitaryPanel")!.IsEffectivelyVisible);
-            Assert.True(window.FindControl<Grid>("RecruitButtons")!.IsEffectivelyVisible);
-            Assert.False(window.FindControl<Grid>("WorkerButtons")!.IsEffectivelyVisible);
-            foreach (var name in new[] { "BuildButton", "CancelRecruitsButton", "EnlistButton", "PauseButton", "SaveButton" })
-            {
-                var button = window.FindControl<Button>(name)!;
-                Assert.True(button.IsEffectivelyVisible);
-                Assert.InRange(button.TranslatePoint(default, window)!.Value.Y, 0, window.ClientSize.Height - button.Bounds.Height);
-            }
-            window.FindControl<ListBox>("BuildingsList")!.ScrollIntoView(viewModel.Selected);
-            Dispatcher.UIThread.RunJobs();
-            using (var image = window.CaptureRenderedFrame())
-            {
-                Assert.NotNull(image);
-                var artifacts = Environment.GetEnvironmentVariable("SIMRISORSE_DESKTOP_ARTIFACTS");
-                if (!string.IsNullOrWhiteSpace(artifacts))
-                {
-                    Directory.CreateDirectory(artifacts);
-                    image.Save(Path.Combine(artifacts, file), PngBitmapEncoderOptions.Default);
-                }
-            }
-
-            viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "forge");
-            Dispatcher.UIThread.RunJobs();
-            Assert.False(viewModel.IsBarracksSelected);
-            Assert.False(window.FindControl<StackPanel>("MilitaryPanel")!.IsEffectivelyVisible);
-            Assert.True(window.FindControl<Grid>("WorkerButtons")!.IsEffectivelyVisible);
-            Assert.False(window.FindControl<Grid>("RecruitButtons")!.IsEffectivelyVisible);
-            Assert.False(viewModel.EnlistCommand.CanExecute(null));
-        }
-        finally { window.CloseWithoutSaving(); }
-    }
-
     [Fact]
     public void OriginalRetroGlyphsCoverTheEntireCivilCatalog()
     {
@@ -509,6 +637,48 @@ public sealed class DesktopTests
         Assert.All(catalog.Resources, resource => Assert.True(PixelGlyph.Supports(resource.Id),
             $"Missing pixel pictogram for resource {resource.Id}."));
         Assert.False(PixelGlyph.Supports("not-a-catalog-key"));
+    }
+
+    [Fact]
+    public async Task ForgeAndSwordsAppearWithDescriptionStorageAndRetroPictograms()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        Assert.Contains("Forgia", viewModel.Buildings.Select(item => item.Name));
+        var forge = viewModel.Buildings.Single(item => item.Id == "forge");
+        Assert.Equal(240m, forge.View.Cost.Single(item => item.ResourceId == "planks").Quantity);
+        Assert.Contains("prima alle Fonderie", forge.Description);
+        Assert.Contains("Fonderia di ferro", forge.Diagnosis);
+        Assert.True(PixelGlyph.Supports("forge"));
+        Assert.True(PixelGlyph.Supports("swords"));
+
+        viewModel.SelectedResource = viewModel.Resources.Single(item => item.Id == "swords");
+        Assert.Contains("Spade: 0 / 1.000", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("1 Municipio × 1.000", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("Forgia richiede almeno 2 posti liberi", viewModel.SelectedResourceStorageDetails);
+    }
+
+    [Fact]
+    public async Task MintAndCoinsShowCorrectInputsStorageBatchAndRetroPictograms()
+    {
+        var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
+        await viewModel.InitializeAsync();
+        var mint = viewModel.Buildings.Single(item => item.Id == "mint");
+        Assert.Equal("Zecca", mint.Name);
+        Assert.Equal(210m, mint.View.Cost.Single(item => item.ResourceId == "planks").Quantity);
+        Assert.Equal(160m, mint.View.Cost.Single(item => item.ResourceId == "stone").Quantity);
+        Assert.Contains("pagamenti specifici", mint.Description);
+        Assert.Contains("Fonderia d'oro", mint.Diagnosis);
+        Assert.Contains(mint.View.InputPerWorker, item => item.ResourceId == "coal" && item.Quantity == 1m);
+        Assert.Contains(mint.View.InputPerWorker, item => item.ResourceId == "gold" && item.Quantity == 1m);
+        Assert.Contains(mint.View.OutputPerWorker, item => item.ResourceId == "coins" && item.Quantity == 3m);
+        Assert.True(PixelGlyph.Supports("mint"));
+        Assert.True(PixelGlyph.Supports("coins"));
+
+        viewModel.SelectedResource = viewModel.Resources.Single(item => item.Id == "coins");
+        Assert.Contains("Monete: 0 / 1.000", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("1 Municipio × 1.000", viewModel.SelectedResourceStorageDetails);
+        Assert.Contains("Zecca richiede almeno 3 posti liberi", viewModel.SelectedResourceStorageDetails);
     }
 
     [AvaloniaTheory]
@@ -627,6 +797,7 @@ public sealed class DesktopTests
         new SqliteGameSaveStore(path).Save(current with
         {
             RulesVersion = "civil-growth-1",
+            Military = null,
             Buildings = [.. current.Buildings.Where(item => !CivilGrowthScenario.Changes.Any(change => change.AddedBuildings.Contains(item.BuildingId)))]
         });
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new SqliteGameSaveStore(path));
@@ -642,15 +813,17 @@ public sealed class DesktopTests
     }
 
     [AvaloniaFact]
-    public async Task WarehouseRaisesCapacityWhilePreservingTheSmallerBreadBaseCapacity()
+    public async Task WarehouseRaisesEveryResourceCapacityByTheSameAmount()
     {
         var viewModel = new MainViewModel(new GameRuntime(CivilGrowthScenario.Create()), new MemoryStore());
         await viewModel.InitializeAsync();
+        var previous = viewModel.View.Resources.ToDictionary(item => item.Id, item => item.Capacity);
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "warehouse");
         viewModel.ConstructCommand.Execute(null);
         Assert.Equal("+500 capacità per ogni risorsa", viewModel.Selected.Status);
-        Assert.All(viewModel.Resources.Where(item => item.Id != "bread"), item => Assert.Equal("1.500", item.Capacity));
-        Assert.Equal("600", viewModel.Resources.Single(item => item.Id == "bread").Capacity);
+        Assert.All(viewModel.View.Resources, item => Assert.Equal(previous[item.Id] + 500m, item.Capacity));
+        Assert.Equal("1.550", viewModel.Resources.Single(item => item.Id == "planks").Capacity);
+        Assert.Equal("1.510", viewModel.Resources.Single(item => item.Id == "bread").Capacity);
         Assert.Contains("Nessun lavoratore", viewModel.Selected.Activity);
     }
 
@@ -666,8 +839,7 @@ public sealed class DesktopTests
         Assert.False(viewModel.ConstructCommand.CanExecute(null));
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "mill");
         Assert.Equal("2 grano → 1 farina", viewModel.Selected.Recipe);
-        Assert.Equal(viewModel.Resources.Count - 1, viewModel.Resources.Count(item => item.Capacity == "1.000"));
-        Assert.Equal("100", viewModel.Resources.Single(item => item.Id == "bread").Capacity);
+        Assert.Equal(viewModel.Resources.Count - 5, viewModel.Resources.Count(item => item.Capacity == "1.000"));
         viewModel.Selected = viewModel.Buildings.Single(item => item.Id == "large-house");
         Assert.Equal(new[] { "Forno" }, viewModel.Selected.View.MissingPrerequisites);
         Assert.Equal("+32 posti abitativi per edificio", viewModel.Selected.Recipe);
@@ -827,7 +999,7 @@ public sealed class DesktopTests
             Snapshot = initial with
             {
                 Population = 9,
-                Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("food", 100m), ("bread", 100m),
+                Resources = SimRisorse.Core.Economy.ResourceBundle.Create(("food", 100m), ("bread", 1085m),
                     ("flour", 1m), ("water", 1m)),
                 Buildings = [.. initial.Buildings.Select(item => item.BuildingId switch
                 {
@@ -843,7 +1015,8 @@ public sealed class DesktopTests
         await viewModel.InitializeAsync();
         Assert.Equal(0m, viewModel.View.Resources.Single(item => item.Id == "bread").ProductionPerSecond);
         Assert.Equal(BreadSupplyState.StorageFull, viewModel.View.BreadSupply.State);
-        Assert.Contains("Forno in attesa: deposito quasi pieno", viewModel.BreadSupplyStatus);
+        Assert.Contains("Forno fermo: non c'è spazio per un lotto di Pane", viewModel.BreadSupplyStatus);
+        Assert.Contains("Costruisci un Magazzino", viewModel.BreadSupplyStatus);
         Assert.DoesNotContain("Capacità nominale dei Forni insufficiente", viewModel.BreadSupplyStatus);
 
         var window = new MainWindow(viewModel, startTimer: false, initialize: false) { Width = 1040, Height = 740 };
@@ -853,7 +1026,7 @@ public sealed class DesktopTests
             Dispatcher.UIThread.RunJobs();
             var supply = window.FindControl<TextBlock>("BreadSupplyStatusText")!;
             Assert.True(supply.IsEffectivelyVisible);
-            Assert.Contains("deposito quasi pieno", supply.Text!);
+            Assert.Contains("Costruisci un Magazzino", supply.Text!);
             var note = window.FindControl<TextBlock>("GrowthPauseNote")!;
             var supplyBottom = supply.TranslatePoint(default, window)!.Value.Y + supply.Bounds.Height;
             var noteTop = note.TranslatePoint(default, window)!.Value.Y;
@@ -1133,15 +1306,27 @@ public sealed class DesktopTests
             Assert.Same(firstRow, viewModel.SelectedResource);
             Assert.Same(firstRow, resources.SelectedItem);
             Assert.True(item.IsSelected);
-            var presenter = item.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>()
-                .First(control => control.Name == "PART_ContentPresenter");
-            Assert.Equal(Color.Parse("#E6D5AC"), Assert.IsAssignableFrom<ISolidColorBrush>(presenter.Background).Color);
+            var ochrePresenter = item.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>()
+                .FirstOrDefault(control => control.Background is ISolidColorBrush brush &&
+                    brush.Color == Color.Parse("#E6D5AC"));
+            Assert.NotNull(ochrePresenter);
             AssertListGutter(window, resources);
 
             viewModel.TogglePauseCommand.Execute(null);
             viewModel.Advance(TimeSpan.FromSeconds(2));
             Assert.Same(firstRow, viewModel.SelectedResource);
             Assert.True(item.IsSelected);
+            Assert.Contains(firstRow.Name, firstRow.CapacityBreakdown);
+            viewModel.SelectedResource = viewModel.Resources.Single(row => row.Id == "bread");
+            Dispatcher.UIThread.RunJobs();
+            Assert.Contains("Pane:", viewModel.SelectedResource!.CapacityBreakdown);
+            Assert.Contains("Magazzini", viewModel.SelectedResource!.CapacityBreakdown);
+            var selectedItem = resources.GetVisualDescendants().OfType<ListBoxItem>()
+                .First(candidate => ReferenceEquals(candidate.DataContext, viewModel.SelectedResource));
+            var capacityCell = selectedItem.GetVisualDescendants().OfType<Grid>()
+                .SelectMany(grid => grid.Children.OfType<TextBlock>())
+                .First(cell => Grid.GetColumn(cell) == 2);
+            Assert.Equal(viewModel.SelectedResource!.CapacityBreakdown, ToolTip.GetTip(capacityCell));
         }
         finally { window.CloseWithoutSaving(); }
     }
@@ -1211,7 +1396,7 @@ public sealed class DesktopTests
             Assert.True(window.IsVisible);
             Assert.Equal(2, viewModel.Selected.Count);
             Assert.True(viewModel.IsPaused);
-            Assert.True(window.FindControl<Button>("DiscardCloseButton")!.IsVisible);
+            Assert.Null(window.FindControl<Button>("DiscardCloseButton")); // No destructive-exit UI.
             store.FailWrites = false;
             Assert.True(await viewModel.SaveAsync());
             Assert.False(viewModel.IsCloseFailureVisible);

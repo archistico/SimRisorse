@@ -1,0 +1,22 @@
+{
+  "version": "SimRisorse-v60-E3-RC1",
+  "base": "SimRisorse-v60-E2-RC1-livelli-upgrade.zip",
+  "base_sha256": "43a7c96706279c7a34705cb026cfd3ec3ea868c8d6effe8f62118e0cd622d19f",
+  "unchanged_existing_technical_files": 170,
+  "changed_existing_technical_files": [
+    "src/SimRisorse.Core/Construction/TieredProductionFamily.cs"
+  ],
+  "change_reason": "Use ToImmutable instead of MoveToImmutable for builder whose Count differs from Capacity (historical 3-producer catalog).",
+  "new_technical_files": [
+    "src/SimRisorse.Core/Research/ResearchPrototypeCheckpoint.cs",
+    "src/SimRisorse.Core/Research/SchoolResearch.cs",
+    "src/SimRisorse.Core/Research/TechnologyCatalog.cs",
+    "src/SimRisorse.Core/Research/TechnologyPurchases.cs",
+    "tests/SimRisorse.Core.Tests/SchoolResearchTests.cs",
+    "tests/SimRisorse.Core.Tests/TechnologyPurchasesTests.cs"
+  ],
+  "verification": "ZIP CRC, baseline hashes, C# delimiter scan and technology-ID consistency; .NET 10 NOT RUN",
+  "live_game_scenario_changed": false,
+  "sqlite_schema_changed": false,
+  "ui_changed": false
+}

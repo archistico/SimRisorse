@@ -36,16 +36,16 @@ public sealed class IronIndustryTests
     {
         var game = StartIndustry();
         Assert.True(game.Advance(TimeSpan.FromSeconds(1100)).Succeeded);
-        Assert.Equal(1000m, game.Resources["iron"].Units);
+        Assert.Equal(game.StorageCapacity["iron"].Units, game.Resources["iron"].Units);
         var blocked = game.ForecastProduction().Single(item => item.BuildingId == "iron-smelter");
         Assert.True(blocked.BlockReason.HasFlag(ProductionBlockReason.StorageFull));
         Assert.Equal(0, blocked.RunnableWorkers);
         Assert.True(game.Construct("warehouse", 1).Succeeded);
         foreach (var id in new[] { "iron-ore", "coal", "iron" })
-            Assert.Equal(1500m, game.StorageCapacity[id].Units);
+            Assert.Equal(1550m, game.StorageCapacity[id].Units);
         Assert.Equal(1, game.ForecastProduction().Single(item => item.BuildingId == "iron-smelter").RunnableWorkers);
         Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(1001m, game.Resources["iron"].Units);
+        Assert.Equal(1051m, game.Resources["iron"].Units);
     }
 
     [Fact]

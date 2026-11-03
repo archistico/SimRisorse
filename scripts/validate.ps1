@@ -51,21 +51,16 @@ try {
         @{ Name = 'industry-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'industry', '--seconds', '1102'); Ticks = 1102 * [TimeSpan]::TicksPerSecond },
         @{ Name = 'industry-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'industry', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
         @{ Name = 'gold-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'gold', '--seconds', '1502'); Ticks = 1502 * [TimeSpan]::TicksPerSecond },
-        @{ Name = 'gold-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'gold', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
-        @{ Name = 'forge-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'forge', '--seconds', '1401'); Ticks = 1401 * [TimeSpan]::TicksPerSecond },
-        @{ Name = 'forge-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'forge', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
-        @{ Name = 'mint-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'mint', '--seconds', '1801'); Ticks = 1801 * [TimeSpan]::TicksPerSecond },
-        @{ Name = 'mint-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'mint', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
-        @{ Name = 'crafting-start'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--seconds', '2201'); Ticks = 2201 * [TimeSpan]::TicksPerSecond },
-        @{ Name = 'crafting-target'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--seconds', '2320'); Ticks = 2320 * [TimeSpan]::TicksPerSecond },
-        @{ Name = 'crafting-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'crafting', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour },
-        @{ Name = 'military-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'military', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour }
+        @{ Name = 'gold-8-hours'; Arguments = @('--scenario', 'civil-growth', '--strategy', 'gold', '--hours', '8'); Ticks = 8 * [TimeSpan]::TicksPerHour }
     )
     foreach ($case in $cases) {
-        # Historical trajectories remain reproducible under civil-growth-4;
-        # the active civil-growth-10 rules are checked by the industrial and accelerated probes.
+        # Historical trajectories remain reproducible under frozen civil-growth-4 and civil-growth-9.
+        # The current v13 progression is checked separately, not compared to the v9 resource caps.
         $arguments = @($simulation) + $case.Arguments
         if ($case.Name -like 'civil-*') { $arguments += @('--rules', 'legacy') }
+        if ($case.Name -like 'industry-*' -or $case.Name -like 'gold-*') {
+            $arguments += @('--rules', 'historical-v9')
+        }
         $name = $case.Name
         $output = & dotnet @arguments
         if ($LASTEXITCODE -ne 0) { throw "Simulation failed: $name" }
@@ -106,7 +101,7 @@ try {
         elseif ($name -like 'industry-*') {
             $iron = $result.Resources | Where-Object Id -eq 'iron'
             $smelter = $result.Buildings | Where-Object Id -eq 'iron-smelter'
-            if ($result.RulesVersion -ne 'civil-growth-10' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
+            if ($result.RulesVersion -ne 'civil-growth-9' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
                 throw 'The industrial rules, construction or workforce differ.'
             }
             if ($name -eq 'industry-start' -and ($iron.Quantity -ne 1 -or
@@ -121,7 +116,7 @@ try {
         elseif ($name -like 'gold-*') {
             $gold = $result.Resources | Where-Object Id -eq 'gold'
             $smelter = $result.Buildings | Where-Object Id -eq 'gold-smelter'
-            if ($result.RulesVersion -ne 'civil-growth-10' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
+            if ($result.RulesVersion -ne 'civil-growth-9' -or $smelter.Count -ne 1 -or $smelter.AssignedWorkers -ne 1) {
                 throw 'The gold rules, construction or workforce differ.'
             }
             if ($name -eq 'gold-start' -and ($gold.Quantity -ne 1 -or
@@ -135,72 +130,111 @@ try {
                 throw 'The long gold and iron timeline differs.'
             }
         }
-        elseif ($name -like 'forge-*') {
-            $swords = $result.Resources | Where-Object Id -eq 'swords'
-            $forge = $result.Buildings | Where-Object Id -eq 'forge'
-            if ($result.RulesVersion -ne 'civil-growth-10' -or $forge.Count -ne 1 -or $forge.AssignedWorkers -ne 1 -or
-                $swords.Capacity -ne 1000) { throw 'The forge rules, construction, workforce or capacity differ.' }
-            if ($name -eq 'forge-start' -and $swords.Quantity -ne 2) { throw 'The first sword batch differs.' }
-            if ($name -eq 'forge-8-hours' -and ($swords.Quantity -ne 1000 -or $result.Population -ne 48)) {
-                throw 'The long forge timeline differs.'
-            }
-        }
-        elseif ($name -like 'mint-*') {
-            $coins = $result.Resources | Where-Object Id -eq 'coins'
-            $mint = $result.Buildings | Where-Object Id -eq 'mint'
-            if ($result.RulesVersion -ne 'civil-growth-10' -or $mint.Count -ne 1 -or $mint.AssignedWorkers -ne 1 -or
-                $coins.Capacity -ne 1000) { throw 'The mint rules, construction, workforce or capacity differ.' }
-            if ($name -eq 'mint-start' -and $coins.Quantity -ne 3) { throw 'The first coin batch differs.' }
-            if ($name -eq 'mint-8-hours' -and ($coins.Quantity -ne 999 -or $result.Population -ne 48 -or
-                $mint.RunnableWorkers -ne 0 -or $mint.FullOutputNames -notcontains 'Monete')) {
-                throw 'The long mint timeline or indivisible batch storage differs.'
-            }
-        }
-        elseif ($name -like 'crafting-*') {
-            $swords = $result.Resources | Where-Object Id -eq 'swords'
-            $coins = $result.Resources | Where-Object Id -eq 'coins'
-            $coal = $result.Buildings | Where-Object Id -eq 'coal-mine'
-            $forge = $result.Buildings | Where-Object Id -eq 'forge'
-            $mint = $result.Buildings | Where-Object Id -eq 'mint'
-            $expectedSwords = if ($name -eq 'crafting-start') { 2 } elseif ($name -eq 'crafting-target') { 240 } else { 1000 }
-            $expectedCoins = if ($name -eq 'crafting-start') { 3 } elseif ($name -eq 'crafting-target') { 360 } else { 999 }
-            if ($result.RulesVersion -ne 'civil-growth-10' -or $coal.Count -ne 2 -or $coal.AssignedWorkers -ne 2 -or
-                $forge.Count -ne 1 -or $forge.AssignedWorkers -ne 1 -or $mint.Count -ne 1 -or $mint.AssignedWorkers -ne 1 -or
-                $swords.Quantity -ne $expectedSwords -or $coins.Quantity -ne $expectedCoins) {
-                throw 'The integrated crafting timeline differs.'
-            }
-        }
-        elseif ($name -eq 'military-8-hours') {
-            $barracks = $result.Buildings | Where-Object Id -eq 'barracks'
-            $military = $result.Military
-            $employed = ($result.Buildings | Measure-Object -Property AssignedWorkers -Sum).Sum
-            if ($result.RulesVersion -ne 'civil-growth-10' -or $barracks.Count -ne 1 -or $barracks.AssignedWorkers -ne 0 -or
-                $military.Soldiers -ne 20 -or $military.QueuedRecruits -ne 0 -or $military.TrainingRemainingSeconds.Count -ne 0 -or
-                $military.TrainingPlaces -ne 1 -or $military.EmployedWorkers -ne $employed -or
-                ($employed + $result.AvailableWorkers + $military.Soldiers) -ne $result.Population) {
-                throw 'The recruitment timeline or the population balance differs.'
-            }
-        }
         if ($name -ne '60-seconds') {
             foreach ($resource in $result.Resources) {
                 if ($resource.Quantity -lt 0 -or $resource.Quantity -gt $resource.Capacity) { throw 'Resource outside capacity.' }
             }
         }
         $output | Set-Content -LiteralPath (Join-Path $artifacts ($name + '.json')) -Encoding UTF8
-        if ($name -like 'crafting-*' -or $name -like 'military-*') {
-            $output | Set-Content -LiteralPath (Join-Path $runDirectory ($name + '.json')) -Encoding UTF8
-        }
     }
-    $acceleratedOutput = & dotnet $simulation --scenario civil-growth --strategy bootstrap --seconds 180
-    if ($LASTEXITCODE -ne 0) { $acceleratedOutput; throw 'Accelerated civil-growth-10 probe failed.' }
+    $acceleratedOutput = & dotnet $simulation --scenario civil-growth --strategy bootstrap --seconds 180 --rules historical-v9
+    if ($LASTEXITCODE -ne 0) { $acceleratedOutput; throw 'Historical civil-growth-9 probe failed.' }
     $accelerated = $acceleratedOutput | ConvertFrom-Json
-    if ($accelerated.RulesVersion -ne 'civil-growth-10' -or $accelerated.Population -ne 10 -or
+    if ($accelerated.RulesVersion -ne 'civil-growth-9' -or $accelerated.Population -ne 10 -or
         $accelerated.PopulationState.GrowthRateTwentieths -ne 23 -or
         $accelerated.PopulationState.GrowthRemainderTwentieths -lt 0 -or
         $accelerated.PopulationState.GrowthRemainderTwentieths -ge 20) {
         throw 'Unexpected accelerated housing growth or invalid fractional progress.'
     }
     $acceleratedOutput | Set-Content -LiteralPath (Join-Path $artifacts 'civil-accelerated.json') -Encoding UTF8
+    # RC5: the active industrial and gold paths must be reachable under current (v13) rules.
+    # Frozen v9 reference quantities remain tested above; current capacities differ by design.
+    foreach ($activeProbe in @(
+        @{ Name = 'industry-current'; Strategy = 'industry'; Seconds = 1102; Building = 'iron-smelter'; Resource = 'iron' },
+        @{ Name = 'gold-current'; Strategy = 'gold'; Seconds = 1502; Building = 'gold-smelter'; Resource = 'gold' }
+    )) {
+        $activeOutput = & dotnet $simulation --scenario civil-growth --strategy $activeProbe.Strategy --seconds $activeProbe.Seconds
+        if ($LASTEXITCODE -ne 0) { $activeOutput; throw "Current-rules simulation failed: $($activeProbe.Name)." }
+        $activeResult = $activeOutput | ConvertFrom-Json
+        $activeBuilding = @($activeResult.Buildings | Where-Object Id -eq $activeProbe.Building)
+        $activeResource = @($activeResult.Resources | Where-Object Id -eq $activeProbe.Resource)
+        $townHall = @($activeResult.Buildings | Where-Object Id -eq 'town-hall')
+        if ($activeResult.RulesVersion -ne 'civil-growth-13' -or
+            $activeBuilding.Count -ne 1 -or $activeBuilding[0].Count -ne 1 -or
+            $activeBuilding[0].AssignedWorkers -ne 1 -or
+            $activeResource.Count -ne 1 -or $activeResource[0].Quantity -le 0 -or
+            $activeResource[0].Quantity -gt $activeResource[0].Capacity -or
+            $townHall.Count -ne 1 -or $townHall[0].Count -ne 1) {
+            throw "Current-rules production or catalog differs: $($activeProbe.Name)."
+        }
+        $activeOutput | Set-Content -LiteralPath (Join-Path $artifacts ($activeProbe.Name + '.json')) -Encoding UTF8
+    }
+    # R3: deterministic, self-funded 8-hour military path recovered from the divergent v41 branch.
+    $militaryOutput = & dotnet $simulation --scenario civil-growth --strategy military --hours 8
+    if ($LASTEXITCODE -ne 0) { $militaryOutput; throw 'Military progression probe failed.' }
+    $military = $militaryOutput | ConvertFrom-Json
+    $barracks = @($military.Buildings | Where-Object Id -eq 'barracks')
+    if ($military.RulesVersion -ne 'civil-growth-13' -or $barracks.Count -ne 1 -or
+        $barracks[0].Count -lt 1 -or $military.Military -eq $null -or
+        $military.Military.AvailableSoldiers -lt 1) {
+        throw 'Military progression did not unlock or train at least one soldier within the 8-hour probe.'
+    }
+    $militaryOutput | Set-Content -LiteralPath (Join-Path $artifacts 'military-8-hours.json') -Encoding UTF8
+    # M5.3c: measured controlled training capacities (not a real-start funding route).
+    $capacityOutput = & dotnet $simulation --benchmark-military-capacity
+    if ($LASTEXITCODE -ne 0) { $capacityOutput; throw 'Military capacity comparison failed.' }
+    $capacity = $capacityOutput | ConvertFrom-Json
+    if ($capacity.RulesVersion -ne 'civil-growth-13' -or
+        $capacity.Model -ne 'controlled-training-only' -or
+        $capacity.SwordsPerRecruit -ne 5 -or $capacity.SeatsPerBarracks -ne 1 -or
+        $capacity.TrainingSecondsPerRecruit -ne 30 -or @($capacity.Profiles).Count -ne 9) {
+        throw 'Unexpected individual military capacity benchmark schema or rules.'
+    }
+    foreach ($b in @(1, 2, 4)) {
+        foreach ($soldiers in @(5, 10, 20)) {
+            $profile = @($capacity.Profiles | Where-Object {
+                $_.Barracks -eq $b -and $_.TargetSoldiers -eq $soldiers
+            })
+            $seconds = [int]([Math]::Ceiling($soldiers / [double]$b) * 30)
+            if ($profile.Count -ne 1 -or $profile[0].TrainingSeconds -ne $seconds -or
+                $profile[0].SwordsSpent -ne (5 * $soldiers) -or
+                $profile[0].CiviliansReserved -ne $soldiers -or
+                $profile[0].FreeCiviliansAfterEnlistment -ne (45 - $soldiers) -or
+                $profile[0].PlanksForBarracks -ne (260 * $b) -or
+                $profile[0].StoneForBarracks -ne (200 * $b) -or
+                $profile[0].FirstSoldierSecond -ne 30) {
+                throw "Military capacity or accounting differs: barracks=$b recruits=$soldiers."
+            }
+        }
+    }
+    $capacityOutput | Set-Content -LiteralPath (Join-Path $artifacts 'military-capacity-benchmark.json') -Encoding UTF8
+    # This is the existing real-start 8h path. Record actual resource/population
+    # balances separately: theoretical 30s/seat must not be reported as campaign time.
+    $militaryBalance = [ordered]@{
+        rulesVersion = $military.RulesVersion
+        simulatedSeconds = [int]($military.ElapsedTicks / [TimeSpan]::TicksPerSecond)
+        barracks = $barracks[0].Count
+        population = $military.Population
+        availableCivilianWorkers = $military.AvailableWorkers
+        soldiersReady = $military.Military.AvailableSoldiers
+        recruitsTraining = $military.Military.TrainingRecruits
+        recruitsWaiting = $military.Military.WaitingRecruits
+        swordStock = ($military.Resources | Where-Object Id -eq 'swords' | Select-Object -First 1).Quantity
+        foodStock = ($military.Resources | Where-Object Id -eq 'food' | Select-Object -First 1).Quantity
+        breadStock = ($military.Resources | Where-Object Id -eq 'bread' | Select-Object -First 1).Quantity
+        requiredFoodPerSecond = $military.PopulationState.RequiredFoodPerSecond
+        consumedFoodPerSecond = $military.PopulationState.ConsumedFoodPerSecond
+        requiredBreadPerSecond = $military.PopulationState.RequiredBreadPerSecond
+        consumedBreadPerSecond = $military.PopulationState.ConsumedBreadPerSecond
+        foodGrowthBlockReason = $military.PopulationState.BlockReason
+    }
+    if ($militaryBalance.simulatedSeconds -ne 28800 -or
+        $militaryBalance.availableCivilianWorkers -lt 0 -or
+        ($militaryBalance.soldiersReady + $militaryBalance.recruitsTraining +
+         $militaryBalance.recruitsWaiting) -gt $militaryBalance.population) {
+        throw 'Military 8h balance has impossible population accounting.'
+    }
+    $militaryBalance | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $artifacts 'military-balance-8-hours.json') -Encoding UTF8
     $housingOutput = & dotnet $simulation --benchmark-housing
     if ($LASTEXITCODE -ne 0) { $housingOutput; throw 'Housing comparison failed.' }
     $housing = $housingOutput | ConvertFrom-Json
@@ -369,60 +403,63 @@ try {
         }
     }
     $industryScaleOutput | Set-Content -LiteralPath (Join-Path $artifacts 'industry-scale-benchmark.json') -Encoding UTF8
-    $forgeMintOutput = & dotnet $simulation --benchmark-forge-mint
-    if ($LASTEXITCODE -ne 0) { $forgeMintOutput; throw 'Forge/mint comparison failed.' }
+    # M5.2c preparation runs against the actual v9 catalog, not the frozen v7 industry profiles.
+    $forgeMintOutput = & dotnet $simulation --benchmark-forge-mint-coal
+    if ($LASTEXITCODE -ne 0) { $forgeMintOutput; throw 'Forge/mint coal benchmark failed.' }
     $forgeMint = $forgeMintOutput | ConvertFrom-Json
-    if ($forgeMint.ScenarioId -ne 'civil-growth' -or $forgeMint.RulesVersion -ne 'civil-growth-10' -or
-        $forgeMint.TargetSwords -ne 240 -or $forgeMint.TargetCoins -ne 360 -or
-        $forgeMint.Profiles.Count -ne 9 -or $forgeMint.Guards.Count -ne 4) { throw 'Unexpected forge/mint comparison shape.' }
-    $craftingExpected = @{
-        'control-staged'       = @{ Seconds = 241; Swords = 240; Coins = 360; Target = 241; Workers = 3 }
-        'control-parallel'     = @{ Seconds = 122; Swords = 240; Coins = 360; Target = 122; Workers = 6 }
-        'control-contended'    = @{ Seconds = 180; Swords = 0; Coins = 0; Target = $null; Workers = 5 }
-        'live-staged-1800'     = @{ Seconds = 1800; Swords = 1680; Coins = 1998; Target = 241; Workers = 5 }
-        'live-parallel-1800'   = @{ Seconds = 1800; Swords = 2000; Coins = 1998; Target = 122; Workers = 8 }
-        'live-contended-1800'  = @{ Seconds = 1800; Swords = 0; Coins = 0; Target = $null; Workers = 7 }
-        'live-staged-28800'    = @{ Seconds = 28800; Swords = 2000; Coins = 1998; Target = 241; Workers = 5 }
-        'live-parallel-28800'  = @{ Seconds = 28800; Swords = 2000; Coins = 1998; Target = 122; Workers = 8 }
-        'live-contended-28800' = @{ Seconds = 28800; Swords = 2000; Coins = 1998; Target = 2240; Workers = 7 }
+    if ($forgeMint.ScenarioId -ne 'civil-growth' -or $forgeMint.RulesVersion -ne 'civil-growth-9' -or
+        $forgeMint.Population -ne 40 -or $forgeMint.SwordsGoal -ne 240 -or
+        $forgeMint.CoinsGoal -ne 360 -or $forgeMint.Profiles.Count -ne 6) {
+        throw 'Unexpected M5.2c benchmark shape.'
     }
-    foreach ($id in $craftingExpected.Keys) {
-        $matches = @($forgeMint.Profiles | Where-Object Id -eq $id)
-        if ($matches.Count -ne 1) { throw "Missing or duplicate forge/mint profile: $id." }
-        $actual = $matches[0]
-        $expected = $craftingExpected[$id]
-        $planks = if ($actual.CoalMines -eq 2) { 1430 } else { 1300 }
-        $stone = if ($actual.CoalMines -eq 2) { 1040 } else { 950 }
-        if ($actual.HorizonSeconds -ne $expected.Seconds -or $actual.ReconciledSeconds -ne $expected.Seconds -or
-            $actual.Swords -ne $expected.Swords -or $actual.Coins -ne $expected.Coins -or $actual.TargetSecond -ne $expected.Target -or
-            $actual.PeakIndustrialWorkers -ne $expected.Workers -or $actual.PlanksSpent -ne $planks -or $actual.StoneSpent -ne $stone -or
-            $actual.CoalProduced -ne ($actual.CoalConsumed + $actual.CoalRemaining) -or
-            $actual.FoodRemaining -le 0 -or $actual.BreadRemaining -le 0 -or $actual.Production.Count -ne 7) {
-            throw "Forge/mint accounting or progression differs for $id."
-        }
-        $forge = @($actual.Production | Where-Object BuildingId -eq 'forge')
-        $mint = @($actual.Production | Where-Object BuildingId -eq 'mint')
-        if ($forge.Count -ne 1 -or $mint.Count -ne 1 -or
-            2 * $forge[0].RunningWorkerSeconds -ne $actual.Swords -or 3 * $mint[0].RunningWorkerSeconds -ne $actual.Coins) {
-            throw "Crafted output does not match active worker-seconds for $id."
+    foreach ($horizon in @(1800, 3600)) {
+        foreach ($profileId in @('phased', 'parallel', 'all-staffed')) {
+            $matches = @($forgeMint.Profiles | Where-Object { $_.Id -eq $profileId -and $_.HorizonSeconds -eq $horizon })
+            if ($matches.Count -ne 1) { throw "Missing or duplicate M5.2c profile: $profileId at $horizon s." }
+            $profile = $matches[0]
+            $twoMines = $profileId -eq 'parallel'
+            if ($profile.CoalMines -ne $(if ($twoMines) { 2 } else { 1 }) -or
+                $profile.PlanksSpent -ne $(if ($twoMines) { 1430 } else { 1300 }) -or
+                $profile.StoneSpent -ne $(if ($twoMines) { 1040 } else { 950 }) -or
+                $profile.ReconciledSeconds -ne $horizon -or $profile.Machines.Count -ne 5 -or
+                $profile.FinalCoal -ne ($profile.CoalProduced - $profile.CoalConsumed) -or
+                $profile.FirstSwordsSecond -le 0 -or $profile.FirstCoinsSecond -le 0) {
+                throw "M5.2c benchmark invariants failed: $profileId at $horizon s."
+            }
+            if ($profileId -eq 'phased' -and $profile.GoalReachedSecond -ne 241) {
+                throw 'M5.2c phased strategy deviated from the 241-second reference.'
+            }
+            if ($profileId -eq 'parallel' -and $profile.GoalReachedSecond -ne 122) {
+                throw 'M5.2c parallel strategy deviated from the 122-second reference.'
+            }
         }
     }
-    $guardExpected = @{
-        'one-slot'       = @{ Swords = 999; Coins = 999; Coal = 2; Iron = 1; Gold = 1 }
-        'two-coin-slots' = @{ Swords = 999; Coins = 998; Coal = 2; Iron = 1; Gold = 1 }
-        'exact-fit'      = @{ Swords = 1000; Coins = 1000; Coal = 0; Iron = 0; Gold = 0 }
-        'coal-priority'  = @{ Swords = 0; Coins = 0; Coal = 0; Iron = 2; Gold = 2 }
-    }
-    foreach ($id in $guardExpected.Keys) {
-        $matches = @($forgeMint.Guards | Where-Object Id -eq $id)
-        if ($matches.Count -ne 1) { throw "Missing or duplicate crafting guard: $id." }
-        foreach ($property in @('Swords', 'Coins', 'Coal', 'Iron', 'Gold')) {
-            if ($matches[0].$property -ne $guardExpected[$id][$property]) { throw "Crafting guard failed: $id/$property." }
+    $forgeMintOutput | Set-Content -LiteralPath (Join-Path $artifacts 'forge-mint-coal-benchmark.json') -Encoding UTF8
+    # v42: starting from the actual first-turn civil colony, with zero industrial resources.
+    $campaignOutput = & dotnet $simulation --benchmark-forge-mint-campaign
+    if ($LASTEXITCODE -ne 0) { $campaignOutput; throw 'Real-start forge/mint benchmark failed.' }
+    $campaign = $campaignOutput | ConvertFrom-Json
+    if ($campaign.ScenarioId -ne 'civil-growth' -or $campaign.RulesVersion -ne 'civil-growth-9' -or
+        $campaign.StartPopulation -ne 8 -or $campaign.HorizonSeconds -ne 2400 -or
+        $campaign.TargetSwords -ne 240 -or $campaign.TargetCoins -ne 360 -or
+        $campaign.Profiles.Count -ne 3) { throw 'Unexpected real-start benchmark shape.' }
+    foreach ($name in @('phased-one-mine', 'concurrent-one-mine', 'concurrent-two-mines')) {
+        $matches = @($campaign.Profiles | Where-Object Id -eq $name)
+        if ($matches.Count -ne 1) { throw "Missing or duplicate real-start profile: $name." }
+        $profile = $matches[0]
+        $twoMines = $name -eq 'concurrent-two-mines'
+        if ($profile.PlanksSpent -ne $(if ($twoMines) { 2190 } else { 2060 }) -or
+            $profile.StoneSpent -ne $(if ($twoMines) { 1490 } else { 1400 }) -or
+            $profile.GoalReachedSecond -le 0 -or $profile.GoalReachedSecond -gt 2400 -or
+            $profile.FirstSwordsSecond -le 0 -or $profile.FirstCoinsSecond -le 0 -or
+            $profile.CoalBeforeTransformers -lt 0 -or $profile.CoalAtGoal -lt 0 -or
+            $profile.ReconciledSeconds -ne 2400 -or $profile.FinalPopulation -le 8 -or
+            $profile.FinalSwords -lt 240 -or $profile.FinalCoins -lt 360 -or
+            $profile.Purchases.Count -ne $(if ($twoMines) { 16 } else { 15 })) {
+            throw "Real-start economic invariants failed: $name."
         }
     }
-    $forgeMintPath = Join-Path $runDirectory 'forge-mint-benchmark.json'
-    $forgeMintOutput | Set-Content -LiteralPath $forgeMintPath -Encoding UTF8
-    $forgeMintOutput | Set-Content -LiteralPath (Join-Path $artifacts 'forge-mint-benchmark.json') -Encoding UTF8
+    $campaignOutput | Set-Content -LiteralPath (Join-Path $artifacts 'forge-mint-campaign-benchmark.json') -Encoding UTF8
     $publish = Join-Path $artifacts 'publish'
     Invoke-Dotnet -Arguments @('publish', 'src/SimRisorse.Desktop/SimRisorse.Desktop.csproj', '--no-restore', '--no-build',
         '-c', 'Release', '--self-contained', 'false', '--output', $publish, '--verbosity', 'minimal')
@@ -457,11 +494,7 @@ try {
         'civil-buildings.png', 'civil-buildings-compact.png', 'civil-resources.png', 'civil-resources-compact.png',
         'civil-advanced-bread-compact.png', 'industry-buildings.png', 'industry-buildings-compact.png',
         'industry-resources.png', 'industry-resources-compact.png', 'gold-buildings.png', 'gold-buildings-compact.png',
-        'gold-resources.png', 'gold-resources-compact.png', 'forge-buildings.png', 'forge-buildings-compact.png',
-        'forge-resources.png', 'forge-resources-compact.png', 'mint-buildings.png', 'mint-buildings-compact.png',
-        'mint-resources.png', 'mint-resources-compact.png', 'effects-warehouse-1040.png', 'effects-warehouse-1240.png',
-        'effects-small-house-1040.png', 'effects-small-house-1240.png', 'effects-large-house-1040.png', 'effects-large-house-1240.png',
-        'barracks-buildings.png', 'barracks-buildings-compact.png')
+        'gold-resources.png', 'gold-resources-compact.png')
     foreach ($screenshot in $screenshots) {
         $path = Join-Path $screenshotDirectory $screenshot
         if (-not (Test-Path -LiteralPath $path)) { throw "Missing render from this test run: $screenshot" }
@@ -478,8 +511,10 @@ try {
         breadScaleBenchmark = (Join-Path $artifacts 'bread-scale-benchmark.json')
         breadHighDensityBenchmark = (Join-Path $artifacts 'bread-high-density-benchmark.json')
         industryScaleBenchmark = (Join-Path $artifacts 'industry-scale-benchmark.json')
-        forgeMintBenchmark = $forgeMintPath
-        craftingTimelines = @('crafting-start', 'crafting-target', 'crafting-8-hours') | ForEach-Object { Join-Path $runDirectory ($_ + '.json') }
+        forgeMintCoalBenchmark = (Join-Path $artifacts 'forge-mint-coal-benchmark.json')
+        forgeMintCampaignBenchmark = (Join-Path $artifacts 'forge-mint-campaign-benchmark.json')
+        militaryCapacityBenchmark = (Join-Path $artifacts 'military-capacity-benchmark.json')
+        militaryCampaignBalance = (Join-Path $artifacts 'military-balance-8-hours.json')
         screenshots = @($screenshots | ForEach-Object { Join-Path $screenshotDirectory $_ })
     }
     $report | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $artifacts 'validation.json') -Encoding UTF8

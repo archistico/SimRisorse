@@ -1,0 +1,43 @@
+{
+  "source_archive": "SimRisorse-v59-G1-D4-albero-tecnologico.zip",
+  "baseline_existing_file_count": 298,
+  "removed_existing_files": [],
+  "modified_existing_executable_files": [],
+  "new_executable_files": [
+    "src/SimRisorse.Core/Construction/ConstructionAcquisitionHistory.cs",
+    "src/SimRisorse.Core/Construction/ProgressiveConstructionPricing.cs",
+    "src/SimRisorse.Core/Construction/ProgressiveConstructionPurchase.cs",
+    "src/SimRisorse.Core/Research/ResearchAccounting.cs",
+    "src/SimRisorse.Core/Research/ResearchPoints.cs",
+    "tests/SimRisorse.Core.Tests/ProgressiveConstructionPricingTests.cs",
+    "tests/SimRisorse.Core.Tests/ResearchAccountingTests.cs"
+  ],
+  "modified_existing_documentation_files": [
+    "00_START_HERE.md",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/AUTHORITY_REGISTRY.md",
+    "docs/CURRENT_STATE.md",
+    "docs/HANDOFF.md",
+    "docs/ROADMAP.md",
+    "docs/adr/0020-tech-tree-sector-research-proposta.md",
+    "docs/adr/README.md"
+  ],
+  "new_files": [
+    "G1_D5_CHECKPOINT.md",
+    "V60_E1_CANDIDATE.md",
+    "docs/adr/0021-ricerca-saldo-libero-spesa-su-scelta.md",
+    "docs/design/G1_D5_E1_IMPLEMENTAZIONE_ISOLATA.md",
+    "src/SimRisorse.Core/Construction/ConstructionAcquisitionHistory.cs",
+    "src/SimRisorse.Core/Construction/ProgressiveConstructionPricing.cs",
+    "src/SimRisorse.Core/Construction/ProgressiveConstructionPurchase.cs",
+    "src/SimRisorse.Core/Research/ResearchAccounting.cs",
+    "src/SimRisorse.Core/Research/ResearchPoints.cs",
+    "tests/SimRisorse.Core.Tests/ProgressiveConstructionPricingTests.cs",
+    "tests/SimRisorse.Core.Tests/ResearchAccountingTests.cs"
+  ],
+  "latest_confirmed_windows_gate": "v59-RC1; user confirmed all tests passed",
+  "candidate_dotnet_validation": "NOT_RUN",
+  "unchanged_ruleset": "civil-growth-13",
+  "unchanged_sqlite_snapshot_version": 2
+}

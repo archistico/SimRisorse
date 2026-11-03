@@ -30,7 +30,8 @@ internal static class GameViewProjector
                 Lines(item.Cost), Lines(item.Recipe?.Input ?? ResourceBundle.Empty), Lines(item.Recipe?.Output ?? ResourceBundle.Empty),
                 item.Prerequisites.Where(id => buildings[id].Count == 0).Select(id => scenario.Catalog.BuildingsById[id].Name).ToImmutableArray(),
                 item.HousingPerBuilding, Lines(item.StoragePerBuilding ?? ResourceBundle.Empty),
-                Names(forecast[item.Id].MissingInputIds), Names(forecast[item.Id].FullOutputIds))).ToImmutableArray();
+                Names(forecast[item.Id].MissingInputIds), Names(forecast[item.Id].FullOutputIds),
+                item.IsScenarioFixed)).ToImmutableArray();
         return new(scenario.Id, scenario.Catalog.RulesVersion, session.ElapsedTicks, session.IsPaused,
             session.Population, session.AvailableWorkers, resourceViews, buildingViews,
             new(population.HousingCapacity, population.ProgressSeconds, population.IntervalSeconds, population.FoodResourceId,
@@ -39,38 +40,11 @@ internal static class GameViewProjector
                 population.RequiredBread.Units, population.ConsumedBread.Units,
                 population.GrowthRemainderTwentieths, population.GrowthRateTwentieths),
             BreadSupplyProjector.Project(session, population, resourceViews, buildingViews),
-            ProjectMilitary(session, snapshot));
-    }
-
-    private static MilitaryView? ProjectMilitary(GameSession session, GameSnapshot snapshot)
-    {
-        if (session.Scenario.MilitaryRules is not { } rules || session.Military is not { } military) return null;
-        var employed = checked((int)snapshot.Buildings.Sum(item => (long)item.AssignedWorkers));
-        var places = session.TrainingPlaces;
-        var equipped = session.Resources[rules.SwordsResourceId].Milliunits / rules.SwordsPerRecruit.Milliunits;
-        var maximum = places == 0 ? 0 : (int)Math.Min(session.AvailableWorkers, equipped);
-        var space = session.StorageCapacity[rules.SwordsResourceId].Milliunits - session.Resources[rules.SwordsResourceId].Milliunits;
-        var cancellable = (int)Math.Min(military.Recruits, Math.Max(0, space) / rules.SwordsPerRecruit.Milliunits);
-        var remaining = military.TrainingProgressSeconds.Select(progress => rules.TrainingSeconds - progress).ToImmutableArray();
-        return new(rules.BarracksBuildingId, rules.SwordsResourceId, session.Scenario.Catalog.ResourcesById[rules.SwordsResourceId].Name,
-            rules.SwordsPerRecruit.Units, rules.TrainingSeconds, rules.RecruitsPerBarracks, places,
-            military.QueuedRecruits, remaining, military.Soldiers, employed, maximum, cancellable)
-        {
-            SecondsUntilAllTrained = SecondsUntilAllTrained(remaining, military.QueuedRecruits, rules.TrainingSeconds)
-        };
-    }
-
-    /// <summary>
-    /// Every place is busy while recruits wait, and a freed place starts the next recruit at once. Remaining times are at
-    /// most one period, so the queue is served in whole waves: the k-th waiting recruit (0-based) uses the place that
-    /// frees (k mod places)-th soonest, k / places periods later.
-    /// </summary>
-    private static long SecondsUntilAllTrained(ImmutableArray<int> remaining, int queued, int period)
-    {
-        if (remaining.IsEmpty) return 0;
-        if (queued == 0) return remaining.Max();
-        var sorted = remaining.Sort();
-        var last = queued - 1L;
-        return sorted[(int)(last % sorted.Length)] + (last / sorted.Length + 1) * period;
+            scenario.MilitaryRules is { } military ? new MilitaryView(session.MilitaryState.WaitingRecruits,
+                session.MilitaryState.TrainingRecruits, session.MilitaryState.AvailableSoldiers,
+                session.MilitaryState.TrainingProgressSeconds, military.TrainingSecondsPerGroup,
+                (long)buildings[military.BarracksId].Count * military.SeatsPerBarracks,
+                military.SwordsPerRecruit, session.MilitaryState.IndividualProgressSeconds,
+                !military.IndividualTraining) : null);
     }
 }

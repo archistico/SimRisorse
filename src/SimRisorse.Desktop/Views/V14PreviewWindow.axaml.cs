@@ -1,0 +1,83 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using SimRisorse.Desktop.Lifecycle;
+using SimRisorse.Desktop.Presentation;
+
+namespace SimRisorse.Desktop.Views;
+
+/// <summary>Separate opt-in v14 window. The ordinary MainWindow stays untouched.</summary>
+public partial class V14PreviewWindow : Window
+{
+    private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _autoSaveTimer;
+    private readonly PlayClock? _clock;
+    private bool _allowClose;
+
+    public V14PreviewWindow()
+    {
+        _timer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        { Interval = TimeSpan.FromMilliseconds(100) };
+        _autoSaveTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        { Interval = TimeSpan.FromMinutes(1) };
+        AvaloniaXamlLoader.Load(this);
+    }
+
+    public V14PreviewWindow(V14PreviewViewModel viewModel, bool startTimer = true) : this()
+    {
+        DataContext = viewModel;
+        _clock = new PlayClock(viewModel.Advance, viewModel.Interrupt);
+        Opened += (_, _) =>
+        {
+            viewModel.Initialize();
+            _clock.Reset();
+            if (startTimer)
+            {
+                _timer.Tick += (_, _) => _clock.Pulse();
+                _autoSaveTimer.Tick += (_, _) =>
+                {
+                    _clock.Pulse();
+                    if (viewModel.CanSave) viewModel.Save();
+                };
+                _timer.Start();
+                _autoSaveTimer.Start();
+            }
+        };
+        Closing += (_, args) =>
+        {
+            if (_allowClose) return;
+            _clock.Pulse();
+            viewModel.Interrupt();
+            // An unrecognised or corrupt v14 checkpoint must never be overwritten;
+            // equally, a blocked Save must not trap the player in a window that
+            // cannot be closed. No write is attempted when saving is disallowed.
+            if (viewModel.CanSave && !viewModel.Save()) args.Cancel = true;
+        };
+        Closed += (_, _) =>
+        {
+            _timer.Stop();
+            _autoSaveTimer.Stop();
+            Win32Properties.RemoveWndProcHookCallback(this, PowerMessage);
+        };
+        Win32Properties.AddWndProcHookCallback(this, PowerMessage);
+    }
+
+    private IntPtr PowerMessage(IntPtr handle, uint message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        // Match the legacy window: suspend / resume notifications always pause the game.
+        if (message == 0x218 && wParam.ToInt64() is 4 or 7 or 18) _clock?.Suspend();
+        return IntPtr.Zero;
+    }
+
+    public void CloseWithoutSaving() { _allowClose = true; Close(); }
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == WindowStateProperty && WindowState == WindowState.Minimized)
+        {
+            _clock?.Suspend();
+        }
+    }
+}

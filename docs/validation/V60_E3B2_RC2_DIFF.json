@@ -1,0 +1,38 @@
+{
+  "source_archive": "SimRisorse-v60-E3b2-RC1-sqlite-v3-isolato.zip",
+  "candidate_archive": "SimRisorse-v60-E3b2-RC2-fix-test-pulizia.zip",
+  "technical_source_diffs": {
+    "tests/SimRisorse.Infrastructure.Tests/V14SqliteSaveStoreTests.cs": {
+      "previous": "8259fcc75222c61a5a0a5742cf0cc7633055d75f4089fed1536477e4617bde69",
+      "candidate": "44404284c21082ab3dd07319ebb4fef8dcbc5ba6623135db302cb3c50d045d82"
+    }
+  },
+  "moved_root_files": {
+    "G1_D7_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D7_SOURCE_INTEGRITY.json",
+    "G1_D9_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D9_SOURCE_INTEGRITY.json",
+    "G1_D3_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D3_SOURCE_INTEGRITY.json",
+    "G1_D6_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D6_SOURCE_INTEGRITY.json",
+    "G1_D5_CHECKPOINT.md": "docs/history/checkpoints/G1_D5_CHECKPOINT.md",
+    "G1_D4_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D4_SOURCE_INTEGRITY.json",
+    "V59_RILASCIO_CANDIDATO.md": "docs/history/releases/V59_RILASCIO_CANDIDATO.md",
+    "V58_RILASCIO_CANDIDATO.md": "docs/history/releases/V58_RILASCIO_CANDIDATO.md",
+    "G1_D6_CHECKPOINT.md": "docs/history/checkpoints/G1_D6_CHECKPOINT.md",
+    "G1_D5_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D5_SOURCE_INTEGRITY.json",
+    "G1_D2_CHECKPOINT.md": "docs/history/checkpoints/G1_D2_CHECKPOINT.md",
+    "G1_D8_CHECKPOINT.md": "docs/history/checkpoints/G1_D8_CHECKPOINT.md",
+    "G1_D9_CHECKPOINT.md": "docs/history/checkpoints/G1_D9_CHECKPOINT.md",
+    "V60_E1_CANDIDATE.md": "docs/history/releases/V60_E1_CANDIDATE.md",
+    "V60_E2_CANDIDATE.md": "docs/history/releases/V60_E2_CANDIDATE.md",
+    "00_START_HERE.md": "docs/START_HERE.md",
+    "G1_D7_CHECKPOINT.md": "docs/history/checkpoints/G1_D7_CHECKPOINT.md",
+    "G1_D4_CHECKPOINT.md": "docs/history/checkpoints/G1_D4_CHECKPOINT.md",
+    "G1_D8_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D8_SOURCE_INTEGRITY.json",
+    "G1_CHECKPOINT.md": "docs/history/checkpoints/G1_CHECKPOINT.md",
+    "G1_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_SOURCE_INTEGRITY.json",
+    "V60_E3B2_CANDIDATE.md": "docs/history/releases/V60_E3B2_CANDIDATE.md",
+    "G1_D3_CHECKPOINT.md": "docs/history/checkpoints/G1_D3_CHECKPOINT.md",
+    "V60_E3_CANDIDATE.md": "docs/history/releases/V60_E3_CANDIDATE.md",
+    "V60_E3B_CANDIDATE.md": "docs/history/releases/V60_E3B_CANDIDATE.md"
+  },
+  "current_validation_status": "PENDING Windows dotnet 10; prior run 372 / 377"
+}

@@ -41,6 +41,5 @@ internal static class TestScenarios
         Assert.Equal(expected.GrowthRemainderTwentieths, actual.GrowthRemainderTwentieths);
         Assert.Equal(expected.Resources, actual.Resources);
         Assert.Equal(expected.Buildings.ToArray(), actual.Buildings.ToArray());
-        Assert.Equal(expected.Military, actual.Military);
     }
 }

@@ -1,13 +1,13 @@
 namespace SimRisorse.Application.Features.Military.CancelRecruits;
 
+/// <summary>Cancel pending recruits and, in the current v13 rules, active trainees too.</summary>
 public sealed record CancelRecruitsRequest(int Count);
 
-/// <summary>Returns waiting recruits first, then those in training with the least progress, with their equipment.</summary>
 public sealed class CancelRecruitsHandler(GameRuntime runtime)
 {
     public CommandResult Handle(CancelRecruitsRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return runtime.Execute(session => session.CancelRecruits(request.Count));
+        return runtime.Execute(session => session.CancelQueuedRecruits(request.Count));
     }
 }

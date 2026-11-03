@@ -29,6 +29,12 @@
       <Setter Property="Background" Value="#B8C2BC" /><Setter Property="Foreground" Value="#5D6C64" />
       <Setter Property="BorderBrush" Value="#B8C2BC" />
     </Style>
+    <!-- Research purchase mirrors construction: grey until every prerequisite and point cost is satisfied. -->
+    <Style Selector="Button.primary.research"><Setter Property="BorderThickness" Value="1" /><Setter Property="BorderBrush" Value="#176858" /></Style>
+    <Style Selector="Button.primary.research:disabled">
+      <Setter Property="Background" Value="#B8C2BC" /><Setter Property="Foreground" Value="#5D6C64" />
+      <Setter Property="BorderBrush" Value="#B8C2BC" />
+    </Style>
     <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="#66766E" /><Setter Property="FontSize" Value="12" /></Style>
     <!-- Le celle restano prima della scrollbar verticale; anche la selezione si ferma al margine riservato. -->
     <Style Selector="ListBox.gutter-list ListBoxItem">

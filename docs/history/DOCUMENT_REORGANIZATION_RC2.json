@@ -1,0 +1,35 @@
+{
+  "source": "v60-E3b2-RC1",
+  "target": "v60-E3b2-RC2",
+  "relocated_root_files": {
+    "G1_D7_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D7_SOURCE_INTEGRITY.json",
+    "G1_D9_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D9_SOURCE_INTEGRITY.json",
+    "G1_D3_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D3_SOURCE_INTEGRITY.json",
+    "G1_D6_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D6_SOURCE_INTEGRITY.json",
+    "G1_D5_CHECKPOINT.md": "docs/history/checkpoints/G1_D5_CHECKPOINT.md",
+    "G1_D4_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D4_SOURCE_INTEGRITY.json",
+    "V59_RILASCIO_CANDIDATO.md": "docs/history/releases/V59_RILASCIO_CANDIDATO.md",
+    "V58_RILASCIO_CANDIDATO.md": "docs/history/releases/V58_RILASCIO_CANDIDATO.md",
+    "G1_D6_CHECKPOINT.md": "docs/history/checkpoints/G1_D6_CHECKPOINT.md",
+    "G1_D5_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D5_SOURCE_INTEGRITY.json",
+    "G1_D2_CHECKPOINT.md": "docs/history/checkpoints/G1_D2_CHECKPOINT.md",
+    "G1_D8_CHECKPOINT.md": "docs/history/checkpoints/G1_D8_CHECKPOINT.md",
+    "G1_D9_CHECKPOINT.md": "docs/history/checkpoints/G1_D9_CHECKPOINT.md",
+    "V60_E1_CANDIDATE.md": "docs/history/releases/V60_E1_CANDIDATE.md",
+    "V60_E2_CANDIDATE.md": "docs/history/releases/V60_E2_CANDIDATE.md",
+    "00_START_HERE.md": "docs/START_HERE.md",
+    "G1_D7_CHECKPOINT.md": "docs/history/checkpoints/G1_D7_CHECKPOINT.md",
+    "G1_D4_CHECKPOINT.md": "docs/history/checkpoints/G1_D4_CHECKPOINT.md",
+    "G1_D8_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_D8_SOURCE_INTEGRITY.json",
+    "G1_CHECKPOINT.md": "docs/history/checkpoints/G1_CHECKPOINT.md",
+    "G1_SOURCE_INTEGRITY.json": "docs/history/integrity/G1_SOURCE_INTEGRITY.json",
+    "V60_E3B2_CANDIDATE.md": "docs/history/releases/V60_E3B2_CANDIDATE.md",
+    "G1_D3_CHECKPOINT.md": "docs/history/checkpoints/G1_D3_CHECKPOINT.md",
+    "V60_E3_CANDIDATE.md": "docs/history/releases/V60_E3_CANDIDATE.md",
+    "V60_E3B_CANDIDATE.md": "docs/history/releases/V60_E3B_CANDIDATE.md"
+  },
+  "archived_indices": {
+    "README.md": "docs/history/README_BEFORE_RC2.md",
+    "docs/README.md": "docs/history/DOCS_README_BEFORE_RC2.md"
+  }
+}

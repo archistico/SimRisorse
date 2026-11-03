@@ -28,6 +28,14 @@ public partial class MainWindow : Window
     {
         _viewModel = viewModel;
         DataContext = viewModel;
+        // Scenario identity is immutable during the lifetime of this window. Apply
+        // a local visibility value rather than a binding on a ListBox item container:
+        // Avalonia can reset container visibility while materializing the navigation.
+        ApplyMilitaryNavigationVisibility();
+        // Some Avalonia item containers finish loading after Window.Opened.
+        // Reaffirm the scenario-specific value at that boundary as well.
+        this.FindControl<ListBoxItem>("MilitaryNavigation")!.Loaded +=
+            (_, _) => ApplyMilitaryNavigationVisibility();
         _clock = new(viewModel.Advance, viewModel.Interrupt);
         if (startTimer)
         {
@@ -41,6 +49,8 @@ public partial class MainWindow : Window
         }
         Opened += (_, _) =>
         {
+            // Reapply after ListBox/TabControl have materialized their containers.
+            ApplyMilitaryNavigationVisibility();
             _clock.Reset();
             if (startTimer) { _timer.Start(); _autoSaveTimer.Start(); }
             if (initialize) Initialization = InitializeAsync();
@@ -54,7 +64,7 @@ public partial class MainWindow : Window
     {
         try { await _viewModel!.InitializeAsync(); }
         catch (Exception exception) { _viewModel!.UnexpectedError(exception); }
-        finally { _clock?.Reset(); }
+        finally { ApplyMilitaryNavigationVisibility(); _clock?.Reset(); }
     }
 
     private async void OnClosing(object? sender, WindowClosingEventArgs args)
@@ -72,9 +82,18 @@ public partial class MainWindow : Window
         finally { _closing = false; }
     }
 
+    private void ApplyMilitaryNavigationVisibility()
+    {
+        if (_viewModel is null) return;
+        var hasMilitary = _viewModel.HasMilitaryRules;
+        this.FindControl<ListBoxItem>("MilitaryNavigation")!.IsVisible = hasMilitary;
+        this.FindControl<TabItem>("MilitaryTab")!.IsVisible = hasMilitary;
+        if (!hasMilitary && this.FindControl<TabControl>("Sections")!.SelectedIndex == 2)
+            this.FindControl<TabControl>("Sections")!.SelectedIndex = 0;
+    }
+
     public void CloseWithoutSaving() { _allowClose = true; Close(); }
     internal void AllowImmediateClose() => _allowClose = true;
-    private void DiscardCloseClick(object? sender, RoutedEventArgs args) => CloseWithoutSaving();
 
     private IntPtr PowerMessage(IntPtr handle, uint message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {

@@ -32,6 +32,9 @@ public sealed class GameCatalog
             if (!buildingIds.Add(building.Id)) throw new ArgumentException($"Duplicate building: {building.Id}.", nameof(buildings));
             if (building.WorkplacesPerBuilding < 0 || building.HousingPerBuilding < 0 || building.Prerequisites.IsDefault)
                 throw new ArgumentException($"Invalid workplace count or prerequisites: {building.Id}.", nameof(buildings));
+            if (building.IsScenarioFixed && (building.WorkplacesPerBuilding != 0 || building.Recipe is not null ||
+                building.HousingPerBuilding != 0 || !building.Cost.Amounts.IsEmpty || !building.Prerequisites.IsEmpty))
+                throw new ArgumentException($"A scenario-fixed structure must not have costs, jobs or prerequisites: {building.Id}.", nameof(buildings));
             ValidateBundle(building.Cost, resourceIds);
             if (building.StoragePerBuilding is { } storage) ValidateBundle(storage, resourceIds);
             if (building.Recipe is { } recipe)

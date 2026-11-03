@@ -1,0 +1,18 @@
+{
+  "package": "SimRisorse v58-RC1",
+  "date": "2026-11-03",
+  "inputs_sha256": {
+    "SimRisorse.zip": "2f7ee7d2a5ca0a273bca935518737734e9a4532c273dffb45755e76bfacf53a1",
+    "SimRisorse-v57.zip": "2a8c07cd73211887a18f094d7bf3182a4f932fdc9a88452c368a1655649850bb"
+  },
+  "source_files": 267,
+  "csharp_files": 108,
+  "xml_static_errors": [],
+  "dotnet_build": "not-run-sdk-unavailable",
+  "xunit": "not-run-sdk-unavailable",
+  "windows_smoke": "not-run-windows-unavailable",
+  "active_rules": "civil-growth-13",
+  "baseline_rules": "civil-growth-12",
+  "planned_next_rules": "civil-growth-14 (not approved)",
+  "notes": "No developer save files were opened or modified."
+}

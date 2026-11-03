@@ -1,0 +1,15 @@
+{
+  "baseline": "SimRisorse-v59-RC1-M5.3c-bilanciamento.zip",
+  "checkpoint": "v59-G1-D1",
+  "executable_files_identical": true,
+  "tracked_folders": [
+    "src",
+    "tests",
+    "tools",
+    "scripts",
+    "experiments"
+  ],
+  "file_count": 158,
+  "sha256_manifest": "f3aeb6f0c724c7a403e6b6531fa817853d25794c51635385bddb032978abe5df",
+  "verification": "sha256 on every file under listed folders; identical original/current"
+}

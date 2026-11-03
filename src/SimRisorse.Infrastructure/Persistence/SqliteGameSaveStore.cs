@@ -14,6 +14,9 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
     public const int ApplicationId = 0x53494D52;
     public const int FileVersion = 2;
     private const int MaximumEntries = 10000;
+    // Military state remains mandatory across all military-capable rulesets.
+    // Unknown and pre-military versions must never acquire an invented military state.
+    private static bool RequiresMilitaryState(string rules) => rules is "civil-growth-10" or "civil-growth-11" or "civil-growth-12" or "civil-growth-13";
     public string DatabasePath { get; } = Path.GetFullPath(path);
 
     public void Save(GameSnapshot snapshot)
@@ -71,6 +74,47 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
         throw new GameSaveException(GameSaveError.UnsupportedFormat, "Unrecognized or unsupported save format.");
     }
 
+    /// <summary>0 absent; 1 original four-column schema; 2 incompatible v41 two-column schema.</summary>
+    private static int MilitarySchema(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using var query = Command(connection, transaction, "PRAGMA table_info(military_state);");
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        using var reader = query.ExecuteReader();
+        while (reader.Read()) names.Add(reader.GetString(1));
+        if (names.Count == 0) return 0;
+        if (names.SetEquals(new[] { "slot", "waiting", "training", "soldiers", "progress_seconds" })) return 1;
+        if (names.SetEquals(new[] { "slot", "queued_recruits", "soldiers" })) return 2;
+        throw new GameSaveException(GameSaveError.InvalidData, "Unrecognized military state columns.");
+    }
+
+    private static ImmutableArray<int> ReadIndividualProgress(SqliteConnection connection,
+        SqliteTransaction transaction, int? expectedCount)
+    {
+        using var check = Command(connection, transaction,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='military_training';");
+        if (Convert.ToInt64(check.ExecuteScalar()) != 1)
+            throw new GameSaveException(GameSaveError.InvalidData, "Individual training table is missing.");
+        if (expectedCount is < 0 or > MaximumEntries)
+            throw new GameSaveException(GameSaveError.InvalidData, "Training count exceeds format limits.");
+        var progress = ImmutableArray.CreateBuilder<int>();
+        using var query = Command(connection, transaction,
+            $"SELECT position,progress_seconds FROM military_training WHERE slot=1 ORDER BY position LIMIT {MaximumEntries + 1};");
+        using var reader = query.ExecuteReader();
+        while (reader.Read())
+        {
+            if (progress.Count >= MaximumEntries || (expectedCount.HasValue && progress.Count >= expectedCount.Value) ||
+                reader.GetInt64(0) != progress.Count)
+                throw new GameSaveException(GameSaveError.InvalidData, "Training positions are missing or duplicated.");
+            var value = reader.GetInt64(1);
+            if (value < 0 || value >= MilitaryTrainingRules.IndividualBarracks.TrainingSecondsPerGroup)
+                throw new GameSaveException(GameSaveError.InvalidData, "Individual training progress is invalid.");
+            progress.Add(checked((int)value));
+        }
+        if (expectedCount.HasValue && progress.Count != expectedCount.Value)
+            throw new GameSaveException(GameSaveError.InvalidData, "Training positions count differs from military state.");
+        return progress.ToImmutable();
+    }
+
     private void SaveCore(GameSnapshot snapshot)
     {
         if (!GameSession.SupportsSnapshotFormat(snapshot.FormatVersion))
@@ -81,12 +125,28 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             (snapshot.FormatVersion == 1 ? snapshot.GrowthProgressSeconds is not null : snapshot.GrowthProgressSeconds is not >= 0) ||
             snapshot.GrowthRemainderTwentieths is < 0 or >= HousingGrowthRules.UnitsPerSecond ||
             (snapshot.FormatVersion == 1 && snapshot.GrowthRemainderTwentieths != 0) ||
+            (snapshot.FormatVersion == 1 && snapshot.Military is not null) ||
+            (RequiresMilitaryState(snapshot.RulesVersion) != (snapshot.Military is not null)) ||
+            (snapshot.Military?.HasIndividualProgress == true && snapshot.RulesVersion != "civil-growth-13") ||
+            (snapshot.RulesVersion == "civil-growth-13" && snapshot.Military?.HasIndividualProgress != true) ||
+            (snapshot.Military is { } militaryCandidate && (militaryCandidate.WaitingRecruits < 0 ||
+                militaryCandidate.TrainingRecruits < 0 || militaryCandidate.AvailableSoldiers < 0 ||
+                militaryCandidate.TrainingProgressSeconds < 0 || militaryCandidate.EnlistedPopulation > int.MaxValue)) ||
             snapshot.Buildings.Any(item => item is null || string.IsNullOrWhiteSpace(item.BuildingId) || item.Count < 0 || item.AssignedWorkers < 0) ||
-            snapshot.Buildings.Select(item => item.BuildingId).Distinct(StringComparer.Ordinal).Count() != snapshot.Buildings.Length ||
-            (snapshot.Military is { } military && (snapshot.FormatVersion == 1 || military.TrainingProgressSeconds.IsDefault ||
-                military.QueuedRecruits < 0 || military.Soldiers < 0 || military.TrainingRecruits > MaximumEntries ||
-                military.TrainingProgressSeconds.Any(progress => progress < 0))))
+            snapshot.Buildings.Select(item => item.BuildingId).Distinct(StringComparer.Ordinal).Count() != snapshot.Buildings.Length)
             throw new GameSaveException(GameSaveError.InvalidData, "Snapshot cannot be written.");
+        if (snapshot.Military is { } militaryState)
+        {
+            var barracks = snapshot.Buildings.SingleOrDefault(item => item.BuildingId == MilitaryTrainingRules.SimpleBarracks.BarracksId);
+            if (barracks is null || snapshot.Buildings.Sum(item => (long)item.AssignedWorkers) +
+                militaryState.EnlistedPopulation > snapshot.Population)
+                throw new GameSaveException(GameSaveError.InvalidData, "Military population or barracks is invalid.");
+            try { MilitaryTraining.Validate(militaryState,
+                snapshot.RulesVersion == "civil-growth-13" ? MilitaryTrainingRules.IndividualBarracks : MilitaryTrainingRules.SimpleBarracks,
+                barracks.Count); }
+            catch (ArgumentException exception)
+            { throw new GameSaveException(GameSaveError.InvalidData, "Military state cannot be written.", exception); }
+        }
         Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
         using var connection = Open(SqliteOpenMode.ReadWriteCreate);
         PreserveReplacedRules(connection, snapshot);
@@ -155,7 +215,65 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
                 """);
             fraction.Parameters.AddWithValue("$fraction", snapshot.GrowthRemainderTwentieths);
             fraction.ExecuteNonQuery();
-            SaveMilitary(connection, transaction, snapshot.Military);
+            if (snapshot.Military is { } military)
+            {
+                // The 03/11 branch used the same military_state name with a different column layout.
+                // The backup of replaced rules was made before this transaction; change schema atomically.
+                if (MilitarySchema(connection, transaction) == 2)
+                {
+                    using var drop = Command(connection, transaction,
+                        "DROP TABLE IF EXISTS military_training; DROP TABLE military_state;");
+                    drop.ExecuteNonQuery();
+                }
+                using var militaryCommand = Command(connection, transaction, """
+                    CREATE TABLE IF NOT EXISTS military_state (
+                        slot INTEGER PRIMARY KEY CHECK(slot=1) REFERENCES game_save(slot),
+                        waiting INTEGER NOT NULL CHECK(waiting>=0),
+                        training INTEGER NOT NULL CHECK(training>=0),
+                        soldiers INTEGER NOT NULL CHECK(soldiers>=0),
+                        progress_seconds INTEGER NOT NULL CHECK(progress_seconds>=0)
+                    ) STRICT;
+                    INSERT INTO military_state VALUES(1,$waiting,$training,$soldiers,$progress)
+                    ON CONFLICT(slot) DO UPDATE SET waiting=excluded.waiting, training=excluded.training,
+                        soldiers=excluded.soldiers, progress_seconds=excluded.progress_seconds;
+                    """);
+                militaryCommand.Parameters.AddWithValue("$waiting", military.WaitingRecruits);
+                militaryCommand.Parameters.AddWithValue("$training", military.TrainingRecruits);
+                militaryCommand.Parameters.AddWithValue("$soldiers", military.AvailableSoldiers);
+                militaryCommand.Parameters.AddWithValue("$progress", military.TrainingProgressSeconds);
+                militaryCommand.ExecuteNonQuery();
+                // Per-person training is a companion to the original four-column schema, not a schema overwrite.
+                if (snapshot.RulesVersion == "civil-growth-13")
+                {
+                    using (var schema = Command(connection, transaction, """
+                        CREATE TABLE IF NOT EXISTS military_training (
+                            slot INTEGER NOT NULL REFERENCES game_save(slot),
+                            position INTEGER NOT NULL CHECK(position>=0),
+                            progress_seconds INTEGER NOT NULL CHECK(progress_seconds>=0),
+                            PRIMARY KEY(slot,position)
+                        ) STRICT;
+                        DELETE FROM military_training WHERE slot=1;
+                        """)) schema.ExecuteNonQuery();
+                    for (var i = 0; i < military.IndividualProgressSeconds.Length; i++)
+                    {
+                        using var insert = Command(connection, transaction,
+                            "INSERT INTO military_training VALUES(1,$position,$progress);");
+                        insert.Parameters.AddWithValue("$position", i);
+                        insert.Parameters.AddWithValue("$progress", military.IndividualProgressSeconds[i]);
+                        insert.ExecuteNonQuery();
+                    }
+                }
+            }
+            else
+            {
+                using var hasMilitary = Command(connection, transaction,
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='military_state';");
+                if (Convert.ToInt64(hasMilitary.ExecuteScalar()) > 0)
+                {
+                    using var clearMilitary = Command(connection, transaction, "DELETE FROM military_state WHERE slot=1;");
+                    clearMilitary.ExecuteNonQuery();
+                }
+            }
         }
         using (var clear = Command(connection, transaction, "DELETE FROM resource_stock WHERE slot=1; DELETE FROM building_stock WHERE slot=1;")) clear.ExecuteNonQuery();
         foreach (var (id, amount) in snapshot.Resources.Amounts)
@@ -174,76 +292,6 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             insert.ExecuteNonQuery();
         }
         transaction.Commit();
-    }
-
-    /// <summary>
-    /// Optional companion tables, like the growth fraction: the v2 file format is unchanged and checkpoints of rules
-    /// without recruitment have no row. Rows are replaced on every write, so a later civil-only save leaves none behind.
-    /// </summary>
-    private static void SaveMilitary(SqliteConnection connection, SqliteTransaction transaction, MilitaryState? military)
-    {
-        using (var schema = Command(connection, transaction, """
-            CREATE TABLE IF NOT EXISTS military_state (
-                slot INTEGER PRIMARY KEY CHECK(slot=1) REFERENCES game_save(slot),
-                queued_recruits INTEGER NOT NULL CHECK(queued_recruits>=0),
-                soldiers INTEGER NOT NULL CHECK(soldiers>=0)
-            ) STRICT;
-            CREATE TABLE IF NOT EXISTS military_training (
-                slot INTEGER NOT NULL REFERENCES game_save(slot), position INTEGER NOT NULL CHECK(position>=0),
-                progress_seconds INTEGER NOT NULL CHECK(progress_seconds>=0), PRIMARY KEY(slot,position)
-            ) STRICT;
-            DELETE FROM military_training WHERE slot=1;
-            DELETE FROM military_state WHERE slot=1;
-            """)) schema.ExecuteNonQuery();
-        if (military is null) return;
-        using (var state = Command(connection, transaction, "INSERT INTO military_state VALUES(1,$queued,$soldiers);"))
-        {
-            state.Parameters.AddWithValue("$queued", military.QueuedRecruits);
-            state.Parameters.AddWithValue("$soldiers", military.Soldiers);
-            state.ExecuteNonQuery();
-        }
-        for (var position = 0; position < military.TrainingRecruits; position++)
-        {
-            using var insert = Command(connection, transaction, "INSERT INTO military_training VALUES(1,$position,$progress);");
-            insert.Parameters.AddWithValue("$position", position);
-            insert.Parameters.AddWithValue("$progress", military.TrainingProgressSeconds[position]);
-            insert.ExecuteNonQuery();
-        }
-    }
-
-    private static MilitaryState? LoadMilitary(SqliteConnection connection, SqliteTransaction transaction)
-    {
-        using (var tables = Command(connection, transaction,
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('military_state','military_training');"))
-        {
-            var count = Convert.ToInt64(tables.ExecuteScalar());
-            if (count == 0) return null;
-            if (count != 2) throw new GameSaveException(GameSaveError.InvalidData, "Military tables are incomplete.");
-        }
-        int? queued = null, soldiers = null;
-        using (var command = Command(connection, transaction, "SELECT queued_recruits,soldiers FROM military_state WHERE slot=1;"))
-        using (var reader = command.ExecuteReader())
-            if (reader.Read())
-            {
-                queued = checked((int)reader.GetInt64(0));
-                soldiers = checked((int)reader.GetInt64(1));
-            }
-        var training = ImmutableArray.CreateBuilder<int>();
-        using (var command = Command(connection, transaction,
-            $"SELECT position,progress_seconds FROM military_training WHERE slot=1 ORDER BY position LIMIT {MaximumEntries + 1};"))
-        using (var reader = command.ExecuteReader())
-            while (reader.Read())
-            {
-                if (reader.GetInt64(0) != training.Count)
-                    throw new GameSaveException(GameSaveError.InvalidData, "Training places are not contiguous.");
-                training.Add(checked((int)reader.GetInt64(1)));
-            }
-        if (training.Count > MaximumEntries || queued is null && training.Count > 0)
-            throw new GameSaveException(GameSaveError.InvalidData, "Military state is invalid.");
-        if (queued is not { } waiting || soldiers is not { } trained) return null;
-        if (waiting < 0 || trained < 0 || training.Any(progress => progress < 0))
-            throw new GameSaveException(GameSaveError.InvalidData, "Military state is invalid.");
-        return new(waiting, training.ToImmutable(), trained);
     }
 
     /// <summary>
@@ -322,6 +370,7 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
             throw new GameSaveException(GameSaveError.InvalidData, "The save exceeds format limits.");
         int? progress = null;
         var remainder = 0;
+        MilitaryTrainingState? militaryState = null;
         if (version == 2)
         {
             using var command = Command(connection, transaction, "SELECT growth_seconds FROM population_state WHERE slot=1;");
@@ -340,10 +389,65 @@ public sealed class SqliteGameSaveStore(string path) : IGameSaveStore
                     throw new GameSaveException(GameSaveError.InvalidData, "Growth fraction is missing or invalid.");
                 remainder = (int)units;
             }
+            var militarySchema = MilitarySchema(connection, transaction);
+            if (militarySchema == 1)
+            {
+                using var military = Command(connection, transaction,
+                    "SELECT waiting,training,soldiers,progress_seconds FROM military_state WHERE slot=1;");
+                using var reader = military.ExecuteReader();
+                if (reader.Read())
+                {
+                    var waiting = checked((int)reader.GetInt64(0));
+                    var training = checked((int)reader.GetInt64(1));
+                    var soldiers = checked((int)reader.GetInt64(2));
+                    var trainingProgressSeconds = checked((int)reader.GetInt64(3));
+                    militaryState = new(waiting, training, soldiers, trainingProgressSeconds);
+                }
+                reader.Close();
+                if (rules == "civil-growth-13" && militaryState is { } individual)
+                {
+                    var individualProgressSeconds = ReadIndividualProgress(connection, transaction, individual.TrainingRecruits);
+                    militaryState = individual with { IndividualProgressSeconds = individualProgressSeconds };
+                }
+            }
+            else if (militarySchema == 2)
+            {
+                // Only the known v41 fork may use this alternate schema under the ambiguous v10 identifier.
+                if (rules != "civil-growth-10")
+                    throw new GameSaveException(GameSaveError.InvalidData, "Alternate military schema belongs to the v41 fork only.");
+                using var military = Command(connection, transaction,
+                    "SELECT queued_recruits,soldiers FROM military_state WHERE slot=1;");
+                using var reader = military.ExecuteReader();
+                if (reader.Read())
+                {
+                    var queued = checked((int)reader.GetInt64(0));
+                    var soldiers = checked((int)reader.GetInt64(1));
+                    reader.Close();
+                    var forkProgressSeconds = ReadIndividualProgress(connection, transaction, null);
+                    // The alternate branch has no explicit training count; read positions until exhausted.
+                    militaryState = new MilitaryTrainingState(queued, forkProgressSeconds.Length, soldiers,
+                        forkProgressSeconds.Length == 0 ? 0 : forkProgressSeconds[0], forkProgressSeconds);
+                }
+            }
         }
-        var military = version == 2 ? LoadMilitary(connection, transaction) : null;
+        if (RequiresMilitaryState(rules) != (militaryState is not null) ||
+            (rules == "civil-growth-13" && militaryState?.HasIndividualProgress != true) ||
+            (rules is "civil-growth-11" or "civil-growth-12" && militaryState?.HasIndividualProgress == true))
+            throw new GameSaveException(GameSaveError.InvalidData, "Military state is missing or incompatible with rules.");
+        if (militaryState is not null)
+        {
+            var barracks = buildings.SingleOrDefault(item => item.BuildingId == MilitaryTrainingRules.SimpleBarracks.BarracksId);
+            if (barracks is null || buildings.Sum(item => (long)item.AssignedWorkers) +
+                militaryState.EnlistedPopulation > population)
+                throw new GameSaveException(GameSaveError.InvalidData, "Military population or barracks is invalid.");
+            try { MilitaryTraining.Validate(militaryState,
+                militaryState.HasIndividualProgress ? MilitaryTrainingRules.IndividualBarracks : MilitaryTrainingRules.SimpleBarracks,
+                barracks.Count); }
+            catch (ArgumentException exception)
+            { throw new GameSaveException(GameSaveError.InvalidData, "Military state is invalid.", exception); }
+        }
         var snapshot = new GameSnapshot(version, scenario, rules, elapsed, population,
-            ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress, remainder, military);
+            ResourceBundle.FromAmounts(resources), buildings.ToImmutable(), progress, remainder, militaryState);
         transaction.Commit();
         return snapshot;
     }

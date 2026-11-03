@@ -1,0 +1,27 @@
+{
+  "checkpoint": "v60-E3b2-RC1",
+  "date": "2026-11-03",
+  "base_zip": "SimRisorse-v60-E3b-RC1-snapshot-migrazione.zip",
+  "base_code_test_script_modified": false,
+  "added_files": [
+    "G1_D9_CHECKPOINT.md",
+    "V60_E3B2_CANDIDATE.md",
+    "docs/adr/0025-e3b2-sqlite-v3-copy-on-write-isolato.md",
+    "docs/design/G1_D9_E3B2_SQLITE_V3_ISOLATO.md",
+    "src/SimRisorse.Infrastructure/Persistence/V14SqliteSaveStore.cs",
+    "tests/SimRisorse.Infrastructure.Tests/V14SqliteSaveStoreTests.cs"
+  ],
+  "modified_docs": [
+    "00_START_HERE.md",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/AUTHORITY_REGISTRY.md",
+    "docs/CURRENT_STATE.md",
+    "docs/NEW_CHAT_HANDOFF.md",
+    "docs/ROADMAP.md",
+    "docs/adr/README.md"
+  ],
+  "dotnet_compiled": false,
+  "windows_tests": "PENDING",
+  "notes": "Baseline E3b/1 validated by user; E3b/2 isolated v3 store only"
+}

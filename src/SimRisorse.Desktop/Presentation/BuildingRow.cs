@@ -4,13 +4,14 @@ using SimRisorse.Core.Economy;
 
 namespace SimRisorse.Desktop.Presentation;
 
-public sealed class BuildingRow(BuildingView view) : ObservableObject
+public sealed class BuildingRow(BuildingView view, GameView gameView) : ObservableObject
 {
     private BuildingView _view = view;
-    private MilitaryView? _military;
+    private GameView _gameView = gameView;
+    private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
+    private bool IndividualTraining => _gameView.Military is { } military &&
+        !military.IndividualProgressSeconds.IsDefault;
     public BuildingView View => _view;
-    /// <summary>The barracks trains recruits instead of producing resources or housing.</summary>
-    public bool IsBarracks => _military is { } military && military.BarracksBuildingId == Id;
     public string Id => _view.Id;
     public string Name => _view.Name;
     public int Count => _view.Count;
@@ -19,58 +20,68 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     public string Initials => new(Name.Where(char.IsUpper).Take(2).ToArray());
     public string Description => Id switch
     {
+        "town-hall" => "Centro della colonia, presente fin dall'inizio. Fornisce una sola volta 120 Tavole, 80 Pietra e 30 Cibo e offre 1.000 posti per ogni risorsa. Non può essere costruito o demolito.",
         "tree-feller" => "Fornisce i tronchi che alimentano le segherie. Più persone assegnate aumentano la raccolta.",
         "sawmill" => "Trasforma i tronchi in tavole per costruire e ampliare la colonia.",
         "stonecutter" => "Estrae la pietra necessaria agli investimenti e alle nuove costruzioni.",
-        "small-house" => "Offre 8 posti abitativi. Ogni Casa piccola oltre la prima accelera gli arrivi del 15%, fino al limite complessivo di 2×. Richiede Cibo; non impiega lavoratori.",
-        "large-house" => "Offre 32 posti abitativi e accelera gli arrivi del 30%, fino al limite complessivo di 2×. Richiede un Forno costruito e Pane per gli abitanti avanzati, oltre al Cibo.",
+        "small-house" => "Offre 8 posti abitativi e 10 posti di scorta per Cibo e Pane. Ogni Casa piccola oltre la prima accelera gli arrivi del 15%, fino al limite complessivo di 2×. Richiede Cibo; non impiega lavoratori.",
+        "large-house" => "Offre 32 posti abitativi e 25 posti di scorta per Cibo e Pane; accelera gli arrivi del 30%, fino al limite complessivo di 2×. Richiede un Forno costruito e Pane per gli abitanti avanzati, oltre al Cibo.",
         "fisher" => "Raccoglie pesce da trasformare in cibo nel deposito alimentare.",
-        "food-store" => "Trasforma il pesce in cibo per gli abitanti. Il cibo consente alla popolazione di crescere.",
+        "food-store" => "Trasforma il Pesce in Cibo, necessario per la crescita degli abitanti, e conserva fino a 50 unità aggiuntive di Cibo per struttura. Non conserva il Pane.",
         "farm" => "Coltiva il grano da macinare nel mulino. Due fattorie riforniscono un mulino a pieno ritmo.",
         "well" => "Fornisce l'acqua necessaria al forno per impastare il pane.",
         "mill" => "Macina il grano in farina per il forno.",
-        "bakery" => "Trasforma farina e acqua in Pane per gli abitanti delle case grandi. Il Cibo di base resta necessario per tutti.",
-        "warehouse" => "Amplia lo spazio di ogni risorsa. Quando una scorta raggiunge la capacità la sua produzione si ferma: un magazzino la fa ripartire.",
+        "bakery" => "Trasforma Farina e Acqua in Pane per gli abitanti delle Case grandi. Ogni Forno aggiunge 50 posti per il Pane; il Municipio e i Magazzini offrono spazio condiviso. Il Cibo di base resta necessario per tutti.",
+        "warehouse" => "Aumenta di 500 unità la capacità di ogni risorsa. Gli edifici produttivi conservano piccole quantità dei propri prodotti; il Deposito alimentare aggiunge spazio soltanto per il Cibo.",
         "iron-mine" => "Estrae minerale di ferro per la fonderia. Richiede una Casa grande costruita e un lavoratore assegnato.",
         "coal-mine" => "Estrae il carbone usato dalla fonderia. Richiede una Casa grande costruita e un lavoratore assegnato.",
         "iron-smelter" => "Fonde il minerale di ferro usando carbone. Le due miniere devono essere costruite; i materiali estratti sono utilizzabili dal secondo successivo.",
         "gold-mine" => "Estrae minerale d'oro. Richiede una Casa grande costruita e un lavoratore assegnato.",
         "gold-smelter" => "Fonde il minerale d'oro usando carbone. Condivide il carbone con il ferro, che ha priorità quando le scorte non bastano.",
-        "forge" => "Trasforma ferro e carbone in lotti di 2 Spade. Le fonderie hanno priorità sul carbone. Le Spade sono scorte per il futuro arruolamento.",
-        "mint" => "Trasforma oro e carbone in lotti di 3 Monete. Fonderie e Forgia hanno priorità sul carbone. Le Monete sono scorte per futuri pagamenti espliciti.",
-        "barracks" => "Addestra in Soldati gli abitanti liberi che arruoli: le Spade si spendono subito e ogni Caserma forma una recluta alla volta. Reclute e soldati restano residenti e consumano Cibo e Pane. Non impiega lavoratori.",
+        "forge" => "Trasforma 1 Ferro e 1 Carbone in 2 Spade per addetto al secondo. Il carbone va prima alle Fonderie di ferro e d'oro: libera i loro addetti o potenzia le miniere se la Forgia resta senza. Ogni recluta richiede " +
+            (IndividualTraining ? "5" : "2") + " Spade, consumate all'arruolamento.",
+        "mint" => "Trasforma 1 Oro e 1 Carbone in 3 Monete per addetto al secondo. Il carbone va prima alle Fonderie e alla Forgia: puoi liberare addetti o costruire altre Miniere di carbone. Le Monete serviranno per pagamenti specifici, non per tutte le costruzioni.",
+        "barracks" => IndividualTraining
+            ? "La Caserma costa 260 Tavole e 200 Pietra e richiede una Forgia. Offre 1 posto individuale senza lavoratori; ogni recluta completa 30 secondi di gioco. È possibile annullare anche gli addestramenti. Reclute e soldati rimangono residenti e consumano le razioni normali."
+            : "La Caserma costa 280 Tavole e 200 Pietra e richiede una Forgia. Offre 2 posti di addestramento senza lavoratori assegnati. Ogni gruppo impiega 60 secondi di gioco; le reclute successive attendono in coda. Reclute e soldati usano gli stessi alloggi e le stesse razioni degli altri abitanti.",
         _ => "Assegna persone e controlla materiali e spazio per far lavorare la struttura."
     };
     public bool IsProducer => !_view.BlockReason.HasFlag(ProductionBlockReason.NotProducer);
-    public bool IsStorage => !_view.StoragePerBuilding.IsEmpty;
+    public bool HasStorage => !_view.StoragePerBuilding.IsEmpty;
+    public bool IsScenarioFixed => _view.IsScenarioFixed;
+    public bool IsBuildable => !IsScenarioFixed;
     public string OutputHeading => IsProducer ? "PRODUCE PER ADDETTO / S" : "EFFETTO";
     public string Output => IsProducer ? Format(_view.OutputPerWorker) : Recipe;
     public IEnumerable<ResourceDetailLine> OutputLines => _view.OutputPerWorker.Select(output =>
         new ResourceDetailLine(output.ResourceId, Format([output])));
-    public IEnumerable<ResourceDetailLine> EffectLines
-    {
-        get
-        {
-            if (_view.HousingPerBuilding > 0)
-                yield return new("population", $"+{_view.HousingPerBuilding} posti abitativi per casa");
-            if (IsStorage)
-                yield return new("warehouse", $"{StorageEffect(1)} per magazzino");
-            if (IsBarracks && _military is { } military)
-            {
-                yield return new("recruits", military.TrainingPlacesPerBarracks == 1 ? "1 recluta alla volta per caserma"
-                    : $"{military.TrainingPlacesPerBarracks} reclute alla volta per caserma");
-                yield return new("soldiers", $"1 soldato ogni {military.TrainingSeconds} s per posto occupato");
-            }
-        }
-    }
     public bool HasInputs => !_view.InputPerWorker.IsEmpty;
     public IEnumerable<ResourceDetailLine> ConsumptionLines => _view.InputPerWorker.Select(input =>
         new ResourceDetailLine(input.ResourceId, Format([input])));
-    public string Recipe => _view.HousingPerBuilding > 0 ? $"+{_view.HousingPerBuilding} posti abitativi per edificio" :
-        IsStorage ? $"{StorageEffect(1)} per edificio" :
+    // The same 14px glyph + 12px text template is shared with costs, production and consumption.
+    // Storage and housing/training are independent effects, all rendered with the same icon/text template.
+    public IEnumerable<ResourceDetailLine> CapacityLines
+    {
+        get
+        {
+            if (Id == "town-hall") return [new ResourceDetailLine(Id, "+1.000 posti per ogni risorsa")];
+            if (Id == "warehouse") return [new ResourceDetailLine(Id, "+500 posti per ogni risorsa")];
+            var lines = new List<ResourceDetailLine>();
+            if (Id == "barracks") lines.Add(new ResourceDetailLine(Id, IndividualTraining ? "+1 posto di addestramento per Caserma" : "+2 posti di addestramento per Caserma"));
+            if (_view.HousingPerBuilding > 0)
+                lines.Add(new ResourceDetailLine("population", $"+{_view.HousingPerBuilding} posti abitativi per edificio"));
+            lines.AddRange(_view.StoragePerBuilding.Select(item => new ResourceDetailLine(item.ResourceId,
+                $"+{item.Quantity.ToString("#,0.###", Italian)} {item.Name} di capacità")));
+            if (lines.Count == 0) lines.Add(new ResourceDetailLine(Id, "Nessuna capacità aggiuntiva"));
+            return lines;
+        }
+    }
+    public string Recipe => Id == "barracks" ? (IndividualTraining ? "+1 posto di addestramento per Caserma" : "+2 posti di addestramento per Caserma") :
+        _view.HousingPerBuilding > 0 ? $"+{_view.HousingPerBuilding} posti abitativi per edificio" :
+        !IsProducer && HasStorage ? $"{StorageEffect(1)} per edificio" :
         (_view.InputPerWorker.IsEmpty ? string.Empty : Format(_view.InputPerWorker) + " → ") + Format(_view.OutputPerWorker);
-    public string Activity => IsBarracks ? "Nessun lavoratore richiesto: arruola abitanti liberi con le Spade." :
-        !IsProducer ? (IsStorage ? "Capacità disponibile appena costruito. Nessun lavoratore richiesto." :
+    public string Activity => Id == "barracks" ? (IndividualTraining ? "Nessun addetto richiesto. Gestisci arruolamento e annullamenti nella scheda Esercito; il congedo è rinviato." : "Nessun addetto richiesto. Gestisci arruolamento, addestramento e congedi nella scheda Esercito.") :
+        IsScenarioFixed ? "Il Municipio è una struttura iniziale permanente. Non richiede lavoratori." :
+        !IsProducer ? (Id == "warehouse" ? "Capacità disponibile appena costruito. Nessun lavoratore richiesto." :
         $"+{_view.HousingPerBuilding} posti per edificio. Nessun lavoratore richiesto.") :
         $"{_view.RunnableWorkers} di {Workers} lavoratori possono produrre nel prossimo secondo.";
     public string Diagnosis
@@ -85,7 +96,29 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
             if (!_view.MissingInputNames.IsEmpty)
                 messages.Add($"Materie prime insufficienti: {string.Join(", ", _view.MissingInputNames)}.");
             if (!_view.FullOutputNames.IsEmpty)
-                messages.Add($"Spazio insufficiente per: {string.Join(", ", _view.FullOutputNames)}.");
+            {
+                foreach (var output in _view.OutputPerWorker.Where(item => _view.FullOutputNames.Contains(item.Name)))
+                {
+                    var stock = _gameView.Resources.First(item => item.Id == output.ResourceId);
+                    var free = Math.Max(0m, stock.Capacity - stock.Quantity);
+                    messages.Add($"Spazio insufficiente per {output.Name}: {stock.Quantity.ToString("#,0.###", Italian)} / " +
+                        $"{stock.Capacity.ToString("#,0.###", Italian)} (liberi {free.ToString("#,0.###", Italian)}; " +
+                        $"servono {output.Quantity.ToString("#,0.###", Italian)} posti per lotto e addetto).");
+                }
+                var warehouse = _gameView.Buildings.FirstOrDefault(item => item.Id == "warehouse");
+                if (warehouse is not null)
+                {
+                    messages.Add("Per aumentare la capacità costruisci un Magazzino (+500 per ogni risorsa).");
+                    foreach (var output in _view.OutputPerWorker.Where(item => _view.FullOutputNames.Contains(item.Name)))
+                    {
+                        var local = _view.StoragePerBuilding.FirstOrDefault(item => item.ResourceId == output.ResourceId)?.Quantity ?? 0m;
+                        if (local > 0m)
+                            messages.Add($"Anche un altro {Name} aggiunge {local.ToString("#,0.###", Italian)} posti per {output.Name}.");
+                    }
+                    if (_view.FullOutputNames.Contains("Pane"))
+                        messages.Add("Il Deposito alimentare produce Cibo dal Pesce: non immagazzina Pane.");
+                }
+            }
             if (messages.Count > 0)
                 messages.Add("La previsione considera il consumo degli abitanti e le prenotazioni delle strutture con priorità maggiore.");
             return string.Join(" ", messages);
@@ -93,9 +126,9 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     }
     public bool HasDiagnosis => Diagnosis.Length > 0;
     public string Status => _view.BlockReason.HasFlag(ProductionBlockReason.NotConstructed) ? "Da costruire" :
-        IsStorage ? StorageEffect(Count) :
-        IsBarracks && _military is { } military ? $"{military.TrainingRecruits}/{military.TrainingPlaces} in addestramento · " +
-            (military.Soldiers == 1 ? "1 soldato" : $"{military.Soldiers} soldati") :
+        IsScenarioFixed ? "Struttura iniziale · capacità condivisa" :
+        Id == "barracks" ? $"{(long)Count * (IndividualTraining ? 1 : 2)} posti di addestramento · {_gameView.Military?.TrainingRecruits ?? 0} occupati" :
+        Id == "warehouse" ? StorageEffect(Count) :
         !IsProducer ? $"{(long)Count * _view.HousingPerBuilding} posti abitativi" :
         _view.BlockReason.HasFlag(ProductionBlockReason.NoWorkers) ? "Nessun lavoratore" :
         _view.RunnableWorkers > 0 && _view.RunnableWorkers < Workers ? $"Produzione parziale: {_view.RunnableWorkers}/{Workers}" :
@@ -107,10 +140,5 @@ public sealed class BuildingRow(BuildingView view) : ObservableObject
     private string StorageEffect(int count) => _view.StoragePerBuilding.Select(item => item.Quantity).Distinct().Count() == 1
         ? "+" + (_view.StoragePerBuilding[0].Quantity * count).ToString("#,0.###", CultureInfo.GetCultureInfo("it-IT")) + " capacità per ogni risorsa"
         : "+" + Format(_view.StoragePerBuilding, count) + " di capacità";
-    public void Update(BuildingView updated, MilitaryView? military = null)
-    {
-        _view = updated;
-        _military = military;
-        Notify(string.Empty);
-    }
+    public void Update(BuildingView updated, GameView gameView) { _view = updated; _gameView = gameView; Notify(string.Empty); }
 }

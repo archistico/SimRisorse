@@ -1,100 +1,59 @@
 # SimRisorse
 
-![SimRisorse: menu laterale, card delle scorte e dettaglio del Taglialegna](docs/screenshots/colonia.png)
+**AGGIORNAMENTO G1-D28 / RC12 (03/11/2026):** l’utente ha confermato i **test RC11 passati (466 attesi)**. RC12 corregge l'Albero tecnologico della sola v14: **punti e prezzi ricerca a due decimali**; pulsante **«Acquista ricerca» grigio e non azionabile** se manca il saldo effettivo o un prerequisito, verde/hover ocra solo se acquistabile. La precisione contabile in millipunti resta invariata. **468 test attesi**, non eseguiti qui per assenza SDK .NET 10; parità visiva P0 ancora aperta. [Report](docs/design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano](docs/validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](docs/adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
 
-Gioco gestionale in cui sviluppi una colonia investendo materiali e lavoratori nelle filiere produttive. Parti da tronchi, legno lavorato e pietra, fai crescere la popolazione e sblocchi alimentazione e industria.
+**AGGIORNAMENTO G1-D27 / RC11 (03/11/2026):** l’utente conferma **test RC10 passati (464 attesi)**, senza comunicare un conteggio dettagliato. RC11 riordina il dettaglio Edifici della sola v14 in due righe: **Costruisci | +1 | +5 | +10** e **Lavoratore | +1 | +5 | +10**; il pulsante **−1** rimane compatto accanto alla label Lavoratore per non perdere la funzione di rilascio. Aggiunti comandi atomici per assegnare 5/10 persone, con limiti di popolazione libera e posti di lavoro, stati disabled espliciti e hover già previsto. **466 test attesi** (+2 casi), non eseguiti qui per assenza dell’SDK .NET 10; audit GUI P0 ancora aperto. [Rapporto RC11](docs/design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [Piano RC11](docs/validation/G1_D27_RC11_TEST_PLAN.md) · [ADR 0036](docs/adr/0036-v14-layout-costruzione-e-lotti-lavoratori.md).
 
-Il progetto è in sviluppo. La prima campagna prevede **22 tipi di edifici**: per vincere occorrerà possederli tutti, costruendo per ultimo il Castello, sbloccato da una conquista obbligatoria. Navi, missioni, conquista e vittoria devono ancora essere implementati.
+Gioco gestionale di risorse e popolazione in **C# / .NET 10**, interfaccia desktop **Avalonia 12** in stile pixel art retro 8-bit, persistenza **SQLite**, test **xUnit**.
 
-## Stato attuale
+**AGGIORNAMENTO G1-D26 / RC10 (03/11/2026):** la compilazione Windows della RC9 si è interrotta con **CS0246** in `tests/SimRisorse.Application.Tests/V14SchoolSuppliesTests.cs` (riga 15): `GameScenario` è definito in `SimRisorse.Core.Content`, ma mancava il relativo `using`. **RC10 aggiunge esclusivamente tale import nel codice dei test.** Tutti gli altri progetti sono stati compilati nel log dell’utente; la suite xUnit RC9 non è partita. **Ultima suite verde: RC8, 456/456 test confermati. RC10: 464 test attesi, non ancora eseguiti; audit GUI P0 ancora aperto.** [Diagnosi RC10](docs/design/G1_D26_RC10_FIX_IMPORT_GAMESCENARIO.md) · [Piano RC10](docs/validation/G1_D26_RC10_TEST_PLAN.md).
 
-**3 novembre 2026 — M5.3a/b implementata, da verificare su Windows.** Regole `civil-growth-10`, **20 tipi di edifici e 16 risorse**: la **Caserma** (260 Legno lavorato/200 Pietra, dopo la Forgia) trasforma abitanti liberi in soldati al costo di **5 Spade** ciascuno; ogni Caserma addestra una recluta alla volta in **30 secondi**. Reclute e soldati restano residenti; l'arruolamento si può annullare. Il codice è stato scritto senza SDK .NET disponibile: **308 test attesi**, [rapporto](docs/validation/M5_3A_BARRACKS.md). Restano Cantiere e Castello.
+## Quale versione utilizzare
 
-- Crescita civile con Case piccole e grandi, Cibo e Pane, Magazzini e capacità delle scorte.
-- Miniere di ferro, carbone e oro, due fonderie e priorità del Ferro quando il Carbone scarseggia.
-- Interfaccia retro con font monospace, icone pixel, menu laterale Edifici/Risorse, **tabella delle risorse ordinata alfabeticamente** con stima del tempo di riempimento (`hh:mm:ss`), cifre allineate a destra e quantità arrotondate all'unità. Le card mantengono la precisione precedente.
-- Dettaglio con descrizione, costi, produzioni e consumi **in elenchi con icone**. Ordini da **1, 5 o 10** unità; assegnazioni manuali dei lavoratori.
-- Pausa, salvataggio manuale e automatico, ripresa senza produzione a gioco chiuso.
-- Conversione dei vecchi salvataggi civili con backup dell'originale; formato SQLite v2.
+| Modalità | Comando | Stato | Salvataggi |
+| --- | --- | --- | --- |
+| **Gioco normale (`civil-growth-13`)** | `./run-game.cmd` | Campagna storica funzionante, da preservare | SQLite v2, profilo normale |
+| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC12 candidata** (ricerca a due decimali e pulsante Acquista), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
 
-Ultima validazione completa Windows (v40, prima della Caserma): **260/260 test**, build senza avvisi/errori, **23 cronologie più crescita accelerata**, **sei benchmark**, pubblicazione e smoke nativi dei due scenari. Generati **33 render**. M5.2c confronta nove profili e quattro guardie con replay e contabilità per secondo; [risultati e limiti](docs/validation/M5_2C_FORGE_MINT.md).
+**Stato storico e corrente (03/11/2026):** la **RC8 ha superato 456 test su Windows** (comunicato dall'utente). La **RC9 / G1-D25** rimuove «Esci senza salvare» e allinea la Scuola all'Esercito (coda, posti, progresso, ricercatori), introducendo le **Matite** nella sola v14. Fabbricazione manuale: 1 Legno lavorato + 1 Carbone → 4 Matite; ogni iscrizione richiede **10 Cibo e almeno 2 Matite**. Salvaguardati i vecchi salvataggi v14, con rimborsi delle sole Matite realmente pagate. **RC9: compilazione fallita per CS0246 in un test; RC10 ha corretto l’import ed è stata dichiarata verde dall’utente; RC11 ha 466 test attesi**; la parità grafica completa v13/v14 resta aperta.
 
-La **Forgia** costa 240 Legno lavorato/180 Pietra e trasforma **1 Ferro +1 Carbone → 2 Spade/s**; la **Zecca** costa 210/160 e trasforma **1 Oro +1 Carbone → 3 Monete/s**, con un addetto ciascuna. Le fonderie hanno priorità sul Carbone, poi Forgia e Zecca. Spade per il futuro arruolamento e Monete per pagamenti espliciti; nessuna valuta generale. **M5.2c è verificata:** obiettivo 240 Spade/360 Monete in **241 s a fasi /122 s in parallelo** nel confronto sintetico; **2.320 s dalla nuova partita** con la strategia integrata `crafting`. La [prova isolata storica](experiments/forge-mint-probe/README.md) resta distinta dalle nuove misure sul catalogo corrente. Le Spade si consumano ora nell'arruolamento; i prezzi navali saranno scelti in M5.4; le circa **8 ore efficienti / 32+ ore lente** restano obiettivi della campagna completa.
+## Come avviare e validare
 
-## Avvio su Windows
-
-Servono il **.NET SDK 10** indicato in [global.json](global.json) e l'accesso alle sorgenti NuGet per il primo ripristino. Dalla radice del repository:
+Su Windows 11 con SDK .NET 10 coerente con `global.json` (versione minima di riferimento `10.0.200`) e dipendenze ripristinabili:
 
 ```powershell
 .\validate.cmd
 .\run-game.cmd
+.\run-game.cmd --experimental-v14
 ```
 
-La validazione ripristina i pacchetti con lock, compila, esegue test e simulazioni, pubblica il desktop e ne verifica il ciclo nativo con salvataggi privati. Gli artefatti sono in `.local-cache/m4/`, esclusa da Git. Con una cache completa è disponibile anche il ripristino offline:
+Usare **cartelle nuove** per i nuovi ZIP. Prima di testare la v14, eseguire una copia di sicurezza dei propri salvataggi. La modalità normale e quella sperimentale usano percorsi differenti:
 
-```powershell
-.\validate.cmd -OfflinePackageSource .local-cache/nuget
-```
+- v13: `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`
+- v14: `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`
 
-Il percorso offline non esegue l'audit delle dipendenze. Comandi, benchmark e modalità di verifica sono nella [guida di sviluppo](docs/DEVELOPMENT.md).
+La v14 **non deve migrare o sovrascrivere automaticamente** la partita v13. La protezione dei salvataggi deve essere verificata, non presunta.
 
-## Come si gioca oggi
+## Contratto dell'interfaccia
 
-La partita parte **in pausa** e tenta di riprendere il salvataggio esistente. Dal menu laterale puoi passare tra Edifici e Risorse; le card di abitanti, posti, lavoratori liberi e scorte restano visibili.
+La **GUI v13 è la base funzionale e visiva da conservare**. Nella barra laterale della v14 si aggiungono **Scuola** e **Albero tecnologico** senza eliminare Edifici, Risorse ed Esercito. La tabella Risorse resta a **sette colonne**, con ordinamento, capacità, tooltip e allineamenti storici; Esercito mantiene i comandi di addestramento. Ogni livello di produttore è un **edificio distinto** nell'elenco (es. Segheria / Segheria grande / Segheria avanzata): niente ComboBox di livello nei dettagli. Costruzioni +1/+5/+10, upgrade separati, prerequisiti e motivi di blocco chiari. Gli edifici bloccati sono grigi ma selezionabili; nel dettaglio v14 due righe:
+`Costruisci | +1 | +5 | +10` (stato grigio se non pagabile, hover ocra se attivo) e
+`Lavoratore | +1 | +5 | +10` (disabilitazione quando mancano abitanti/posti). Un `−1` compatto resta accanto alla label Lavoratore per liberare personale. La Scuola si costruisce esclusivamente da Edifici; il tab Scuola è riservato a formazione, ricercatori e laboratorio Matite, senza pulsante Costruisci. «Esci senza salvare» non compare più nelle due interfacce. **Non riprogettare le schede già funzionanti.**
 
-Seleziona una struttura per leggere costi, produzione per addetto e secondo, consumi e prerequisiti. Scegli la quantità, costruisci e assegna i lavoratori. Gli ordini sono consentiti anche in pausa; il pulsante **Avvia produzione** fa avanzare la simulazione. L'hover ocra distingue i pulsanti disponibili da quelli disabilitati in grigio.
+La ricerca si **accumula liberamente** e si spende su decisione del giocatore. Nell’Albero tecnologico i punti sono mostrati con due decimali; «Acquista ricerca» è grigio se non acquistabile, con verifica esatta del saldo prima dell’acquisto. I coefficienti economici, prezzi e tempi della Scuola restano **candidati** finché non saranno espressamente approvati attraverso il bilanciamento.
 
-Le Case piccole offrono **8 posti** e le grandi **32**, con prerequisito Forno. Con spazio e alimentazione disponibili arriva un abitante ogni **60 secondi validi** al ritmo base; le case aggiuntive accelerano gli arrivi fino a **2×**. Tutti consumano Cibo, mentre i residenti oltre la capacità delle Case piccole richiedono anche Pane. La barra Crescita segnala carenze e blocchi. I valori correnti sono regole di sviluppo, non bilanciamento finale.
+## Documentazione di riferimento
 
-Selezionando la **Caserma** compaiono la sezione Reclutamento e i pulsanti **Arruola** e **Annulla** al posto dei lavoratori. Arruolare impiega solo abitanti liberi e spende subito 5 Spade a persona; le reclute attendono un posto e diventano soldati dopo 30 secondi validi. Reclute e soldati non lavorano ma continuano a occupare le case e a mangiare. Annullando si recuperano persone e Spade, prima dalla coda e poi da chi ha meno progresso.
+- [Ripresa rapida](docs/START_HERE.md) e [handoff completo per nuova chat](docs/HANDOFF.md)
+- [Prompt di passaggio a nuova chat](docs/NEW_CHAT_HANDOFF.md)
+- [Stato validazione corrente](docs/CURRENT_STATE.md)
+- [Roadmap dettagliata e gate](docs/ROADMAP.md)
+- [Decisioni approvate / candidate](docs/AUTHORITY_REGISTRY.md)
+- [Changelog consolidato](CHANGELOG.md) e [storico integrale precedente](docs/history/operational/CHANGELOG_PRIMA_DEL_RIORDINO_G1_D19.md)
+- [Matrice di parità GUI](docs/validation/G1_D19_MATRICE_PARITA_GUI.md), [rapporto RC6 diagnostica produttiva](docs/design/G1_D22_E3B4_RC6_DIAGNOSTICA_PRODUZIONE.md), [piano RC6](docs/validation/G1_D22_RC6_TEST_PLAN.md), [piano RC5](docs/validation/G1_D21_RC5_TEST_PLAN.md) e [correzione test RC7](docs/validation/G1_D23_RC7_TEST_PLAN.md), [nuovo piano RC8](docs/validation/G1_D24_RC8_TEST_PLAN.md), [piano RC9](docs/validation/G1_D25_RC9_TEST_PLAN.md), [rapporto RC9](docs/design/G1_D25_E3B4_RC9_SCUOLA_MATITE.md) e [rapporto D24](docs/design/G1_D24_E3B4_RC8_STATI_EDIFICI_E_COMANDI.md)
 
-Il salvataggio avviene ogni minuto e alla chiusura ordinata, oltre al comando manuale. Su Windows la partita civile usa `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`. Il vecchio scenario mantiene il proprio slot ed è disponibile con `run-game.cmd --scenario economy-foundation`. [Formato, conversioni e recupero](docs/SAVE_FORMAT.md).
+[RC11: layout e batch lavoratori](docs/design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [piano test RC11](docs/validation/G1_D27_RC11_TEST_PLAN.md) · [ADR 0036](docs/adr/0036-v14-layout-costruzione-e-lotti-lavoratori.md).
 
-Per eseguire il motore senza finestre dopo la validazione:
+**Ordine di sviluppo:** prima correggere e validare la **parità GUI**; poi audit del bilanciamento e migrazioni; infine riprendere il navale. Ogni incremento di codice richiede ZIP integrale, test, documentazione e stato esplicito.
 
-```powershell
-dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --scenario civil-growth --strategy gold --seconds 1502
-```
-
-I quattro benchmark abitativi e del Pane si possono leggere senza ripetere le simulazioni con `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\report-m4.ps1`. Il quinto, industriale, si esegue con `dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-industry-scale`. [Guida ai benchmark M4](docs/validation/M4_BENCHMARK_READER.md); [M5.1c](docs/validation/M5_1C_INDUSTRY_SCALE.md).
-
-## Stack e struttura
-
-**C#/.NET 10, Avalonia 12.1.4/MVVM e SQLite**, con Microsoft.Data.Sqlite 10.0.14. Monolite modulare: il motore resta indipendente dall'interfaccia. Windows è verificato; Linux/macOS e DPI fisici differenti restano da verificare.
-
-| Cartella | Responsabilità |
-| --- | --- |
-| `src/SimRisorse.Core/` | Stato e regole della simulazione |
-| `src/SimRisorse.Application/` | Casi d'uso, scenari e modelli di lettura |
-| `src/SimRisorse.Infrastructure/` | Salvataggi SQLite |
-| `src/SimRisorse.Desktop/` | Interfaccia Avalonia |
-| `tests/` | Test dei quattro livelli |
-| `tools/SimRisorse.Simulation/` | Scenari e benchmark senza finestre |
-| `experiments/` | Prove separate dalla soluzione principale |
-| `docs/` | Design, decisioni, verifiche e screenshot |
-
-## Documentazione
-
-| Documento | Contenuto |
-| --- | --- |
-| [Indice completo](docs/README.md) | Documentazione corrente, studi e rapporti storici |
-| [Game design](docs/GAME_DESIGN.md) | Regole confermate e questioni aperte |
-| [Roadmap](docs/ROADMAP.md) | Milestone completate e prossimi incrementi |
-| [Handoff](docs/HANDOFF.md) | Punto operativo da cui continuare |
-| [Architettura e ADR](docs/ARCHITECTURE.md) | Confini del codice e decisioni tecniche |
-| [Sviluppo](docs/DEVELOPMENT.md) | Comandi, convenzioni e verifiche |
-| [Salvataggi](docs/SAVE_FORMAT.md) | Formato, backup e compatibilità |
-| [Interfaccia retro](docs/PIXEL_ART_UI.md) | Layout, icone, font e stati dei controlli |
-| [Ultima verifica dell'interfaccia](docs/validation/DESKTOP_UI.md) | Gate da 206 test, render e limiti |
-| [M5.1c — benchmark industriale](docs/validation/M5_1C_INDUSTRY_SCALE.md) | Cinque profili di contesa del Carbone verificati |
-| [M5.3a/b — Caserma](docs/validation/M5_3A_BARRACKS.md) | Contratto militare, 308 test attesi, **da verificare su Windows** |
-| [M5.2c — Filiere integrate](docs/validation/M5_2C_FORGE_MINT.md) | Ultimo gate verificato da 260 test, confronto strategie e percorso dalla nuova partita |
-| [M5.2b — Zecca](docs/validation/M5_2B_MINT.md) | Gate storico da 258 test, Monete e conversione v8→v9 |
-| [M5.2a — Forgia](docs/validation/M5_2A_FORGE.md) | Gate storico da 235 test, Spade e conversione v7→v8 |
-| [Changelog](CHANGELOG.md) | Modifiche realizzate |
-
-Lo screenshot iniziale è un render dell'applicazione attuale, conservato nel repository. [Provenienza e aggiornamento](docs/screenshots/README.md).
-
-## Licenza
-
-Il repository contiene la GNU Affero General Public License v3 in [LICENSE.txt](LICENSE.txt).
+[RC12: acquisto ricerca e due decimali](docs/design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano RC12](docs/validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](docs/adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).

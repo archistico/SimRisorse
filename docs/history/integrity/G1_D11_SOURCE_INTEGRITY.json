@@ -1,0 +1,22 @@
+{
+  "checkpoint": "v60-E3b3-RC1",
+  "base": "v60-E3b2-RC3",
+  "base_validated_on_windows_by_user": true,
+  "current_dotnet_validated": false,
+  "ruleset_active": "civil-growth-13",
+  "v14_session_isolated": true,
+  "technical_files_added": [
+    "src/SimRisorse.Core/Sessions/V14CampaignSession.cs",
+    "tests/SimRisorse.Application.Tests/V14CampaignSessionTests.cs",
+    "tests/SimRisorse.Infrastructure.Tests/V14CampaignSessionPersistenceTests.cs"
+  ],
+  "baseline_technical_files_modified": [],
+  "new_test_cases": 7,
+  "baseline_test_count_expected": 380,
+  "target_test_count_expected": 387,
+  "files": {
+    "src/SimRisorse.Core/Sessions/V14CampaignSession.cs": "cb31a5943015e7ec0c6bfd946ea9788296740cb80e78118d77e225dc7ad68488",
+    "tests/SimRisorse.Application.Tests/V14CampaignSessionTests.cs": "1a1cb55348d0a9b9c548dd775400ef19efe9af43668099983258c77c47c84c99",
+    "tests/SimRisorse.Infrastructure.Tests/V14CampaignSessionPersistenceTests.cs": "737605128dfe24337e048b933c51806a4f92ea22d80d8200e3dc7019e559237a"
+  }
+}

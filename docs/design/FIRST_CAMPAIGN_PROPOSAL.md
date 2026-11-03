@@ -4,15 +4,15 @@ Data: 2026-10-27. **D0.1, D0.2 e ruolo D0.3 approvati dall'utente.** Prima campa
 
 ## Base della proposta
 
-M4 è **chiusa**: gate verificato, benchmark letti, giudizio utente positivo sul prototipo monospace, Carne fuori dalla prima campagna e demolizione rinviata. M5.1a e [M5.1b Oro](../validation/M5_1B_GOLD.md) sono verificate; M5.2a/b Forgia e Zecca sono verificate: `civil-growth-9`, **19 tipi di edifici e 16 risorse**, 260/260 test con M5.2c chiusa; [report](../validation/M5_2C_FORGE_MINT.md).
+M4 è **chiusa**: gate verificato, benchmark letti, giudizio utente positivo sul prototipo monospace, Carne fuori dalla prima campagna e demolizione rinviata. M5.1a e [M5.1b Oro](../validation/M5_1B_GOLD.md) sono verificate; corrente `civil-growth-7`, **17 tipi di edifici e 14 risorse**, 204/204 test.
 
-Dei [43 riferimenti inventariati](PRE_M5_DECISION_GATE.md), l'utente ha scelto **22 tipi per la prima campagna**: i 12 civili e 10 industriali, militari o navali. Con M5.2b **19 sono implementati e 3 restano futuri**. Gli altri **21 riferimenti sono fuori dalla prima campagna**. Il contratto di vittoria è scelto; le regole operative dei contenuti successivi vanno dimensionate prima dell'implementazione.
+Dei [43 riferimenti inventariati](PRE_M5_DECISION_GATE.md), l'utente ha scelto **22 tipi per la prima campagna**: i 12 civili e 10 industriali, militari o navali. Con M5.1b **17 sono implementati e 5 restano futuri**. Gli altri **21 riferimenti sono fuori dalla prima campagna**. Il contratto di vittoria è scelto; le regole operative dei contenuti successivi vanno dimensionate prima dell'implementazione.
 
 Questa scelta preserva l'obiettivo generale di costruire tutti i tipi previsti **dallo scenario scelto**, senza rendere automaticamente obbligatorio ogni elemento delle immagini originali. Un edificio può servire alla progressione oppure essere un traguardo finale esplicito; gli altri entrano nel catalogo quando ne viene definita la funzione.
 
 ## Catalogo scelto: 22 tipi
 
-Gli ID dei 19 tipi presenti sono eseguibili; quelli dei tre tipi futuri sono candidati tecnici. I numeri rimandano alle righe del dossier dei 43 riferimenti.
+Gli ID dei 17 tipi presenti sono eseguibili; quelli dei cinque tipi futuri sono candidati tecnici. I numeri rimandano alle righe del dossier dei 43 riferimenti.
 
 | Rif. | Tipo | ID presente o candidato | Ruolo proposto | Incremento |
 | ---: | --- | --- | --- | --- |
@@ -31,10 +31,10 @@ Gli ID dei 19 tipi presenti sono eseguibili; quelli dei tre tipi futuri sono can
 | 20 | Miniera d'oro | `gold-mine` | Minerale d'oro | M5.1b verificata |
 | 21 | Miniera di carbone | `coal-mine` | Carbone per la fonderia | M5.1a verificata |
 | 22 | Miniera di ferro | `iron-mine` | Minerale di ferro | M5.1a verificata |
-| 23 | Fonderia d'oro | `gold-smelter` | Oro per la Zecca | M5.1b verificata |
-| 24 | Fonderia di ferro | `iron-smelter` | Ferro per la Forgia | M5.1a verificata |
-| 25 | Zecca | `mint` | Monete per pagamenti espliciti, quantità navali da definire | M5.2b verificata |
-| 26 | Forgia | `forge` | Spade inventariate per il futuro reclutamento | M5.2a verificata |
+| 23 | Fonderia d'oro | `gold-smelter` | Oro, con futuro impiego nella Zecca | M5.1b verificata |
+| 24 | Fonderia di ferro | `iron-smelter` | Ferro, con futuro impiego nella Forgia | M5.1a verificata |
+| 25 | Zecca | `mint` | Monete per azioni da definire in D0.8 | M5.2b |
+| 26 | Forgia | `forge` | Spade per il reclutamento, contratto D0.8 da scegliere | M5.2a |
 | 27 | Caserma | `barracks` | Preparazione dei soldati, secondo D0.4 | M5.3 |
 | 30 | Castello | `castle` | Costruzione conclusiva della campagna | M5.7 |
 | 31 | Cantiere navale | `shipyard` | Accesso ai mezzi per la prima conquista | M5.4 |

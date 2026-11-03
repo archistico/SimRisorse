@@ -1,6 +1,16 @@
+> **Aggiornamento 03/11/2026 · v58-RC2 (non validata):** questo documento contiene materiale del precedente checkpoint v57 e alcune parti sono storiche. Per lo stato attuale del ramo unificato leggere [docs/CURRENT_STATE.md](CURRENT_STATE.md), [docs/ROADMAP.md](ROADMAP.md) e [docs/validation/V58_RECONCILIATION.md](validation/V58_RECONCILIATION.md). Nuovo ruleset candidato: `civil-growth-13` (addestramento individuale); flotta non implementata.
+
 # Salvataggi desktop
 
+**Fonte aggiornata v57 (solo documentazione):** versione del gioco `civil-growth-12`, checkpoint SQLite v2, **Municipio unico** nello stato iniziale, capacità derivata dagli edifici e `military_state` obbligatorio dalla v10 alla v12. Per il punto di ripresa completo leggere [CURRENT_STATE.md](CURRENT_STATE.md) e [NEW_CHAT_HANDOFF.md](NEW_CHAT_HANDOFF.md). Le note v53/v47 sotto descrivono il momento del loro inserimento.
+
+**Aggiornamento v54 (28/10/2026; prevale sullo storico):** regole attive `civil-growth-12`. La capienza generale di 1.000 unità per risorsa è ora attribuita a **un Municipio fisso iniziale**, non alla base invisibile dello scenario; altri edifici aggiungono capacità specifica. Conversione S1 v11→v12 inserisce **`town-hall` conteggio 1, lavoratori 0**, senza assegnare nuove scorte; i salvataggi da v1 sono aggiornati attraverso i passi precedenti. Il caricamento rifiuta municipi mancanti, duplicati o con conteggio diverso da 1; stato militare obbligatorio anche per v12. Primo salvataggio dopo conversione: backup immutato dello stato originale. Nessuna modifica allo schema SQLite o al formato snapshot **v2**. 287 test attesi, esito Windows ancora da raccogliere. [Protocollo](validation/V54_TOWN_HALL_DISTRIBUTED_STORAGE.md).
+
 Stato: implementato per Foundation v1 e per Civil v2, con conversione esplicita delle regole civili e copia di sicurezza. Non è compatibile automaticamente con l'esperimento M1, che usa un file e un modello differenti.
+
+**Aggiornamento v53 (28/10/2026):** regole attive **`civil-growth-11`**; Pane ha ora **1.000 posti iniziali + 500 per ogni Magazzino**, esattamente come le altre risorse. Con la conversione S1 **v10→v11** scorte, edifici, popolazione, tempo e stato militare restano invariati. Il primo salvataggio dopo il caricamento conserva la copia originale `.civil-growth-10.backup.sqlite3`. **`military_state` è obbligatorio e validato per v10 e v11**, rifiutato nelle versioni precedenti e in versioni sconosciute. Il vecchio modello militare v10 è recuperabile tramite `CreateBarracksForBenchmarks()`, con Pane base 100. **Formato SQLite e snapshot restano v2; 280 test xUnit da eseguire su Windows.** [Gate v53](validation/V53_STORAGE_UI.md).
+
+**Aggiornamento storico v47:** la v10 introdusse la Caserma e lo stato militare obbligatorio con migrazione v9→v10. Il test Windows di quella versione era pendente. Alcune sezioni sotto descrivono lo schema storico v8.
 
 ## Percorso e comportamento
 
@@ -34,7 +44,7 @@ La modalità `--smoke-test` usa sempre un percorso di prova, fornito dal validat
 | `PRAGMA user_version` | `1` | `2` |
 | Versione del contratto snapshot | `1` | `2` |
 | Scenario | `economy-foundation` | `civil-growth` |
-| Regole | `economy-foundation-1` | `civil-growth-9` (converte `civil-growth-1…-8`) |
+| Regole | `economy-foundation-1` | **`civil-growth-12`** (converte `civil-growth-1…-11`) |
 
 La versione del file è distinta dalla versione del contratto e dal bilanciamento. Il loader rifiuta file estranei, versioni non supportate e regole che non corrispondono allo scenario attivo, salvo le conversioni esplicite elencate sotto. Non sono presenti migrazioni di formato o fingerprint del catalogo.
 
@@ -48,12 +58,13 @@ Le conversioni dichiarate sono elencate in `CivilGrowthScenario.Changes` e si ap
 - `civil-growth-4 → civil-growth-5`: aggiunge il bonus di velocità per abitazione, senza nuove strutture o risorse. I secondi maturati rimangono identici; la nuova parte frazionaria in ventesimi parte a zero. Il ritmo viene ricalcolato dalle case presenti. Nessun arrivo retroattivo.
 - `civil-growth-5 → civil-growth-6`: aggiunge Miniera ferro, Miniera carbone e Fonderia ferro a quantità/personale zero; Minerale ferro, Carbone e Ferro partono da zero, con capacità base 1.000 e +500 per Magazzino già posseduto. Conserva tempo, scorte civili, persone, edifici e frazione di crescita. Vecchi checkpoint che dichiarano già risorse industriali positive o righe industriali incompatibili sono rifiutati. Politica **S1 scelta dall'utente**, [ADR 0014](adr/0014-first-iron-industry-and-civil-save-upgrade.md).
 - `civil-growth-6 → civil-growth-7`: aggiunge Miniera e Fonderia d'oro a quantità/personale zero; Minerale d'oro e Oro a zero, capacità 1.000 +500 per Magazzino già posseduto. **Ferro, Carbone, lavoratori e progresso già esistenti si conservano**. Rifiuta scorte d'oro positive antecedenti alla loro introduzione. SQLite v2 e politica S1 invariati; [verifica su checkpoint v6](validation/M5_1B_GOLD.md).
+- `civil-growth-7 → civil-growth-8`: aggiunge **Forgia** a quantità/personale zero e la risorsa **Spade** a zero. Capacità Spade 1.000 +500 per Magazzino già posseduto. Il converter rifiuta Spade positive dichiarate da un salvataggio v7. Tutto lo stato precedente è mantenuto, senza produzione retroattiva; stesso formato SQLite v2, backup originale al primo salvataggio. [Verifica v8 da eseguire](validation/M5_2A_FORGE.md).
+- `civil-growth-8 → civil-growth-9`: aggiunge **Zecca** a quantità/personale zero e la risorsa **Monete** a zero; rifiuta Monete positive dichiarate da un salvataggio v8, conserva i dati precedenti.
+- `civil-growth-9 → civil-growth-10`: aggiunge **Caserma** a quantità zero e lo **stato militare vuoto**. Le regole v9 non avevano stato militare: eventuali dati militari preesistenti in un checkpoint che si dichiara v9 vengono rifiutati. La popolazione, gli addetti, le scorte, il tempo frazionario e il progresso della crescita restano invariati. Non vengono inventate reclute o Spade. Per una partita **già v10**, `military_state` deve esistere ed essere valida; nessun default silenzioso.
+- `civil-growth-10 → civil-growth-11`: aumenta la **capacità iniziale del Pane da 100 a 1.000**, senza alterare i quantitativi già salvati né aggiungere edifici. Ogni Magazzino mantiene il bonus +500 identico per tutte le risorse. Conserva **anche** coda, addestramento, soldati, orologio e frazioni; non reinterpreta le reclute. La nuova capienza è calcolata dal catalogo e non inserita nel checkpoint.
+- `civil-growth-11 → civil-growth-12`: aggiunge **un Municipio (`town-hall`) con conteggio 1 e 0 addetti**. La precedente base invisibile di 1.000 per risorsa è sostituita dal contributo del Municipio; i produttori aggiungono 50 posti ai soli output, le Case 10/25 a Cibo e Pane, le Caserme 20 a Spade, i Magazzini 500 a tutte. **Non cambiano le quantità delle scorte**, le persone, il tempo, l'esercito né i progressi frazionari. Vietati Municipio assente, plurimo o con addetti; la prima sovrascrittura conserva il backup S1. Gli inventari rimangono condivisi.
 
-- `civil-growth-7 → civil-growth-8`: Forgia a quantità/personale zero, Spade a zero e capacità 1.000 +500 per Magazzino esistente. Conserva scorte industriali/civili, persone, lavoratori, tempo e frazioni; rifiuta Spade positive e righe Forgia incompatibili precedenti all’introduzione. SQLite/snapshot v2, slot e backup S1 invariati; [ADR 0015](adr/0015-forge-swords-and-v7-save-upgrade.md).
-
-- `civil-growth-8 → civil-growth-9`: Zecca a quantità/personale zero, Monete zero e capacità 1.000 +500 per Magazzino esistente. Preserva Spade frazionarie, Forgia e addetto, tutte le altre scorte, persone, lavoratori, tempo e frazioni. Rifiuta Monete positive o righe Zecca incompatibili antecedenti all’introduzione. SQLite/snapshot v2, stesso slot e backup S1; [ADR 0016](adr/0016-mint-coins-and-v8-save-upgrade.md).
-
-Il convertitore rifiuta un checkpoint che dichiara `civil-growth-3` ma possiede già Casa grande o una scorta positiva di Pane. Il caricamento non applica una nuova simulazione per il passato. Formato file e snapshot restano **v2**: ogni edificio è una riga in `building_stock`, mentre le nuove risorse a zero non hanno righe. La capacità di Pane è 100 unità di base (+500 per Magazzino), le altre capacità di base restano 1.000. Le capacità sono calcolate dagli edifici, non salvate. Decisioni negli [ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md) e [0011](adr/0011-advanced-housing-and-bread-rations.md).
+Il convertitore rifiuta un checkpoint che dichiara `civil-growth-3` ma possiede già Casa grande o una scorta positiva di Pane. Il caricamento non applica una nuova simulazione per il passato. Formato file e snapshot restano **v2**: ogni edificio è una riga in `building_stock`, mentre le nuove risorse a zero non hanno righe. Nelle **regole v11** tutte le capacità di base sono **1.000**; nel catalogo storico fino alla **v10** Pane era l'eccezione con 100. Ogni Magazzino aggiunge **500** a ciascuna capacità; le capacità sono calcolate dagli edifici e non salvate. Decisioni negli [ADR 0010](adr/0010-storage-capacity-and-rules-conversion.md) e [0011](adr/0011-advanced-housing-and-bread-rations.md).
 
 Il caricamento converte solo in memoria. Il primo salvataggio che sostituirebbe un checkpoint della stessa generazione con scenario o regole diversi copia prima il file con `VACUUM INTO` in `<nome>.<regole>.backup.sqlite3`, nella stessa cartella (per esempio `civil-growth.civil-growth-1.backup.sqlite3`). Se il nome esiste si usa `-2`, `-3`…: le copie non vengono sovrascritte e, senza un nome libero, il salvataggio fallisce. I caratteri delle regole non sicuri per un percorso diventano `_`. Le copie si riaprono con `run-game.cmd --save-path`, con un programma che supporti quelle regole.
 
@@ -75,7 +86,9 @@ Tre tabelle `STRICT`, con quantità intere e controlli di non negatività:
 
 ## Estensione SQLite v2
 
-Le tre tabelle precedenti restano presenti. Il file v2 ha una tabella obbligatoria `STRICT` e, a partire dalle regole `civil-growth-5`, una tabella complementare opzionale:
+**Estensione v47/v53/v54:** per le regole **`civil-growth-10`, `civil-growth-11` e `civil-growth-12`** è obbligatoria una tabella `military_state` con una riga `slot=1` e colonne `waiting`, `training`, `soldiers`, `progress_seconds` (interi `STRICT` non negativi). Il salvataggio avviene **nella stessa transazione** di `game_save`, `resource_stock`, `building_stock` e delle tabelle di crescita; un errore annulla tutte le modifiche. Per le versioni precedenti alla v10 la tabella può essere assente, ma non può contenere una riga militare riferita al checkpoint. La convalida applicativa controlla inoltre l'effettiva capienza delle Caserme, la durata del gruppo e l'invariante **popolazione = civili liberi + addetti + reclute in coda + reclute in formazione + soldati**.
+
+Le tre tabelle principali restano presenti. Il file v2 ha una tabella obbligatoria per la crescita, una tabella di frazione compatibile con i precedenti checkpoint e, dalle regole v10 in poi, anche la tabella militare obbligatoria descritta sopra:
 
 | Tabella | Colonne | Responsabilità |
 | --- | --- | --- |
@@ -85,15 +98,6 @@ Le tre tabelle precedenti restano presenti. Il file v2 ha una tabella obbligator
 `slot=1` è chiave primaria e riferimento a `game_save`. `growth_seconds` è un intero non negativo; il Core verifica che sia inferiore all'intervallo delle regole attive (60 per Civil). Una riga mancante non significa progresso zero: il checkpoint è incompleto e viene rifiutato. Lo snapshot v2 richiede `GrowthProgressSeconds`; lo snapshot v1 non deve contenerlo.
 
 Il vecchio checkpoint SQLite v2 **senza la tabella `population_growth_fraction`** è ancora leggibile: il resto viene interpretato come zero. Se la tabella è presente, la riga per lo slot 1 è obbligatoria e controllata. Il nuovo writer la crea e salva assieme alle altre tabelle nella stessa transazione, senza cambiare `user_version=2`. Snapshot e Core espongono `GrowthRemainderTwentieths` (0–19); le regole storiche `civil-growth-4` richiedono resto zero. Nessun calcolo usa numeri a virgola mobile.
-
-Dalle regole `civil-growth-10` il writer aggiunge, sempre nella stessa transazione e senza cambiare `user_version=2`, due tabelle complementari `STRICT` per il reclutamento:
-
-| Tabella | Colonne | Responsabilità |
-| --- | --- | --- |
-| `military_state` | slot, queued_recruits, soldiers | Reclute in attesa di un posto e soldati addestrati |
-| `military_training` | slot, position, progress_seconds | Un posto di Caserma occupato per riga, posizioni contigue da 0, in ordine di progresso decrescente |
-
-Senza tabelle, o con le tabelle ma senza riga in `military_state`, il checkpoint appartiene a regole senza reclutamento (snapshot `Military = null`): i file v9 e precedenti restano leggibili e la conversione v9→v10 crea un esercito vuoto. Una sola delle due tabelle, posizioni non contigue, valori negativi o posti senza la riga di stato rendono il file non valido. Ogni scrittura sostituisce le righe: un checkpoint civile salvato dopo uno militare non lascia reclute residue. Il Core controlla poi posti, periodo di 30 s e bilancio `impiegati + reclute + soldati ≤ abitanti`. Decisione nell'[ADR 0017](adr/0017-barracks-recruitment-and-v9-save-upgrade.md).
 
 `game_save.population` conserva il numero effettivo delle persone, non soltanto la dotazione iniziale. Il Core verifica anche capacità abitativa, popolazione iniziale minima dello scenario senza decessi e assegnazioni. Il nuovo abitante, i relativi consumi e il progresso residuo non vengono ricalcolati dal tempo totale.
 
@@ -121,4 +125,4 @@ Round trip, precisione, ricaricamento in pausa, rifiuto di versioni future e dat
 
 Non sono ancora implementati più slot per scenario, selezione grafica degli scenari, gestione delle copie dalla UI, migrazioni di formato, conversioni non dichiarate in `CivilGrowthScenario.Changes` o validazione competitiva per una classifica pubblica. Un arresto forzato può perdere il progresso successivo all'ultimo checkpoint; non è stato simulato uno spegnimento elettrico.
 
-**Stato M5 corrente:** Ferro, Oro, Forgia/Spade e Zecca/Monete sono implementati e verificati in `civil-growth-9`; [report M5.2c](validation/M5_2C_FORGE_MINT.md). M5.2c verifica anche prodotti simultanei e priorità del Carbone su un checkpoint SQLite frazionario, senza cambiare formato. La conversione v8→v9 aggiunge soltanto Zecca/Monete, senza cambiare formato o slot. Militari, flotta e missioni restano futuri; non aggiungere nuovi contenuti mantenendo un ID di regole già persistito.
+**Stato v57 (codice v55):** Ferro, Carbone, Oro, **Spade e Monete** sono risorse integrate; **Forgia, Zecca e Caserma/Esercito** sono già implementate. Le regole S1 non hanno cambiato il formato SQLite v2. **Navi, conquiste e Castello** non sono implementati e richiedono ulteriori contratti espliciti.

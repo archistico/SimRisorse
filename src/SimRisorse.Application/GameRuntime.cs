@@ -64,7 +64,19 @@ public sealed class GameRuntime(GameScenario scenario)
             if (_revision != revision) return (Persistence.GameSaveError.Superseded, null);
             if (!GameSession.SupportsSnapshotFormat(snapshot.FormatVersion)) return (Persistence.GameSaveError.UnsupportedFormat, null);
             var rules = _session.Scenario.Catalog.RulesVersion;
-            var upgraded = snapshot.ScenarioId == _session.Scenario.Id ? Scenarios.ScenarioUpgrades.Apply(snapshot, rules) : snapshot;
+            // Reject unknown or future rule identifiers before any migration attempt.
+            // Only explicitly declared historical versions may be upgraded. The 03/11
+            // individual-training fork retains the known v10 identifier and is still
+            // distinguished by its stored military checkpoint in UpgradeOneStep.
+            if (snapshot.ScenarioId != _session.Scenario.Id ||
+                (snapshot.RulesVersion != rules &&
+                 _session.Scenario.Id == Scenarios.CivilGrowthScenario.Id &&
+                 !Scenarios.CivilGrowthScenario.Changes.Any(change => change.From == snapshot.RulesVersion)))
+                return (Persistence.GameSaveError.IncompatibleRules, null);
+            GameSnapshot upgraded;
+            try { upgraded = snapshot.ScenarioId == _session.Scenario.Id ? Scenarios.ScenarioUpgrades.Apply(snapshot, rules) : snapshot; }
+            catch (Exception exception) when (exception is ArgumentException or OverflowException or InvalidOperationException)
+            { return (Persistence.GameSaveError.InvalidData, null); }
             if (upgraded.ScenarioId != _session.Scenario.Id || upgraded.RulesVersion != rules)
                 return (Persistence.GameSaveError.IncompatibleRules, null);
             try

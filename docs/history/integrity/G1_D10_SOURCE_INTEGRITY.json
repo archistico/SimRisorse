@@ -1,0 +1,21 @@
+{
+  "checkpoint": "v60-E3b2-RC3",
+  "baseline": "SimRisorse-v60-E3b2-RC2-fix-test-pulizia.zip",
+  "baseline_zip_sha256": "1f0f20a23345583e1c0c179a7cfe09292473ad1a296c771763fa09b5b9b8f841",
+  "technical_modified": [
+    "src/SimRisorse.Infrastructure/Persistence/V14SqliteSaveStore.cs",
+    "tests/SimRisorse.Infrastructure.Tests/V14SqliteSaveStoreTests.cs"
+  ],
+  "technical_added": [],
+  "technical_deleted": [],
+  "source_sha256": {
+    "src/SimRisorse.Infrastructure/Persistence/V14SqliteSaveStore.cs": "4ea69bd34293365075d520c47d5113fe486d54c5dff05591e0173da649ff7a25",
+    "tests/SimRisorse.Infrastructure.Tests/V14SqliteSaveStoreTests.cs": "5e234e34de6f6655f536d19650a0372d079301fb6750ad492a257a9a912c5587"
+  },
+  "validation": {
+    "windows_baseline": "RC2 validated by user",
+    "rc3_dotnet": "not executed",
+    "sqlite_schema": "tested locally",
+    "markdown_links": "checked locally"
+  }
+}

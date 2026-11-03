@@ -62,14 +62,14 @@ public sealed class GoldIndustryTests
     {
         var game = StartGold();
         Assert.True(game.Advance(TimeSpan.FromSeconds(1100)).Succeeded);
-        Assert.Equal(1000m, game.Resources["gold"].Units);
+        Assert.Equal(game.StorageCapacity["gold"].Units, game.Resources["gold"].Units);
         Assert.True(game.ForecastProduction().Single(item => item.BuildingId == "gold-smelter")
             .BlockReason.HasFlag(ProductionBlockReason.StorageFull));
         Assert.True(game.Construct("warehouse", 1).Succeeded);
-        Assert.Equal(1500m, game.StorageCapacity["gold"].Units);
-        Assert.Equal(1500m, game.StorageCapacity["gold-ore"].Units);
+        Assert.Equal(1550m, game.StorageCapacity["gold"].Units);
+        Assert.Equal(1550m, game.StorageCapacity["gold-ore"].Units);
         Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(1001m, game.Resources["gold"].Units);
+        Assert.Equal(1051m, game.Resources["gold"].Units);
     }
 
     [Fact]

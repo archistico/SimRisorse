@@ -1,3 +1,19 @@
+> **G1-D24 / RC8:** [ADR 0034 — Stati Edifici, comandi separati e Scuola](0034-v14-stati-edifici-e-layout-azioni.md), requisito UX accettato; test Windows 456 attesi, non eseguiti.
+
+> **Ultimo ADR tecnico sperimentale:** [0030 — Civili e replay v14](0030-e3b3e-edifici-civili-replay-v14.md). Coefficienti e soglie numeriche restano candidati.
+
+> **G1-D9 / E3b/2:** nuovo [ADR 0025 — persistenza SQLite v3 isolata e copy-on-write](0025-e3b2-sqlite-v3-copy-on-write-isolato.md), PROPOSTO e implementato in ramo sperimentale non validato. Ultimo gate Windows positivo: v60-E3b-RC1.
+
+> **ADR 0021 — ACCETTATO (03/11/2026):** [Saldo ricerca libero e spesa volontaria](0021-ricerca-saldo-libero-spesa-su-scelta.md). La decisione approva la **modalità** della ricerca, non i costi delle tecnologie né l’intero ADR 0020, che resta proposto. Il codice v60-E1-RC1 è ancora isolato dalla campagna e non validato su Windows.
+
+> **G1-D4 · Nuovo [ADR 0020 — PROPOSTO](0020-tech-tree-sector-research-proposta.md):** ricerche settoriali con punti spendibili, Scuola e prerequisiti. Non modifica gli ADR accettati né abilita ancora una nuova campagna.
+
+> **Indice attivo al 03/11/2026:** v59-RC1 validata da `validate.cmd` secondo l'utente. Aggiunto [ADR 0017 — PROPOSTO, NON ACCETTATO](0017-naval-mission-boundaries-proposta.md) per il contratto G1. L'ADR 0016 è implementato e validato come strumentazione; restano da esaminare i JSON della simulazione reale. Le note v58/v57 sottostanti sono storiche.
+
+> **Indice aggiornato alla v59-RC1.** Il gate `validate.cmd` della v58-RC5 è stato dichiarato superato dall’utente; per la nuova RC1 non abbiamo ancora risultati Windows.
+
+> **Aggiornamento 03/11/2026 · v58-RC2 (non validata):** questo documento contiene materiale del precedente checkpoint v57 e alcune parti sono storiche. Per lo stato attuale del ramo unificato leggere [docs/CURRENT_STATE.md](../CURRENT_STATE.md), [docs/ROADMAP.md](../ROADMAP.md) e [docs/validation/V58_RECONCILIATION.md](../validation/V58_RECONCILIATION.md). Nuovo ruleset candidato: `civil-growth-13` (addestramento individuale); flotta non implementata.
+
 # Registro delle decisioni architetturali
 
 Gli ADR documentano una decisione, le alternative considerate e le conseguenze. La data iniziale del registro è il 2026-10-26. Lo stato di un ADR non indica che la relativa funzionalità sia già implementata.
@@ -29,9 +45,12 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 | [0012](0012-retro-8bit-desktop-visual-language.md) | Identità visiva retro 8-bit essenziale | Accettato | Progettazione soltanto; futura GUI pixel art non ancora implementata |
 | [0013](0013-accelerated-housing-and-fractional-growth.md) | Case che accelerano gli arrivi, frazioni e compatibilità SQLite v2 | Accettato | `civil-growth-5` implementato; gate Windows v24 da eseguire |
 | [0014](0014-first-iron-industry-and-civil-save-upgrade.md) | Prima industria del ferro, regole v6 e continuità S1 | Accettato | M5.1a verificata: 191 test, conversione v5→v6 e backup, benchmark v4/v5 preservati |
-| [0015](0015-forge-swords-and-v7-save-upgrade.md) | Forgia, Spade e conversione v7→v8 | Accettato | M5.2a verificata: 235 test, SQLite v2 e backup, catalogo v7 conservato |
-| [0016](0016-mint-coins-and-v8-save-upgrade.md) | Zecca, Monete e conversione v8→v9 | Accettato | M5.2b verificata: 258 test, lotti interi, SQLite v2 e backup, catalogo v8 conservato |
-| [0017](0017-barracks-recruitment-and-v9-save-upgrade.md) | Caserma, reclutamento per posti e conversione v9→v10 | Accettato | M5.3a/b implementata, **da verificare su Windows** (308 test attesi) |
+| [0015](0015-individual-military-training-branch-reconciliation.md) | Recupero del ramo v41 e addestramento individuale v13 | Accettato come base del ramo v13 | RC5 validata dall’utente, DB reali da controllare su copie |
+| [0016](0016-military-benchmark-separate-controlled-from-campaign.md) | Separare benchmark addestramento controllato e campagna reale | Accettato (metodo) | v59-RC1, test v59-RC1 superati; lettura valori pendente |
+| [0024](0024-v14-snapshot-migration-boundaries-proposta.md) | Snapshot v14 e migrazione v13→v14 | **PROPOSTO** | Core isolato testato su Windows nella v60-E3b-RC1 |
+| [0025](0025-e3b2-sqlite-v3-copy-on-write-isolato.md) | SQLite v3 copy-on-write e backup S1 | **PROPOSTO** | E3b/2, Infrastructure isolata; test .NET pendenti |
+| [0023](0023-e3-school-technology-ledger-isolated-prototype.md) | E3, Scuola e tecnologie come prototipo Core isolato | Proposto (numeri; prototipo) | E3a Core/test scritti, non validati; v13 invariata |
+| [0017](0017-naval-mission-boundaries-proposta.md) | Flotta persistente ed esplorazione/conquista separate | **PROPOSTO** | G1 solo documentazione; nessun codice navale |
 
 ## Come aggiungere una decisione
 
@@ -42,3 +61,13 @@ Le preferenze del prodotto espresse dall'utente sono distinte dalle scelte tecni
 5. Aggiornare questo indice; aggiornare roadmap e handoff se cambia il lavoro successivo.
 
 Una decisione accettata non si riscrive per nascondere un cambio di direzione. Si crea un nuovo ADR e si marca il precedente come superato. Le correzioni editoriali sono consentite.
+
+
+| [0018](0018-progressive-construction-tiers-and-research-proposta.md) | Costi progressivi, tier e Scuola | **PROPOSTO** | Nessuna implementazione; design G1-D4 |
+
+| [0019](0019-contratto-quantitativo-economia-ricerca-proposta.md) | Contratto quantitativo economia e migrazioni | **PROPOSTO** | Nessuna implementazione; design G1-D4 |
+
+| [0020](0020-tech-tree-sector-research-proposta.md) | Ricerche settoriali e punti spendibili | **PROPOSTO** | Nessuna implementazione; design G1-D4 |
+
+- [ADR 0033 — Preservazione funzionale GUI v13 → v14](0033-preservazione-funzionale-gui-v13-v14.md)
+- [ADR 0034 — Stati Edifici e layout delle azioni v14](0034-v14-stati-edifici-e-layout-azioni.md)

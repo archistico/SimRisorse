@@ -1,16 +1,16 @@
 # Scenario Civil Growth
 
-Stato corrente: **M5.2 Verificata**, regole `civil-growth-9`, 19 edifici/16 risorse, **260/260 test**. Forgia/Spade e Zecca/Monete hanno un percorso integrato dalla nuova partita (`crafting`) e confronto misurato delle politiche; [report M5.2c](../validation/M5_2C_FORGE_MINT.md). S1 e SQLite v2 preservati; prossimo passo contratto M5.3 Caserma.
+Stato corrente: **`civil-growth-8` preparata (18 edifici / 15 risorse), da validare**. M4 chiusa; prototipo monospace approvato e demolizione rinviata. M5.1a introduce Ferro/Carbone, M5.1b l'Oro (verificati con S1: [ultimo report](../validation/M5_1B_GOLD.md)); M5.2a introduce **Forgia/Spade** ([gate pendente](../validation/M5_2A_FORGE.md)). Cibo/Pane, crescita e abitazioni restano invariati; i cataloghi precedenti v4–v7 restano disponibili ai benchmark/migrazioni.
 
 ## Dotazione e catalogo
 
-Il nuovo scenario conserva le tre strutture e le regole produttive di [Economy Foundation](ECONOMY_FOUNDATION.md): 8 abitanti, un taglialegna, una segheria e un tagliapietra, con un lavoratore ciascuno. Scorte iniziali: 120 legno lavorato, 80 pietra, **30 Cibo**, tutte le altre a zero. Capacità di base 1.000 per 15 risorse, ma solo **100 per Pane**. Una Casa piccola già costruita ospita gli 8 abitanti; 5 sono liberi.
+Il nuovo scenario conserva le tre strutture e le regole produttive di [Economy Foundation](ECONOMY_FOUNDATION.md): 8 abitanti, un taglialegna, una segheria e un tagliapietra, con un lavoratore ciascuno. Scorte iniziali: 120 legno lavorato, 80 pietra, zero tronchi, **30 Cibo, zero Pesce e zero Pane**. Capacità di base 1.000 per otto risorse, ma solo **100 per Pane**. Una Casa piccola già costruita ospita gli 8 abitanti; 5 sono liberi.
 
 | Nuovo edificio | Costo | Personale | Effetto o ricetta | Prerequisito |
 | --- | --- | --- | --- | --- |
 | Casa piccola | 80 legno lavorato + 40 pietra | Nessuno | +8 posti abitativi per edificio | Nessuno |
 | **Casa grande** | **160 legno lavorato + 80 pietra** | Nessuno | **+32 posti abitativi** per edificio | Almeno 1 forno |
-| Magazzino | 100 legno lavorato + 60 pietra | Nessuno | +500 capacità per ognuna delle 16 risorse, per edificio | Nessuno |
+| Magazzino | 100 legno lavorato + 60 pietra | Nessuno | +500 capacità per ognuna delle nove risorse, per edificio | Nessuno |
 | Pescatore | 40 legno lavorato + 20 pietra | 1 per edificio | 1 pesce per lavoratore/s | Nessuno |
 | Deposito alimentare | 60 legno lavorato + 30 pietra | 1 per edificio | 1 pesce → 1 cibo per lavoratore/s | Almeno 1 pescatore |
 | Fattoria | 60 legno lavorato + 30 pietra | 1 per edificio | 1 grano per lavoratore/s | Nessuno |
@@ -19,8 +19,6 @@ Il nuovo scenario conserva le tre strutture e le regole produttive di [Economy F
 | Forno | 150 legno lavorato + 100 pietra | 1 per edificio | 1 farina + 1 acqua → **3 Pane** per lavoratore/s | Almeno 1 mulino e 1 pozzo |
 
 Il deposito alimentare trasforma pesce in Cibo di base e non aumenta la capacità; lo spazio aggiuntivo viene dal magazzino. Carne e altre trasformazioni non sono ancora implementate. Le priorità delle strutture aggiunte sono 35, 36, 37, 40, 50, 55, 56, 60 e 70, dopo i materiali di base; case e magazzino non eseguono ricette. Grano, acqua e farina partono da zero con capacità di base 1.000.
-
-Le filiere industriali sono descritte nei rapporti [Ferro](../validation/M5_1A_IRON.md), [Oro](../validation/M5_1B_GOLD.md) e [Forgia](../validation/M5_2A_FORGE.md). La Forgia costa 240 Legno lavorato/180 Pietra, richiede una Fonderia di ferro posseduta e un addetto; trasforma **1 Ferro +1 Carbone → 2 Spade/s**, priorità 100 dopo le fonderie. Spade a capacità ordinaria e lotti interi, senza arruolamento ancora disponibile. La **Zecca** costa 210/160, richiede Fonderia d’oro e 1 addetto; **1 Oro +1 Carbone → 3 Monete/s**, priorità 101 dopo Forgia 100. Monete a capacità ordinaria e lotti interi, per pagamenti espliciti futuri; [report](../validation/M5_2B_MINT.md).
 
 ## Filiera del pane
 
@@ -35,7 +33,7 @@ Ogni anello lavora dal secondo successivo a quello in cui il suo input è compar
 
 ## Capacità di magazzino
 
-- Capacità effettiva = 1.000 + 500 × magazzini per le 15 risorse diverse dal Pane; **100 + 500 × magazzini per Pane**. Non viene salvata: deriva dagli edifici.
+- Capacità effettiva = 1.000 + 500 × magazzini per le otto risorse precedenti; **100 + 500 × magazzini per Pane**. Non viene salvata: deriva dagli edifici.
 - Quando lo spazio libero non basta per l'output completo di un lavoratore, quel lavoratore non produce e non consuma input (regola M2 invariata). La UI segnala "Deposito pieno".
 - Il nuovo spazio vale dal secondo successivo alla costruzione. Il magazzino è attivo appena costruito, senza personale.
 - Non esiste demolizione: la capacità non diminuisce. Decisione nell'[ADR 0010](../adr/0010-storage-capacity-and-rules-conversion.md).
@@ -50,13 +48,9 @@ Ogni anello lavora dal secondo successivo a quello in cui il suo input è compar
 | `civil-growth-4` | `civil-growth-5` | Nessun edificio o risorsa aggiunti; accelerazione abitativa; resto frazionario iniziale zero |
 | `civil-growth-5` | `civil-growth-6` | Miniere ferro/carbone e fonderia a zero; nuove scorte industriali zero, capacità 1.000 +500 per Magazzino; frazione esistente conservata |
 | `civil-growth-6` | `civil-growth-7` | Miniera e Fonderia d'oro a zero; scorte nuove zero, capacità 1.000 +500 per Magazzino; Ferro, Carbone e frazioni esistenti conservati |
-| `civil-growth-7` | `civil-growth-8` | Forgia a quantità/addetti zero; Spade zero, capacità 1.000 +500 per Magazzino; scorte, persone, lavoratori, tempo e frazioni preservati |
+| `civil-growth-7` | `civil-growth-8` | Forgia a zero, Spade a zero con capienza 1.000 +500 per Magazzino; tutte le scorte e progressi precedenti conservati |
 
-| `civil-growth-8` | `civil-growth-9` | Zecca a quantità/addetti zero; Monete zero, capacità ordinaria; Spade, Forgia, personale, scorte, tempo e frazioni preservati |
-
-Le conversioni si concatenano da `civil-growth-1` alla corrente `-9`. Tempo, abitanti, progresso e scorte esistenti restano invariati. Il resto frazionario parte da zero all'introduzione di v5 e si conserva nei passaggi successivi. Il vecchio Cibo rimane Cibo; Pane, metalli, minerali, Spade e Monete partono da zero ai rispettivi passaggi. Ripresa in pausa, backup dell'originale alla prima scrittura; versioni sconosciute e dati incoerenti rifiutati.
-
-La strategia `crafting` conserva il percorso civile/ferro, aggiunge Oro a 1.500 s e seconda Miniera di carbone/Forgia/Zecca a 2.200 s, pagando 580 Legno lavorato/430 Pietra per queste ultime tre strutture. A **2.201 s** compaiono i primi lotti; a **2.320 s** ci sono 240 Spade e 360 Monete, popolazione 48. A otto ore 1.000 Spade/999 Monete alla capienza base. È una cronologia di riferimento, non un ottimizzatore.
+Le conversioni si concatenano da `civil-growth-1` alla corrente `-7`. Tempo, abitanti, progresso e scorte esistenti restano invariati. Il resto frazionario parte da zero all'introduzione di v5 e si conserva nei passaggi successivi. Il vecchio Cibo rimane Cibo; Pane, metalli e minerali partono da zero ai rispettivi passaggi. Ripresa in pausa, backup dell'originale alla prima scrittura; versioni sconosciute e dati incoerenti rifiutati.
 
 ## Crescita e cibo
 
@@ -80,7 +74,7 @@ Quando la colonia ospita residenti avanzati, la colonna Crescita mostra anche un
 
 - **Capacità nominale dei Forni insufficiente**: la somma della produzione massima dei lavoratori assegnati ai Forni è inferiore al consumo dei residenti avanzati. La UI indica ora **quanti Pane/s mancano** e quanti addetti supplementari richiederebbe, al minimo, la ricetta del Forno. Occorre aumentare la capacità produttiva o ridurre i residenti avanzati con altre Case piccole.
 - **Filiera Pane limitata**: i Forni potrebbero produrre abbastanza, ma nel prossimo secondo mancano input o altre condizioni operative; controllare Fattorie, Pozzi, Mulini, scorte e assegnazioni.
-- **Forno in attesa: deposito quasi pieno**: non c'è spazio per un lotto completo. Un saldo negativo del prossimo secondo non significa necessariamente che serva un altro Forno: la scorta esistente continua ad alimentare gli abitanti.
+- **Forno fermo: non c'è spazio per un lotto di Pane**: il Pane parte da **100 posti**, un Forno produce **3 Pane per addetto/secondo** e servono almeno tre posti liberi per ogni lotto indivisibile. La UI suggerisce **Magazzino (+500 per ogni risorsa)**, non «Deposito alimentare», che produce Cibo dal Pesce. Un saldo negativo del prossimo secondo non significa necessariamente che serva un altro Forno: la scorta esistente continua ad alimentare gli abitanti.
 - **Produzione Pane sufficiente nel prossimo secondo**: fotografia del passo immediato, non garanzia di sostenibilità futura se cambiano residenti, forniture o scorte.
 
 L'**autonomia senza produzione** divide la scorta attuale per la domanda attuale, arrotonda per difetto e mostra ore, minuti o secondi. Per esempio, 20 Pane con nove residenti avanzati (0,135/s) corrispondono a **2 min 28 s**. Non considera nuove persone o produzione successiva; non è un conto alla rovescia verso una carestia. Questa diagnosi non modifica il motore né viene persistita.

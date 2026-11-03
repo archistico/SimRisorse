@@ -1,303 +1,138 @@
-# Roadmap operativa di SimRisorse
+# Roadmap operativa e dettagliata — SimRisorse
 
-Aggiornata il **2026-11-02**. **M4.11** introduce il prototipo 8-bit; **M4.12** il lettore dei benchmark; **M4.13** l'audit aritmetico delle abitazioni; **M4.14** la [scheda decisionale D0](design/D0_DECISION_BOARD.md); **M4.15** la [prefattibilità M5.4 navale](design/M5_4_NAVAL_PREFEASIBILITY.md). Il gate Windows e la lettura quantitativa storici sono eseguiti. Questo documento distingue implementazione, verifica e decisioni aperte. Lo storico è nel [changelog](../CHANGELOG.md); il punto di ripresa è in [HANDOFF.md](HANDOFF.md).
+**AGGIORNAMENTO G1-D28 / RC12 (03/11/2026):** RC11 dichiarata verde dall'utente (**466 test attesi**, numero esatto non comunicato). RC12: ricerca a **due decimali**, pulsante «Acquista ricerca» disabilitato e grigio se saldo o prerequisiti insufficienti, verde con hover ocra solo quando acquistabile. Controllo prezzi/saldi sul valore **non arrotondato** in millipunti. **468 test attesi, non eseguiti** in questo ambiente privo di SDK .NET 10. GUI v13, core e SQLite invariati; audit visivo P0 ancora aperto. [Report RC12](design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano](validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
 
-**Evidenze Windows correnti:** gate **M5.2c** del 02/11, **260/260 test**, zero avvisi/errori, **23 cronologie più crescita accelerata**, **sei benchmark**, 33 PNG e smoke dei due scenari. Run `1c74597068ab4f96b4f6fd6d30518b45`; [report](validation/M5_2C_FORGE_MINT.md). Nessuna nuova regola, migrazione o modifica UI in questo incremento.
 
-## 1. Stato attuale
+**AGGIORNAMENTO G1-D27 / RC11 (03/11/2026):** l’utente conferma **test RC10 passati (464 attesi)**, senza comunicare un conteggio dettagliato. RC11 riordina il dettaglio Edifici della sola v14 in due righe: **Costruisci | +1 | +5 | +10** e **Lavoratore | +1 | +5 | +10**; il pulsante **−1** rimane compatto accanto alla label Lavoratore per non perdere la funzione di rilascio. Aggiunti comandi atomici per assegnare 5/10 persone, con limiti di popolazione libera e posti di lavoro, stati disabled espliciti e hover già previsto. **466 test attesi** (+2 casi), non eseguiti qui per assenza dell’SDK .NET 10; audit GUI P0 ancora aperto. [Rapporto RC11](design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [Piano RC11](validation/G1_D27_RC11_TEST_PLAN.md) · [ADR 0036](adr/0036-v14-layout-costruzione-e-lotti-lavoratori.md).
 
-**Aggiornamento corrente:** M4, M5.1 e **M5.2 Verificate**. **M5.3a/b implementata, da verificare su Windows** (v41): regole `civil-growth-10`, 20 edifici/16 risorse, Caserma con posti di addestramento secondo il contratto scelto il 03/11; 308 test attesi, [rapporto](validation/M5_3A_BARRACKS.md). Ultimo gate verificato: M5.2c, 260/260. Prossimo passo: `validate.cmd`, poi M5.3c (impatto civile).
 
-| Milestone | Risultato | Stato |
+**AGGIORNAMENTO G1-D26 / RC10 (03/11/2026):** la compilazione Windows della RC9 si è interrotta con **CS0246** in `tests/SimRisorse.Application.Tests/V14SchoolSuppliesTests.cs` (riga 15): `GameScenario` è definito in `SimRisorse.Core.Content`, ma mancava il relativo `using`. **RC10 aggiunge esclusivamente tale import nel codice dei test.** Tutti gli altri progetti sono stati compilati nel log dell’utente; la suite xUnit RC9 non è partita. **Ultima suite verde: RC8, 456/456 test confermati. RC10: 464 test attesi, non ancora eseguiti; audit GUI P0 ancora aperto.** [Diagnosi RC10](design/G1_D26_RC10_FIX_IMPORT_GAMESCENARIO.md) · [Piano RC10](validation/G1_D26_RC10_TEST_PLAN.md).
+
+
+**AGGIORNAMENTO G1-D25 / RC9 (03/11/2026):** **RC8 456/456 test superati, comunicato dall'utente.** RC9 rimuove «Esci senza salvare» in entrambe le UI; la tab Scuola segue l'Esercito con coda, formazione/progresso, ricercatori; introduce la risorsa **Matite** solo nella v14 (1 Legno lavorato + 1 Carbone → 4 Matite, fabbricazione manuale, 2 Matite + 10 Cibo per studente), persistenza v3 retrocompatibile e rimborsi non fittizi. **464 test attesi, NON eseguiti**; confronto visivo ancora aperto. [Rapporto RC9](design/G1_D25_E3B4_RC9_SCUOLA_MATITE.md) · [Piano RC9](validation/G1_D25_RC9_TEST_PLAN.md) · [ADR 0035](adr/0035-scuola-formazione-matite-v14.md).
+
+**Regola di priorità:** nessuna nuova meccanica E4 o navale deve avere precedenza su regressioni e parità funzionale della GUI v14. I gate richiedono evidenze: test automatici, comparazione manuale e assenza di regressioni, non soltanto codice scritto.
+
+## 1. Stato consolidato
+
+| Traguardo | Stato verificabile | Evidenza / vincolo |
 | --- | --- | --- |
-| **M0** | Riferimenti, organizzazione, documentazione | **Completata e verificata** |
-| **M1** | Prova dello stack .NET/Avalonia/SQLite | **Completata e verificata** |
-| **M2** | Motore economico indipendente dalla GUI | **Completata e verificata** |
-| **M3** | Prima partita desktop salvabile | **Completata e verificata** |
-| **M4** | Crescita civile, abitazioni e Pane | **Chiusa e verificata; demolizione rinviata** |
-| **M5** | Economia avanzata, esercito e isole | **M5.1 e M5.2 verificate; M5.3a/b implementata, da verificare** |
-| **M6** | Vittoria, risultati e bilanciamento globale | **Da avviare dopo M5** |
-| **M7** | Qualità finale e distribuzione | **Da avviare dopo M6** |
+| Gioco normale `civil-growth-13`, SQLite v2 | Base funzionante da preservare | Ultime versioni Windows v59+ validate; nessuna modifica al profilo normale |
+| E1 prezzi progressivi, E2 tre livelli, E3 Scuola e ricerca | Implementati nel ramo v14 | Componenti esercitati dai successivi test, **numeri non ratificati** |
+| E3b/1 snapshot e migrazione in memoria | Integrato nel prototipo | Convalida successiva della sessione v14 |
+| E3b/2 store SQLite v3 | Validato | RC3 di persistenza: 380 test confermati |
+| E3b/3 ciclo v14, tier, civili, replay | Validato | RC5: 417 test confermati |
+| E3b/4a anteprima desktop isolata | Test verdi, UX non approvata | RC1: **427 test confermati** |
+| E3b/4b ricostruzione GUI classica | **Respinta visivamente** | RC2 regressioni Risorse, comandi e parti Esercito |
+| E3b/4c RC3: ripristino parità | Candidata da verificare | 439 test attesi, non confermati; audit Windows aperto |
+| **E3b/4d RC4: diagnosi Pane v13/v14** | **Suite confermata passata dall’utente, UX aperta** | **4 test aggiunti, 443 attesi** (numero esatto non comunicato); stessa diagnosi/read model |
+| **E3b/4e RC5: preventivi lotti e upgrade** | **Inclusi nella suite RC6, gate automatico non ancora verde** | **4 test Desktop aggiunti**; solo GUI v14; confronto visivo pendente |
+| **E3b/4f RC6: diagnosi produttiva Edifici** | **451 test eseguiti; 450 passati e 1 fallito** | Errore nell'asserzione UI `IsEnabled` (riga 191), non nella verifica `CanExecute` o nei costi; gate non superato |
+| **E3b/4f RC7: correzione test Avalonia** | **Da validare** | `IsEffectivelyEnabled` e corrispondenza comandi di upgrade; **451 test invariati**; codice prodotto v13/v14 intatto |
+| **E3b/4g RC8 / G1-D24: stati Edifici/Scuola** | **456 test passati su Windows, GUI non certificata** | Righe prerequisiti grigie/selezionabili, Costruisci piena riga disabilitato senza materiali, 4 pulsanti in seconda riga, Scuola senza secondo Costruisci; **456 test attesi** |
+| **E3b/4i RC9: Scuola e Matite** | **Build Windows fallita: 1 CS0246; test non partiti** | Import `SimRisorse.Core.Content` mancante in `V14SchoolSuppliesTests.cs`; 464 test non eseguiti |
+| **E3b/4j RC10: correzione compilazione test** | **Test confermati passati dall’utente** | Import aggiunto nel solo test Application; 464 test attesi; runtime, UI e salvataggi immutati |
+| **E3b/4k RC11 / G1-D27: due righe Edifici e lotti lavoratori** | **Test confermati passati dall’utente (466 attesi)** | RC10 verde confermata dall’utente, +2 casi RC11; layout e comandi +5/+10 lavoratori; audit grafico P0 aperto |
+| **E3b/4l RC12 / G1-D28: albero tecnologico** | **Candidata: 468 test attesi** | RC11 test confermati passati (466 attesi); N2 per punti e prezzi, Acquista grigio se non pagabile, verifica exact milli-points; audit grafico P0 aperto |
+| **E3b/4h: parità definitiva** | Da realizzare dopo validazione RC8 e confronto manuale | Conservare integralmente v13 e integrare solo funzioni nuove |
+| E4a audit economico anti-blocco | Non iniziato | Benchmark e definizione del contratto economico |
+| E4b bilanciamento approvato | Non iniziato | Decisione esplicita dell'utente sui numeri |
+| E4c attivazione v14 e migrazione controllata | Non iniziata | Backup, rollback, reale compatibilità salvataggi |
+| M5.4, M5.5–M5.7, M6/M7 | Futuro | Solo dopo economica/GUI stabile e gates |
 
-**Baseline corrente:** C#/.NET 10, Avalonia 12.1.4, SQLite v2; regole `civil-growth-9`, **19 tipi di edifici / 16 risorse**. GUI retro monospace con elenchi/schede, senza mappa di posizionamento.
+## 2. P0 — Validare RC12 (RC11 verde, parità visiva ancora aperta)
 
-**Validazione corrente:** Windows, SDK 10.0.201, **260 test superati** (Core 67, Application 97, Infrastructure 35, Desktop 61), zero avvisi/errori, 31 render richiesti più due dettagli, smoke nativi superati. Aggiunti benchmark corrente e tre cronologie `crafting`, checkpoint/replay e SQLite con prodotti simultanei. I gate grafici precedenti restano nei rapporti storici.
+**Input:** v60-E3b4-RC12 (include RC5–RC10 e novità Scuola/Matite); baseline confronto `./run-game.cmd` v13; v14 opt-in `./run-game.cmd --experimental-v14`.
 
-**Scelte ricevute:** [prima campagna con 22 tipi](design/FIRST_CAMPAIGN_PROPOSAL.md), 19 presenti e 3 futuri; altri 21 riferimenti fuori. Possesso dei 22 tipi e Castello dopo una conquista obbligatoria. Base grafica approvata, demolizione rinviata, S1 e configurazioni A di Ferro/Oro scelte. **Contratto M5.2 A Forgia/Zecca scelto il 28/10** (costi, ricette, addetti, priorità, capacità e ruolo Spade/Monete); contratti militari/navali a valle restano distinti.
+**Attività:**
 
-**Evidenza preparatoria M5.1:** [prova industriale A/B separata](../experiments/industry-probe/README.md) eseguita: otto confronti con acquisti in blocco/progressivi, due modalità di avanzamento, saturazione e ripresa delle fonderie. Ipotesi misurate in una colonia sintetica, separate dai parametri poi scelti per il gioco. Gate preparatorio di allora `4c51d35a1c924fdca6656687e8f21e0e`: **177/177 test**, simulazioni e smoke superati.
+1. Da cartella RC12 estratta nuova eseguire `./validate.cmd`; conservare riepilogo e `.trx`. Obiettivo **468 test** (+2 su RC11 dichiarata verde); confronto: RC6 = **450/451**, un errore di asserzione Avalonia. Se numero diverso, analizzare discovery.
+2. Avviare entrambe le modalità a **1040×740** e **1240×850**; verificare la GUI anche sotto cambi di dimensione/DPI quando possibile.
+3. Confrontare scheda Risorse **voce per voce** con la v13: sette colonne, quantità arrotondate, capacità con tooltip e scomposizione, produzione/consumo/saldo, tempo di riempimento, ordinamento alfabetico, selezione ocra, allineamento, scrollbar, Pane e risorse a saldo negativo.
+4. Confrontare **Edifici**: stesso elenco/pannello dettagli, nomi e icone, costi/produzione/consumi/capacità con stile uniforme; blocchi da prerequisiti ⇒ nessun Costruisci visibile; materiale insufficiente ⇒ pulsante disabilitato e causa spiegata; ordini +1/+5/+10, upgrade separato, nessuna ComboBox.
+5. Confrontare **Esercito**: Caserme, Spade, numero soldati/reclute, coda e progressi individuali, arruola/annulla, congedo non ammesso; stessa interazione e struttura, non semplice pannello informativo.
+6. Confrontare **Popolazione/Cibo/Pane**: crescita, razioni, posti, blocchi della produzione, testo di diagnosi e indicazione di quale edificio/capacità manchi. Controllare in particolare le diagnosi prodotte da `BreadSupplyProjector` e `Storage`.
+7. Testare **selezione, focus, hover, disabilitazione, scrolling e footer**: la selezione rimane dopo aggiornamenti; hover non muove pulsanti; colonne non coprono scrollbar; testi e controlli rimangono visibili.
+8. Riprovare nuova partita con conferma, pausa, riprendi, salvataggio manuale/automatico, chiusura, ripristino e apertura con DB incompatibile **senza alterarlo e senza bloccare la chiusura**.
 
-## 2. Regole di pianificazione
+**Verificare per prima la RC12:** [piano RC12](validation/G1_D28_RC12_TEST_PLAN.md). Poi rieseguire i controlli precedenti. **RC11:** [piano RC11](validation/G1_D27_RC11_TEST_PLAN.md). **Fix già confermato in RC10:** [piano RC10](validation/G1_D26_RC10_TEST_PLAN.md). **Quindi verificare le novità Scuola/Matite:** [piano RC9](validation/G1_D25_RC9_TEST_PLAN.md). **Verifiche storiche specifiche RC8 (superate nei test, layout sostituito in RC11):** [piano D24](validation/G1_D24_RC8_TEST_PLAN.md): elenco grigio senza disabilitare selezione, Costruisci unico a larghezza piena, disabled grigio senza risorse, hover ocra senza scostamenti, una seconda riga a quattro pulsanti con testi completi; tab Scuola senza costruzione. Confronto a 1040×740 e 1240×850. **RC7 non ha un run confermato.**
 
-1. **Prima le regole, poi il codice:** costi, ricette, obiettivi, limiti e gestione dei casi eccezionali richiedono una scelta esplicita prima di diventare meccaniche.
-2. **Incrementi verticali piccoli:** una funzionalità comprende motore, lettura, persistenza quando necessaria, test, simulazione e documentazione.
-3. **Tre stati distinti:** *proposto*, *implementato ma da validare*, *verificato*. Un test scritto non è un test superato; una proposta tecnica non è una regola approvata.
-4. **Versioni delle regole esplicite:** una modifica economica o di compatibilità richiede una nuova versione e una politica di conversione dei checkpoint. Le analisi e i read model non richiedono una nuova versione.
-5. **Bilanciamento progressivo:** misurare costi, tempi e carenze a ogni nuova filiera, poi misurare la durata complessiva in M6. Le **8 ore efficienti / 32+ ore inefficienti** sono obiettivi del gioco completo, non certificazioni di M4.
-6. **GUI progressiva:** estendere la base 8-bit già approvata durante M5–M6, rifinire in M7. La GUI non replica formule economiche del Core.
-7. **Salvataggi protetti:** test e benchmark non toccano le partite personali; le conversioni sono verificabili e preservano l'originale secondo le regole già adottate.
+**Verifiche specifiche RC7:** il test `UpgradeWithResearchButWithoutMaterialsRemainsVisibleAndDisabled` deve usare `IsEffectivelyEnabled`, dopo aver verificato il `Command` legato al pulsante. Nessuna modifica funzionale è stata eseguita sul ViewModel o sullo XAML. [Piano D23](validation/G1_D23_RC7_TEST_PLAN.md). **Verifiche specifiche RC5:** quote +5/+10 visibili e cumulative con arrotondamenti per edificio; comandi disabilitati con mancanti; upgrade visibili ma disabilitati se la ricerca è sbloccata e mancano solo materiali. Confrontare report/piano [G1-D21](validation/G1_D21_RC5_TEST_PLAN.md). **RC6:** Segheria senza Tronchi, filiera condivisa Base/Grande/Avanzato, capacità Pane piena e doppio blocco costruzione/produzione, secondo [piano D22](validation/G1_D22_RC6_TEST_PLAN.md).
 
-## 3. M0–M3 — Baseline completata
+**Criterio di chiusura P0:** log Windows verde + checklist manuale registrata, **nessuna perdita rispetto alla v13**. Se emergono altri problemi, aprire una patch successiva di sola correzione, niente E4. Vedere [matrice dettagliata](validation/G1_D19_MATRICE_PARITA_GUI.md) e [piano RC5](validation/G1_D21_RC5_TEST_PLAN.md), oltre al [piano RC4](validation/G1_D20_RC4_TEST_PLAN.md); [piano RC3](validation/V60_E3B4_RC3_PARITY_TEST_PLAN.md) ancora applicabile.
 
-Non riaprire queste milestone per sviluppi ordinari: le successive modifiche sono nuove funzionalità o manutenzione regressiva.
+## 3. P1 — Completare l'architettura GUI senza duplicazione funzionale
 
-| Milestone | Evidenze principali | Riferimento |
-| --- | --- | --- |
-| M0 | Riorganizzazione e integrità dei riferimenti; documentazione e ADR | [Handoff](HANDOFF.md) |
-| M1 | 23 test della prova ridotta, stack adottato | [Verifica M1](validation/M1_STACK_PROBE.md) |
-| M2 | 45 test e simulazioni del motore autonomo | [Verifica M2](validation/M2_CORE.md) |
-| M3 | 82 test, desktop, ciclo di salvataggio e ripresa | [Verifica M3](validation/M3_DESKTOP.md) |
+**Motivo:** la RC2 è regredita perché `V14PreviewWindow`/`V14PreviewViewModel` ricostruivano viste e presentazioni originariamente disponibili nella `MainWindow` v13.
 
-I conteggi descrivono i checkpoint di uscita di ogni milestone, **non** il numero totale della suite attuale.
+**Attività tecniche:**
 
-## 4. M4 — Chiudere la progressione civile
+1. Inventario di righe, tooltip, command, stati e template della finestra v13 e relativo mapping nella v14; ogni elemento esistente avrà un corrispettivo documentato.
+2. Estrarre **solo dove garantita equivalenza** componenti riutilizzabili: risorse, header/footer, `ResourceDetailTemplate`, dettagli blocchi, area Crescita e comandi Esercito. Favorire un ViewModel adapter per differenze di stato, non una seconda logica di produzione.
+3. Testare i componenti estratti nella **v13** e nella **v14** in parallelo; introdurre controlli automatici che falliscano se scompaiono le sette colonne, i tooltip, i pulsanti corretti o gli stati dei blocchi.
+4. Evitare un restyling, cambio di palette o grid redesign: piccole modifiche visibili solo per Scuola, ricerca e tier.
+5. Garantire che gli ordini multipli indicano sempre **prezzo cumulativo crescente**, non solo prezzo unitario e moltiplicatore.
 
-**Obiettivo:** un'economia civile riproducibile con più livelli abitativi, doppia alimentazione, filiere recuperabili e diagnostica interpretabile, pronta come base del gioco avanzato.
+**Criterio di chiusura:** nessun cambiamento visivo/funzionale non richiesto nella modalità normale; v14 senza le lacune inventariate; test headless + audit Windows. La rifattorizzazione è **subordinata** al gate P0, non un prerequisito per rilasciare una patch mirata.
 
-| Fase | Incremento | Stato | Criterio verificabile |
-| --- | --- | --- | --- |
-| **M4.1** | Case piccole, Cibo e crescita | Verificata | Arrivi dopo secondi validi, carenze e case piene corrette |
-| **M4.2** | Magazzini e capacità derivata | Verificata | Espansione e ripresa della produzione; salvataggi convertibili |
-| **M4.3** | Fattorie, Pozzo, Mulino e Forno | Verificata | Ricette e prerequisiti; cronologia del Pane |
-| **M4.4** | Casa grande, Pane distinto, razioni avanzate | Implementata; gate riferito superato dall'utente | Crescita 16→17, doppia razione e conversioni `-1/-2/-3 → -4` |
-| **M4.5** | Benchmark abitazioni e scala Pane | Gate riferito superato dall'utente | Risultati riproducibili e riconciliazione di ogni passo |
-| **M4.6** | Diagnostica numerica Forno + intera filiera | **Gate v17 riferito superato dall'utente** | 163 test attesi, valori per Grano/Acqua/Farina/Pane, UI compatta |
-| **M4.7** | Confronto filiera snella/completa a 220 abitanti | **Gate v17 riferito superato dall'utente** | Quattro strategie, costi reali, filiera operativa e 1.800 secondi riconciliati per strategia |
-| **M4.8** | Consolidamento M4 e stress oltre 308 abitanti | **Gate v21 riferito superato dall'utente** | Due profili di scala, limiti documentati, baseline fissata |
-| **M4.9** | Ergonomia GUI: avvisi fissi, costruzione, densità, geometria hover | **Gate v23 riferito superato dall'utente** | Prerequisiti visibili senza scroll, colori distinti e posizioni invarianti in hover alle due risoluzioni |
-| **M4.10** | Case che accelerano gli arrivi, persistenza frazionaria e conversione da `-4` a `-5` | **Gate v24 riferito superato dall'utente** | Bonus +15%/+30%, limite 2×, stessi risultati con passi diversi, vecchi salvataggi v2 leggibili, benchmark e GUI coerenti |
-| **M4.11** | Primo prototipo desktop retro 8-bit | **Gate tecnico verificato; giudizio utente aperto** | Icone originali 8×8 per 12 edifici e 9 risorse, leggibilità e geometria a 1040×740 e 1240×850, nessun effetto sulle regole |
-| **M4.12** | Rapporto comparativo dei quattro benchmark M4 | **Eseguito e risultati consolidati** | Lettura JSON reale, confronti quantitativi M4, controlli di versione/coerenza, nessuna mutazione al gameplay |
-| **M4.13** | Audit economico dell'incentivo numerico delle case | **v27 analisi completata, benchmark da eseguire** | Enumerazione delle quattro combinazioni a costo minimo per 2×, costi alimentari e condizioni in cui il bonus non basta |
-| **M4.14** | Preparazione del gate D0 e verifica della coerenza documentale M5 | **v28 scheda completata, decisioni non approvate** | Otto scelte tracciate, criteri di approvazione M4→M5, `civil-growth-5` baseline e S1/S2 chiariti |
-| **M4.15** | Prefattibilità M5.4: Cantiere navale, flotta e trasporto | **v29 studio completato, contenuti non approvati** | Primo viaggio raggiungibile, identità navi, pagamento, save e futuro preflight distinti dalle missioni |
+## 4. P2 — Rifinitura delle nuove funzioni v14
 
-### M4.6–M4.7 — Gate precedente confermato dall'utente
+**Scuola:** costruzione nel catalogo edifici; pagina dedicata alla coda, tempi in secondi simulati, costi e requisiti, posti studenti e ricercatori; ritorno civile e annullamento con regole esplicite, non implicite.
 
-La validazione di **v17** è stata dichiarata superata dall'utente. Il pacchetto comprendeva build Release, **163 casi xUnit attesi**, analisi dei due cataloghi, dodici cronologie standard, benchmark abitativo e Pane a quattro strategie, **nove render** e ciclo di salvataggio nativo. Gli output grezzi (`validation.json`, TRX, JSON, PNG) non sono allegati qui: non trasformare la conferma in risultati quantitativi inventati. L'assenza di .NET nell'ambiente di preparazione non autorizza una seconda certificazione autonoma.
+**Ricerca:** albero consultabile, saldo liberamente accumulato e acquisto **solo su clic**; prerequisiti, costi e benefici comprensibili; tecnologia non implementata non acquistabile; pagina coerente con sidebar originale.
 
-### M4.7 — Esperimento economico senza cambiare le regole
+**Produttori:** per ogni famiglia righe **Base, Grande, Avanzato** come edifici autonomi, con 1/3/10 posti; pulsanti Costruisci direttamente per la riga selezionata, Upgrade distinto con sorgente/destinazione esplicite. Informare su capacità propria (candidata +50/+150/+500 per output), produzione per lavoratore e manodopera effettiva. Niente ComboBox di livello o lotto.
 
-**Implementazione confermata dal gate utente v17; output numerici non allegati.** Il comando `--benchmark-bread-scale` confronta da una colonia sintetica identica da **220 abitanti**, per 30 minuti di gioco:
+**Criterio di chiusura:** Esercito e Risorse della v13 rimangono identici; nessuna nuova pagina oscura dati già presenti; errori spiegati e operazioni atomicamente rifiutate.
 
-| Strategia | Potenziamento | Personale in più | Legno lavorato in più | Pietra in più |
-| --- | --- | ---: | ---: | ---: |
-| Una filiera | Nessuno | 0 | 0 | 0 |
-| Due complete | 2 Fattorie + Pozzo + Mulino + Forno | 5 | 420 | 280 |
-| Seconda completa tardiva | Stesso potenziamento al minuto 15 | 5 | 420 | 280 |
-| **Snella** | 1 Fattoria + Pozzo + Mulino + Forno | **4** | **360** | **250** |
+## 5. P3 — E4a audit di progressione economica e anti-blocco
 
-Sono ora registrati abitanti finali, tempi per 240/250 abitanti, secondi bloccati, Pane/Cibo finali, lavoratori, attività dei quattro anelli, Pane prodotto/consumato e riconciliazione secondo per secondo. Il limite medio teorico **4,5 Pane/s** della strategia snella **non è ancora una prestazione osservata**; lotti produttivi e capacità di deposito possono modificarne il rendimento reale. Dettagli in [capacità della filiera](scenarios/BREAD_CHAIN_CAPACITY.md) e [benchmark attuale](scenarios/BREAD_SCALE_BENCHMARK.md).
+**Prima di fissare costi e tecnologie:**
 
-### M4.8 — Stress ad alta popolazione e uscita dalla milestone
+- Verificare per ogni risorsa che la capacità disponibile permetta i lotti indivisibili; il Magazzino amplia **tutte** le risorse; Pane non ha eccezioni invisibili.
+- Simulare costi crescenti e upgrade 1→3→10, acquisti multipli, domanda/produzione di Cibo e Pane, esigenze militari, riserve per ricercatori.
+- Cercare stalli: prezzi superiori alla capacità raggiungibile, filiere senza materiali rinnovabili, prerequisiti circolari, ricercatori/formazione impossibili per mancanza abitanti, risorse in deadlock.
+- Usare benchmark riproducibili **dalla partita reale** e replay: simulazione a 1 s e frazioni, salva/carica a metà, overflow, edifici demoliti, errori senza addebiti e punteggi coerenti.
+- Completare metriche (tempi per obiettivi, produzione netta e saturazione, prezzi per unità, tempo al primo ricercatore e sblocchi, scorte di sicurezza). I benchmark M5.3c a 8 ore, quando mancanti, devono essere forniti/rigenerati; **non inventare dati**.
 
-Il profilo da 220 abitanti arriva al massimo a 250, ancora sotto il punto in cui la filiera snella da 4,5 Pane/s diventa nominalmente insufficiente. Il comando `--benchmark-bread-high-density` confronta quattro strategie su **320→350 abitanti**, 360 posti, quattro filiere di Cibo e stessa produzione Pane iniziale. Il gate del pacchetto che lo contiene è **riferito superato dall'utente**; senza i JSON non possiamo stabilire tempi, popolazioni finali o durata effettiva delle carenze. [Scheda tecnica e limiti](scenarios/BREAD_HIGH_DENSITY_BENCHMARK.md).
+**Criterio di chiusura:** report misurato, confronti di configurazioni e nessuna situazione inevitabile di blocco nella progressione prevista.
 
-- [x] Gate v17 con diagnostica e quattro strategie da 220 abitanti riferito superato dall'utente (output grezzi non allegati).
-- [x] Gate Windows del nuovo profilo da 320 abitanti **riferito superato dall'utente**; output JSON non fornito.
-- [ ] Politiche abitative/Persistenza/razioni senza regressioni; nessuna partita personale alterata.
-- [ ] Limiti di produttività e principali strategie documentati con misure, non solo formule.
-- [ ] Carenze recuperabili per i casi previsti; stato di blocco leggibile dalla UI.
-- [ ] Catena e catalogo raggiungibili; baseline di regole e salvataggi fissata.
-- [ ] Questioni **Carne** e **demolizione** classificate esplicitamente come *approvate*, *rinviate* o *fuori perimetro di M4*.
+## 6. P4 — E4b gate delle decisioni economiche
 
-### M4.9 — Compattazione GUI (v22) e regressione hover (v23)
+**Da sottoporre all'utente in forma compatta e comprensibile**, senza confondere prototipo e regola approvata:
 
-- In **Edifici**, la diagnosi dei prerequisiti e dei blocchi è ora nel riquadro **fisso sopra il comando Costruisci**; nome, descrizione e ricetta rimangono nel pannello scorrevole. Non occorre scorrere il dettaglio per vedere «Per costruire servono prima…».
-- Margini, card risorse, elenco edifici, pulsanti e footer occupano meno altezza, conservando nomi e informazioni economiche. Il futuro tema pixel art 8-bit non viene ancora introdotto.
-- Il pulsante **Costruisci** ha stati espliciti normale, hover, premuto e disabilitato. L'hover è verde più luminoso con bordo, il disabilitato grigio; il comando rimane disabilitato in presenza di vincoli.
-- **Gate v22:** l'utente ha confermato superati i test e la validazione del pacchetto con **166 casi previsti**; gli output grezzi non sono disponibili qui.
-- **Correzione v23:** lo spessore del bordo era differente in hover (**2**) rispetto al disabilitato (**1**), causando un ricalcolo dell'altezza del pulsante e uno spostamento degli elementi che lo precedono. Ora è **1 in tutti gli stati**; cambiano solo i colori. Il caso Desktop confronta geometria di pulsante, costo e quantità prima/dopo hover e disabilitazione a **1040×740** e **1240×850**. Il precedente test a una risoluzione è diventato una teoria a due casi: **167 xUnit attesi** (+1), gate successivamente riferito superato dall'utente.
+- Tasso di incremento dei costi (candidato **+15%** per acquisto), formula e arrotondamenti; conteggio storico per famiglia.
+- Moltiplicatori di costo per Base/Grande/Avanzato (candidati **1 / 2,6 / 6,5**) e prezzi di upgrade.
+- Capacità per edificio per risorsa prodotta (candidate **+50 / +150 / +500**); personale **1 / 3 / 10** è un requisito espresso dall'utente.
+- Scuola: prezzo, prerequisiti, posti, tempo e costo della formazione; produzione punti per ricercatore, politica di annullamento/ritorno civile.
+- Tecnologie: otto settoriali implementate sperimentalmente, livelli e costi; Logistica/Navigazione non acquistabili finché senza effetto; scelta delle regole di sblocco definitive.
+- Relazione con case avanzate, Pane, stoccaggio, popolazione e condizioni di vittoria.
 
-### M4.10 — Case che accelerano la crescita (v24)
+**Criterio:** approvazione **esplicita** dei valori e ADR aggiornato. Il superamento dei test non approva numeri, gameplay o UX.
 
-- **Formula adottata:** moltiplicatore `min(2; 1 + 0,15 × max(0, case piccole − 1) + 0,30 × case grandi)`. La prima Casa piccola è la dotazione iniziale e non dà bonus. Il tetto corrisponde a un arrivo ogni 30 secondi validi, contro 60 al ritmo base; gli arrivi avvengono solo a fine passo di un secondo.
-- **Il contatore è unico per colonia.** Edifici nuovi cambiano il ritmo dei progressi futuri senza azzerare quanto già maturato. Cibo, Pane dei residenti avanzati, posti liberi, pausa e assenza di progresso offline restano vincoli invariati.
-- **Precisione e salvataggi:** Core usa interi in ventesimi; salva secondi completi e una frazione 0–19 in tabella SQLite compatibile con i precedenti snapshot v2. Conversione `civil-growth-4 → civil-growth-5` senza resettare i secondi precedenti, con backup automatico del vecchio file alla prima sovrascrittura.
-- **Gate v24:** 174 casi xUnit attesi, nuovi test su bonus, tetto, cambi di ritmo, carenze, persistenza e UI, cronologie M4 storiche preservate con `--rules legacy`, nuovo confronto `--benchmark-housing-accelerated`. **L'utente riferisce superati test e validazione Windows;** TRX/JSON numerici non allegati. Lo stato v24 è pertanto *verificato secondo l'utente*, non rieseguito in questo ambiente.
+## 7. P5 — E4c attivazione e migrazione controllata v13→v14
 
-### M4.11 — Primo prototipo visivo 8-bit (v25)
+1. Inventario dei salvataggi v13, inclusi formati storici/fork militari previsti; fixture reali **anonimizzate**, non database personali incorporati negli ZIP.
+2. Backup coerente e verificabile prima della prima operazione; conversione v13→v14 a **percorso separato**, mai overwrite dell'originale; versioni/snapshot espliciti.
+3. Round-trip SQLite v3, protezioni contro file malformati o schema incompatibile, prova di rollback e recupero dopo crash/spazio esaurito.
+4. Integrare v14 nel gioco normale **solo dopo** approvazione GUI e bilanciamento; fornire migrazione opt-in con diagnosi e possibilità di tornare al backup.
+5. Smoke test Windows end-to-end, compatibilità vecchi salvataggi e controllo scrittura del profilo corretto.
 
-- Creato un controllo `PixelGlyph` che disegna **pittogrammi originali su una matrice 8×8**, senza librerie né immagini esterne. Tutte le nove risorse e i dodici edifici civili hanno una chiave grafica stabile corrispondente all'ID di catalogo.
-- Inseriti i simboli negli **edifici**, nelle **tre scorte in evidenza** e nella **tabella Risorse**. Pannelli a spigoli retti, bordi discreti e palette ridotta con blu notte, crema, azzurro e colori di produzione. Le etichette testuali e le quantità restano sempre esplicite.
-- Conservati pannello di blocco sopra `Costruisci`, densità della schermata, stato disabilitato distinto dall'hover e **spessore invariato del bordo durante l'hover**. Nessun cambiamento a Core, Application, prezzo, popolazione o SQLite.
-- Nuova prova di copertura pittogrammi e **due test di layout a 1040×740 / 1240×850**; conteggio complessivo atteso **177**. Da eseguire Windows `validate.cmd`, poi **ispezionare a vista i PNG** per leggibilità di icone e testi a entrambi i formati, inclusi Pane e diagnostica.
+**Criterio:** nessuna perdita di partite o dati; rollback dimostrato; il profilo v13 non viene modificato senza scelta esplicita.
 
-**Confine:** è una **schermata campione**, non un'approvazione definitiva di ogni colore/font/sprite. D0.7 resta aperta per revisione grafica, contrasto, scaling e DPI prima dell'estensione a M5.
+## 8. P6 — Ripresa del gameplay navale e delle fasi successive
 
-### M4.12 — Rapporto leggibile dei benchmark (v26)
+- **M5.4:** Cantiere navale, Navi, equipaggi/risorse, produzione, costi, UI e regole di raggiungibilità; sblocchi tecnologici navali solo quando producono effetti reali.
+- **M5.5:** esplorazione separata dalla conquista; requisiti espliciti, esiti deterministici dove approvati, inizialmente senza perdite irreversibili.
+- **M5.6–M5.7:** conquista/territori, Castello e obiettivo finale; decisioni numeriche e condizioni di vittoria da validare prima dell'implementazione.
+- **M6–M7:** rifinitura, bilanciamento conclusivo, UX/accessibilità e distribuzione, da ripianificare alla luce del codice effettivo.
 
-- Aggiunto `scripts/report-m4.ps1`: legge gli esperimenti che `validate.cmd` ha già prodotto e genera una **tabella affiancata** di tempi e risparmi delle case accelerate, più due tabelle di resa della filiera Pane (220 e 320 abitanti).
-- Valori ricavati **esclusivamente dai JSON effettivi**, senza attribuire risultati al solo gate passato. Controlli su durate, versioni, ID e secondi riconciliati; assenza dei file segnalata come errore, non interpretata come dato zero.
-- Uso documentato in [Lettura benchmark M4](validation/M4_BENCHMARK_READER.md). Script indipendente: non richiede nuove dipendenze .NET e non modifica salvataggi o checkpoint. Manca la prova PowerShell Windows, da fare quando disponibile insieme al gate v25.
-- Nessuna nuova economia introdotta. Il passo successivo, dopo aver visto i valori reali, è chiudere formalmente M4 e decidere D0.1–D0.8 con l'utente.
+Documenti di base: [G1 navale](design/G1_NAVAL_MISSIONS_DECISION_GATE.md), [ADR 0017 proposto](adr/0017-naval-mission-boundaries-proposta.md).
 
-### M4.13 — Incentivo numerico e costo delle abitazioni (v27)
+## 9. Regole di consegna e stop
 
-- Nuovo [audit delle case](scenarios/HOUSING_INCENTIVE_AUDIT.md), derivato dalle formule effettive di Core e dai costi di scenario, senza eseguire la simulazione: il tetto **2×** si raggiunge con sette Case piccole aggiuntive, oppure cinque piccole e una grande, tre piccole e due grandi, una piccola e tre grandi.
-- **Tutte e quattro costano 560 legno lavorato e 280 pietra per le sole abitazioni**, ma offrono rispettivamente **64, 80, 96 e 112 posti** (inclusa la Casa piccola iniziale). Le grandi richiedono tuttavia un Forno e Pane; a **112 abitanti** una sola filiera Cibo da 1/s non è più nominalmente sufficiente.
-- L'audit elenca anche le filiere alimentari e gli addetti necessari *a regime*, chiarisce quando un bonus a 2× non produce più benefici e propone confronti di gioco futuri controllati. È un **calcolo teorico**, non una dichiarazione di strategia vincente o una richiesta implicita di cambiare prezzi/bonus.
-- Nessuna modifica alla GUI v25, al lettore PowerShell v26, al motore, al catalogo o ai checkpoint SQLite; il gate resta **177 test previsti su Windows** e gli output quantitativi sono ancora da acquisire.
-
-**Raccomandazione, non decisione:** rinviare Carne finché non sia chiaro il vettovagliamento militare; non rendere demolizione obbligatoria per M4 salvo che i test mostrino errori irreversibili di progressione. Il rimborso del **25%** resta soltanto una proposta in [Q-08](scenarios/DEMOLITION_M4_REVIEW.md).
-
-### M4.14 — Decisioni pronte per confronto (v28)
-
-*Nota storica:* i tre punti seguenti descrivono il checkpoint v28, **prima** delle approvazioni e dell'introduzione dell'industria. Lo stato corrente è nelle sezioni 1, 5 e 6.
-
-- La [scheda operativa D0](design/D0_DECISION_BOARD.md) separa otto domande e proposte da conferme dell'utente e collega ciascuna ai propri gate.
-- Gli studi M5.1–M5.3 sono ora coerenti con la regola **attuale `civil-growth-5`**: l'eventuale `civil-growth-6` è soltanto un futuro nome candidato con scelta S1 approvata; l'alternativa S2 richiede un nuovo ID di scenario e import esplicito.
-- Il **gate v28 resta da eseguire** (177 xUnit attesi, UI 8-bit, benchmark reali). Nessuna filiera, regola o migrazione M5 è stata implementata.
-
-### M4.15 — Prevenire cicli e duplicazioni nel trasporto (v29)
-
-*Nota storica:* stato del checkpoint v29, precedente alle M5.1a/b. Il riferimento a 177 test non è il conteggio della suite corrente.
-
-- Nuovo [studio M5.4](design/M5_4_NAVAL_PREFEASIBILITY.md): separa Cantiere, acquisto della nave, flotta salvabile e missione futura. Confronta navi monouso, riutilizzabili e capacità astratta, lasciando costi, equipaggio e capienza all'approvazione.
-- Il primo viaggio **non** può dipendere da Monete disponibili solo dopo una conquista: la Zecca M5.2 è una fonte candidata precoloniale. Comandi e ID nave devono essere atomici, senza consumi o prenotazioni duplicate.
-- **Solo progettazione**, stesso codice eseguibile di v25; il gate di riferimento è ora **v29**, sempre 177 test xUnit attesi e controllo dei render.
-
-## 5. Decisioni di design acquisite e contratti residui
-
-**Stato corrente:** diverse decisioni D0 sono state **approvate e implementate** dopo il dossier iniziale. La [matrice storica dei 43 riferimenti e dei 12 edifici dell'epoca](design/PRE_M5_DECISION_GATE.md) resta utile per tracciabilità; il gioco ha **19 edifici** ora, **22 tipi scelti** per la prima campagna, di cui tre futuri. La [scheda D0](design/D0_DECISION_BOARD.md) distingue conferme e dettagli ancora aperti.
-
-1. **D0.1, catalogo:** scelti i **22 tipi** della [prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md), tutti necessari per vincere; altri **21 riferimenti esclusi**. I tre tipi ancora da realizzare sono Caserma, Cantiere e Castello.
-2. **D0.2, vittoria:** possesso contemporaneo di tutti i tipi previsti, **Castello come ultimo edificio**; demolizione rinviata.
-3. **D0.3, conquista:** almeno **una conquista obbligatoria** per sbloccare il Castello. Rimangono da definire caratteristiche e requisiti delle missioni e delle isole.
-4. **S1, continuità:** stessa partita civile con conversioni dichiarate e backup; l'aggiornamento a `civil-growth-7` è già introdotto.
-5. **M5.1a/b, industria:** prezzi e ricette **A** del Ferro e dell'Oro approvati separatamente; la priorità del Ferro sul Carbone resta fissa.
-6. **Dettagli futuri:** Quantità d’impiego di Spade/Monete, popolazione militare, durata/difficoltà, trasporti e missioni richiedono ancora contratti verificabili. Produzioni e prezzi di Forgia/Zecca sono già approvati e implementati.
-
-**Vincolo aritmetico aggiornato:** con ritmo iniziale di 60 s, limite superiore di **un arrivo ogni 30 s** e otto abitanti iniziali, in otto ore si possono avere **al massimo teorico 968 abitanti** soltanto assumendo fin dall'inizio case, Pane e Cibo sufficienti e accelerazione al tetto. È un limite ideale, non una strategia praticabile né una misura: i primi edifici e le scorte reali riducono il numero. M5 dovrà misurare il bilancio fra manodopera e reclute con le nuove regole.
-
-**Criterio per le fasi future:** specificare ogni nuovo contratto di produzione, personale, salvataggio e sblocco e provarne la raggiungibilità prima di implementare la relativa filiera. Non riaprire le scelte già approvate.
-
-**Materiale preparatorio storico:** il [dossier D0](design/PRE_M5_DECISION_GATE.md) e gli studi [M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md)/[M5.2](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) conservano alternative proposte *prima* delle approvazioni. Si applicano le scelte successive registrate qui e nell'[handoff](HANDOFF.md).
-
-## 6. M5 — Economia avanzata, esercito e isole
-
-**Stato: in corso.** **M5.1 e M5.2 Verificate.** Contratto M5.3 scelto il 03/11 ([ADR 0017](adr/0017-barracks-recruitment-and-v9-save-upgrade.md)); M5.3a/b (Caserma, arruolamento atomico, posti di addestramento, annullamento, salvataggi v10) implementata in v41 e **da verificare su Windows**. M5.3c e M5.4–M5.7 restano future.
-
-| Fase | Contenuto | Verifica per chiuderla |
-| --- | --- | --- |
-| **M5.1** | Miniere, ferro, carbone, oro e lavorazioni primarie | Input e costi raggiungibili, contesa e capacità provate |
-| **M5.2 — Verificata** | Forgia, Spade, Zecca e Monete; confronto a fasi/parallelo e percorso integrato | 260/260 test, nove profili, quattro guardie, 241/122 s e 2.320 s da nuova partita; impieghi militari/navali nelle fasi successive |
-| **M5.3a/b — Implementata, da verificare** | Caserma, arruolamento atomico, posti di addestramento da 30 s, annullamento, conversione v9→v10 | 308 test attesi, cronologia `military-8-hours`, bilancio `impiegati + liberi + reclute + soldati`, render Caserma |
-| **M5.3c** | Impatto civile del reclutamento | Contingenti piccoli/grandi e reclutamento precoce/tardivo: lavoro civile perso, Cibo/Pane, tempi |
-| **M5.4** | Cantiere navale, navi e requisiti di trasporto | Costruzione, disponibilità e impiego dei mezzi verificati |
-| **M5.5** | Esplorazione e spedizioni temporizzate | Stessa cronologia con passi diversi; esito applicato una sola volta |
-| **M5.6** | Conquista di isole, ricompense, colonie/commercio se approvati | Sblocchi persistenti e nessun guadagno duplicato |
-| **M5.7** | Castelli, strutture militari avanzate e scenario integrato | Dall'economia civile a una conquista completa con save/load |
-
-Regole da seguire in M5:
-
-- L'intero sistema militare utilizza il **tempo simulato**, non l'orologio reale.
-- Le missioni saranno inizialmente **deterministiche e gestite per schede**, senza combattimento tattico o mappa di posizionamento, salvo nuova scelta.
-- Soldati, navi e missioni sono stati distinti dagli edifici anche se condividono concetti come costo e prerequisito.
-- I salvataggi militari richiederanno versionamento e una migrazione esplicita dal checkpoint civile esistente, senza conversioni silenziose.
-- Le ricette alternative (per esempio Carne/Pesce) richiedono un modello di scelta preciso: il catalogo attuale usa **una ricetta per edificio** e la proiezione della filiera unica non copre produttori alternativi.
-- Ogni fase include test Core/Application, simulazione della filiera, stato di lettura e verifica dei checkpoint; la GUI può crescere insieme alle funzionalità.
-
-**Criterio di uscita M5:** una partita può avanzare da materiali e popolazione civili fino a un esercito equipaggiato, un viaggio, una conquista e la relativa ricompensa, essere sospesa durante una missione e riprendere senza duplicazioni.
-
-### M5.1 — Ferro e Oro integrate; confronto di scala in verifica
-
-Il [dossier M5.1](design/M5_1_INDUSTRY_PREFEASIBILITY.md) conserva la comparazione preparatoria dei prezzi e delle strategie. **È stata adottata la configurazione A**: 450 Tavole / 320 Pietra e tre lavoratori per costruire l'intera filiera iniziale del Ferro (Miniera Fe 120/80, Miniera Carbone 130/90, Fonderia Fe 200/150), con massimo 1 Ferro/s. La filiera Oro è anch'essa implementata con i costi A, risorse e versione `civil-growth-7`; conversione e backup S1 sono attivi.
-
-**Benchmark M5.1c Verificato il 02/11:** cinque profili e replay interi/frazionari, quantità teoriche confermate dal gate Windows. Il benchmark resta fissato al catalogo storico `civil-growth-7`; [protocollo aggiornato](validation/M5_1C_INDUSTRY_SCALE.md).
-
-### Preparazione di M5.2: Forgia, Zecca e carbone condiviso
-
-Il [dossier M5.2](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) ha confrontato Forgia (240/180, 1 Ferro + 1 Carbone → 2 Spade/s) e Zecca (210/160, 1 Oro + 1 Carbone → 3 Monete/s), con un addetto ciascuna: **l'utente ha scelto questo contratto A il 28/10**. Assumendo anche i valori A di M5.1, le **due fonderie e i due trasformatori** richiederebbero **4 Carbone/s**: una miniera da 2/s non li mantiene tutti attivi contemporaneamente. Sono individuate due possibili strategie: **produzione a fasi con una miniera**, oppure **seconda miniera per sovrapporre le filiere**. Costi cumulativi teorici: **1.300/950** per l'insieme con una miniera, **1.430/1.040** con due. **Forgia verificata in v8 e Zecca verificata in v9**. L’esperimento isolato ha confermato 241/122 s il 02/11 sul checkpoint sintetico storico; il confronto nel gioco corrente è ora verificato in M5.2c: nove profili e quattro guardie, più cronologia `crafting`.
-
-**Preparazione v31, esclusivamente documentale:** per un obiettivo comparabile di **240 Spade + 360 Monete** sono stati ricostruiti **241 secondi ideali** con un'unica miniera e personale riassegnato per fasi, oppure **122 secondi ideali** con due miniere e sovrapposizione. I numeri escludono la raccolta dei materiali e i tempi per costruire, presuppongono minerali già presenti e ricette candidate: non sono misure .NET né tempi della campagna. Il dossier aggiornato elenca decisioni ancora necessarie, test F1–F10 e distinzione tra conversione S1 unica (`-7→-8`) e due versioni successive (`-7→-8→-9`) se si rilasciano separatamente Forgia e Zecca.
-
-**Preparazione v32, solo esperimento:** aggiunto [ForgeMintProbe](../experiments/forge-mint-probe/README.md), separato dalla soluzione e dalla validazione, per confrontare con `GameSession` sei profili (ipotesi A/B × tre strategie), bilancio delle risorse a ogni secondo, costi e snapshot dei replay. **Il codice dell'esperimento non è ancora stato eseguito su .NET**. All'epoca nessun valore era approvato; in seguito il contratto A è stato scelto senza introdurre migrazione, interfaccia o meccaniche nuove; M5.1c resta in attesa del gate completo.
-
-**Preparazione v34, ancora fuori dal gioco:** [ForgeMintProbe](../experiments/forge-mint-probe/README.md) aggiunge **sei verifiche F8/F9** su blocchi da deposito, lotti che entrano esattamente e precedenza delle fonderie con Carbone scarso, ripetute per prezzi A/B e per passi interi/frazionari. L'utente ha confermato i test della v33, ma il nuovo esperimento v34 è **da eseguire in .NET**. Le decisioni A su ricette e uso futuro delle Spade/Monete sono state poi approvate nel design.
-
-**Rifinitura v33, solo Desktop:** nell'elenco Risorse la ricerca visiva è agevolata dall'ordinamento alfabetico per nome italiano. L'ordine delle card di sintesi non cambia, così come catalogo e risultati numerici. Due casi di regressione aggiunti ai test Desktop: **esecuzione Windows ancora in attesa**, insieme a M5.1c e alla prova separata M5.2.
-
-**Rifinitura v35, solo Desktop:** la tabella Risorse mostra saldo, colonne numeriche allineate a destra, quantità arrotondata solo in tabella e tempo di riempimento indicativo; il dettaglio Edifici rende i consumi in elenco icona/testo come costi e produzioni. Il saldo previsto dal ReadModel è usato solo per il tempo stimato, senza modificare le regole. Nuovo caso xUnit e casi visuali estesi: **209 test attesi, non ancora eseguiti in Windows**. Catalogo, file di salvataggio e prove M5.2 immutati.
-
-**Rifinitura v36, solo Desktop:** tabella Risorse convertita a `ListBox` per selezione ocra al clic; le righe Risorse ed Edifici riservano **20 px** dalla scrollbar verticale. Due casi UI addizionali verificano separazione geometrica e selezione a 1040×740 e 1240×850. **211 test attesi, da verificare in Windows**; regole e salvataggi invariati.
-
-**Significato approvato:** Spade come risorsa consumata durante l'arruolamento e Monete come scorta per comandi espliciti, non sistema monetario applicato a tutti gli edifici. La produzione coloniale alternativa di Monete, **le quantità per reclute/navi** e i contratti di pagamento restano futuri. **M5.2a/b sono Verificate**, con Forgia in v8 e Zecca in v9. **M5.2c è Verificata**: 241/122 s nel confronto, obiettivo da nuova partita a 2.320 s, prove sostenute e salvataggi. M5.2 è chiusa; impieghi e quantità militari/navali restano nelle fasi successive.
-
-### Preparazione di M5.3: Caserma e popolazione condivisa
-
-Il [dossier M5.3](design/M5_3_ARMY_PREFEASIBILITY.md) porta il requisito *Spade + abitanti → Caserma → Soldati* in un contratto verificabile, senza fissare valori non presenti nei riferimenti. L'invariante proposto distingue **civili impiegati, civili liberi, reclute e soldati**, senza duplicare persone. Confronta arruolamento immediato, coda temporizzata e capacità per Caserma; propone M5.3a arruolamento atomico, M5.3b addestramento e persistenza e M5.3c confronto dell'impatto civile. **D0.8 ha stabilito che le Spade si consumano all'arruolamento**; restano da approvare **D0.4**, quantità per recluta, tempi, cancellazione/congedo, razioni, capienza e perdite. Nessun soldato è stato aggiunto all'attuale `civil-growth-7`.
-
-### Preparazione di M5.4: Cantiere navale e flotta
-
-Il [dossier M5.4](design/M5_4_NAVAL_PREFEASIBILITY.md) confronta nave monouso, entità persistente e capacità astratta, senza adottare un modello. Propone **M5.4a** primo Cantiere/acquisto atomico, **M5.4b** flotta con ID e salvataggi, **M5.4c** preflight di trasporto senza far partire missioni. Tavole e Monete compaiono nel riferimento, **non** i loro prezzi, le capienze, la durata della costruzione o la necessità di equipaggio. M5.5 si occuperà di spedizioni, M5.6 di conquiste/colonie. S1 è già scelta; restano da approvare contratti navali, risorse/Monete ed economia militare prima di scrivere codice.
-
-## 7. M6 — Vittoria, risultati e bilanciamento complessivo
-
-La **regola** della vittoria viene approvata nel gate di design; in M6 la rendiamo completa, verificabile e bilanciata.
-
-| Fase | Lavoro | Evidenza attesa |
-| --- | --- | --- |
-| **M6.1** | Verifica degli obiettivi finali e dell'eventuale costruzione conclusiva | Vittoria rilevata una sola volta; condizioni negative testate |
-| **M6.2** | Strategia automatica dall'inizio alla vittoria | Cronologia riproducibile e raggiungibilità provata |
-| **M6.3** | Durata della strategia efficiente | Tempo effettivamente misurato rispetto all'obiettivo di circa **8 ore** |
-| **M6.4** | Strategie meno efficaci ma realistiche | Confronto fino a **32 ore o più**, senza attese artificiali obbligatorie |
-| **M6.5** | Bilanciamento di prezzi, produttività, personale, sblocchi e recuperi | Report per versione delle regole, nessuna filiera inutilmente dominante |
-| **M6.6** | Risultati, cronologia e classifica locale | Identità delle regole e tempo di gioco registrati senza ambiguità |
-| **M6.7** | Prove con giocatori, comprensibilità e ritmo | Problemi osservati e revisioni documentate |
-
-**Non assumere** che otto ore garantiscano divertimento o che un benchmark dimostri l'ottimalità. La classifica pubblica resta un'opzione separata da decidere con Q-10; non anticipare server e account per una classifica locale.
-
-## 8. Traccia parallela — GUI pixel art 8-bit
-
-La base retro monospace è **implementata, verificata e approvata**. Il layout corrente include menu laterale da 240 px, card comuni, icona abitanti, costi e produzione con icone e hover ocra. Il [contratto grafico](PIXEL_ART_UI.md) distingue questi elementi dalle rifiniture future.
-
-| Quando | Incremento grafico | Gate |
-| --- | --- | --- |
-| M4 e prima industria — completate | Prototipo, monospace, icone civili/industriali, menu, card e dettaglio compatti | Verificati 1040×740 e 1240×850; DPI fisici da ampliare |
-| Durante M5 — prossime fasi | Aggiungere icone e sezioni per esercito, navi e isole | Ogni comando essenziale raggiungibile; nessuna formula duplicata |
-| Durante M6 | Migliorare priorità visiva di costi, produzione, missioni e obiettivi | Prove di comprensibilità con scenari complessi |
-| M7 | Rifinitura estetica e accessibilità | Sprite nitidi, contrasto, tastiera, ridimensionamento |
-
-Asset **originali o con licenza compatibile**. La direzione è descritta in [PIXEL_ART_UI.md](PIXEL_ART_UI.md) e nell'[ADR 0012](adr/0012-retro-8bit-desktop-visual-language.md). Non programmare la GUI finale tutta in M7.
-
-## 9. M7 — Consolidamento, qualità e distribuzione
-
-1. Correzione dei bug e test di regressione, senza nuova espansione significativa delle regole.
-2. CI per build e test, audit delle dipendenze quando disponibile, controllo dei pacchetti effettivamente distribuiti.
-3. Prove delle migrazioni, errori SQLite, rollback e preservazione dei salvataggi personali.
-4. Profilazione con molte strutture, partite lunghe e più missioni in corso.
-5. UI pixel art definitiva e verifica di accessibilità, DPI, tastiera e leggibilità.
-6. Pacchetto Windows, avvio nativo, installazione e aggiornamento; altre piattaforme solo se testate.
-7. Manuale per i giocatori, note di rilascio e prima versione pubblicabile.
-
-**Criterio di uscita:** una partita completa e salvabile supera le verifiche dichiarate, le piattaforme supportate sono esplicitate e il prodotto è distribuibile.
-
-## 10. Decisioni aperte e loro ordine
-
-| Priorità | Tema | Stato | Prima di |
-| --- | --- | --- | --- |
-| Alta | Catalogo della prima campagna, fra i 43 tipi di riferimento | **Scelti 22 tipi; altri 21 fuori**. Contratto di vittoria distinto | Gate di design M5 |
-| Alta | Vittoria Q-01 e conquiste Q-02 | **Scelte:** possesso dei 22 tipi, Castello dopo una conquista obbligatoria; parametri missione aperti | Implementazioni M5.5–M6 |
-| Alta | Reclutamento, perdite, mantenimento Q-09 | **Da decidere** | M5.3 |
-| Alta | Impiego nei comandi e fonte coloniale alternativa | **Ruolo scelto e produzione verificata; quantità per reclute/navi da scegliere** | M5.3 / M5.4 |
-| Media | Carne: filiera civile alternativa o vettovagliamento militare | **Fuori dalla prima campagna per D0.1**; eventuale ruolo futuro da decidere | Nuova ricetta/missione che la usi |
-| Media | Demolizione Q-08; 25% rimborso solo candidato | **Rinviata dall'utente** | Eventuale incremento successivo |
-| Media | Tempo 1:1 oppure accelerazione e impatto sulla classifica | **Da decidere per il gioco completo** | M6.6 |
-| Successiva | Classifica locale o pubblica Q-10 | **Da decidere** | Eventuale servizio pubblico |
-
-Le decisioni già adottate per M2–M4 non vengono annullate da questa lista. La tabella documenta **estensioni ancora aperte**.
-
-## 11. Regola di avanzamento e resoconto fisso
-
-Ogni incremento futuro deve comunicare sempre questi cinque elementi, anche quando l'utente non può testare:
-
-1. **Dove siamo:** milestone, versione del pacchetto, ultima validazione effettivamente confermata.
-2. **Cosa abbiamo fatto:** codice/documenti cambiati, decisioni adottate, risultati misurati.
-3. **Cosa stiamo implementando:** obiettivo limitato dell'incremento, file/moduli interessati, impatto su regole e salvataggi.
-4. **Cosa ci aspetta:** prossimo passo e dipendenze verso la chiusura della milestone e la roadmap futura.
-5. **Cosa rimane aperto:** test non eseguiti, rischi, scelta dell'utente richiesta, limite noto e criterio di uscita.
-
-Lo stato deve usare esplicitamente **Proposto / Implementato non validato / Verificato / Rinviato**. Una conferma dell'utente sui test è un gate riferito dall'utente; il report numerico locale non va inventato. I documenti da allineare sono [game design](GAME_DESIGN.md), [handoff](HANDOFF.md), [changelog](../CHANGELOG.md) e gli ADR pertinenti. Le regole nuove richiedono una scelta dell'utente; un piano o uno studio non autorizza ad applicarle.
-
-**Prossima sequenza:** **contratto di reclutamento e M5.3 Caserma** → parametri navali e M5.4 Cantiere/flotta → M5.5–M5.7 missioni, conquista e Castello → M6 vittoria/classifica. **M5.2 è Verificata e chiusa**. Costi/ricette industriali, S1, ruolo Spade/Monete e gli altri contratti già scelti non vanno richiesti nuovamente.
+- Un incremento alla volta; checkpoint, ADR se cambia una decisione, test, diff, ZIP **integrale**, roadmap e handoff aggiornati.
+- Preservare **GUI v13**, database personali, stoccaggio condiviso e tempo simulato; niente cancellazioni retroattive.
+- Separare **test dichiarati passati dall'utente**, verifiche statiche e test non eseguiti; archiviare le evidenze.
+- Se un gate fallisce, **non** sviluppare la fase successiva: risolvere prima la regressione.
+- Directory principale essenziale; documenti storici in `docs/history/`, non accumulare checkpoint/versioni obsolete alla radice.

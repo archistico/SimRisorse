@@ -1,6 +1,14 @@
+> **Aggiornamento 03/11/2026 · v58-RC2 (non validata):** questo documento contiene materiale del precedente checkpoint v57 e alcune parti sono storiche. Per lo stato attuale del ramo unificato leggere [docs/CURRENT_STATE.md](CURRENT_STATE.md), [docs/ROADMAP.md](ROADMAP.md) e [docs/validation/V58_RECONCILIATION.md](validation/V58_RECONCILIATION.md). Nuovo ruleset candidato: `civil-growth-13` (addestramento individuale); flotta non implementata.
+
 # Game design
 
-Data di riferimento: **2026-11-02**. Questo documento distingue requisiti confermati, proposte e questioni da risolvere. L’ordine operativo è nella [roadmap](ROADMAP.md).
+**Nota di autorità v57:** per funzionalità correnti e decisioni effettivamente acquisite usare [CURRENT_STATE.md](CURRENT_STATE.md) e [AUTHORITY_REGISTRY.md](AUTHORITY_REGISTRY.md). Questa pagina include studi e paragrafi storici (v38/v53) con numeri precedenti: **v55 usa `civil-growth-12`, 21 strutture (20 della campagna + Municipio), 16 risorse, con Forgia/Zecca/Caserma già implementate**. Non dedurre che le funzionalità storicamente «future» siano ancora da implementare; il solo dossier navale aggiornato è [N-01…N-07](design/M5_4_DECISION_GATE_V55.md), ancora da approvare.
+
+**Decisione approvata v54 del 28/10/2026:** Municipio iniziale *non costruibile*, +1.000 posti a ogni risorsa e scorte iniziali assegnate solo all'avvio. Piccolo deposito degli output in ciascun produttore (+50 per risorsa), Case piccole/grandi (+10/+25 Cibo e Pane), Caserma (+20 Spade), Magazzino generalista (+500 per risorsa). Scorte in inventario globale, bonus espliciti nell'interfaccia. Municipio è un edificio di scenario, **fuori dai 22 edifici da costruire** per completare la prima campagna. Scenario `civil-growth-12`, 21 strutture catalogate / 16 risorse, 287 test attesi da validare in Windows; le decisioni navali non sono approvate (futura v13). [Gate](validation/V54_TOWN_HALL_DISTRIBUTED_STORAGE.md).
+
+Data di riferimento: 2026-10-27. Questo documento distingue requisiti confermati, proposte e questioni da risolvere; gli screenshot sono evidenze di un riferimento, non una specifica da copiare integralmente. L'ordine operativo delle scelte è nella [roadmap](ROADMAP.md).
+
+**Aggiornamento v53 del 28/10/2026, prevale sulle fotografie storiche sotto:** regole `civil-growth-11` con 20 edifici, 16 risorse, esercito integrato, **1.000 posti iniziali per tutte le risorse** incluso il Pane (+500/Magazzino); descrizione della capacità al sorvolo della colonna Risorse e riga con icona nel dettaglio di ogni edificio. Conversione/backup S1 da v10, **280 test attesi e validazione Windows pendente**. Cantiere, flotta, conquista e Castello non sono ancora implementati; le proposte navali N-01…N-07 richiedono approvazione e, se accettate, inizieranno dalla v12.
 
 ## Visione e ciclo di gioco
 
@@ -10,17 +18,13 @@ Il ciclo previsto è: osservare risorse e fabbisogni, scegliere un investimento,
 
 ## Requisiti confermati
 
-**Decisione D0.1 del 2026-10-27:** prima campagna con i [22 tipi elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): 12 civili, cinque di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere e Castello. Gli altri 21 riferimenti sono fuori dalla prima campagna. Con M5.2b **19 tipi sono implementati e 3 restano futuri**.
+**Decisione D0.1 del 2026-10-27:** prima campagna con i [22 tipi elencati nella scheda dedicata](design/FIRST_CAMPAIGN_PROPOSAL.md): 12 civili, cinque di estrazione/fusione, Forgia, Zecca, Caserma, Cantiere e Castello. Gli altri 21 riferimenti sono fuori dalla prima campagna. **Nella baseline attuale 20 tipi sono implementati e 2 sono futuri** (Cantiere e Castello), più il Municipio **extra**. [Catalogo reale](CATALOG_CURRENT.md).
 
-**Decisioni successive esplicite:** vittoria con possesso di tutti i 22 tipi e Castello conclusivo; una conquista obbligatoria sblocca il Castello. Gli edifici iniziali contano già. M4 chiusa dopo giudizio positivo sul prototipo monospace e rinvio della demolizione. Scelta **S1** per continuare le partite con conversione/backup e **configurazione A per la prima filiera ferro/carbone**. M5.1a verificata inizialmente nelle regole **`civil-growth-6`**, 15 edifici e 12 risorse: [parametri e risultati](validation/M5_1A_IRON.md). Le regole operative militari/navali e la funzione di vittoria restano da implementare; l'Oro è stato aggiunto nell'incremento successivo.
+**Decisioni successive esplicite:** vittoria con possesso di tutti i 22 tipi e Castello conclusivo; una conquista obbligatoria sblocca il Castello. Gli edifici iniziali contano già. M4 chiusa dopo giudizio positivo sul prototipo monospace e rinvio della demolizione. Scelta **S1** per continuare le partite con conversione/backup e **configurazione A per la prima filiera ferro/carbone**. M5.1a verificata inizialmente nelle regole **`civil-growth-6`**, 15 edifici e 12 risorse: [parametri e risultati](validation/M5_1A_IRON.md). **Il reclutamento militare è ora implementato**; navi, missioni, conquista e funzione di vittoria restano futuri.
 
-**Scelta successiva M5.1b:** approvata separatamente la configurazione A dell'Oro: Miniera 180/120 legno/pietra, 1 minerale/s; Fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s; un addetto ciascuna, capacità 1.000 +500 per Magazzino, scorte iniziali zero. Ferro prioritario con carbone scarso. **M5.1b verificata**, `civil-growth-7`, 17 edifici / 14 risorse e 204/204 test: [report](validation/M5_1B_GOLD.md). Questa è la verifica storica dell’Oro; Forgia e Spade sono state aggiunte in M5.2a.
+**Scelta successiva M5.1b:** approvata separatamente la configurazione A dell'Oro: Miniera 180/120 legno/pietra, 1 minerale/s; Fonderia 220/170, 1 minerale + 1 carbone → 1 oro/s; un addetto ciascuna, capacità originaria 1.000 +500 per Magazzino, scorte iniziali zero. Ferro prioritario con carbone scarso. **M5.1b verificata** sotto `civil-growth-7`: [report](validation/M5_1B_GOLD.md). **Forgia/Spade e Zecca/Monete sono state poi implementate**; le Spade servono oggi all'arruolamento, mentre l'eventuale spesa di Monete per le navi è soltanto proposta in M5.4.
 
-**M5.2a Verificato:** contratto A scelto il 28/10 e Forgia implementata in `civil-growth-8`: costo 240 Legno lavorato/180 Pietra, 1 addetto, Fonderia di ferro posseduta, **1 Ferro + 1 Carbone → 2 Spade/s**, priorità 100 dopo le fonderie. Scorte iniziali zero, capacità 1.000 +500 per Magazzino, lotti indivisibili. Spade inventariate per il futuro arruolamento; nessun soldato introdotto. Conversione S1 da v1–v7 con backup, SQLite v2. **235/235 test**, cinque benchmark e smoke Windows superati. [Report](validation/M5_2A_FORGE.md). La Zecca è stata implementata e verificata nell’incremento seguente, descritto sotto.
-
-**M5.2b Verificato:** Zecca/Monete in `civil-growth-9`, **19 edifici / 16 risorse**, **258/258 test** e gate Windows completo. Zecca 210 Legno lavorato/160 Pietra, 1 addetto, Fonderia d’oro posseduta, **1 Oro +1 Carbone → 3 Monete/s**, priorità 101 dopo Forgia 100. Monete iniziali zero, capacità 1.000 +500 per Magazzino e lotti indivisibili: con 1–2 posti residui non si consumano input. Monete per pagamenti espliciti futuri, non valuta generale. Conversione S1 v8→v9 concatenata dalle precedenti, scorte Spade e personale preservati, SQLite v2; [report](validation/M5_2B_MINT.md). **M5.2c è ora Verificata**: nove profili sul catalogo corrente, quattro guardie e percorso integrato dalla nuova partita; [risultati](validation/M5_2C_FORGE_MINT.md). Quantità per reclute/navi da scegliere nelle rispettive fasi.
-
-**M5.3 — contratto scelto il 03/11, implementato in `civil-growth-10`, da verificare su Windows:** Caserma 260 Legno lavorato/200 Pietra, 0 addetti, prerequisito Forgia; **5 Spade per recluta**; ogni Caserma addestra **1 recluta alla volta in 30 s validi**; reclute e soldati **restano residenti** (case, Cibo, Pane); **annullamento** con restituzione di persona e Spade (il tempo già svolto si perde); **congedo rinviato** alle missioni. Più Caserme addestrano in parallelo. Un lavoratore assegnato non viene arruolato implicitamente e un soldato non può lavorare. Perdite permanenti non decise. [ADR 0017](adr/0017-barracks-recruitment-and-v9-save-upgrade.md).
+**Gate storico dopo le rifiniture UI:** **206/206 test** riferiti alla versione dell'epoca, non alla v55/v57. Menu laterale, card abitanti/scorte, dettaglio con costi prima della produzione e hover ocra sono implementati. **Il gate corrente attende 287 xUnit**. [Interfaccia](PIXEL_ART_UI.md), [risultati storici](validation/DESKTOP_UI.md) e [gate attivo](validation/V55_STATIC_AUDIT.md).
 
 | ID | Requisito | Conseguenza |
 | --- | --- | --- |
@@ -62,7 +66,7 @@ M3 rende giocabile lo scenario ridotto: ordini da 1, 5 o 10 unità, viste Edific
 - Abitazioni con capacità e possibile crescita della popolazione; eventuale dotazione immediata di abitanti trattata come effetto separato.
 - Cibo come vincolo di mantenimento. Per lo scenario civile M4 è adottata una prima politica esplicita; per soldati e gioco completo soglie e conseguenze restano aperte.
 
-Le persone sono conteggi interi. Un tasso di crescita frazionario può accumulare avanzamento senza rappresentare una frazione di lavoratore assegnabile. Non è deciso come gestire eventuali rientri, congedi o perdite.
+Le persone sono conteggi interi. Un tasso di crescita frazionario può accumulare avanzamento senza rappresentare una frazione di lavoratore assegnabile. **Dal ruleset `civil-growth-12` il congedo dei soldati pronti è implementato**, così come l'annullamento delle reclute in attesa; rientri da missioni e perdite permanenti non sono ancora definiti, perché le missioni non esistono.
 
 ### Esercito e isole
 
@@ -72,7 +76,7 @@ Le persone sono conteggi interi. Un tasso di crescita frazionario può accumular
 - Esiti inizialmente deterministici e informazioni sufficienti a pianificare una spedizione.
 - Navi e contingenti come entità distinte dagli edifici, anche quando l'interfaccia usa elenchi simili.
 
-L'utente ha scelto **una conquista obbligatoria che sblocca il Castello**, costruzione conclusiva. Identità dell'isola, forze, durata, costi ed esiti restano da definire prima del codice militare/navale.
+L'utente ha scelto **una conquista obbligatoria che sblocca il Castello**, costruzione conclusiva. **Reclutamento, Caserma e addestramento sono già in codice**; identità dell'isola, forze impiegate nella spedizione, durata, costi ed esiti restano da definire **prima di implementare navigazione e missioni**.
 
 ### Interfaccia
 

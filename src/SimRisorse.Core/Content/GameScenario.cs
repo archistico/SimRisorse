@@ -1,8 +1,8 @@
 using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
-using SimRisorse.Core.Military;
 using SimRisorse.Core.Population;
+using SimRisorse.Core.Military;
 
 namespace SimRisorse.Core.Content;
 
@@ -10,7 +10,7 @@ public sealed class GameScenario
 {
     public GameScenario(string id, GameCatalog catalog, int population, ResourceBundle capacity,
         ResourceBundle initialResources, IEnumerable<BuildingState> initialBuildings, PopulationRules? populationRules = null,
-        MilitaryRules? militaryRules = null)
+        MilitaryTrainingRules? militaryRules = null)
     {
         ContentIdentifier.Validate(id, nameof(id));
         ArgumentNullException.ThrowIfNull(catalog);
@@ -24,6 +24,14 @@ public sealed class GameScenario
         Catalog = catalog;
         Population = population;
         PopulationRules = populationRules;
+        MilitaryRules = militaryRules;
+        if (militaryRules is not null &&
+            (!catalog.ResourcesById.ContainsKey(militaryRules.SwordResourceId) ||
+             !catalog.BuildingsById.TryGetValue(militaryRules.BarracksId, out var barracks) ||
+             barracks.WorkplacesPerBuilding != 0 || barracks.Recipe is not null ||
+             !barracks.Cost.Equals(militaryRules.BarracksCost) ||
+             !barracks.Prerequisites.Contains(militaryRules.PrerequisiteId)))
+            throw new ArgumentException("Military rules require a matching non-production barracks and swords.", nameof(militaryRules));
         if (populationRules is not null && !catalog.ResourcesById.ContainsKey(populationRules.FoodResourceId))
             throw new ArgumentException("Population food must be a catalog resource.", nameof(populationRules));
         if (populationRules?.AdvancedHousing is { } advanced &&
@@ -36,17 +44,16 @@ public sealed class GameScenario
             (!catalog.BuildingsById.TryGetValue(growth.SmallHouseId, out var small) || small.HousingPerBuilding == 0 ||
              !catalog.BuildingsById.TryGetValue(growth.LargeHouseId, out var large) || large.HousingPerBuilding == 0))
             throw new ArgumentException("Accelerated growth requires two known housing building types.", nameof(populationRules));
-        if (militaryRules is not null &&
-            (populationRules is null || !catalog.ResourcesById.ContainsKey(militaryRules.SwordsResourceId) ||
-             !catalog.BuildingsById.TryGetValue(militaryRules.BarracksBuildingId, out var barracks) ||
-             barracks.Recipe is not null || barracks.WorkplacesPerBuilding != 0))
-            throw new ArgumentException("Recruitment requires growing population, a known equipment resource and a barracks without workplaces.",
-                nameof(militaryRules));
-        MilitaryRules = militaryRules;
         Capacity = capacity;
         InitialResources = initialResources;
         var byId = initial.ToDictionary(item => item.BuildingId, StringComparer.Ordinal);
         InitialBuildings = catalog.Buildings.Select(item => byId.GetValueOrDefault(item.Id) ?? new(item.Id, 0, 0)).ToImmutableArray();
+        foreach (var fixedBuilding in catalog.Buildings.Where(item => item.IsScenarioFixed))
+        {
+            var starting = InitialBuildings.Single(item => item.BuildingId == fixedBuilding.Id);
+            if (starting.Count != 1 || starting.AssignedWorkers != 0)
+                throw new ArgumentException("A scenario-fixed structure must start as exactly one unstaffed building.", nameof(initialBuildings));
+        }
         if (!StorageCapacity(InitialBuildings).Covers(initialResources)) throw new ArgumentException("Initial stocks exceed storage capacity.");
         if (populationRules is not null && HousingCapacity(InitialBuildings) < population)
             throw new ArgumentException("Initial population exceeds housing.", nameof(initialBuildings));
@@ -56,7 +63,7 @@ public sealed class GameScenario
     public GameCatalog Catalog { get; }
     public int Population { get; }
     public PopulationRules? PopulationRules { get; }
-    public MilitaryRules? MilitaryRules { get; }
+    public MilitaryTrainingRules? MilitaryRules { get; }
     /// <summary>Base storage before building effects; sessions use <see cref="StorageCapacity"/>.</summary>
     public ResourceBundle Capacity { get; }
     public ResourceBundle InitialResources { get; }

@@ -1,0 +1,212 @@
+{
+  "status": "PROPOSTA_NON_APPROVATA",
+  "base_rules_version": "civil-growth-13",
+  "proposed_rules_version": "civil-growth-14",
+  "date": "2026-11-03",
+  "point_model": "saldo-globale-spendibile",
+  "base_research_per_scientist_per_second": "0.1",
+  "families": {
+    "lavorazioni": [
+      "tree-feller",
+      "sawmill",
+      "stonecutter"
+    ],
+    "alimentazione": [
+      "fisher",
+      "food-store",
+      "farm",
+      "well",
+      "mill",
+      "bakery"
+    ],
+    "estrazione": [
+      "iron-mine",
+      "coal-mine",
+      "gold-mine"
+    ],
+    "industria": [
+      "iron-smelter",
+      "gold-smelter",
+      "forge",
+      "mint"
+    ]
+  },
+  "technologies": [
+    {
+      "id": "lavorazioni-1",
+      "name": "Lavorazioni I",
+      "cost": 100,
+      "prerequisite_tech": [],
+      "required_buildings": [],
+      "unlock_tier": "grande",
+      "families": [
+        "tree-feller",
+        "sawmill",
+        "stonecutter"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "lavorazioni-2",
+      "name": "Lavorazioni II",
+      "cost": 350,
+      "prerequisite_tech": [
+        "lavorazioni-1"
+      ],
+      "required_buildings": [],
+      "unlock_tier": "avanzata",
+      "families": [
+        "tree-feller",
+        "sawmill",
+        "stonecutter"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "alimentazione-1",
+      "name": "Alimentazione I",
+      "cost": 100,
+      "prerequisite_tech": [],
+      "required_buildings": [],
+      "unlock_tier": "grande",
+      "families": [
+        "fisher",
+        "food-store",
+        "farm",
+        "well",
+        "mill",
+        "bakery"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "alimentazione-2",
+      "name": "Alimentazione II",
+      "cost": 350,
+      "prerequisite_tech": [
+        "alimentazione-1"
+      ],
+      "required_buildings": [],
+      "unlock_tier": "avanzata",
+      "families": [
+        "fisher",
+        "food-store",
+        "farm",
+        "well",
+        "mill",
+        "bakery"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "estrazione-1",
+      "name": "Estrazione I",
+      "cost": 150,
+      "prerequisite_tech": [],
+      "required_buildings": [],
+      "unlock_tier": "grande",
+      "families": [
+        "iron-mine",
+        "coal-mine",
+        "gold-mine"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "estrazione-2",
+      "name": "Estrazione II",
+      "cost": 400,
+      "prerequisite_tech": [
+        "estrazione-1"
+      ],
+      "required_buildings": [],
+      "unlock_tier": "avanzata",
+      "families": [
+        "iron-mine",
+        "coal-mine",
+        "gold-mine"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "industria-1",
+      "name": "Industria I",
+      "cost": 200,
+      "prerequisite_tech": [
+        "estrazione-1"
+      ],
+      "required_buildings": [],
+      "unlock_tier": "grande",
+      "families": [
+        "iron-smelter",
+        "gold-smelter",
+        "forge",
+        "mint"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "industria-2",
+      "name": "Industria II",
+      "cost": 450,
+      "prerequisite_tech": [
+        "industria-1"
+      ],
+      "required_buildings": [],
+      "unlock_tier": "avanzata",
+      "families": [
+        "iron-smelter",
+        "gold-smelter",
+        "forge",
+        "mint"
+      ],
+      "phase": "v14_candidate"
+    },
+    {
+      "id": "logistica-1",
+      "name": "Logistica I",
+      "cost": 120,
+      "prerequisite_tech": [],
+      "required_buildings": [],
+      "unlock_tier": null,
+      "families": [],
+      "phase": "future_not_purchasable"
+    },
+    {
+      "id": "logistica-2",
+      "name": "Logistica II",
+      "cost": 360,
+      "prerequisite_tech": [
+        "logistica-1"
+      ],
+      "required_buildings": [],
+      "unlock_tier": null,
+      "families": [],
+      "phase": "future_not_purchasable"
+    },
+    {
+      "id": "navigazione-1",
+      "name": "Navigazione",
+      "cost": 250,
+      "prerequisite_tech": [
+        "lavorazioni-1"
+      ],
+      "required_buildings": [
+        "mint"
+      ],
+      "unlock_tier": null,
+      "families": [],
+      "phase": "naval_future_not_purchasable"
+    }
+  ],
+  "non_tiered": [
+    "small-house",
+    "large-house",
+    "warehouse",
+    "barracks",
+    "town-hall",
+    "school",
+    "shipyard",
+    "castle"
+  ]
+}

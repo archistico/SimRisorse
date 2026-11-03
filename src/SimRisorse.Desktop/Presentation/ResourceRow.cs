@@ -8,15 +8,19 @@ namespace SimRisorse.Desktop.Presentation;
 public sealed class ResourceRow(ResourceView view) : ObservableObject
 {
     private ResourceView _view = view;
+    private string _capacityBreakdown = string.Empty;
     private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
-    // Rows can be created outside the dispatcher; shared colors must be safe to render on the UI thread.
-    private static readonly IBrush SurplusBrush = new ImmutableSolidColorBrush(Color.Parse("#176858"));
-    private static readonly IBrush DeficitBrush = new ImmutableSolidColorBrush(Color.Parse("#A44732"));
+    // I colori sono condivisi tra le righe, ma i test headless ricreano il
+    // Dispatcher per ogni caso: SolidColorBrush e' legato al thread di creazione.
+    // Un brush immutabile puo' invece essere riutilizzato tra dispatcher distinti.
+    private static readonly IImmutableBrush SurplusBrush = new ImmutableSolidColorBrush(Color.Parse("#176858"));
+    private static readonly IImmutableBrush DeficitBrush = new ImmutableSolidColorBrush(Color.Parse("#A44732"));
     public string Id => _view.Id;
     public string Name => _view.Name;
     public string Quantity => _view.Quantity.ToString("#,0.###", Italian);
     public string QuantityRounded => decimal.Round(_view.Quantity, 0, MidpointRounding.AwayFromZero).ToString("#,0", Italian);
     public string Capacity => _view.Capacity.ToString("#,0.###", Italian);
+    public string CapacityBreakdown => _capacityBreakdown;
     public string Stock => $"{Quantity} / {Capacity}";
     public string NetRate => _view.NetPerSecond.ToString("+0.###;-0.###;±0", Italian) + " /s";
     public IBrush NetForeground => _view.NetPerSecond < 0 ? DeficitBrush : SurplusBrush;
@@ -39,5 +43,10 @@ public sealed class ResourceRow(ResourceView view) : ObservableObject
         }
     }
     public double FillPercent => _view.Capacity == 0 ? 0 : (double)(_view.Quantity / _view.Capacity * 100);
-    public void Update(ResourceView updated) { _view = updated; Notify(string.Empty); }
+    public void Update(ResourceView updated, string? capacityBreakdown = null)
+    {
+        _view = updated;
+        if (capacityBreakdown is not null) _capacityBreakdown = capacityBreakdown;
+        Notify(string.Empty);
+    }
 }

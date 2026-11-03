@@ -1,0 +1,18 @@
+{
+  "checkpoint": "G1-D6/E2",
+  "code_base": "v60-E1-RC1",
+  "active_ruleset": "civil-growth-13 (unchanged)",
+  "net10_compiled": false,
+  "source_test_script_previous_file_count": 165,
+  "unchanged_previous_files": 165,
+  "modified_previous_files": [],
+  "added_code_and_test_files": {
+    "src/SimRisorse.Core/Construction/TieredBuildingPortfolio.cs": "2fc06ddc7be02aa6762c3af6d02e87508423a4ef88d48b5342ed4945e65abb16",
+    "src/SimRisorse.Core/Construction/TieredConstruction.cs": "1f35d6fcf597a460efba1eb9d55a0edc30ed3ac9b7ebaa25b29308cf5a2fd9ca",
+    "src/SimRisorse.Core/Construction/TieredEconomyProjection.cs": "7948fe5b2d795fced73828fbd63666949bc9ff6ed6b1ef2035d19d16faa26193",
+    "src/SimRisorse.Core/Construction/TieredProductionFamily.cs": "6c03fe4dadd78792086b65543141b2093c93f792f16e387be866b793e0a3fa5d",
+    "tests/SimRisorse.Application.Tests/TierCoverageTests.cs": "8a2f5983019c8a201642faac59d465b7698f656f57d42454a261bee872b4daf0",
+    "tests/SimRisorse.Core.Tests/TieredBuildingsTests.cs": "0368d5ac900eae1d3aca911c78246b6cbfa5e3c9ccc0a4f8562597912d848393"
+  },
+  "note": "No old source/test/tool/script changed; new test files await Windows .NET 10."
+}

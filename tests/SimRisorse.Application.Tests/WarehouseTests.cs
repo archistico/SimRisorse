@@ -29,16 +29,15 @@ public sealed class WarehouseTests
         Assert.True(new ConstructBuildingsHandler(runtime).Handle(new("small-house", 1)).Succeeded);
         var full = advance.Handle(new(TimeSpan.FromSeconds(1139))).View;
         foreach (var id in new[] { "planks", "stone" })
-            Assert.Equal(1000m, Resource(full, id).Quantity);
+            Assert.Equal(Resource(full, id).Capacity, Resource(full, id).Quantity);
         Assert.Equal(ProductionBlockReason.StorageFull, full.Buildings.Single(item => item.Id == "stonecutter").BlockReason);
         Assert.Equal(0m, Resource(full, "stone").NetPerSecond);
 
         var built = new ConstructBuildingsHandler(runtime).Handle(new("warehouse", 1));
         Assert.True(built.Succeeded);
-        Assert.All(built.View.Resources.Where(item => item.Id != "bread"), item => Assert.Equal(1500m, item.Capacity));
-        Assert.Equal(600m, Resource(built.View, "bread").Capacity);
-        Assert.Equal(900m, Resource(built.View, "planks").Quantity);
-        Assert.Equal(940m, Resource(built.View, "stone").Quantity);
+        Assert.All(built.View.Resources, item => Assert.Equal(Resource(full, item.Id).Capacity + 500m, item.Capacity));
+        Assert.Equal(Resource(full, "planks").Quantity - 100m, Resource(built.View, "planks").Quantity);
+        Assert.Equal(Resource(full, "stone").Quantity - 60m, Resource(built.View, "stone").Quantity);
         Assert.Equal(1, built.View.Buildings.Single(item => item.Id == "stonecutter").RunnableWorkers);
         Assert.Equal(ProductionBlockReason.NotProducer | ProductionBlockReason.NoWorkers,
             built.View.Buildings.Single(item => item.Id == "warehouse").BlockReason);
@@ -48,7 +47,7 @@ public sealed class WarehouseTests
         var after = advance.Handle(new(TimeSpan.FromSeconds(1))).View;
         foreach (var resource in before.Resources)
             Assert.Equal(resource.Quantity + resource.NetPerSecond, Resource(after, resource.Id).Quantity);
-        Assert.Equal(941m, Resource(after, "stone").Quantity);
+        Assert.Equal(Resource(built.View, "stone").Quantity + 1m, Resource(after, "stone").Quantity);
     }
 
     [Theory]
@@ -58,6 +57,9 @@ public sealed class WarehouseTests
     [InlineData("civil-growth-4")]
     [InlineData("civil-growth-5")]
     [InlineData("civil-growth-6")]
+    [InlineData("civil-growth-7")]
+    [InlineData("civil-growth-8")]
+    [InlineData("civil-growth-9")]
     public async Task PreviousCivilCheckpointIsConvertedOnLoadKeepingProgress(string rules)
     {
         var scenario = CivilGrowthScenario.Create();
@@ -76,9 +78,9 @@ public sealed class WarehouseTests
         Assert.Equal(CivilGrowthScenario.RulesVersion, result.View.RulesVersion);
         Assert.True(result.View.IsPaused);
         foreach (var id in CivilGrowthScenario.Changes.SkipWhile(item => item.From != rules).SelectMany(item => item.AddedBuildings))
-            Assert.Equal(0, result.View.Buildings.Single(item => item.Id == id).Count);
+            Assert.Equal(id == "town-hall" ? 1 : 0, result.View.Buildings.Single(item => item.Id == id).Count);
         Assert.Equal(1000m, Resource(result.View, "flour").Capacity);
-        Assert.Equal(100m, Resource(result.View, "bread").Capacity);
+        Assert.Equal(1020m, Resource(result.View, "bread").Capacity);
         Assert.Equal(0m, Resource(result.View, "bread").Quantity);
         Assert.Equal(59, result.View.PopulationState.ProgressSeconds);
         Assert.Equal(current.ElapsedTicks, result.View.ElapsedTicks);
@@ -98,15 +100,24 @@ public sealed class WarehouseTests
         var runtime = new GameRuntime(scenario);
         Assert.True(new ConstructBuildingsHandler(runtime).Handle(new("small-house", 1)).Succeeded);
 
-        var unknown = await new LoadGameHandler(runtime, new SnapshotStore(current with { RulesVersion = "civil-growth-999" })).HandleAsync();
-        Assert.Equal(GameSaveError.IncompatibleRules, unknown.Error);
+        Assert.Equal("civil-growth-13", CivilGrowthScenario.RulesVersion);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, current.RulesVersion);
+        var future = current with { RulesVersion = "civil-growth-14" };
+        Assert.NotEqual(CivilGrowthScenario.RulesVersion, future.RulesVersion);
+        var unknown = await new LoadGameHandler(runtime, new SnapshotStore(future)).HandleAsync();
+        Assert.True(unknown.Error == GameSaveError.IncompatibleRules,
+            $"Unknown rules {future.RulesVersion} unexpectedly restored as {unknown.View.RulesVersion}; result: {unknown.Error}.");
+        Assert.Equal(CivilGrowthScenario.RulesVersion, unknown.View.RulesVersion);
+        var unsupported = await new LoadGameHandler(runtime,
+            new SnapshotStore(current with { RulesVersion = "civil-growth-999" })).HandleAsync();
+        Assert.Equal(GameSaveError.IncompatibleRules, unsupported.Error);
         var otherScenario = await new LoadGameHandler(runtime,
             new SnapshotStore(Older(current, "civil-growth-1") with { ScenarioId = "economy-foundation" })).HandleAsync();
         Assert.Equal(GameSaveError.IncompatibleRules, otherScenario.Error);
         foreach (var rules in new[] { "civil-growth-1", "civil-growth-2", "civil-growth-3" })
         {
             var alreadyHasNewBuildings = await new LoadGameHandler(runtime,
-                new SnapshotStore(current with { RulesVersion = rules })).HandleAsync();
+                new SnapshotStore(current with { RulesVersion = rules, Military = null })).HandleAsync();
             Assert.Equal(GameSaveError.InvalidData, alreadyHasNewBuildings.Error);
             Assert.Null(alreadyHasNewBuildings.UpgradedFromRules);
             Assert.Equal(2, alreadyHasNewBuildings.View.Buildings.Single(item => item.Id == "small-house").Count);
@@ -121,7 +132,8 @@ public sealed class WarehouseTests
     internal static GameSnapshot Older(GameSnapshot current, string rules)
     {
         var later = CivilGrowthScenario.Changes.SkipWhile(item => item.From != rules).SelectMany(item => item.AddedBuildings).ToHashSet();
-        return current with { RulesVersion = rules, Buildings = [.. current.Buildings.Where(item => !later.Contains(item.BuildingId))] };
+        return current with { RulesVersion = rules, Military = null,
+            Buildings = [.. current.Buildings.Where(item => !later.Contains(item.BuildingId))] };
     }
 
     private static ReadModels.ResourceView Resource(ReadModels.GameView view, string id) => view.Resources.Single(item => item.Id == id);

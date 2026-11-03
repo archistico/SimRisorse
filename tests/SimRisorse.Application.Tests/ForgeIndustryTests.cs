@@ -10,207 +10,143 @@ namespace SimRisorse.Application.Tests;
 public sealed class ForgeIndustryTests
 {
     [Fact]
-    public void CivilianTimelinePaysForTheForgeAndProducesSwordsWithoutChangingOtherPrices()
+    public void ForgeHasApprovedCostRecipePriorityAndPrerequisiteWithoutChangingV7()
     {
-        var initial = GameSession.Create(CivilGrowthScenario.Create());
-        Assert.Equal(GameError.MissingPrerequisite, initial.Construct("forge", 1).Error);
-        var game = IronIndustryTests.StartIndustry();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(300)).Succeeded);
-        var before = game.Resources;
-        BuildAndStaff(game, "forge");
-        Assert.Equal(before["planks"].Units - 240m, game.Resources["planks"].Units);
-        Assert.Equal(before["stone"].Units - 180m, game.Resources["stone"].Units);
-        Assert.Equal(0m, game.Resources["swords"].Units);
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(2m, game.Resources["swords"].Units);
-        Assert.Equal(1401 * TimeSpan.TicksPerSecond, game.ElapsedTicks);
-        Assert.True(game.Advance(TimeSpan.FromHours(8)).Succeeded);
-        Assert.Equal(1000m, game.Resources["swords"].Units);
-    }
+        var current = CivilGrowthScenario.CreateForgeForBenchmarks();
+        var forge = current.Catalog.BuildingsById["forge"];
+        Assert.Equal("civil-growth-8", current.Catalog.RulesVersion);
+        Assert.Equal(18, current.Catalog.Buildings.Length);
+        Assert.Equal(15, current.Catalog.Resources.Length);
+        Assert.Equal(240m, forge.Cost["planks"].Units);
+        Assert.Equal(180m, forge.Cost["stone"].Units);
+        Assert.Equal(1, forge.WorkplacesPerBuilding);
+        Assert.Equal(100, forge.AllocationPriority);
+        Assert.Equal(new[] { "iron-smelter" }, forge.Prerequisites);
+        Assert.Equal(1m, forge.Recipe!.Input["iron"].Units);
+        Assert.Equal(1m, forge.Recipe.Input["coal"].Units);
+        Assert.Equal(2m, forge.Recipe.Output["swords"].Units);
+        Assert.Equal(1000m, current.Capacity["swords"].Units);
+        Assert.Equal(500m, current.Catalog.BuildingsById["warehouse"].StoragePerBuilding!["swords"].Units);
+        Assert.Equal(GameError.MissingPrerequisite, GameSession.Create(current).Construct("forge", 1).Error);
 
-    [Fact]
-    public void FreshOreAndIronCannotBeUsedInTheSameSecondTheyAreProduced()
-    {
-        var game = Prepared(ResourceBundle.Empty);
-        foreach (var id in new[] { "iron-mine", "coal-mine", "iron-smelter", "forge" })
-            Assert.True(game.AssignWorkers(id, 1).Succeeded);
-        game.Resume();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(0m, game.Resources["iron"].Units);
-        Assert.Equal(0m, game.Resources["swords"].Units);
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(1m, game.Resources["iron"].Units);
-        Assert.Equal(0m, game.Resources["swords"].Units);
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(1m, game.Resources["iron"].Units);
-        Assert.Equal(3m, game.Resources["coal"].Units);
-        Assert.Equal(2m, game.Resources["swords"].Units);
-    }
-
-    [Theory]
-    [InlineData(999, 999, 10)]
-    [InlineData(998, 1000, 9)]
-    public void SwordBatchesAreIndivisibleAndABlockedForgeDoesNotConsumeInputs(int start, int end, int inputLeft)
-    {
-        var game = Prepared(ResourceBundle.Create(("swords", start), ("iron", 10m), ("coal", 10m)));
-        Assert.True(game.AssignWorkers("forge", 1).Succeeded);
-        game.Resume();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(end, game.Resources["swords"].Units);
-        Assert.Equal(inputLeft, game.Resources["iron"].Units);
-        Assert.Equal(inputLeft, game.Resources["coal"].Units);
-        Assert.True(game.ForecastProduction().Single(item => item.BuildingId == "forge")
-            .BlockReason.HasFlag(ProductionBlockReason.StorageFull));
-        Assert.True(game.Construct("warehouse", 1).Succeeded);
-        Assert.Equal(1500m, game.StorageCapacity["swords"].Units);
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(end + 2, game.Resources["swords"].Units);
-    }
-
-    [Fact]
-    public void BothSmeltersReserveScarceCoalBeforeTheForgeAndMoreCoalRestartsIt()
-    {
-        var game = Prepared(ResourceBundle.Create(("iron-ore", 10m), ("gold-ore", 10m), ("iron", 5m), ("coal", 2m)));
-        foreach (var id in new[] { "iron-smelter", "gold-smelter", "coal-mine", "forge" })
-            Assert.True(game.AssignWorkers(id, 1).Succeeded);
-        var forge = game.ForecastProduction().Single(item => item.BuildingId == "forge");
-        Assert.Equal(0, forge.RunnableWorkers);
-        Assert.Contains("coal", forge.MissingInputIds);
-        game.Resume();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(6m, game.Resources["iron"].Units);
-        Assert.Equal(1m, game.Resources["gold"].Units);
-        Assert.Equal(0m, game.Resources["swords"].Units);
-        BuildAndStaff(game, "coal-mine");
-        Assert.True(game.Advance(TimeSpan.FromSeconds(2)).Succeeded);
-        Assert.Equal(2m, game.Resources["swords"].Units);
-    }
-
-    [Theory]
-    [InlineData("iron", "coal")]
-    [InlineData("coal", "iron")]
-    public void MissingInputsAreNamedAndDoNotSpendTheOtherIngredient(string available, string missing)
-    {
-        var game = Prepared(ResourceBundle.Create((available, 10m)));
-        Assert.True(game.AssignWorkers("forge", 1).Succeeded);
-        Assert.Contains(missing, game.ForecastProduction().Single(item => item.BuildingId == "forge").MissingInputIds);
-        game.Resume();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(10m, game.Resources[available].Units);
-        Assert.Equal(0m, game.Resources["swords"].Units);
-    }
-
-    [Fact]
-    public void UnstaffedPausedAndFractionalReplaysPreserveTheSameSwordStocks()
-    {
-        var game = Prepared(ResourceBundle.Create(("iron", 10m), ("coal", 10m)));
-        game.Resume();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
-        Assert.Equal(0m, game.Resources["swords"].Units);
-        Assert.True(game.AssignWorkers("forge", 1).Succeeded);
-        var split = GameSession.Restore(game.Scenario, game.Snapshot());
-        split.Resume();
-        Assert.True(game.Advance(TimeSpan.FromSeconds(4)).Succeeded);
-        for (var second = 0; second < 4; second++)
-        {
-            Assert.True(split.Advance(TimeSpan.FromMilliseconds(250)).Succeeded);
-            Assert.True(split.Advance(TimeSpan.FromMilliseconds(750)).Succeeded);
-        }
-        Assert.Equal(8m, game.Resources["swords"].Units);
-        Assert.Equal(game.Resources, split.Resources);
-        Assert.Equal(game.ElapsedTicks, split.ElapsedTicks);
-        Assert.Equal(game.Snapshot().GrowthProgressSeconds, split.Snapshot().GrowthProgressSeconds);
-        Assert.Equal(game.Snapshot().GrowthRemainderTwentieths, split.Snapshot().GrowthRemainderTwentieths);
-        game.Pause();
-        var paused = game.Snapshot();
-        Assert.True(game.Advance(TimeSpan.FromHours(1)).Succeeded);
-        Assert.Equal(paused.ElapsedTicks, game.ElapsedTicks);
-        Assert.Equal(paused.Resources, game.Resources);
-        Assert.Equal(paused.Buildings.ToArray(), game.Snapshot().Buildings.ToArray());
-        Assert.Equal(paused.GrowthProgressSeconds, game.Snapshot().GrowthProgressSeconds);
-        Assert.Equal(paused.GrowthRemainderTwentieths, game.Snapshot().GrowthRemainderTwentieths);
-    }
-
-    [Fact]
-    public void V7BenchmarkRemainsTheGoldCatalogWithoutForgeOrSwords()
-    {
         var old = CivilGrowthScenario.CreateGoldForBenchmarks();
         Assert.Equal("civil-growth-7", old.Catalog.RulesVersion);
         Assert.Equal(17, old.Catalog.Buildings.Length);
         Assert.Equal(14, old.Catalog.Resources.Length);
         Assert.False(old.Catalog.BuildingsById.ContainsKey("forge"));
         Assert.False(old.Catalog.ResourcesById.ContainsKey("swords"));
+        var newScenario = CivilGrowthScenario.Create();
+        Assert.Equal("civil-growth-13", newScenario.Catalog.RulesVersion);
+        Assert.Equal(forge.AllocationPriority, newScenario.Catalog.BuildingsById["forge"].AllocationPriority);
+        Assert.Equal(forge.Cost["planks"], newScenario.Catalog.BuildingsById["forge"].Cost["planks"]);
     }
 
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    [InlineData(4)]
-    [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
-    [InlineData(8)]
-    public async Task EveryEarlierCivilVersionUpgradesWithNewContentAtZero(int version)
-    {
-        var old = GameSession.Create(CivilGrowthScenario.CreateForgeForBenchmarks()).Snapshot();
-        var later = CivilGrowthScenario.Changes.Skip(version - 1).SelectMany(item => item.AddedBuildings).ToHashSet();
-        old = old with
-        {
-            RulesVersion = $"civil-growth-{version}",
-            ElapsedTicks = TimeSpan.FromMilliseconds(17500).Ticks,
-            GrowthProgressSeconds = 17,
-            GrowthRemainderTwentieths = version >= 5 ? 7 : 0,
-            Resources = old.Resources + ResourceBundle.Create(("logs", 1.234m)),
-            Buildings = [.. old.Buildings.Where(item => !later.Contains(item.BuildingId))]
-        };
-        var runtime = new GameRuntime(CivilGrowthScenario.Create());
-        var loaded = await new LoadGameHandler(runtime, new SnapshotStore(old)).HandleAsync();
-        Assert.True(loaded.Succeeded);
-        Assert.Equal(CivilGrowthScenario.RulesVersion, loaded.View.RulesVersion);
-        Assert.Equal(old.ElapsedTicks, loaded.View.ElapsedTicks);
-        Assert.Equal(old.GrowthProgressSeconds, loaded.View.PopulationState.ProgressSeconds);
-        Assert.Equal(old.GrowthRemainderTwentieths, loaded.View.PopulationState.GrowthRemainderTwentieths);
-        Assert.Equal(1.234m, loaded.View.Resources.Single(item => item.Id == "logs").Quantity);
-        Assert.Equal(0m, loaded.View.Resources.Single(item => item.Id == "swords").Quantity);
-        Assert.Equal(0, loaded.View.Buildings.Single(item => item.Id == "forge").Count);
-        Assert.Equal(0m, loaded.View.Resources.Single(item => item.Id == "coins").Quantity);
-        Assert.Equal(0, loaded.View.Buildings.Single(item => item.Id == "mint").Count);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task V7CannotClaimSwordsOrForgeAndFailedLoadKeepsTheCurrentGame(bool claimsBuilding)
-    {
-        var old = GameSession.Create(CivilGrowthScenario.CreateGoldForBenchmarks()).Snapshot();
-        old = claimsBuilding ? old with { Buildings = [.. old.Buildings, new("forge", 1, 0)] }
-            : old with { Resources = old.Resources + ResourceBundle.Create(("swords", 0.001m)) };
-        var loaded = await new LoadGameHandler(new GameRuntime(CivilGrowthScenario.Create()), new SnapshotStore(old)).HandleAsync();
-        Assert.False(loaded.Succeeded);
-        Assert.Equal(120m, loaded.View.Resources.Single(item => item.Id == "planks").Quantity);
-        Assert.Equal(0m, loaded.View.Resources.Single(item => item.Id == "swords").Quantity);
-        Assert.Equal(0, loaded.View.Buildings.Single(item => item.Id == "forge").Count);
-    }
-
-    private static GameSession Prepared(ResourceBundle industrialStock)
+    [Fact]
+    public void ForgeIsPurchasedAndStaffedAndUsesMetalOnlyFromThePreviousSecond()
     {
         var scenario = CivilGrowthScenario.Create();
-        var initial = GameSession.Create(scenario).Snapshot();
-        return GameSession.Restore(scenario, initial with
+        var game = Seed(scenario, ResourceBundle.Create(("iron-ore", 10m), ("coal", 10m)),
+            ironWorkers: 1, forgeWorkers: 0, forgeCount: 0);
+        var planks = game.Resources["planks"].Units;
+        var stone = game.Resources["stone"].Units;
+        Assert.True(game.Construct("forge", 1).Succeeded);
+        Assert.Equal(planks - 240m, game.Resources["planks"].Units);
+        Assert.Equal(stone - 180m, game.Resources["stone"].Units);
+        Assert.True(game.AssignWorkers("forge", 1).Succeeded);
+        Assert.Equal(0, Forecast(game, "forge").RunnableWorkers);
+        Assert.Contains("iron", Forecast(game, "forge").MissingInputIds);
+
+        game.Resume();
+        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
+        Assert.Equal(1m, game.Resources["iron"].Units);
+        Assert.Equal(0m, game.Resources["swords"].Units);
+        Assert.Equal(1, Forecast(game, "forge").RunnableWorkers);
+        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
+        Assert.Equal(2m, game.Resources["swords"].Units);
+        Assert.Equal(1m, game.Resources["iron"].Units);
+        Assert.Equal(7m, game.Resources["coal"].Units);
+    }
+
+    [Theory]
+    [InlineData(1048, true, 1050)]
+    [InlineData(1049, false, 1049)]
+    public void ForgeProductionHonorsIndivisibleTwoSwordLots(int startingSwords, bool canProduce, int expectedSwords)
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var game = Seed(scenario, ResourceBundle.Create(("iron", 10m), ("coal", 10m), ("swords", startingSwords)),
+            ironWorkers: 0, forgeWorkers: 1);
+        var forecast = Forecast(game, "forge");
+        Assert.Equal(canProduce ? 1 : 0, forecast.RunnableWorkers);
+        Assert.Equal(!canProduce, forecast.BlockReason.HasFlag(ProductionBlockReason.StorageFull));
+        Assert.Equal(!canProduce, forecast.FullOutputIds.Contains("swords"));
+        game.Resume();
+        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
+        Assert.Equal((decimal)expectedSwords, game.Resources["swords"].Units);
+        Assert.Equal(canProduce ? 9m : 10m, game.Resources["iron"].Units);
+        if (!canProduce)
         {
-            Resources = ResourceBundle.Create(("planks", 1000m), ("stone", 1000m), ("food", 100m), ("bread", 100m)) + industrialStock,
-            Buildings = [.. initial.Buildings.Select(item => item.BuildingId is "large-house" or "bakery" or
-                "iron-mine" or "coal-mine" or "iron-smelter" or "gold-mine" or "gold-smelter" or "forge"
-                    ? item with { Count = 1 } : item)]
+            Assert.True(game.Construct("warehouse", 1).Succeeded);
+            Assert.Equal(1550m, game.StorageCapacity["swords"].Units);
+            Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
+            Assert.Equal(1051m, game.Resources["swords"].Units);
+        }
+    }
+
+    [Fact]
+    public void ScarceCoalGoesToIronThenGoldSmeltersBeforeForge()
+    {
+        var scenario = CivilGrowthScenario.Create();
+        var game = Seed(scenario, ResourceBundle.Create(("iron-ore", 10m), ("gold-ore", 10m),
+            ("iron", 10m), ("coal", 2m)), ironWorkers: 1, goldWorkers: 1, forgeWorkers: 1);
+        Assert.Equal(1, Forecast(game, "iron-smelter").RunnableWorkers);
+        Assert.Equal(1, Forecast(game, "gold-smelter").RunnableWorkers);
+        Assert.Equal(0, Forecast(game, "forge").RunnableWorkers);
+        Assert.Contains("coal", Forecast(game, "forge").MissingInputIds);
+        Assert.True(game.ReleaseWorkers("iron-smelter", 1).Succeeded);
+        Assert.Equal(1, Forecast(game, "gold-smelter").RunnableWorkers);
+        Assert.Equal(1, Forecast(game, "forge").RunnableWorkers);
+        game.Resume();
+        Assert.True(game.Advance(TimeSpan.FromSeconds(1)).Succeeded);
+        Assert.Equal(2m, game.Resources["swords"].Units);
+        Assert.Equal(1m, game.Resources["gold"].Units);
+        Assert.Equal(0m, game.Resources["coal"].Units);
+    }
+
+    [Fact]
+    public async Task AClaimOfSwordsInAnOldV7CheckpointIsNotSilentlyUpgraded()
+    {
+        var old = GameSession.Create(CivilGrowthScenario.CreateGoldForBenchmarks()).Snapshot() with
+        { Resources = ResourceBundle.Create(("swords", 1m)) };
+        var runtime = new GameRuntime(CivilGrowthScenario.Create());
+        var result = await new LoadGameHandler(runtime, new SnapshotStore(old)).HandleAsync();
+        Assert.Equal(GameSaveError.IncompatibleRules, result.Error);
+        Assert.Equal(CivilGrowthScenario.RulesVersion, result.View.RulesVersion);
+        Assert.Equal(0m, result.View.Resources.Single(item => item.Id == "swords").Quantity);
+    }
+
+    private static GameSession Seed(SimRisorse.Core.Content.GameScenario scenario, ResourceBundle industrialStocks,
+        int ironWorkers, int forgeWorkers, int goldWorkers = 0, int forgeCount = 1)
+    {
+        var original = GameSession.Create(scenario).Snapshot();
+        return GameSession.Restore(scenario, original with
+        {
+            Population = 40,
+            Resources = ResourceBundle.Create(("planks", 1000m), ("stone", 1000m),
+                ("food", 100m), ("bread", 100m)) + industrialStocks,
+            Buildings = [.. original.Buildings.Select(item => item.BuildingId switch
+            {
+                "large-house" => item with { Count = 1 },
+                "iron-mine" or "coal-mine" or "gold-mine" => item with { Count = 1 },
+                "iron-smelter" => item with { Count = 1, AssignedWorkers = ironWorkers },
+                "gold-smelter" => item with { Count = 1, AssignedWorkers = goldWorkers },
+                "forge" => item with { Count = forgeCount, AssignedWorkers = forgeWorkers },
+                _ => item
+            })]
         });
     }
 
-    private static void BuildAndStaff(GameSession game, string id)
-    {
-        Assert.True(game.Construct(id, 1).Succeeded);
-        Assert.True(game.AssignWorkers(id, 1).Succeeded);
-    }
+    private static BuildingProduction Forecast(GameSession game, string id) =>
+        game.ForecastProduction().Single(item => item.BuildingId == id);
 
     private sealed class SnapshotStore(GameSnapshot snapshot) : IGameSaveStore
     {

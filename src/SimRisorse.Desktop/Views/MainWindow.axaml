@@ -24,6 +24,7 @@
                  SelectedIndex="{Binding SelectedIndex, ElementName=Sections, Mode=TwoWay}">
           <ListBoxItem x:Name="BuildingsNavigation" Content="Edifici" />
           <ListBoxItem x:Name="ResourcesNavigation" Content="Risorse" />
+          <ListBoxItem x:Name="MilitaryNavigation" Content="Esercito" />
         </ListBox>
         <ScrollViewer Grid.Row="2" Margin="0,12,0,12" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <Border Background="#303B50" BorderBrush="#66BED0" BorderThickness="1" CornerRadius="0" Padding="10" VerticalAlignment="Top"><StackPanel Spacing="7">
@@ -112,23 +113,19 @@
                   <ScrollViewer HorizontalScrollBarVisibility="Disabled"><StackPanel Spacing="6">
                     <TextBlock Text="{Binding Selected.Name}" FontSize="21" FontWeight="SemiBold" />
                     <TextBlock x:Name="BuildingDescriptionText" Text="{Binding Selected.Description}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" LineHeight="17" />
-                    <TextBlock x:Name="ConstructionCostText" Text="{Binding ConstructionCostHeading}" Classes="label" FontSize="11" Margin="0,4,0,0" />
-                    <ItemsControl x:Name="ConstructionCostList" ItemsSource="{Binding SelectedCostLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
-                    <StackPanel Spacing="4" Margin="0,4,0,0">
+                    <TextBlock x:Name="ConstructionCostText" Text="{Binding ConstructionCostHeading}" Classes="label" FontSize="11" Margin="0,4,0,0" IsVisible="{Binding Selected.IsBuildable}" />
+                    <ItemsControl x:Name="ConstructionCostList" ItemsSource="{Binding SelectedCostLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" IsVisible="{Binding Selected.IsBuildable}" />
+                    <StackPanel Spacing="4" Margin="0,4,0,0" IsVisible="{Binding Selected.IsProducer}">
                       <TextBlock Text="{Binding Selected.OutputHeading}" Classes="label" FontSize="11" />
-                      <ItemsControl x:Name="ProductionOutputList" ItemsSource="{Binding Selected.OutputLines}" IsVisible="{Binding Selected.IsProducer}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
-                      <ItemsControl x:Name="BuildingEffectList" ItemsSource="{Binding Selected.EffectLines}" IsVisible="{Binding !Selected.IsProducer}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
+                      <ItemsControl x:Name="ProductionOutputList" ItemsSource="{Binding Selected.OutputLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
                       <StackPanel Spacing="4" IsVisible="{Binding Selected.HasInputs}">
                         <TextBlock Text="CONSUMA PER ADDETTO / S" Classes="label" FontSize="11" />
                         <ItemsControl x:Name="ProductionInputList" ItemsSource="{Binding Selected.ConsumptionLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
                       </StackPanel>
                     </StackPanel>
-                    <StackPanel x:Name="MilitaryPanel" Spacing="4" Margin="0,4,0,0" IsVisible="{Binding IsBarracksSelected}">
-                      <TextBlock Text="RECLUTAMENTO" Classes="label" FontSize="11" />
-                      <ItemsControl x:Name="MilitaryStatusList" ItemsSource="{Binding MilitaryStatusLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
-                      <TextBlock x:Name="EnlistCostHeadingText" Text="{Binding EnlistCostHeading}" Classes="label" FontSize="11" Margin="0,4,0,0" />
-                      <ItemsControl x:Name="EnlistCostList" ItemsSource="{Binding EnlistCostLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
-                      <TextBlock x:Name="MilitaryNoteText" Text="{Binding MilitaryNote}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" />
+                    <StackPanel Spacing="4" Margin="0,4,0,0">
+                      <TextBlock Text="CAPACITÀ PER EDIFICIO" Classes="label" FontSize="11" />
+                      <ItemsControl x:Name="BuildingCapacityList" ItemsSource="{Binding Selected.CapacityLines}" ItemTemplate="{StaticResource ResourceDetailTemplate}" />
                     </StackPanel>
                   </StackPanel></ScrollViewer>
                   <StackPanel Grid.Row="1" Spacing="6">
@@ -136,10 +133,9 @@
                       <TextBlock x:Name="ProductionDiagnosisText" Text="{Binding Selected.Diagnosis}" TextWrapping="Wrap" FontSize="12" Foreground="#735A37" />
                     </Border>
                     <Border Background="#CBD7C9" Height="1" Margin="0,1" />
-                    <Grid ColumnDefinitions="*,90"><TextBlock Text="Quantità per ordine" VerticalAlignment="Center" Classes="label" /><ComboBox x:Name="BatchSelector" Grid.Column="1" ItemsSource="{Binding BatchSizes}" SelectedItem="{Binding BatchSize, Mode=TwoWay}" HorizontalAlignment="Stretch" /></Grid>
-                    <Button x:Name="BuildButton" Classes="primary build" Content="{Binding BuildLabel}" Command="{Binding ConstructCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
-                    <Grid x:Name="WorkerButtons" ColumnDefinitions="*,*" ColumnSpacing="7" IsVisible="{Binding !IsBarracksSelected}"><Button x:Name="ReleaseButton" Content="− Lavoratori" Command="{Binding ReleaseCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /><Button x:Name="AssignButton" Grid.Column="1" Content="+ Lavoratori" Command="{Binding AssignCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /></Grid>
-                    <Grid x:Name="RecruitButtons" ColumnDefinitions="*,*" ColumnSpacing="7" IsVisible="{Binding IsBarracksSelected}"><Button x:Name="CancelRecruitsButton" Content="{Binding CancelRecruitsLabel}" Command="{Binding CancelRecruitsCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /><Button x:Name="EnlistButton" Grid.Column="1" Content="{Binding EnlistLabel}" Command="{Binding EnlistCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /></Grid>
+                    <Grid ColumnDefinitions="*,90" IsVisible="{Binding Selected.IsBuildable}"><TextBlock Text="Quantità per ordine" VerticalAlignment="Center" Classes="label" /><ComboBox x:Name="BatchSelector" Grid.Column="1" ItemsSource="{Binding BatchSizes}" SelectedItem="{Binding BatchSize, Mode=TwoWay}" HorizontalAlignment="Stretch" /></Grid>
+                    <Button x:Name="BuildButton" Classes="primary build" Content="{Binding BuildLabel}" Command="{Binding ConstructCommand}" IsVisible="{Binding Selected.IsBuildable}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="7" IsVisible="{Binding Selected.IsBuildable}"><Button x:Name="ReleaseButton" Content="− Lavoratori" Command="{Binding ReleaseCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /><Button x:Name="AssignButton" Grid.Column="1" Content="+ Lavoratori" Command="{Binding AssignCommand}" Padding="7,7" FontSize="12" HorizontalAlignment="Stretch" /></Grid>
                     <TextBlock Text="{Binding Selected.Activity}" TextWrapping="Wrap" Classes="label" />
                   </StackPanel>
                 </Grid>
@@ -151,17 +147,76 @@
             <TextBlock Text="Scorte e flussi del prossimo secondo. In pausa le quantità restano ferme." FontSize="12" TextWrapping="Wrap" Foreground="#66766E" />
             <Border Grid.Row="1" Background="#FFFDF4" BorderBrush="#303B50" BorderThickness="1" CornerRadius="0" Padding="12">
               <Grid RowDefinitions="Auto,*" RowSpacing="13">
-                <Grid x:Name="ResourceTableHeader" ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,0,20,0"><TextBlock Text="Risorsa" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Quantità" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="Capacità" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="Produzione /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="Consumo /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="Saldo /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="6" Text="Si riempie tra" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /></Grid>
+                <Grid x:Name="ResourceTableHeader" ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,0,20,0"><TextBlock Text="Risorsa" FontWeight="SemiBold" /><TextBlock Grid.Column="1" Text="Quantità" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="Capacità" ToolTip.Tip="Passa il puntatore sulla capacità per vedere quantità, spazio libero e calcolo della capienza." FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="Produzione /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="Consumo /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="Saldo /s" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="6" Text="Si riempie tra" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" TextAlignment="Right" /></Grid>
                 <ListBox x:Name="ResourcesTable" Classes="gutter-list" Grid.Row="1" ItemsSource="{Binding Resources}" SelectedItem="{Binding SelectedResource, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate><DataTemplate x:DataType="vm:ResourceRow">
                       <Grid ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
+                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" ToolTip.Tip="{Binding CapacityBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
                       </Grid>
                     </DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
               </Grid>
             </Border>
-            <TextBlock Grid.Row="2" Text="Il saldo considera lavoratori, abitanti, materiali, spazio e priorità. Il riempimento è una stima a saldo costante; — indica saldo nullo o negativo." Classes="label" TextWrapping="Wrap" />
+            <StackPanel Grid.Row="2" Spacing="5">
+              <TextBlock Text="Il saldo considera lavoratori, abitanti, materiali, spazio e priorità. Il riempimento è una stima a saldo costante; — indica saldo nullo o negativo." Classes="label" TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+        </TabItem>
+        <TabItem x:Name="MilitaryTab" Header="Esercito">
+          <Grid RowDefinitions="Auto,*,Auto" RowSpacing="9">
+            <TextBlock Text="Difendi la colonia: le reclute restano abitanti, ma non sono disponibili per lavorare." FontSize="12" Foreground="#66766E" TextWrapping="Wrap" />
+            <ScrollViewer x:Name="MilitaryScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <StackPanel Spacing="9" Margin="0,0,12,0">
+                <Border Background="#FFFDF4" BorderBrush="#303B50" BorderThickness="1" Padding="13,11">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="ABITANTI E LAVORO" Classes="label" FontSize="11" />
+                    <TextBlock x:Name="MilitaryRosterText" Text="{Binding MilitaryRoster}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="Soldati e reclute occupano gli alloggi e consumano Cibo e, dove richiesto, Pane. Puoi assegnare ai lavori solo gli abitanti liberi." TextWrapping="Wrap" FontSize="12" Foreground="#53685C" />
+                  </StackPanel>
+                </Border>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="9">
+                  <Border Background="#DFE7E3" BorderBrush="#303B50" BorderThickness="1" Padding="12,10">
+                    <StackPanel Spacing="5">
+                      <TextBlock Text="CASERME E POSTI" Classes="label" FontSize="11" />
+                      <StackPanel Orientation="Horizontal" Spacing="7"><pixel:PixelGlyph Key="barracks" Width="21" Height="21" /><TextBlock Text="{Binding MilitaryBarracks}" FontSize="19" FontWeight="SemiBold" /></StackPanel>
+                      <TextBlock Text="{Binding MilitaryCapacityStatus}" TextWrapping="Wrap" FontSize="12" />
+                      <TextBlock Text="{Binding MilitarySeatsExplanation}" TextWrapping="Wrap" FontSize="11" Foreground="#53685C" />
+                    </StackPanel>
+                  </Border>
+                  <Border Grid.Column="1" Background="#F1E6C9" BorderBrush="#303B50" BorderThickness="1" Padding="12,10">
+                    <StackPanel Spacing="5">
+                      <TextBlock Text="ARMAMENTO" Classes="label" FontSize="11" />
+                      <StackPanel Orientation="Horizontal" Spacing="7"><pixel:PixelGlyph Key="swords" Width="21" Height="21" /><TextBlock Text="{Binding MilitaryWeaponsStatus}" FontWeight="SemiBold" TextWrapping="Wrap" FontSize="12" /></StackPanel>
+                      <TextBlock Text="{Binding MilitaryArmamentExplanation}" TextWrapping="Wrap" FontSize="11" Foreground="#625A3D" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
+                <Border Background="#FFFDF4" BorderBrush="#303B50" BorderThickness="1" Padding="13,10">
+                  <StackPanel Spacing="7">
+                    <TextBlock Text="{Binding MilitaryTrainingHeading}" Classes="label" FontSize="11" />
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                      <StackPanel Spacing="3"><TextBlock Text="IN ATTESA" Classes="label" /><TextBlock x:Name="MilitaryWaitingCount" Text="{Binding WaitingRecruits}" FontSize="22" FontWeight="SemiBold" /></StackPanel>
+                      <StackPanel Grid.Column="1" Spacing="3"><TextBlock Text="IN FORMAZIONE" Classes="label" /><TextBlock x:Name="MilitaryTrainingCount" Text="{Binding TrainingRecruits}" FontSize="22" FontWeight="SemiBold" /></StackPanel>
+                      <StackPanel Grid.Column="2" Spacing="3"><TextBlock Text="SOLDATI PRONTI" Classes="label" /><TextBlock x:Name="MilitarySoldiersCount" Text="{Binding AvailableSoldiers}" FontSize="22" FontWeight="SemiBold" /></StackPanel>
+                    </Grid>
+                    <ProgressBar x:Name="MilitaryProgressBar" Value="{Binding MilitaryTrainingPercent}" Minimum="0" Maximum="100" Height="7" MinWidth="0" Foreground="#A67C38" />
+                    <TextBlock x:Name="MilitaryTrainingText" Text="{Binding MilitaryTrainingStatus}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" />
+                    <TextBlock Text="{Binding MilitaryQueueExplanation}" TextWrapping="Wrap" FontSize="11" Foreground="#66766E" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </ScrollViewer>
+            <Border Grid.Row="2" Background="#DFE7E3" BorderBrush="#303B50" BorderThickness="1" Padding="10,9">
+              <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,105" ColumnSpacing="9"><TextBlock Text="Numero di persone per ordine" VerticalAlignment="Center" Classes="label" /><ComboBox x:Name="MilitaryQuantitySelector" Grid.Column="1" ItemsSource="{Binding BatchSizes}" SelectedItem="{Binding MilitaryQuantity, Mode=TwoWay}" HorizontalAlignment="Stretch" /></Grid>
+                <TextBlock x:Name="MilitaryLimitsNote" Text="{Binding MilitaryLimitsNote}" TextWrapping="Wrap" FontSize="11" Foreground="#53685C" />
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                  <StackPanel Spacing="5"><Button x:Name="EnlistButton" Classes="primary" Content="{Binding EnlistLabel}" Command="{Binding EnlistCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" /><TextBlock x:Name="MilitaryRecruitmentHintText" Text="{Binding MilitaryRecruitmentHint}" TextWrapping="Wrap" FontSize="11" Foreground="#53685C" /></StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="5"><Button x:Name="CancelQueueButton" Content="{Binding CancelRecruitsLabel}" Command="{Binding CancelRecruitsCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" /><TextBlock x:Name="MilitaryCancelHintText" Text="{Binding MilitaryCancelHint}" TextWrapping="Wrap" FontSize="11" Foreground="#53685C" /></StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="5"><Button x:Name="DischargeButton" Content="{Binding DischargeLabel}" Command="{Binding DischargeCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" /><TextBlock x:Name="MilitaryDischargeHintText" Text="{Binding MilitaryDischargeHint}" TextWrapping="Wrap" FontSize="11" Foreground="#53685C" /></StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
           </Grid>
         </TabItem>
       </TabControl>
@@ -171,7 +226,6 @@
           <TextBlock Text="Avviare una nuova partita? La sessione attuale sarà sostituita." TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" />
           <Button x:Name="ConfirmNewGameButton" Grid.Column="1" Content="Avvia nuova" Command="{Binding ConfirmNewGameCommand}" /><Button Grid.Column="2" Content="Annulla" Command="{Binding CancelNewGameCommand}" />
         </Grid></Border>
-        <Button x:Name="DiscardCloseButton" IsVisible="{Binding IsCloseFailureVisible}" Content="Esci senza salvare" Click="DiscardCloseClick" HorizontalAlignment="Right" />
         <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="9">
           <TextBlock Text="{Binding BusyState}" Classes="label" VerticalAlignment="Center" TextWrapping="Wrap" />
           <Button x:Name="NewGameButton" Grid.Column="1" Content="Nuova partita" Command="{Binding NewGameCommand}" />

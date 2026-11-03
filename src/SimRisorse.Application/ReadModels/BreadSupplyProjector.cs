@@ -1,3 +1,4 @@
+using SimRisorse.Core.Content;
 using SimRisorse.Core.Economy;
 using SimRisorse.Core.Population;
 using SimRisorse.Core.Sessions;
@@ -13,17 +14,24 @@ internal static class BreadSupplyProjector
 {
     public static BreadSupplyView Project(GameSession session, PopulationForecast population,
         IReadOnlyList<ResourceView> resources, IReadOnlyList<BuildingView> buildings)
+        => Project(session.Scenario, session.Population, population, resources, buildings);
+
+    // The exact same diagnosis is used by the opt-in v14 campaign. No v13
+    // GameSession is instantiated for the experimental preview.
+    public static BreadSupplyView Project(GameScenario scenario, int currentPopulation,
+        PopulationForecast population, IReadOnlyList<ResourceView> resources,
+        IReadOnlyList<BuildingView> buildings)
     {
-        if (session.Scenario.PopulationRules?.AdvancedHousing is not { } rules ||
+        if (scenario.PopulationRules?.AdvancedHousing is not { } rules ||
             population.BreadResourceId is not { } breadId)
             return new(BreadSupplyState.Hidden, null);
 
         var bread = resources.Single(item => item.Id == breadId);
         var firstAdvancedArrival = population.AdvancedResidents == 0 &&
-            session.Population < population.HousingCapacity &&
-            (long)session.Population + 1 > population.BasicHousingCapacity;
+            currentPopulation < population.HousingCapacity &&
+            (long)currentPopulation + 1 > population.BasicHousingCapacity;
         var firstArrivalDemand = firstAdvancedArrival
-            ? rules.BreadPerPersonPerSecond.Units * ((long)session.Population + 1 - population.BasicHousingCapacity)
+            ? rules.BreadPerPersonPerSecond.Units * ((long)currentPopulation + 1 - population.BasicHousingCapacity)
             : 0m;
         var stockRequiredForFirstArrival = firstAdvancedArrival && bread.Quantity < firstArrivalDemand;
 

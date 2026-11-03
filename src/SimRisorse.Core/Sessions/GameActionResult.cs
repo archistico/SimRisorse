@@ -5,7 +5,8 @@ public enum GameError
     None, InvalidQuantity, UnknownBuilding, MissingPrerequisite, InsufficientResources,
     InsufficientWorkplaces, InsufficientPopulation, InsufficientAssignedWorkers,
     NumericLimit, InvalidElapsedTime, AdvanceLimitExceeded,
-    MilitaryUnavailable, InsufficientRecruits, InsufficientStorage
+    MissingBarracks, InsufficientSwords, InsufficientSoldiers, InsufficientQueuedRecruits, InsufficientStorage,
+    FixedBuilding, DischargeUnavailable
 }
 
 public readonly record struct GameActionResult(GameError Error)

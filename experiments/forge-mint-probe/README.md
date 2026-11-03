@@ -1,10 +1,10 @@
 # Prova isolata M5.2 — Forgia, Zecca e Carbone
 
-Preparata il **2026-10-27**, **eseguita il 2026-11-02**. **Esperimento isolato**, separato dal catalogo del gioco. Il contratto A è stato approvato il 28/10; B resta un confronto sperimentale. Forgia è ora nel gioco v8, Zecca resta futura. Il [dossier M5.2](../../docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md) conserva le scelte e i limiti delle misure.
+Preparata il **2026-10-27**, aggiornata il 28/10. **Solo sperimentazione, non il catalogo corrente del gioco.** Il contratto A è stato approvato e la Forgia/Spade è ora integrata in v38; questo esperimento mantiene lo scenario ipotetico completo Forgia+Zecca con prezzi **A/B** per consentire un confronto separato. Il [dossier M5.2](../../docs/design/M5_2_FORGE_MINT_PREFEASIBILITY.md) distingue decisioni e risultati teorici.
 
 ## Che cosa misura
 
-Il progetto legge il catalogo **storico** `civil-growth-7` tramite `CreateGoldForBenchmarks()` e crea in memoria lo scenario `forge-mint-probe` con Forgia/Zecca, Spade/Monete per i confronti A/B. Questo mantiene riproducibile l’esperimento anche dopo l’introduzione di Forgia nel gioco v8. Non apre né migra salvataggi personali; usa i normali comandi di `GameSession`.
+Il progetto legge il catalogo storico congelato di `civil-growth-7` con `CreateGoldForBenchmarks()`, mentre il gioco attuale è `civil-growth-8`. Crea **in memoria** un diverso scenario denominato `forge-mint-probe` con Forgia, Zecca, Spade e Monete ipotetiche. Non registra versioni civili, non modifica Core/Application/Desktop e non apre né migra salvataggi personali. Usa i normali `GameSession.Construct`, `AssignWorkers`, `ReleaseWorkers`, `ForecastEconomy` e `Advance`.
 
 Tre configurazioni vengono ripetute per prezzi **A** e **B** (sei profili):
 
@@ -46,10 +46,10 @@ Ipotesi sintetiche: **40 abitanti e 40 posti**, 1.000 unità di ciascun minerale
 dotnet run --project experiments/forge-mint-probe/SimRisorse.ForgeMintProbe.csproj -c Release
 ```
 
-Output: un JSON con i sei profili nella proprietà `Profiles` e sei verifiche nella proprietà `Guards`, stato `ISOLATED_EXPERIMENT` e indicatori dei tempi, delle scorte e dei costi. Il comando è separato dalla validazione ordinaria, che continua a misurare esclusivamente regole già presenti nel gioco.
+Output: un JSON con i sei profili nella proprietà `Profiles` e sei verifiche nella proprietà `Guards`, stato `UNAPPROVED_EXPERIMENT` e indicatori dei tempi, delle scorte e dei costi. Il comando è separato dalla validazione ordinaria, che continua a misurare esclusivamente regole già presenti nel gioco.
 
-**Verificato il 02/11:** comando terminato con codice 0; sei profili A/B e sei guardie completati, ogni caso confrontato a passi interi/frazionari con snapshot uguali. Confermati **241 s a fasi / 122 s paralleli** per 240 Spade +360 Monete. Output `.local-cache/m4/forge-mint-probe.log`. Sono misure su colonia sintetica con minerali precaricati e acquisti finanziati, non tempi dalla nuova partita né chiusura di M5.2c.
+**Stato della verifica:** questo progetto è stato preparato e sottoposto a controlli statici, ma **non compilato né eseguito in .NET** nell'ambiente di preparazione. Gli oracoli numerici sono stati confrontati anche con un modello aritmetico indipendente; non sono risultati ufficiali del gioco.
 
 ## Dopo la conferma delle scelte
 
-Forgia/Spade sono ora verificate nel gioco v8. Il prossimo passo è Zecca/Monete in v9 secondo il contratto già approvato; poi M5.2c confronterà le filiere complete e una cronologia dalla nuova partita. L’esperimento non viene aggiunto al gate ordinario.
+Se i profili risultano corretti, il dossier potrà aiutare a decidere costi e priorità di M5.2. Prima di implementare Forgia/Zecca nel catalogo reale, occorrerà approvare ricette e finalità delle risorse, verificare M5.1c su Windows e predisporre la successiva conversione S1 senza rinominare silenziosamente le vecchie regole.

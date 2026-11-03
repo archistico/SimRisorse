@@ -1,70 +1,58 @@
-# Documentazione di SimRisorse
+# Documentazione SimRisorse — indice corrente G1-D26
 
-Aggiornata il **2026-11-03**. **M5.3a/b implementata, da verificare su Windows**: `civil-growth-10`, 20 edifici/16 risorse, Caserma e reclutamento per posti secondo il contratto scelto il 03/11; 308 test attesi, [rapporto](validation/M5_3A_BARRACKS.md). Ultimo gate verificato: **M5.2c, 260/260 test**, [report](validation/M5_2C_FORGE_MINT.md). Il [README principale](../README.md) presenta il gioco e l’avvio.
+**AGGIORNAMENTO G1-D28 / RC12 (03/11/2026):** RC11 dichiarata verde dall'utente (**466 test attesi**, numero esatto non comunicato). RC12: ricerca a **due decimali**, pulsante «Acquista ricerca» disabilitato e grigio se saldo o prerequisiti insufficienti, verde con hover ocra solo quando acquistabile. Controllo prezzi/saldi sul valore **non arrotondato** in millipunti. **468 test attesi, non eseguiti** in questo ambiente privo di SDK .NET 10. GUI v13, core e SQLite invariati; audit visivo P0 ancora aperto. [Report RC12](design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano](validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
 
-## Documenti correnti
 
-| Documento | Quando leggerlo |
-| --- | --- |
-| [Handoff](HANDOFF.md) | Riprendere il lavoro: stato verificato, scelte ricevute e prossimo incremento |
-| [Roadmap](ROADMAP.md) | Consultare milestone, dipendenze e criteri di completamento |
-| [Game design](GAME_DESIGN.md) | Distinguere regole confermate e proposte |
-| [Architettura](ARCHITECTURE.md) | Comprendere confini e dipendenze del codice |
-| [Registro ADR](adr/README.md) | Consultare le decisioni tecniche e le motivazioni |
-| [Sviluppo](DEVELOPMENT.md) | Eseguire build, test, simulazioni e benchmark |
-| [Salvataggi](SAVE_FORMAT.md) | Gestire formato, conversioni, backup e recupero |
-| [Interfaccia retro](PIXEL_ART_UI.md) | Consultare layout, font, icone e stati dei controlli |
-| [Screenshot del progetto](screenshots/README.md) | Conoscere provenienza e aggiornamento dell'immagine nel README |
+**AGGIORNAMENTO G1-D26 / RC10 (03/11/2026):** la compilazione Windows della RC9 si è interrotta con **CS0246** in `tests/SimRisorse.Application.Tests/V14SchoolSuppliesTests.cs` (riga 15): `GameScenario` è definito in `SimRisorse.Core.Content`, ma mancava il relativo `using`. **RC10 aggiunge esclusivamente tale import nel codice dei test.** Tutti gli altri progetti sono stati compilati nel log dell’utente; la suite xUnit RC9 non è partita. **Ultima suite verde: RC8, 456/456 test confermati. RC10: 464 test attesi, non ancora eseguiti; audit GUI P0 ancora aperto.** [Diagnosi RC10](design/G1_D26_RC10_FIX_IMPORT_GAMESCENARIO.md) · [Piano RC10](validation/G1_D26_RC10_TEST_PLAN.md).
 
-Le pagine operative descrivono il presente. Le misure dei singoli gate nei rapporti seguenti conservano data, conteggi e limiti dell'esecuzione originale.
 
-## Decisioni di campagna e contenuti futuri
+**AGGIORNAMENTO G1-D25 / RC9 (03/11/2026):** **RC8 456/456 test superati, comunicato dall'utente.** RC9 rimuove «Esci senza salvare» in entrambe le UI; la tab Scuola segue l'Esercito con coda, formazione/progresso, ricercatori; introduce la risorsa **Matite** solo nella v14 (1 Legno lavorato + 1 Carbone → 4 Matite, fabbricazione manuale, 2 Matite + 10 Cibo per studente), persistenza v3 retrocompatibile e rimborsi non fittizi. **464 test attesi, NON eseguiti**; confronto visivo ancora aperto. [Rapporto RC9](design/G1_D25_E3B4_RC9_SCUOLA_MATITE.md) · [Piano RC9](validation/G1_D25_RC9_TEST_PLAN.md) · [ADR 0035](adr/0035-scuola-formazione-matite-v14.md).
 
-| Documento | Stato e contenuto |
-| --- | --- |
-| [Prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md) | Catalogo scelto di 22 tipi, vittoria e ruolo della conquista; tre tipi ancora futuri |
-| [Scheda D0](design/D0_DECISION_BOARD.md) | Scelte già ricevute e contratti ancora da definire |
-| [Dossier preparatorio D0](design/PRE_M5_DECISION_GATE.md) | Inventario dei 43 riferimenti e ragionamento sulle alternative |
-| [M5.1 Industria](design/M5_1_INDUSTRY_PREFEASIBILITY.md) | Studio iniziale; Ferro e Oro implementati, benchmark scala/contesa verificato |
-| [M5.2 Forgia e Zecca](design/M5_2_FORGE_MINT_PREFEASIBILITY.md) | **Contratto A approvato il 28/10**, Forgia/Zecca e confronto M5.2c verificati; parametri militari ancora da scegliere; confronti A/B storici, test F1–F10 e salvataggi |
-| [M5.3 Esercito](design/M5_3_ARMY_PREFEASIBILITY.md) | **Contratto scelto il 03/11** (posti per Caserma, 5 Spade, 30 s, residenti, annullamento); implementato in v41, da verificare |
-| [M5.4 Navigazione](design/M5_4_NAVAL_PREFEASIBILITY.md) | Ipotesi su Cantiere, navi, trasporti e primo viaggio |
-| [Esperimento industriale A/B](../experiments/industry-probe/README.md) | Prova separata su colonia sintetica v5, senza cambiare i parametri del gioco |
-| [Esperimento M5.2 Forgia/Zecca](../experiments/forge-mint-probe/README.md) | Sei profili A/B e sei controlli F8/F9 su capienza/priorità, **eseguiti separatamente il 02/11**, 241/122 s misurati nel checkpoint sintetico |
 
-## Scenari e modelli economici
+**Fonte dello stato attuale:** **v60-E3b4-RC10 / G1-D26 candidata**, **464 test attesi e non eseguiti**; RC9 non compilava per un namespace mancante nel test. RC8 è stata dichiarata **456/456 verde** dall'utente il 3 novembre 2026. RC9 introduce Scuola con progressi, Matite e rimozione del comando «Esci senza salvare». Parità grafica generale v13/v14 ancora aperta.
 
-- [Economy Foundation](scenarios/ECONOMY_FOUNDATION.md): ciclo economico di riferimento del Core.
-- [Crescita civile](scenarios/CIVIL_GROWTH.md): abitazioni, crescita, Cibo e Pane; [bozza originaria](scenarios/CIVIL_GROWTH_DRAFT.md).
-- [Case grandi e Pane](scenarios/ADVANCED_HOUSING_PROPOSAL.md): proposta storica che precede l'implementazione.
-- [Confronto abitazioni](scenarios/HOUSING_BENCHMARK.md) e [audit degli incentivi](scenarios/HOUSING_INCENTIVE_AUDIT.md).
-- [Scala della filiera Pane](scenarios/BREAD_SCALE_BENCHMARK.md), [alta densità](scenarios/BREAD_HIGH_DENSITY_BENCHMARK.md) e [capacità nominale](scenarios/BREAD_CHAIN_CAPACITY.md).
-- [Carne](scenarios/MEAT_DESIGN_REVIEW.md): fuori dalla prima campagna.
-- [Demolizione](scenarios/DEMOLITION_M4_REVIEW.md): studio conservato; implementazione rinviata e rimborso non scelto.
-- [Prova economica M1](scenarios/ECONOMY_PROBE.md): scenario dell'esperimento iniziale.
+## Per iniziare
 
-## Verifiche
+- [Ripresa rapida](START_HERE.md)
+- [Handoff tecnico completo per una nuova chat](HANDOFF.md)
+- [Messaggio di avvio da riutilizzare in una nuova chat](NEW_CHAT_HANDOFF.md)
+- [Stato corrente e incertezze](CURRENT_STATE.md)
+- [Roadmap dettagliata con priorità e gate](ROADMAP.md)
+- [Registro delle decisioni confermate/candidate](AUTHORITY_REGISTRY.md)
+- [Changelog consolidato](../CHANGELOG.md)
 
-| Rapporto | Evidenza |
-| --- | --- |
-| [M5.3a/b Caserma](validation/M5_3A_BARRACKS.md) | **Da verificare:** 308 test attesi, cronologia `military-8-hours`, conversione v9→v10, render Caserma |
-| [M5.2c Filiere](validation/M5_2C_FORGE_MINT.md) | **260/260 test**, nove profili, quattro guardie, replay e percorso integrato |
-| [M5.2b Zecca](validation/M5_2B_MINT.md) | **258/258 test**, Monete, lotti interi, conversione v8→v9, render e smoke Windows |
-| [M5.2a Forgia](validation/M5_2A_FORGE.md) | **235/235 test**, primo lotto, conversione v7→v8, render e smoke Windows |
-| [Interfaccia storica](validation/DESKTOP_UI.md) | Gate da **206 test**, layout, icone, font e hover ocra |
-| [M5.1c Carbone/scala](validation/M5_1C_INDUSTRY_SCALE.md) | Cinque profili verificati con replay interi/frazionari il 02/11 |
-| [M5.1b Oro](validation/M5_1B_GOLD.md) | Gate di integrazione da 204 test, conversione v6→v7, priorità del Carbone e primo Oro |
-| [M5.1a Ferro](validation/M5_1A_IRON.md) | Gate da 191 test, prima industria e conversione S1 |
-| [Risultati misurati M4](validation/M4_MEASURED_RESULTS.md) | Quattro benchmark eseguiti e render ispezionati |
-| [Lettore dei benchmark](validation/M4_BENCHMARK_READER.md) | Riprodurre il rapporto dai JSON conservati |
-| [Cronologia M4](validation/M4_CIVIL_GROWTH.md) | Evoluzione e verifiche della crescita civile |
-| [M3 Desktop](validation/M3_DESKTOP.md) | Prima partita salvabile e avvio nativo |
-| [Migrazione Avalonia 12](validation/AVALONIA_12.md) | Baseline dei pacchetti e controllo delle dipendenze alla migrazione |
-| [M2 Core](validation/M2_CORE.md) | Motore autonomo e simulazioni lunghe |
-| [M1 Stack](validation/M1_STACK_PROBE.md) | Prova iniziale dello stack desktop |
+## Ultime modifiche
 
-## Riferimenti e storico
+- [RC10 correzione del compilatore CS0246](design/G1_D26_RC10_FIX_IMPORT_GAMESCENARIO.md) · [Piano RC10](validation/G1_D26_RC10_TEST_PLAN.md)
 
-- [Immagini del gioco di riferimento](references/README.md) e [analisi delle filiere](references/RESOURCE_AND_PRODUCTION_CHAINS.md): materiale di studio distinto dagli screenshot dell'applicazione.
-- [Changelog](../CHANGELOG.md): modifiche realizzate, ordinate per incremento.
-- [Handoff storico](HANDOFF_HISTORY.md): punti di ripresa precedenti, con le limitazioni note in quel momento.
+- [RC9 Scuola, formazione e Matite](design/G1_D25_E3B4_RC9_SCUOLA_MATITE.md) · [Piano di test RC9](validation/G1_D25_RC9_TEST_PLAN.md) · [ADR 0035](adr/0035-scuola-formazione-matite-v14.md)
+
+## GUI e regressioni
+
+- [RC8 / D24 — Rapporto correttivo Edifici e Scuola](design/G1_D24_E3B4_RC8_STATI_EDIFICI_E_COMANDI.md) · [piano di validazione RC8](validation/G1_D24_RC8_TEST_PLAN.md) · [ADR 0034](adr/0034-v14-stati-edifici-e-layout-azioni.md)
+
+- [Matrice di parità v13/v14 — verifiche obbligatorie](validation/G1_D19_MATRICE_PARITA_GUI.md)
+- [Analisi RC7 / problema del test](design/G1_D23_E3B4_RC7_AVALONIA_TEST_ENABLED.md) · [Piano prova RC7](validation/G1_D23_RC7_TEST_PLAN.md)
+- [Piano prova RC6](validation/G1_D22_RC6_TEST_PLAN.md) · [Piano prova RC5](validation/G1_D21_RC5_TEST_PLAN.md) · [Piano RC4](validation/G1_D20_RC4_TEST_PLAN.md) · [Test plan RC3](validation/V60_E3B4_RC3_PARITY_TEST_PLAN.md)
+- [Rapporto G1-D22 diagnostica produttiva](design/G1_D22_E3B4_RC6_DIAGNOSTICA_PRODUZIONE.md)
+- [Rapporto G1-D21 preventivi e upgrade](design/G1_D21_E3B4_RC5_LOTTI_UPGRADE_GUI.md)
+- [Rapporto G1-D20 diagnosi Pane](design/G1_D20_E3B4_RC4_DIAGNOSTICA_PANE.md)
+- [Design e rapporto RC3](design/G1_D18_E3B4_RC3_RIPRISTINO_FUNZIONI_GUI.md)
+- [Contratto grafico originale](PIXEL_ART_UI.md)
+- [ADR 0032 — livelli come edifici](adr/0032-gui-v14-identica-navigazione-classica-tier-come-edifici.md)
+- [ADR 0033 — mantenere tutte le funzioni v13](adr/0033-preservazione-funzionale-gui-v13-v14.md)
+
+## Motore, salvataggi e sviluppo
+
+- [Architettura](ARCHITECTURE.md) · [Convenzioni e comandi](DEVELOPMENT.md) · [Formato salvataggi](SAVE_FORMAT.md)
+- [Contratto economico ancora in proposta](design/G1_ECONOMIA_RICERCA_CONTRATTO_QUANTITATIVO.md) · [Albero tecnologico candidato](design/G1_D4_ALBERO_TECNOLOGICO_E_GAMEPLAY.md)
+- [ADR e loro storico](adr/README.md) · [Resoconto audit documentale](validation/G1_D19_DOCUMENTATION_AUDIT.md)
+
+## Storia conservata
+
+- [Checkpoint](history/checkpoints/README.md) · [Note di rilascio](history/releases/README.md) · [Manifest](history/integrity/README.md)
+- [Changelog completo precedente](history/operational/CHANGELOG_PRIMA_DEL_RIORDINO_G1_D19.md) · [Indice archivi operativi](history/operational/README.md) · [Checkpoint G1-D19](history/checkpoints/G1_D19_CHECKPOINT.md)
+- [Roadmap precedente](history/operational/ROADMAP_PRIMA_DEL_RIORDINO_G1_D19.md)
+- [Handoff precedente](history/operational/HANDOFF_PRIMA_DEL_RIORDINO_G1_D19.md)
+
+**Indicazione:** in caso di conflitto tra documenti storici e questi riferimenti, seguire `AUTHORITY_REGISTRY.md`, `CURRENT_STATE.md` e i requisiti dell'utente; non inventare validazioni o autorizzazioni economiche.

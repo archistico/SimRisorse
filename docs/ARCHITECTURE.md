@@ -1,10 +1,12 @@
+> **Aggiornamento 03/11/2026 · v58-RC2 (non validata):** questo documento contiene materiale del precedente checkpoint v57 e alcune parti sono storiche. Per lo stato attuale del ramo unificato leggere [docs/CURRENT_STATE.md](CURRENT_STATE.md), [docs/ROADMAP.md](ROADMAP.md) e [docs/validation/V58_RECONCILIATION.md](validation/V58_RECONCILIATION.md). Nuovo ruleset candidato: `civil-growth-13` (addestramento individuale); flotta non implementata.
+
 # Architettura
 
-Stato: Core, Application, Infrastructure, Desktop e Simulation implementati e collegati. Le scelte formalizzate sono nel [registro ADR](adr/README.md). Il primo incremento M4 implementa popolazione dinamica, case e filiera alimentare; la progressione militare non è ancora implementata.
+**Nota di aggiornamento v57 (28/10/2026):** questo documento descrive l'architettura consolidata e alcune tappe storiche. La baseline è **v55 / `civil-growth-12`**, con Forgia, Zecca, reclute, addestramento, Caserma e scheda Esercito già implementati. **Non** sono implementati navi, missioni, conquiste, Castello e vittoria. Per lo stato corrente e il gate usare [CURRENT_STATE.md](CURRENT_STATE.md), [ROADMAP.md](ROADMAP.md) e [CATALOG_CURRENT.md](CATALOG_CURRENT.md). Le decisioni architetturali sono nel [registro ADR](adr/README.md).
 
-M5.1a/b e M5.2a/b aggiungono Ferro, Carbone, Oro, Forgia/Spade e Zecca/Monete come contenuti Application usando il pianificatore economico esistente. Corrente `civil-growth-9`; S1 preserva slot e SQLite v2 con conversione/backup. Cataloghi v4/v5/v6/v7/v8 conservati per benchmark e compatibilità; v7 resta il confronto industriale e l’esperimento isolato. [Decisione Zecca/S1](adr/0016-mint-coins-and-v8-save-upgrade.md), [ultimo gate e confronto integrato](validation/M5_2C_FORGE_MINT.md).
+M5.1a/b hanno aggiunto Ferro, Carbone e Oro usando il pianificatore economico esistente; M5.2 ha introdotto Forgia/Spade e Zecca/Monete, M5.3 Caserma e addestramento. S1 preserva slot e SQLite v2 con conversione/backup dichiarati. I cataloghi v4–v11 rimangono accessibili ai benchmark storici e alle verifiche di compatibilità. [Decisione S1](adr/0014-first-iron-industry-and-civil-save-upgrade.md), [verifica storica M5.1b](validation/M5_1B_GOLD.md), [audit statico v55 e gate Windows pendente](validation/V55_STATIC_AUDIT.md).
 
-Nel Desktop `PixelGlyph` contiene i pittogrammi, `ResourceDetailLine` e il template condiviso presentano costi, produzione, consumi ed effetti, `MainViewModel` espone i riepiloghi. Colori e font sono risorse del tema; i pennelli statici condivisi sono immutabili, utilizzabili anche se le righe vengono create fuori dal dispatcher. La navigazione seleziona le pagine senza duplicare i dati. [Contratto grafico](PIXEL_ART_UI.md) e [gate corrente da 260 test](validation/M5_2C_FORGE_MINT.md).
+Le rifiniture correnti del Desktop non cambiano le regole: `PixelGlyph` contiene i pittogrammi, `ResourceDetailLine` e il template condiviso presentano costi, produzione, consumi e capacità; `MainViewModel` espone i riepiloghi. Colori e font sono risorse del tema; la navigazione laterale seleziona le pagine senza duplicare i dati. [Contratto grafico](PIXEL_ART_UI.md) e [risultati storici della UI](validation/DESKTOP_UI.md); il gate della v55 attende **287 test xUnit** su Windows.
 
 Il desktop corrente usa Avalonia 12.1.4 e Microsoft.Data.Sqlite 10.0.14: [ADR 0008](adr/0008-avalonia-12.md). Il nuovo [scenario civile](scenarios/CIVIL_GROWTH.md) usa snapshot/file v2 e uno slot separato, mantenendo quello M3 disponibile in v1: [ADR 0009](adr/0009-civil-growth-and-save-generations.md).
 
@@ -101,7 +103,7 @@ Lo stato viene mantenuto in memoria e salvato tramite un contratto applicativo. 
 
 Il salvataggio deve comprendere tempo simulato, risorse, popolazione, costruzioni, attività in corso, versione del formato e identità delle regole. Deve consentire di riprendere senza produrre risorse per il tempo trascorso a programma chiuso.
 
-Formato, atomicità e rifiuto delle versioni non supportate sono definiti per M3 e per lo stato di crescita M4. Sono supportati checkpoint v1 e v2 nel rispettivo scenario; le conversioni tra cataloghi o generazioni restano da introdurre. Non si ricalcola silenziosamente una vecchia partita con un bilanciamento nuovo.
+Formato, atomicità e rifiuto delle versioni non supportate sono definiti per M3 e per lo stato di crescita M4. Sono supportati checkpoint v1 e v2 nei rispettivi scenari. **Le conversioni dichiarate dei ruleset civili `civil-growth-1` → `-12` esistono**, con politica S1 e backup prima della sovrascrittura. È invece **vietata la conversione implicita tra generazioni di formato** (v1/v2) o scenari diversi. Non si ricalcola silenziosamente una vecchia partita con un bilanciamento nuovo: vedere [SAVE_FORMAT.md](SAVE_FORMAT.md).
 
 `GameSnapshot` è un contratto immutabile in memoria, con controlli di identità, scorte e assegnazioni e ripresa in pausa. Non coincide con il formato su disco o il salvataggio dell'esperimento. L'adattatore converte esplicitamente dati e quantità e il runtime li valida prima della sostituzione della partita attiva.
 
@@ -113,7 +115,7 @@ Un adattatore monotono sincronizza il tempo prima degli ordini. Pausa, minimizza
 
 ## Risultati e classifica
 
-Il Core rileva il completamento secondo gli obiettivi dello scenario. Il risultato conserva il tempo di gioco e l'identità delle regole usate. Restano da decidere la condizione esatta di vittoria e le categorie della classifica.
+**Visione ancora da implementare:** il Core dovrà rilevare il completamento secondo gli obiettivi dello scenario. La condizione principale è già stata scelta: possesso dei **22 tipi edificabili della prima campagna**, con Castello finale sbloccato da una conquista obbligatoria; il Municipio iniziale è extra e non conta. Il risultato dovrà conservare tempo di gioco e identità delle regole. Restano da decidere categorie della classifica e altri dettagli dei risultati; nessuna vittoria è attualmente rilevata dal gioco.
 
 Una classifica locale può usare i risultati salvati. Un'eventuale classifica pubblica richiede un modello di verifica separato: un tempo dichiarato dal client non costituisce, da solo, una partita verificata. Server, account e protocolli non sono ancora progettati.
 

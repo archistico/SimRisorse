@@ -3,8 +3,9 @@ using System.Diagnostics;
 using System.Globalization;
 using SimRisorse.Application;
 using SimRisorse.Application.Features.Construction.ConstructBuildings;
-using SimRisorse.Application.Features.Military.CancelRecruits;
 using SimRisorse.Application.Features.Military.EnlistRecruits;
+using SimRisorse.Application.Features.Military.DischargeSoldiers;
+using SimRisorse.Application.Features.Military.CancelRecruits;
 using SimRisorse.Application.Features.Persistence.LoadGame;
 using SimRisorse.Application.Features.Persistence.SaveGame;
 using SimRisorse.Application.Features.Population.AssignWorkers;
@@ -35,6 +36,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _busy, _loading, _closing, _initialized, _autoSaveAllowed;
     private bool _newGameConfirmation, _closeFailure;
     private int _batchSize = 1;
+    private int _militaryQuantity = 1;
     private Task<bool>? _pendingOperation;
 
     public MainViewModel(GameRuntime runtime, IGameSaveStore store)
@@ -46,7 +48,7 @@ public sealed class MainViewModel : ObservableObject
         _view = _read.Handle();
         Resources = new(_view.Resources.OrderBy(item => item.Name, ResourceNameComparer)
             .ThenBy(item => item.Id, StringComparer.Ordinal).Select(item => new ResourceRow(item)));
-        Buildings = new(_view.Buildings.Select(item => new BuildingRow(item)));
+        Buildings = new(_view.Buildings.Select(item => new BuildingRow(item, _view)));
         _selected = Buildings[0];
         TogglePauseCommand = new(() =>
         {
@@ -58,10 +60,16 @@ public sealed class MainViewModel : ObservableObject
         AssignCommand = Action(() => new AssignWorkersHandler(runtime).Handle(new(Selected.Id, BatchSize)),
             () => _view.AvailableWorkers >= BatchSize && Selected.View.Workplaces - Selected.Workers >= BatchSize);
         ReleaseCommand = Action(() => new ReleaseWorkersHandler(runtime).Handle(new(Selected.Id, BatchSize)), () => Selected.Workers >= BatchSize);
-        EnlistCommand = Action(() => new EnlistRecruitsHandler(runtime).Handle(new(BatchSize)),
-            () => IsBarracksSelected && _view.Military!.MaximumEnlistable >= BatchSize);
-        CancelRecruitsCommand = Action(() => new CancelRecruitsHandler(runtime).Handle(new(BatchSize)),
-            () => IsBarracksSelected && _view.Military!.MaximumCancellable >= BatchSize);
+        EnlistCommand = MilitaryAction(() => new EnlistRecruitsHandler(runtime).Handle(new(MilitaryQuantity)),
+            () => HasMilitaryRules && MilitaryBarracks > 0 && _view.AvailableWorkers >= MilitaryQuantity &&
+                  AvailableSwords >= MilitarySwordCost, "Reclute arruolate. Le Spade sono state consumate una sola volta.");
+        DischargeCommand = MilitaryAction(() => new DischargeSoldiersHandler(runtime).Handle(new(MilitaryQuantity)),
+            () => _view.Military is { AllowsDischarge: true } army && army.AvailableSoldiers >= MilitaryQuantity,
+            "Soldati congedati. Sono di nuovo civili liberi; le Spade non vengono restituite.");
+        CancelRecruitsCommand = MilitaryAction(() => new CancelRecruitsHandler(runtime).Handle(new(MilitaryQuantity)),
+            () => _view.Military is { } army && (long)army.WaitingRecruits + army.TrainingRecruits >= MilitaryQuantity &&
+                  FreeSwordStorage >= MilitarySwordCost,
+            "Reclute annullate. Spade restituite nel magazzino.");
         NewGameCommand = new(() => { SynchronizeTime?.Invoke(); Pause(); _newGameConfirmation = true; Refresh(); }, () => !_busy && !_closing);
         ConfirmNewGameCommand = new(() =>
         {
@@ -88,11 +96,147 @@ public sealed class MainViewModel : ObservableObject
     public ResourceRow? SelectedResource
     {
         get => _selectedResource;
-        set { if (_selectedResource != value) { _selectedResource = value; Notify(); } }
+        set { if (_selectedResource != value) { _selectedResource = value; Notify(); Notify(nameof(SelectedResourceStorageDetails)); } }
+    }
+    // Used both by the selected row and by the Capacity-column tooltip.
+    // No permanent explanatory box is needed below the table.
+    public string SelectedResourceStorageDetails => SelectedResource?.CapacityBreakdown ??
+        "Passa il puntatore sulla capacità di una risorsa per vedere il calcolo dello spazio.";
+
+    private string CapacityBreakdown(ResourceView stock)
+    {
+        var contributions = _view.Buildings.Select(building => new
+        {
+            Building = building,
+            PerBuilding = building.StoragePerBuilding.FirstOrDefault(item => item.ResourceId == stock.Id)?.Quantity ?? 0m
+        }).Where(item => item.PerBuilding > 0m).ToArray();
+        var initialCapacity = stock.Capacity - contributions.Sum(item => item.PerBuilding * item.Building.Count);
+        var free = Math.Max(0m, stock.Capacity - stock.Quantity);
+        string Amount(decimal number) => number.ToString("#,0.###", Italian);
+
+        var breakdown = new List<string>();
+        if (initialCapacity > 0m) breakdown.Add($"{Amount(initialCapacity)} iniziale");
+        foreach (var item in contributions.Where(item => item.Building.Count > 0 || item.Building.Id == "warehouse"))
+        {
+            var label = item.Building.Id switch
+            {
+                "warehouse" => item.Building.Count == 1 ? "Magazzino" : "Magazzini",
+                "bakery" => item.Building.Count == 1 ? "Forno" : "Forni",
+                "town-hall" => "Municipio",
+                "small-house" => item.Building.Count == 1 ? "Casa piccola" : "Case piccole",
+                "large-house" => item.Building.Count == 1 ? "Casa grande" : "Case grandi",
+                _ => item.Building.Name
+            };
+            breakdown.Add($"{item.Building.Count} {label} × {Amount(item.PerBuilding)}");
+        }
+        var explanation = $"{stock.Name}: {Amount(stock.Quantity)} / {Amount(stock.Capacity)}; " +
+            $"spazio libero {Amount(free)}. Capienza: {string.Join(" + ", breakdown)}. " +
+            "Per aumentarla, costruisci un Magazzino (+500 per ogni risorsa) oppure un edificio che conservi questa risorsa.";
+        if (stock.Id is "bread" or "swords" or "coins")
+        {
+            var producerId = stock.Id switch { "bread" => "bakery", "swords" => "forge", _ => "mint" };
+            var producer = _view.Buildings.FirstOrDefault(item => item.Id == producerId);
+            var batch = producer?.OutputPerWorker.FirstOrDefault(item => item.ResourceId == stock.Id)?.Quantity ?? 0m;
+            if (batch > 0m)
+            {
+                var producerLabel = stock.Id switch { "bread" => "al Forno", "swords" => "alla Forgia", _ => "alla Zecca" };
+                explanation += $" Ogni addetto {producerLabel} richiede almeno {Amount(batch)} posti liberi per un lotto.";
+            }
+        }
+        return explanation;
     }
     public IReadOnlyList<int> BatchSizes { get; } = Array.AsReadOnly(new[] { 1, 5, 10 });
     public BuildingRow Selected { get => _selected; set { if (value is not null && value != _selected) { _selected = value; Refresh(); } } }
     public int BatchSize { get => _batchSize; set { if (BatchSizes.Contains(value)) { _batchSize = value; Refresh(); } } }
+    public int MilitaryQuantity
+    {
+        get => _militaryQuantity;
+        set { if (BatchSizes.Contains(value) && _militaryQuantity != value) { _militaryQuantity = value; Refresh(); } }
+    }
+    public bool HasMilitaryRules => _view.Military is not null;
+    private bool HasIndividualTraining => _view.Military is { } military &&
+        !military.IndividualProgressSeconds.IsDefault;
+    public int MilitaryBarracks => _view.Buildings.FirstOrDefault(item => item.Id == "barracks")?.Count ?? 0;
+    public int WaitingRecruits => _view.Military?.WaitingRecruits ?? 0;
+    public int TrainingRecruits => _view.Military?.TrainingRecruits ?? 0;
+    public int AvailableSoldiers => _view.Military?.AvailableSoldiers ?? 0;
+    public int MilitaryPeople => WaitingRecruits + TrainingRecruits + AvailableSoldiers;
+    public int AssignedWorkersCount => _view.Population - _view.AvailableWorkers - MilitaryPeople;
+    public long MilitarySeats => _view.Military?.Seats ?? 0;
+    public long FreeMilitarySeats => Math.Max(0, MilitarySeats - TrainingRecruits);
+    public int MilitarySwordCost => (_view.Military?.SwordsPerRecruit ?? 0) * MilitaryQuantity;
+    public decimal AvailableSwords => _view.Resources.FirstOrDefault(item => item.Id == "swords")?.Quantity ?? 0m;
+    public int MilitaryMaximumEnlistable => _view.Military is not { } military || MilitaryBarracks == 0 ||
+        military.SwordsPerRecruit <= 0 ? 0 :
+        (int)Math.Min(Math.Max(0, _view.AvailableWorkers),
+            Math.Min((decimal)int.MaxValue, Math.Floor(AvailableSwords / military.SwordsPerRecruit)));
+    public int MilitaryMaximumCancellable => _view.Military is not { } military ||
+        military.SwordsPerRecruit <= 0 ? 0 :
+        (int)Math.Min((decimal)WaitingRecruits + (HasIndividualTraining ? TrainingRecruits : 0),
+            Math.Min((decimal)int.MaxValue, Math.Floor(FreeSwordStorage / military.SwordsPerRecruit)));
+    public string MilitaryLimitsNote => $"Arruolabili ora: {MilitaryMaximumEnlistable} · " +
+        $"annullabili con rimborso: {MilitaryMaximumCancellable}.";
+    public string MilitarySeatsExplanation => HasIndividualTraining
+        ? "Una Caserma richiede la Forgia e ospita una recluta per volta."
+        : "Una Caserma richiede la Forgia e ospita due reclute in addestramento.";
+    public string MilitaryArmamentExplanation => HasIndividualTraining
+        ? "La Forgia produce le Spade. Ogni recluta ne consuma cinque; se annullata le Spade sono restituite. Il congedo è rinviato."
+        : "La Forgia produce le Spade. Ogni recluta ne consuma due all'arruolamento; il congedo non le restituisce.";
+    public string MilitaryTrainingHeading => HasIndividualTraining
+        ? "FORMAZIONE · 30 SECONDI PER RECLUTA" : "FORMAZIONE · 60 SECONDI PER GRUPPO";
+    public string MilitaryQueueExplanation => HasIndividualTraining
+        ? "I posti liberi avviano la prima recluta in attesa. Ciascuna progredisce individualmente e l'annullamento perde il tempo già svolto."
+        : "Le reclute eccedenti attendono in ordine di arrivo. Il gruppo successivo inizia quando termina quello attivo.";
+    public decimal FreeSwordStorage
+    {
+        get
+        {
+            var swords = _view.Resources.FirstOrDefault(item => item.Id == "swords");
+            return swords is null ? 0m : Math.Max(0m, swords.Capacity - swords.Quantity);
+        }
+    }
+    public string MilitaryRoster => $"{_view.Population} abitanti = {AssignedWorkersCount} lavoratori + {_view.AvailableWorkers} liberi + " +
+        $"{WaitingRecruits} in coda + {TrainingRecruits} in addestramento + {AvailableSoldiers} soldati";
+    public string MilitaryCapacityStatus => $"{MilitaryBarracks} {(MilitaryBarracks == 1 ? "Caserma" : "Caserme")} · " +
+        $"{TrainingRecruits}/{MilitarySeats} posti occupati · {FreeMilitarySeats} posti liberi";
+    public string MilitaryWeaponsStatus => $"Spade disponibili: {AvailableSwords.ToString("#,0.###", Italian)} · " +
+        $"Costo per {MilitaryQuantity} {(MilitaryQuantity == 1 ? "recluta" : "reclute")}: {MilitarySwordCost} Spade";
+    public string MilitaryTrainingStatus => _view.Military is not { } army || army.TrainingRecruits == 0
+        ? "Nessuna recluta in addestramento."
+        : !army.IndividualProgressSeconds.IsDefault
+            ? $"{army.TrainingRecruits} reclute in addestramento individuale · prima pronta tra " +
+              TimeSpan.FromSeconds(army.TrainingSecondsPerGroup - army.TrainingProgressSeconds).ToString(@"mm\:ss", Italian) + "."
+            : $"Gruppo attivo: {army.TrainingRecruits} reclute · mancano " +
+              TimeSpan.FromSeconds(army.TrainingSecondsPerGroup - army.TrainingProgressSeconds).ToString(@"mm\:ss", Italian) + " " +
+              $"(su {army.TrainingSecondsPerGroup} s per gruppo).";
+    public double MilitaryTrainingPercent => _view.Military is { TrainingRecruits: > 0 } army
+        ? 100d * army.TrainingProgressSeconds / army.TrainingSecondsPerGroup : 0d;
+    public string MilitaryRecruitmentHint => MilitaryBarracks == 0
+        ? "Per arruolare costruisci una Caserma dalla scheda Edifici (richiede prima la Forgia)."
+        : _view.AvailableWorkers < MilitaryQuantity
+            ? $"Abitanti liberi insufficienti: disponibili {_view.AvailableWorkers}, ne servono {MilitaryQuantity}. " +
+              "Libera lavoratori o aumenta gli alloggi e attendi nuovi abitanti."
+            : AvailableSwords < MilitarySwordCost
+                ? $"Spade insufficienti: disponibili {AvailableSwords.ToString("#,0.###", Italian)}, ne servono {MilitarySwordCost}. " +
+                  "Assegna lavoratori alla Forgia, controllando Ferro, Carbone e magazzini."
+                : "Arruolamento possibile. Le reclute occupano gli alloggi e consumano le razioni normali.";
+    public string MilitaryCancelHint => (long)WaitingRecruits + (HasIndividualTraining ? TrainingRecruits : 0) < MilitaryQuantity
+        ? $"Reclute annullabili insufficienti: disponibili {WaitingRecruits + (HasIndividualTraining ? TrainingRecruits : 0)}."
+        : FreeSwordStorage < MilitarySwordCost
+            ? $"Spazio insufficiente per restituire {MilitarySwordCost} Spade: liberi " +
+              $"{FreeSwordStorage.ToString("#,0.###", Italian)} posti. Costruisci un Magazzino o libera spazio per le Spade."
+            : HasIndividualTraining
+                ? "Annulla prima la coda e poi l'addestramento meno avanzato. Le Spade tornano nel magazzino."
+                : "Le reclute in coda possono tornare civili. Le loro Spade vengono restituite per intero.";
+    public string MilitaryDischargeHint => _view.Military is { AllowsDischarge: false }
+        ? "Congedo rinviato fino all'introduzione delle missioni: i soldati restano assegnati."
+        : AvailableSoldiers < MilitaryQuantity
+        ? $"Soldati disponibili per il congedo: {AvailableSoldiers}. Le reclute in formazione non possono essere congedate."
+        : "I soldati congedati tornano civili liberi. Le Spade già consumate non vengono rimborsate.";
+    public string EnlistLabel => $"Arruola +{MilitaryQuantity}";
+    public string DischargeLabel => $"Congeda −{MilitaryQuantity}";
+    public string CancelRecruitsLabel => HasIndividualTraining
+        ? $"Annulla reclute −{MilitaryQuantity}" : $"Annulla coda −{MilitaryQuantity}";
     public GameView View => _view;
     public bool IsPaused => _view.IsPaused;
     public bool IsBusy => _busy;
@@ -114,40 +258,9 @@ public sealed class MainViewModel : ObservableObject
     public bool HasAdvancedResidents => _view.PopulationState.AdvancedResidents > 0;
     public bool ShowBreadSupplyStatus => _view.BreadSupply.State != BreadSupplyState.Hidden;
     public string ScenarioName => HasPopulationGrowth ? "Crescita civile" : "Economia di base";
-    public string Population => (HasPopulationGrowth
+    public string Population => HasPopulationGrowth
         ? $"{_view.Population} / {_view.PopulationState.HousingCapacity} abitanti · {_view.AvailableWorkers} liberi"
-        : $"{_view.AvailableWorkers} disponibili / {_view.Population} abitanti") +
-        (_view.Military is { } military && military.Recruits + military.Soldiers > 0
-            ? $" · {military.Recruits} reclute · {military.Soldiers} soldati" : string.Empty);
-    public bool IsBarracksSelected => _view.Military is { } military && Selected.Id == military.BarracksBuildingId;
-    public string EnlistLabel => $"Arruola +{BatchSize}";
-    public string CancelRecruitsLabel => $"Annulla −{BatchSize}";
-    public string EnlistCostHeading => BatchSize == 1 ? "COSTO PER RECLUTA" : $"COSTO PER {BatchSize} RECLUTE";
-    public IEnumerable<ResourceDetailLine> EnlistCostLines => _view.Military is { } military
-        ? new[]
-        {
-            new ResourceDetailLine(military.SwordsResourceId,
-                $"{(military.SwordsPerRecruit * BatchSize).ToString("0.###", Italian)} {military.SwordsName.ToLowerInvariant()}"),
-            new ResourceDetailLine("population", BatchSize == 1 ? "1 abitante libero" : $"{BatchSize} abitanti liberi")
-        }
-        : Array.Empty<ResourceDetailLine>();
-    public IEnumerable<ResourceDetailLine> MilitaryStatusLines
-    {
-        get
-        {
-            if (_view.Military is not { } military) yield break;
-            yield return new("recruits", $"In coda: {military.QueuedRecruits}");
-            yield return new("barracks", $"In addestramento: {military.TrainingRecruits} / {military.TrainingPlaces} posti");
-            yield return new("soldiers", $"Soldati: {military.Soldiers}");
-            if (military.TrainingRecruits > 0)
-                yield return new("recruits", military.Recruits == 1
-                    ? $"Pronto tra {military.TrainingRemainingSeconds[0]} s"
-                    : $"Prossimo tra {military.TrainingRemainingSeconds[0]} s · tutti tra {military.SecondsUntilAllTrained} s");
-        }
-    }
-    public string MilitaryNote => _view.Military is not { } military ? string.Empty :
-        military.TrainingPlaces == 0 ? "Costruisci la Caserma per arruolare." :
-        $"Liberi: {_view.AvailableWorkers} · arruolabili ora: {military.MaximumEnlistable}. L'annullamento restituisce persone e Spade; il tempo già svolto si perde.";
+        : $"{_view.AvailableWorkers} disponibili / {_view.Population} abitanti";
     public string GrowthStatus => _view.PopulationState.BlockReason switch
     {
         GrowthBlockReason.MissingFood => "Manca cibo: crescita sospesa",
@@ -169,39 +282,8 @@ public sealed class MainViewModel : ObservableObject
     }
     public string FoodRequirement => $"{_view.PopulationState.RequiredFoodPerSecond:0.###} cibo/s";
     public string BreadRequirement => $"{_view.PopulationState.RequiredBreadPerSecond:0.###} pane/s · {_view.PopulationState.AdvancedResidents} residenti avanzati";
-    public string BreadSupplyStatus
-    {
-        get
-        {
-            var diagnosis = _view.BreadSupply.State switch
-            {
-                BreadSupplyState.Hidden => string.Empty,
-                BreadSupplyState.FirstAdvancedArrivalNeedsStock =>
-                    "Serve Pane in scorta per il primo residente avanzato. Controlla Forno, filiera e lavoratori.",
-                BreadSupplyState.NominalCapacityInsufficient =>
-                    $"Capacità nominale dei Forni insufficiente: −{_view.BreadSupply.NominalShortfallPerSecond.ToString("0.###", Italian)} Pane/s" +
-                    (_view.BreadSupply.AdditionalAssignedWorkers is int workers && workers > 0
-                        ? $" · +{workers} {(workers == 1 ? "addetto" : "addetti")}"
-                        : string.Empty),
-                BreadSupplyState.SufficientNextSecond => "Produzione Pane sufficiente nel prossimo secondo",
-                BreadSupplyState.MissingInputs => "Filiera Pane limitata: input insufficienti",
-                BreadSupplyState.StorageFull => "Forno in attesa: deposito quasi pieno",
-                _ => "Filiera Pane limitata nel prossimo secondo"
-            };
-            return _view.BreadSupply.ReserveSecondsWithoutProduction is { } seconds
-                ? $"{diagnosis}\nScorta senza produzione: {FormatReserve(seconds)} (consumo attuale)"
-                : diagnosis;
-        }
-    }
+    public string BreadSupplyStatus => BreadSupplyStatusFormatter.Format(_view.BreadSupply);
 
-    private static string FormatReserve(decimal seconds)
-    {
-        if (seconds < 60m) return $"{seconds:0} s";
-        var minutes = decimal.Floor(seconds / 60m);
-        if (minutes < 60m) return $"{minutes:0} min {seconds - minutes * 60m:0} s";
-        var hours = decimal.Floor(minutes / 60m);
-        return $"{hours:0} h {minutes - hours * 60m:0} min";
-    }
     public double GrowthPercent => HasPopulationGrowth
         ? 100d * (_view.PopulationState.ProgressSeconds + _view.PopulationState.GrowthRemainderTwentieths / (double)HousingGrowthRules.UnitsPerSecond) /
           _view.PopulationState.IntervalSeconds : 0d;
@@ -222,6 +304,7 @@ public sealed class MainViewModel : ObservableObject
     public UiCommand AssignCommand { get; }
     public UiCommand ReleaseCommand { get; }
     public UiCommand EnlistCommand { get; }
+    public UiCommand DischargeCommand { get; }
     public UiCommand CancelRecruitsCommand { get; }
     public UiCommand NewGameCommand { get; }
     public UiCommand ConfirmNewGameCommand { get; }
@@ -229,7 +312,7 @@ public sealed class MainViewModel : ObservableObject
     public AsyncUiCommand SaveCommand { get; }
     public AsyncUiCommand LoadCommand { get; }
 
-    private bool CanConstruct() => Selected.View.MissingPrerequisites.IsEmpty && Selected.Count <= int.MaxValue - BatchSize &&
+    private bool CanConstruct() => !Selected.IsScenarioFixed && Selected.View.MissingPrerequisites.IsEmpty && Selected.Count <= int.MaxValue - BatchSize &&
         (!HasPopulationGrowth || (long)BatchSize * Selected.View.HousingPerBuilding <= int.MaxValue - _view.PopulationState.HousingCapacity) &&
         Selected.View.Cost.All(cost => _view.Resources.Single(item => item.Id == cost.ResourceId).Quantity >= cost.Quantity * BatchSize);
 
@@ -242,10 +325,28 @@ public sealed class MainViewModel : ObservableObject
             GameError.InsufficientResources => "Materiali insufficienti. Nessuna risorsa spesa.",
             GameError.InsufficientPopulation => "Non ci sono abbastanza abitanti disponibili.",
             GameError.InsufficientWorkplaces => "Servono altri posti di lavoro.",
+            GameError.FixedBuilding => "Il Municipio è una struttura iniziale unica e non può essere costruito.",
             GameError.MissingPrerequisite => "Manca una struttura necessaria.",
-            GameError.InsufficientRecruits => "Non ci sono abbastanza reclute da annullare.",
-            GameError.InsufficientStorage => "Spazio insufficiente per restituire le Spade. Nessuna recluta annullata.",
             _ => "L'ordine non può essere eseguito con le quantità richieste."
+        };
+        Refresh();
+    }, () => !_busy && !_closing && !_newGameConfirmation && condition());
+
+    private UiCommand MilitaryAction(Func<CommandResult> action, Func<bool> condition, string successMessage) => new(() =>
+    {
+        SynchronizeTime?.Invoke();
+        var result = action();
+        _message = result.Succeeded ? successMessage : result.Error switch
+        {
+            GameError.MissingBarracks => "Costruisci una Caserma per arruolare.",
+            GameError.InsufficientSwords => "Spade insufficienti: aumenta la produzione della Forgia.",
+            GameError.InsufficientPopulation => "Abitanti liberi insufficienti. Libera lavoratori o amplia gli alloggi.",
+            GameError.InsufficientSoldiers => "Non ci sono abbastanza soldati addestrati da congedare.",
+            GameError.InsufficientQueuedRecruits => HasIndividualTraining
+                ? "Non ci sono abbastanza reclute in coda o in addestramento da annullare."
+                : "Si possono annullare solo le reclute ancora in coda.",
+            GameError.InsufficientStorage => "Magazzino delle Spade pieno: crea spazio prima di annullare reclute.",
+            _ => "Ordine militare non eseguibile: nessuna risorsa o persona è stata modificata."
         };
         Refresh();
     }, () => !_busy && !_closing && !_newGameConfirmation && condition());
@@ -307,7 +408,7 @@ public sealed class MainViewModel : ObservableObject
                 _closeFailure = false;
                 _message = !load ? "Partita salvata." : result.UpgradedFromRules is { } previous
                     ? $"Partita ripresa in pausa e aggiornata dalle regole {previous} a {result.View.RulesVersion}: " +
-                      "le nuove strutture e le nuove risorse partono da zero; le vecchie scorte restano invariate. " +
+                      "le strutture aggiunte vengono inizializzate secondo le nuove regole; le vecchie scorte restano invariate. " +
                       "Al prossimo salvataggio il file originale viene conservato come copia accanto alla partita."
                     : "Partita ripresa in pausa. Il tempo trascorso a gioco chiuso non viene conteggiato.";
             }
@@ -372,11 +473,15 @@ public sealed class MainViewModel : ObservableObject
     private void Refresh()
     {
         _view = _read.Handle();
-        foreach (var resource in Resources) resource.Update(_view.Resources.Single(item => item.Id == resource.Id));
-        foreach (var building in Buildings) building.Update(_view.Buildings.Single(item => item.Id == building.Id), _view.Military);
+        foreach (var resource in Resources)
+        {
+            var stock = _view.Resources.Single(item => item.Id == resource.Id);
+            resource.Update(stock, CapacityBreakdown(stock));
+        }
+        foreach (var building in Buildings) building.Update(_view.Buildings.Single(item => item.Id == building.Id), _view);
         Notify(string.Empty);
-        foreach (var command in new[] { TogglePauseCommand, ConstructCommand, AssignCommand, ReleaseCommand, EnlistCommand, CancelRecruitsCommand,
-            NewGameCommand, ConfirmNewGameCommand, CancelNewGameCommand }) command.Refresh();
+        foreach (var command in new[] { TogglePauseCommand, ConstructCommand, AssignCommand, ReleaseCommand,
+            EnlistCommand, DischargeCommand, CancelRecruitsCommand, NewGameCommand, ConfirmNewGameCommand, CancelNewGameCommand }) command.Refresh();
         SaveCommand.Refresh();
         LoadCommand.Refresh();
     }

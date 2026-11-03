@@ -1,87 +1,48 @@
-# M5.2a — Forgia e Spade
+# M5.2a — Forgia e Spade: gate da verificare
 
-**Verificato su Windows il 2026-11-02**, checkpoint **v37**, regole **`civil-growth-8`**. Catalogo: **18 tipi di edifici / 15 risorse**. Contratto A approvato dall'utente il 28/10; la Zecca segue nell'incremento M5.2b.
+**Preparazione 28/10/2026, pacchetto v38.** Implementazione effettuata, **nessuna nuova esecuzione .NET disponibile in questo ambiente**. Non confondere i casi predisposti con test superati. Il più recente gate con rapporto dettagliato resta 206/206; l'utente ha riferito il superamento dei test della v33 (208 casi attesi), ma ha anche segnalato errori successivi in `DesktopTests` senza il messaggio specifico.
 
-## Regole implementate
+## Contratto giocabile nuovo
 
-| Proprietà | Valore |
+| Voce | Valore |
 | --- | --- |
-| Edificio / risorsa | `forge` Forgia / `swords` Spade |
-| Costruzione | 240 Legno lavorato +180 Pietra |
-| Prerequisito | Possesso di una Fonderia di ferro |
-| Addetti | 1 per edificio |
-| Ricetta per addetto/s | 1 Ferro +1 Carbone → 2 Spade |
-| Priorità | 100, dopo Fonderia ferro 90 e Fonderia oro 91 |
-| Scorta iniziale | Zero |
-| Capacità | 1.000 +500 per Magazzino |
+| Regole | `civil-growth-8`, da `civil-growth-7` via conversione S1 |
+| Catalogo | 18 edifici, 15 risorse |
+| Forgia | Costruzione: 240 Tavole, 180 Pietra; prerequisito Fonderia di ferro |
+| Personale | 1 addetto per Forgia |
+| Ricetta | **1 Ferro + 1 Carbone → 2 Spade** al secondo per addetto |
+| Carbone | Fonderia ferro priorità 90; Fonderia oro 91; Forgia 100 |
+| Scorta | Spade base 1.000; ogni Magazzino aggiunge 500, anche alle Spade |
+| Impiego | Solo stoccaggio: reclutamento con consumo di Spade rinviato a M5.3 |
+| Ritorno | Nessuna produzione offline, lotti indivisibili e nessuna modifica allo snapshot SQLite v2 |
 
-Il pianificatore esistente esegue ricette intere. Con Spade a 999/1.000 la Forgia non produce e non consuma Ferro/Carbone; con 998/1.000 entra un lotto esatto. I materiali prodotti diventano disponibili soltanto dal secondo successivo. Senza scorte pregresse, una filiera ferro/carbone e Forgia produce il primo lotto nel terzo passo economico.
+## Verifiche incluse nel codice
 
-Le Spade sono scorte per il futuro arruolamento. Non sono stati introdotti soldati, costi di reclutamento, Monete o pagamenti.
+Nuovo `ForgeIndustryTests` nella suite Application:
 
-## Gate eseguiti e artefatti
+1. Prezzo, ricetta, addetto, prerequisito, priorità e capacità; catalogo storico v7 rimasto immutato.
+2. Acquisto reale della Forgia e primo lotto: il Ferro creato dalla fonderia nello stesso secondo **non è ancora disponibile** per la Forgia. Al secondo successivo vengono accreditate 2 Spade.
+3. Lotti: a **998/1.000** la Forgia arriva esattamente a 1.000; a **999/1.000** il lotto da 2 è bloccato senza spendere Ferro/Carbone. Un Magazzino amplia la capacità a 1.500 e sblocca il lotto.
+4. Contesa: con 2 Carbone e le due fonderie presidiate la Forgia si ferma; liberando un addetto della Fonderia di ferro, il Carbone rimasto può arrivare alla Forgia.
+5. Un checkpoint che si dichiara v7 ma contiene Spade positive viene rifiutato, senza sostituire la sessione corrente.
 
-Comando: `validate.cmd`, restore online con lock, SDK **10.0.201**, Avalonia **12.1.4**, Microsoft.Data.Sqlite **10.0.14**. Build Release: **zero avvisi / zero errori**.
+Nella suite Infrastructure: salvataggio reale v7 → apertura in memoria v8 → nuovo salvataggio v8, con verifica del backup, dello stato, del tempo frazionario, degli addetti e dei materiali industriali.
 
-| Gate | Run | Test |
-| --- | --- | ---: |
-| Baseline v36/M5.1c, prima di Forgia | `11a1fbf5ceff4a6a87fd52bd1126979a` | **211/211** |
-| M5.2a Forgia | `909f039588b94b69b80b8d9e9d9bcd26` | **235/235** |
+Nella suite Desktop: icone Forgia/Spade, descrizione, costo e riquadro della capacità con lotto da 2. Nella teoria `WarehouseTests` aggiunto un caso di conversione v7. Il conteggio previsto cresce da **212 a 221 test xUnit**; il numero deve essere verificato dal runner, non assunto come esito.
 
-| Suite M5.2a | Superati |
-| --- | ---: |
-| Core | 67 |
-| Application | 79 |
-| Infrastructure | 32 |
-| Desktop | 57 |
+Il benchmark `--benchmark-industry-scale` continua a usare `CreateGoldForBenchmarks()` e a emettere **v7** per conservare gli oracoli di M5.1c; gli altri comandi usano v8. L'esperimento separato ForgeMintProbe usa anch'esso il catalogo v7 per non duplicare Forgia/Spade e continua a simulare A/B senza essere inserito nel validatore principale.
 
-Il gate comprende raggiungibilità dei due cataloghi, **18 cronologie più crescita accelerata**, cinque benchmark e pubblicazione/smoke nativo Windows per entrambi gli scenari: salvataggio, caricamento, ripresa della crescita, sospensione e chiusura. Salvataggi di prova isolati da quelli personali.
+## Comandi per il gate Windows
 
-Output locale: `.local-cache/m4/validation.json`, `forge-validation.log`, `forge-start.json`, `forge-8-hours.json`, `industry-scale-benchmark.json`; TRX e PNG sotto `.local-cache/m4/runs/909f039588b94b69b80b8d9e9d9bcd26/`. Sono artefatti locali ignorati da Git, non allegati al repository.
+Da PowerShell nella radice del progetto:
 
-## Cronologia dalla nuova partita
+```powershell
+dotnet test tests/SimRisorse.Desktop.Tests/SimRisorse.Desktop.Tests.csproj -c Release --logger "console;verbosity=normal"
+dotnet test tests/SimRisorse.Application.Tests/SimRisorse.Application.Tests.csproj -c Release
+dotnet test tests/SimRisorse.Infrastructure.Tests/SimRisorse.Infrastructure.Tests.csproj -c Release
+.\validate.cmd
+```
 
-`--scenario civil-growth --strategy forge` segue la strategia civile/ferro esistente: Cibo dall'avvio, Casa piccola a 61 s, filiera Pane a 600 s, Casa grande a 760 s, industria ferro a 1.100 s. A **1.400 s** acquista e assegna un addetto alla Forgia. Prezzi e assegnazioni passano attraverso i comandi reali.
+Acquisire prima il **primo errore completo** di `DesktopTests` (nome del test, messaggio, file/riga, stack trace), senza attribuirlo automaticamente alle modifiche v36–v37 o v38. Poi confermare tutti i test, i benchmark v7 congelati, i layout 1040×740 e 1240×850 e lo smoke di apertura di un salvataggio v7.
 
-| Misura | A 1.401 s | A 8 ore |
-| --- | ---: | ---: |
-| Spade | **2** | **1.000** |
-| Ferro | 299 | 1.000 |
-| Carbone | 301 | 1.000 |
-| Legno lavorato | 70 | 1.000 |
-| Pietra | 531 | 1.000 |
-| Popolazione | 31 | 48 |
-
-Questa è una cronologia di riferimento, non una strategia ottima o la durata della campagna completa. Non costruisce la filiera dell'Oro e non misura la futura contesa con la Zecca.
-
-## Persistenza e regressioni
-
-- Conversioni concatenate **v1–v7→v8**, con Forgia a quantità/personale zero e Spade zero. Capacità dei Magazzini già posseduti applicata anche alle Spade.
-- Test con database SQLite reale v7: conservazione delle scorte frazionarie di Ferro/Oro/Carbone, popolazione, lavoratori, edifici, tempo e frazione della crescita; caricamento in pausa senza scrittura e backup originale prima del primo salvataggio v8. Salvataggio successivo senza duplicare il backup.
-- Round trip di Spade frazionarie e addetto Forgia a metà secondo; ripresa esatta dopo altri 500 ms e nessuna produzione in pausa.
-- Rifiuto di checkpoint antecedenti che dichiarano Spade positive o righe Forgia incompatibili; la partita corrente resta preservata.
-- Test di primo lotto, Carbone prenotato dalle due fonderie, carenze Ferro/Carbone diagnosticate, capienza intera, ripresa dopo acquisto Magazzino, assenza di addetto, pausa e replay interi/frazionari.
-
-SQLite/snapshot **v2**, slot civile e politica S1 invariati. [ADR 0015](../adr/0015-forge-swords-and-v7-save-upgrade.md).
-
-## Interfaccia e correzioni della baseline
-
-Descrizione Forgia, costo, ricetta, input e diagnosi usano la presentazione esistente. Aggiunte icone originali 8×8 di Forgia/Spade; Spade si inserisce nell'ordine alfabetico italiano della tabella Risorse.
-
-**23 PNG generati**: 21 richiesti dal manifest più due dettagli. Ispezionati tutti i quattro nuovi render: `forge-buildings[-compact].png` e `forge-resources[-compact].png`, a **1040×740 / 1240×850**. Verificati ricetta, icone, controlli, colonne e margine delle scrollbar; tabella Spade a +2/s e riempimento indicativo 00:08:19 con 2/1.000.
-
-La prima esecuzione sulla baseline ha trovato pennelli statici mutabili in `ResourceRow`, inizializzati fuori dal dispatcher e poi usati nel rendering UI. Sono ora immutabili. Un altro test leggeva il font da una riga costi rimossa dalla finestra al cambio selezione: confronta ora la riga corrente. Dopo queste correzioni il gate baseline passa **211/211**, prima dell'aggiunta delle nuove regole.
-
-## Benchmark storici ed esperimento separato
-
-I cataloghi v4/v5/v6 restano immutati. `CreateGoldForBenchmarks()` fissa **v7** per M5.1c e ForgeMintProbe: aggiungere Forgia al gioco non cambia il confronto industriale già definito e non duplica gli ID dell'esperimento.
-
-L'esperimento separato è stato eseguito con `dotnet run --project experiments/forge-mint-probe/SimRisorse.ForgeMintProbe.csproj -c Release`, codice di uscita **0**: sei profili A/B più sei guardie F8/F9, ripetuti a passi interi/frazionari con confronto snapshot. Confermati **241 s a fasi / 122 s con due miniere** per 240 Spade +360 Monete. Risultati in `.local-cache/m4/forge-mint-probe.log`.
-
-Sono misure su una colonia sintetica v7 con minerali precaricati e acquisti finanziati. Non sono una prova di Zecca nel catalogo giocabile né il completamento di M5.2c.
-
-## Prossimo incremento e limiti
-
-**M5.2b:** Zecca/Monete secondo il contratto A già approvato, con regole **`civil-growth-9`** e conversione `-8→-9`. Successivamente M5.2c confronterà le due politiche nel gioco corrente, includendo una cronologia dalla nuova partita.
-
-Restano da scegliere quantità di Spade per recluta e Monete per nave nelle fasi militari/navali. Altre piattaforme, DPI fisici e accessibilità non sono coperti da questo gate Windows. Nessuna valutazione del divertimento o certificazione delle otto ore fino alla vittoria.
+**Condizione per M5.2b:** gate Windows positivo (incluse migrazione, rendering e benchmark storico), diagnosi degli errori Desktop chiarita. Solo allora introdurre Zecca e Monete con un ulteriore passaggio `civil-growth-8 → civil-growth-9`. I prezzi e la ricetta della Zecca sono già approvati nel [dossier](../design/M5_2_FORGE_MINT_PREFEASIBILITY.md).

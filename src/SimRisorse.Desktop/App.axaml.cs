@@ -18,11 +18,20 @@ public partial class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var options = DesktopOptions.Parse(desktop.Args ?? []);
-            var viewModel = new MainViewModel(new GameRuntime(options.Scenario), new SqliteGameSaveStore(options.SavePath));
-            var window = new MainWindow(viewModel);
-            desktop.MainWindow = window;
-            if (options.SmokeTest)
-                window.Opened += async (_, _) => await NativeSmokeAsync(desktop, window, viewModel);
+            if (options.ExperimentalV14)
+            {
+                // The v14 preview has its own window, session and v3 store. Never hand
+                // this path to the live v13 GameRuntime or SqliteGameSaveStore.
+                desktop.MainWindow = new V14PreviewWindow(V14PreviewViewModel.CreateForPreview(options.SavePath));
+            }
+            else
+            {
+                var viewModel = new MainViewModel(new GameRuntime(options.Scenario), new SqliteGameSaveStore(options.SavePath));
+                var window = new MainWindow(viewModel);
+                desktop.MainWindow = window;
+                if (options.SmokeTest)
+                    window.Opened += async (_, _) => await NativeSmokeAsync(desktop, window, viewModel);
+            }
         }
         base.OnFrameworkInitializationCompleted();
     }

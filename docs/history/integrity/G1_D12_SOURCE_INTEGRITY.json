@@ -1,0 +1,24 @@
+{
+  "release": "v60-E3b3-RC2",
+  "base": "v60-E3b3-RC1",
+  "validated_base_windows": "User confirms all 387 tests passed",
+  "candidate_dotnet_validation": "not run",
+  "xunit_new_tests": 9,
+  "xunit_expected_total": 396,
+  "unchanged_preexisting_technical_files": 182,
+  "technical_modified": [
+    "src/SimRisorse.Core/Sessions/V14CampaignSession.cs",
+    "tests/SimRisorse.Infrastructure.Tests/V14CampaignSessionPersistenceTests.cs"
+  ],
+  "technical_added": [
+    "src/SimRisorse.Core/Sessions/V14CampaignClock.cs",
+    "tests/SimRisorse.Application.Tests/V14CampaignClockTests.cs"
+  ],
+  "removed_files": [],
+  "source_sha256": {
+    "src/SimRisorse.Core/Sessions/V14CampaignSession.cs": "6fcbc1ee61700800548aadad7dcd2a719c1481d870f533e57ca27dbb2f4845a0",
+    "tests/SimRisorse.Infrastructure.Tests/V14CampaignSessionPersistenceTests.cs": "1a117deca5028e27ded7539fe1470beda1fc501564ae3bc2597faa8e014a437c",
+    "src/SimRisorse.Core/Sessions/V14CampaignClock.cs": "bcd2acdc17e39d33b9e68505f64dbb7906bb2151972fca079d88e8993de1a90e",
+    "tests/SimRisorse.Application.Tests/V14CampaignClockTests.cs": "b9ca30897f8a22c7f1299ba320fa3f09d5a744116f17d694bcb296d88a6a5c57"
+  }
+}

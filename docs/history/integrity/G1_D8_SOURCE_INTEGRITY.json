@@ -1,0 +1,16 @@
+{
+  "baseline": "SimRisorse-v60-E3-RC1-scuola-ricerca.zip",
+  "base_technical_files": 177,
+  "modified_previous_files": [],
+  "removed_files": [],
+  "new_technical_files": [
+    "src/SimRisorse.Core/Sessions/V14CampaignSnapshot.cs",
+    "tests/SimRisorse.Application.Tests/V14CampaignMigrationTests.cs"
+  ],
+  "new_file_sha256": {
+    "src/SimRisorse.Core/Sessions/V14CampaignSnapshot.cs": "86567b28ec2f023888992280feb6a7897a39f1ecb2c25b374b1d26dbc0f540b6",
+    "tests/SimRisorse.Application.Tests/V14CampaignMigrationTests.cs": "7ebe4e47ff58e4800eeec97bad7ff439078d17bae24a75815a253fe52042692a"
+  },
+  "dotnet_build_executed": false,
+  "dotnet_tests_executed": false
+}

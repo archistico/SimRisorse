@@ -1,6 +1,6 @@
 # M5.1c — Contesa del Carbone e confronto di scala
 
-Aggiornato il **2026-11-02**. **Verificato su Windows:** cinque profili con bilancio per secondo e replay interi/frazionari confermati nel gate baseline da **211/211** (run `11a1fbf5ceff4a6a87fd52bd1126979a`) e nel gate M5.2a da **235/235** (run `909f039588b94b69b80b8d9e9d9bcd26`). Le quantità attese della tabella sono state confermate. Il catalogo v7 resta fissato con `CreateGoldForBenchmarks()`; [report corrente](M5_2A_FORGE.md).
+Aggiornato il **2026-10-27**. **Benchmark implementato, gate Windows ancora da eseguire per questo incremento.** I numeri della tabella sono **risultati attesi calcolati dalle regole**, non risultati dichiarati di una simulazione .NET già eseguita.
 
 **Nota 2026-10-28:** l'utente ha confermato «test passati» sulla v33, nella quale `validate.cmd` include questo benchmark. Non è stato fornito l'output del gate o il JSON `industry-scale-benchmark.json`: la tabella rimane quindi etichettata **teorica**, senza attribuirle misure eseguite né un'identità di run non documentata.
 
@@ -12,7 +12,7 @@ Il benchmark parte da un **checkpoint sintetico**, non dall'inizio di una campag
 
 Questo isolamento permette di misurare la contesa del Carbone senza attribuire all'industria le attese causate dalla catena civile, dai prezzi di una partita nuova o dalla disponibilità dei minerali. Il primo secondo alimenta la scorta di Carbone; le Fonderie iniziano nel secondo successivo, secondo l'ordine effettivo del pianificatore.
 
-## Cinque profili: valori attesi confermati il 02/11
+## Cinque profili: valori teorici da verificare
 
 Tutti i profili avanzano per **180 secondi**. I costi includono una Miniera di ferro e una d'oro non presidiate, comuni a tutti i profili. `Oro senza Carbone` conta i *secondi-lavoratore* bloccati, non semplicemente i secondi solari.
 
@@ -47,8 +47,8 @@ dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-indus
 .\validate.cmd
 ```
 
-Il primo comando esegue il singolo benchmark, il secondo l'intera verifica inclusi build, test xUnit, cronologie, benchmark e smoke desktop. Il gate è stato **eseguito e ispezionato il 02/11** con M5.1c, prima sulla baseline da 211 test, poi su M5.2a da 235 test. Gli esiti da 206 test e la conferma utente v33 restano evidenze storiche distinte.
+Il primo comando esegue il singolo benchmark, il secondo l'intera verifica inclusi build, test xUnit, cronologie, benchmark e smoke desktop. **Questi comandi non sono stati eseguiti nell'ambiente di preparazione** perché non è disponibile .NET/PowerShell. I **206/206 test** documentati appartengono al gate Windows precedente dell'archivio locale dell'utente; non dimostrano ancora l'esito di M5.1c.
 
 ## Dopo il gate
 
-**M5.1c Verificata** senza cambiare le regole industriali. Il contratto A Forgia/Zecca è stato approvato separatamente dall'utente il 28/10; Forgia/Spade è ora verificata in v8. Il prossimo incremento è Zecca/Monete in v9; le quantità per reclutamento e navi restano da scegliere nelle fasi successive.
+Se il benchmark e `validate.cmd` passano, M5.1c è chiudibile senza nuove regole, versioni SQLite o mutazioni della GUI. Per M5.2 restano da scegliere **prezzi/ricette di Forgia e Zecca, utilizzo di Spade e Monete**; la misura della sola contesa industriale non approva quelle scelte.

@@ -1,86 +1,59 @@
-# M5.2b — Zecca e Monete
+# M5.2b — Zecca e Monete (v40, validazione Windows pendente)
 
-**Verificato su Windows il 2026-11-02**, checkpoint **v39**, regole **`civil-growth-9`**. **19 tipi di edifici / 16 risorse**. Contratto A approvato dall'utente il 28/10; Forgia/Spade già verificate in [M5.2a](M5_2A_FORGE.md).
+Data: **28 ottobre 2026**. Questo incremento prepara il secondo trasformatore del contratto A già approvato. I test .NET, il validatore completo e il controllo grafico non sono eseguibili nell'ambiente di preparazione.
 
-## Regole implementate
+## Modifiche introdotte
 
-| Proprietà | Valore |
+| Caratteristica | Valore in `civil-growth-9` |
 | --- | --- |
-| Edificio / risorsa | `mint` Zecca / `coins` Monete |
-| Costo | 210 Legno lavorato +160 Pietra |
-| Prerequisito | Possesso di una Fonderia d'oro |
-| Addetti | 1 per edificio |
-| Ricetta per addetto/s | 1 Oro +1 Carbone → 3 Monete |
-| Priorità | 101, dopo Ferro 90, Oro 91 e Forgia 100 |
-| Scorta iniziale | Zero |
-| Capacità | 1.000 +500 per Magazzino |
+| Struttura | **Zecca**, ID `mint` |
+| Costruzione | **210 Tavole** e **160 Pietra** |
+| Prerequisito | Una **Fonderia d'oro** costruita |
+| Personale | **1 addetto** per Zecca |
+| Consumo ogni secondo per addetto | **1 Oro + 1 Carbone** |
+| Produzione ogni secondo per addetto | **3 Monete**, ID `coins` |
+| Priorità del Carbone | Ferro **90**, Oro **91**, Forgia **100**, **Zecca 101** |
+| Capacità Monete | **1.000 iniziale + 500 per Magazzino** |
+| Ricetta | **Lotto indivisibile**: occorrono almeno 3 posti liberi; non produce monete parziali |
+| Destinazione Monete | Scorta per futuri **pagamenti espliciti**; **nessun costo monetario generalizzato** |
 
-Si usa il pianificatore esistente. Nessuna disponibilità degli output nel medesimo secondo della loro produzione. In una filiera nuova senza scorte, il primo passo estrae il minerale, il secondo produce Oro e il terzo le Monete.
+Il catalogo attivo comprende **19 tipi di edifici e 16 risorse**. Sono disponibili icone pixel originali per Zecca e Monete, descrizioni dei prerequisiti e delle cause di blocco e informazioni sul lotto/capacità nella pagina Risorse. Non vengono aggiunti soldati, navi, pagamenti, bonus, produzione offline o nuove modalità di controllo del Carbone.
 
-I lotti sono indivisibili: da 997/1.000 entra un lotto esatto; a 998 o 999 la Zecca non produce e non consuma Oro/Carbone. Da zero, la capienza iniziale consente **999 Monete**, lasciando un posto libero. Un Magazzino aumenta la capacità a 1.500 e permette la ripresa.
+## Compatibilità e isolamento
 
-Le Monete sono scorte per futuri pagamenti espliciti. Non sono valuta generale, non cambiano i costi degli altri edifici e non introducono acquisti di navi o reclutamento.
+- Il catalogo nuovo è **`civil-growth-9`**; la migrazione esplicita **v8→v9** aggiunge Zecca con `Count=0`, `AssignedWorkers=0`. La risorsa Monete parte da zero.
+- Restano gli upgrade concatenati **v1→…→v7→v8→v9** e lo slot civile preesistente.
+- I checkpoint v8 che dichiarano **Monete positive** prima della loro introduzione sono rifiutati, senza sostituzione silenziosa dello stato.
+- Salvataggi SQLite e snapshot nel formato **v2**, backup del file originale al primo salvataggio successivo alla conversione; tempo, crescita frazionale, scorte, edifici e lavoratori esistenti preservati.
+- La factory `CreateGoldForBenchmarks()` resta **v7**; la nuova `CreateForgeForBenchmarks()` congela il **catalogo v8** per le prove storiche di Forgia e salvataggi.
+- Anche il validatore PowerShell ora attende `civil-growth-9` nelle verifiche industriali e di crescita accelerata, mentre i benchmark storici continuano a usare le proprie factory.
 
-## Gate e artefatti
+## Nuovi controlli xUnit preparati (non eseguiti)
 
-`validate.cmd` completo, restore online con lock, SDK **10.0.201**, Avalonia **12.1.4**, Microsoft.Data.Sqlite **10.0.14**. Build Release con **zero avvisi / zero errori**.
+**Application:** contratto A e integrità v8; primo lotto dopo la disponibilità dell'Oro del secondo precedente; capacità Monete a 997/998/999; precedenza del Carbone 90/91/100/101; assenza di pagamento monetario implicito negli acquisti ordinari; replay con salvataggio dopo 250 ms; rifiuto di checkpoint v8 con Monete preesistenti (**9 casi**).
 
-Run **`b478adfdae134725b7610d6acefee7e8`**, **258/258 test**, nessun test fallito o ignorato:
+**Infrastructure:** migrazione v8→v9 tramite SQLite con scorta Spade non nulla, popolazione, addetti, tick/frazioni, lettura senza alterare il file e backup dell'originale alla prima scrittura (**1 caso**).
 
-| Suite | Superati |
-| --- | ---: |
-| Core | 67 |
-| Application | 96 |
-| Infrastructure | 34 |
-| Desktop | 61 |
-| **Totale** | **258** |
+**Desktop:** nome, prezzi, consumi, produzione, prerequisiti, pittogrammi e messaggio di stoccaggio Monete/lotto Zecca (**1 caso**).
 
-Il gate verifica raggiungibilità dei due cataloghi, **20 cronologie più crescita accelerata**, cinque benchmark, pubblicazione e smoke nativi Windows dei due scenari: salvataggio/caricamento, ripresa della crescita, sospensione e chiusura. Salvataggi di prova separati dalle partite personali.
+**Regressione conversioni:** esteso ai checkpoint v8 un dato del test parametrizzato di conversione S1 (**1 caso**).
 
-Artefatti locali ignorati da Git:
+La v39 prevedeva **222 casi xUnit**. L'incremento aggiunge **12 casi**: **234 casi xUnit attesi nella v40**, senza conferma di compilazione o esecuzione. Il log della v38 aveva mostrato **33/53 DesktopTests falliti**, tutti per la stessa violazione del thread grafico; la correzione introdotta in v39 resta da verificare.
 
-- `.local-cache/m4/validation.json`, `mint-validation.log`, `mint-start.json`, `mint-8-hours.json` e i JSON dei cinque benchmark.
-- `.local-cache/m4/runs/b478adfdae134725b7610d6acefee7e8/test-results/`: TRX.
-- Nella stessa run, `screenshots/`: **33 PNG**, di cui **31 richiesti dal manifest** e due render del dettaglio. Il manifest include anche i sei render degli effetti case/Magazzino introdotti in v38.
+## Gate operativo
 
-## Cronologia dalla nuova partita
+Prima la suite che ha prodotto gli errori sul PC Windows:
 
-`--scenario civil-growth --strategy mint` segue il percorso civile/ferro e costruisce Miniera/Fonderia d'oro a 1.500 s, poi la Zecca con un addetto a **1.800 s**. Acquisti e assegnazioni usano i comandi reali. Il primo lotto arriva a **1.801 s**.
+```powershell
+dotnet test tests/SimRisorse.Desktop.Tests/SimRisorse.Desktop.Tests.csproj -c Release --logger "console;verbosity=normal"
+```
 
-| Misura | A 1.801 s | A 8 ore |
-| --- | ---: | ---: |
-| Monete | **3** | **999** |
-| Capacità Monete | 1.000 | 1.000 |
-| Oro | 299 | 1.000 |
-| Ferro | 700 | 1.000 |
-| Carbone | 401 | 1.000 |
-| Legno lavorato | 100 | 1.000 |
-| Pietra | 661 | 1.000 |
-| Popolazione | 41 | 48 |
+Poi, quando tutti i test Desktop passano, la validazione completa:
 
-A otto ore la Zecca è bloccata per spazio insufficiente a un lotto intero, come confermato dal validatore. Il percorso non attiva la Forgia e non è il confronto completo M5.2c, né una misura della durata della campagna o una dimostrazione di ottimalità.
+```powershell
+.\validate.cmd
+```
 
-## Compatibilità e test
+Controlli manuali suggeriti: entrambe le risoluzioni **1040×740 e 1240×850**; selezione ocra e scrollbar degli elenchi; Zecca visibile in Edifici; Monete in Risorse e incremento di capacità dopo un Magazzino; Zecca senza Oro/Carbone e con 1–2 soli posti liberi; salvataggio e ripresa di una partita civile v8 con Spade già accumulate.
 
-- Conversioni **v1–v8→v9**, con Zecca a quantità/personale zero e Monete zero. Capacità dei Magazzini posseduti applicata alle Monete.
-- SQLite reale v8→v9: conservazione di Spade frazionarie, Forgia e relativo lavoratore, scorte industriali/civili, popolazione, edifici, tempo e frazione della crescita. Caricamento in pausa senza scrittura; backup v8 prima del primo salvataggio v9, non duplicato dai successivi salvataggi.
-- Verifica conservata anche su v7, con conversione concatenata attraverso v8. Round trip SQLite di Monete frazionarie, addetto Zecca e residuo di mezzo secondo: ripresa esatta dopo altri 500 ms e nessun avanzamento in pausa.
-- Vecchi checkpoint con Monete positive o righe Zecca incompatibili rifiutati senza sostituire la partita corrente. Test di tutte le versioni precedenti v1–v8, compreso il progresso frazionario.
-- Primo lotto, costi effettivi, capienza residua 0/1/2 e riempimento esatto, ripresa dopo Magazzino, input mancanti, assenza di addetto, pause e replay interi/frazionari.
-- Contesa fra i quattro trasformatori: con 2 Carbone lavorano solo le fonderie; con 3 lavora anche Forgia; con 4 anche Zecca. Rilasciare il lavoratore della Forgia libera il Carbone scarso per la Zecca.
-
-Il caso SQLite v8 acquista realmente anche la Forgia: la dotazione sintetica dei materiali è 1.300/1.300, entro i 1.500 del Magazzino presente. I prezzi del gioco non sono stati adattati per finanziare la fixture.
-
-SQLite/snapshot restano **v2**, slot civile e S1 invariati. [ADR 0016](../adr/0016-mint-coins-and-v8-save-upgrade.md). Cataloghi v4/v5/v6/v7 conservati; `CreateForgeForBenchmarks()` fissa v8 per le verifiche di compatibilità. M5.1c e l'esperimento isolato rimangono su v7.
-
-## Interfaccia
-
-Icone originali 8×8 di Zecca/Monete. Costi, output e consumi usano il template condiviso, con diagnosi per prerequisito, Oro/Carbone, addetti e capienza. Gli effetti delle abitazioni e del Magazzino conservano font/elenco/icone richiesti in v38.
-
-Quattro render nuovi ispezionati a **1040×740 e 1240×850**: `mint-buildings[-compact].png` e `mint-resources[-compact].png`. Controllati ricetta, icone, pulsanti accessibili, scrollbar, colonne e inserimento alfabetico di Monete; nello stato sintetico a 3/1.000 la tabella mostra +3/s e stima **00:05:33**. I test verificano anche costruzione, assegnazione e prima produzione attraverso i comandi Desktop.
-
-## Prossimo incremento e limiti
-
-**M5.2c resta aperta:** confronto a fasi/parallelo nel catalogo corrente, acquisti reali, contabilità per secondo, capienze, replay e cronologia integrata dalla nuova partita. L'esperimento storico v7, eseguito in precedenza, conserva i 241/122 s nel checkpoint sintetico; non è stato rieseguito in questo incremento e non sostituisce il nuovo gate di M5.2c.
-
-Quantità per recluta e nave da scegliere in M5.3/M5.4. Altre piattaforme, DPI fisici, accessibilità e divertimento non sono coperti dal gate Windows; gli obiettivi di circa otto ore fino alla vittoria restano da misurare in M6.
+Finché non viene acquisito questo gate, M5.2b è **implementata ma non validata**. Nella successiva **v41** è stato preparato un [benchmark diagnostico M5.2c](M5_2C_COAL_BENCHMARK.md) sul catalogo già implementato, senza modifiche al gameplay; **non** rappresenta una validazione o la chiusura di M5.2c. Non introdurre ancora reclutamento o pagamento di navi; i numeri **241/122 secondi** restano stime teoriche finché il benchmark non viene eseguito.
