@@ -1,13 +1,13 @@
-# Handoff tecnico completo — SimRisorse RC14 / G1-D29-F1
+# Handoff tecnico completo — SimRisorse RC16 / G1-D31
 
-**Baseline e provenienza:** RC12 / G1-D28, con **test Windows dichiarati tutti passati dall'utente** (468 attesi). RC13 / G1-D29 ha aggiornato roadmap e audit GUI ma **non ha compilato su Windows** per 2 errori CS0136 nel tooltip Matite; test RC13 non eseguiti. RC14 corregge **solo il conflitto di nomi locali**, con **470 test attesi** ancora da validare. Non chiudere il gate visivo P0.
+**Baseline validata:** RC15 (473 test attesi, dichiarati superati dall’utente). **Candidata RC16:** +3 test Desktop, 476 attesi e non eseguiti nell’ambiente di produzione. La RC16 blocca le azioni che modificano la colonia durante «Nuova partita?», fino a Conferma o Annulla; mantiene visibilità e dettagli della GUI e preserva l’intero modello/salvataggi. Patch D30: capienza Matite nel dettaglio Edifici (Municipio/Magazzino/Scuola) e disabilitazione Pausa/Riprendi durante conferma nuova partita, come v13. Il Core v14 introduce soltanto una costante nominata per `50` posti Matite/Scuola senza modifica di formula; GUI v13, XAML, SQLite e salvataggi invariati. **Gate grafico P0 aperto; E4 sospeso.**
 
 ## Ordine di lettura
 
 1. [Stato corrente](CURRENT_STATE.md) — evidenze reali e gate.
 2. [Roadmap ufficiale in sei fasi](ROADMAP.md) — sequenza, decisioni, stop rule e risultati attesi.
 3. [Audit UI-01…UI-22](validation/G1_D29_AUDIT_GUI_V13_V14.md) e [matrice originale](validation/G1_D19_MATRICE_PARITA_GUI.md).
-4. [Piano validazione RC14](validation/G1_D29_RC14_TEST_PLAN.md), [diagnosi CS0136](design/G1_D29_RC14_FIX_CS0136.md), [piano RC13](validation/G1_D29_RC13_TEST_PLAN.md), [rapporto D29](design/G1_D29_RC13_AUDIT_E_TOOLTIP_MATITE.md), [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md).
+4. [Piano validazione RC16](validation/G1_D31_RC16_TEST_PLAN.md), [rapporto RC16](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md), [Piano validazione RC15](validation/G1_D30_RC15_TEST_PLAN.md), [report D30](design/G1_D30_RC15_PARITA_DETTAGLI_E_CONFERMA.md), [piano storico RC14](validation/G1_D29_RC14_TEST_PLAN.md), [diagnosi CS0136](design/G1_D29_RC14_FIX_CS0136.md), [piano RC13](validation/G1_D29_RC13_TEST_PLAN.md), [rapporto D29](design/G1_D29_RC13_AUDIT_E_TOOLTIP_MATITE.md), [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md).
 5. [Registro delle decisioni](AUTHORITY_REGISTRY.md), [architettura](ARCHITECTURE.md) e [contratto GUI](PIXEL_ART_UI.md).
 
 ## Vincoli funzionali da non perdere
@@ -37,8 +37,12 @@ Windows 11 + .NET SDK 10 (`global.json`: 10.0.200, rollForward latestFeature):
 .\run-game.cmd --experimental-v14
 ```
 
-Eseguire 470 test previsti RC14 e riportare log/numero reale; RC13 non è arrivata ai test perché non compilava. Poi D30: confronto visivo per ciascuna delle 22 voci con screenshot alle due risoluzioni; correggere prima gli scostamenti P0. Non iniziare E4 o navale senza gate.
+Eseguire **476 test previsti RC16** e riportare log/numero reale (RC15 già validata); RC13 non è arrivata ai test perché non compilava. Poi D30+: confronto visivo per ciascuna delle 22 voci con screenshot alle due risoluzioni; correggere prima gli scostamenti P0. Non iniziare E4 o navale senza gate.
 
 **Consegna obbligatoria a ogni incremento:** ZIP integrale, test e stato esplicito, changelog, roadmap, handoff, ADR se cambiano decisioni. Conservare snapshot originali e dati personali, senza incorporarli nello ZIP.
 
 Per il contesto dettagliato precedente, la versione G1-D28 di questo documento è in [archivio storico](history/operational/HANDOFF_G1_D28_ARCHIVE.md).
+
+[Report RC15](design/G1_D30_RC15_PARITA_DETTAGLI_E_CONFERMA.md) · [Piano RC15](validation/G1_D30_RC15_TEST_PLAN.md).
+
+**RC16 / D31:** guardia `CanMutateColony` nelle azioni mutanti dei ViewModel v14 e test di disabilitazione; il salvataggio di prova e le verifiche visuali restano pendenti. [Rapporto RC16](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](validation/G1_D31_RC16_TEST_PLAN.md).

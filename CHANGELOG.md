@@ -1,3 +1,20 @@
+## v60-E3b4-RC16 / G1-D31 — Blocco delle azioni durante «Nuova partita» (CANDIDATA, 03/11/2026)
+
+- **Gate RC15:** l'utente ha dichiarato superati i test Windows (**473 attesi**). RC16 **476 test attesi**, non compilati/eseguiti nell'ambiente di confezionamento privo di .NET 10.
+- **Difetto D31-01 (UI-20):** nella v14 la conferma «Nuova partita?» bloccava Pausa/Riprendi, ma lasciava abilitati Costruisci, Lavoratore, ricerca, Scuola, Matite ed Esercito. La v13 proteggeva le azioni di gioco durante la conferma.
+- **Soluzione:** guardia unica `CanMutateColony` su tutte le azioni mutanti, anche su comandi legacy non esposti nel layout, con `CanExecute` aggiornato, disabilitazione esplicita delle azioni che usano binding `IsEnabled` e doppia protezione in `Perform`. Conferma e annullamento rimangono utilizzabili; cancellazione della conferma ripristina i comandi senza alterare scorte. Salva/Carica conservano il comportamento della v13; flusso da riesaminare separatamente in audit UI-20/UI-21.
+- **Test:** +3 Desktop (no mutazioni/reversibilità, ricerca già acquistabile, stato visivo Avalonia); **476 attesi**. **Nessuna modifica** a GUI v13, XAML, Core, economia, SQLite, salvataggi o coefficienti. P0 grafico e E4 ancora aperti.
+- [Rapporto D31](docs/design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](docs/validation/G1_D31_RC16_TEST_PLAN.md) · [Audit UI-01…UI-22](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md).
+
+## v60-E3b4-RC15 / G1-D30 — Parità capienza Matite e conferma nuova partita (CANDIDATA, 03/11/2026)
+
+- **RC14: 470 test dichiarati superati dall’utente.** La GUI P0 resta da confrontare visivamente su Windows alle due risoluzioni previste.
+- **UI-04/UI-12:** dettagli Edifici v14 ora elencano la capienza Matite di Municipio, Magazzino e Scuola con la stessa icona e lo stesso componente delle altre risorse. Per i primi due l’importo è ricavato dallo storage di Legno lavorato, per Scuola dalla costante Core nominata; valori economici effettivi invariati.
+- **UI-20:** durante la conferma «Nuova partita» il comando Pausa/Riprendi è disabilitato come in v13 e torna disponibile alla chiusura della conferma.
+- **Test:** +3 Desktop (dettagli capacità, guardia comando, disabilitazione visuale Avalonia), **473 attesi**; non eseguibili qui senza SDK .NET 10.
+- **Ambito:** v14 presentazione e 1 costante nominata nel Core v14 senza cambiare la formula, test e documentazione. Nessun cambiamento a v13, XAML, SQLite, economie o salvataggi.
+- [Report D30](docs/design/G1_D30_RC15_PARITA_DETTAGLI_E_CONFERMA.md) · [Piano RC15](docs/validation/G1_D30_RC15_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
 # Changelog — SimRisorse
 
 ## v60-E3b4-RC14 / G1-D29-F1 — Fix compilazione tooltip Matite (CANDIDATA, 03/11/2026)

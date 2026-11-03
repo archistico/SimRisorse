@@ -108,6 +108,28 @@ public sealed class V14UiParityRegressionTests
     }
 
     [Fact]
+    public void BuildingDetailsShowPencilStorageFromActualV14CapacityRules()
+    {
+        var baseline = CivilGrowthScenario.Create();
+        var view = Fresh();
+        view.Initialize();
+        foreach (var id in new[] { "town-hall", "warehouse" })
+        {
+            var building = baseline.Catalog.BuildingsById[id];
+            var pencilCapacity = building.StoragePerBuilding!["planks"].Units;
+            var entry = view.Buildings.Single(item => item.FamilyId == id);
+            var pencil = Assert.Single(entry.CapacityLines, item => item.ResourceId == V14SchoolSupplies.ResourceId);
+            Assert.Equal($"{pencilCapacity.ToString("#,0.###", CultureInfo.GetCultureInfo("it-IT"))} Matite", pencil.Text);
+            // Keep the original v13 storage entries in the details too.
+            Assert.Contains(entry.CapacityLines, item => item.ResourceId == "planks");
+        }
+        var school = view.Buildings.Single(item => item.Kind == V14BuildingKind.School);
+        Assert.Contains(school.CapacityLines, item => item.ResourceId == "population");
+        Assert.Contains(school.CapacityLines, item => item.ResourceId == V14SchoolSupplies.ResourceId &&
+            item.Text == $"{V14SchoolSupplies.SchoolPencilStorage} Matite");
+    }
+
+    [Fact]
     public void V14FirstAdvancedArrivalShowsTheSameDetailedBreadWarningAsV13()
     {
         var baseline = CivilGrowthScenario.Create();
@@ -433,6 +455,164 @@ public sealed class V14UiParityRegressionTests
         view.CancelNewGameCommand.Execute(null);
         Assert.False(view.IsNewGameConfirmationVisible);
         Assert.False(File.Exists(view.DatabasePath));
+    }
+
+    [Fact]
+    public void NewGameConfirmationKeepsPauseDisabledUntilResolved()
+    {
+        var view = Fresh();
+        view.Initialize();
+        Assert.True(view.TogglePauseCommand.CanExecute(null));
+        view.TogglePauseCommand.Execute(null);
+        Assert.False(view.IsPaused);
+        view.NewGameCommand.Execute(null);
+        Assert.True(view.IsNewGameConfirmationVisible);
+        Assert.True(view.IsPaused);
+        Assert.False(view.TogglePauseCommand.CanExecute(null));
+        view.TogglePauseCommand.Execute(null);
+        Assert.True(view.IsPaused); // A direct command invocation cannot resume during confirmation.
+        view.CancelNewGameCommand.Execute(null);
+        Assert.False(view.IsNewGameConfirmationVisible);
+        Assert.True(view.TogglePauseCommand.CanExecute(null));
+        view.TogglePauseCommand.Execute(null);
+        Assert.False(view.IsPaused);
+    }
+
+    [Fact]
+    public void PendingNewGameDisablesColonyCommandsAndPreservesResourcesUntilResolution()
+    {
+        var view = Fresh();
+        view.Initialize();
+        view.SelectedBuilding = view.Buildings.Single(item => item.FamilyId == "sawmill" &&
+            item.Tier == ProductionTier.Base);
+        var selected = view.SelectedBuilding;
+        var initialCount = selected!.Count;
+        var resourcesBefore = view.Resources.Select(item => (item.Id, item.Quantity)).ToArray();
+        Assert.True(view.BuildSelectedCommand.CanExecute(null));
+        Assert.True(view.BuildSchoolCommand.CanExecute(null));
+        Assert.True(view.BuildProducerCommand.CanExecute(null));
+        Assert.True(view.BuildCivicCommand.CanExecute(null));
+
+        view.NewGameCommand.Execute(null);
+        Assert.True(view.IsNewGameConfirmationVisible);
+        Assert.True(view.IsPaused);
+        var blockedCommands = new[]
+        {
+            view.BuildSelectedCommand, view.BuildFiveCommand, view.BuildTenCommand,
+            view.AssignSelectedWorkerCommand, view.AssignFiveSelectedWorkersCommand,
+            view.AssignTenSelectedWorkersCommand, view.ReleaseSelectedWorkerCommand,
+            view.UpgradeSelectedCommand, view.UpgradeSelectedToAdvancedCommand,
+            view.BuildSchoolCommand, view.BuildProducerCommand, view.UpgradeProducerCommand,
+            view.AssignWorkerCommand, view.ReleaseWorkerCommand, view.BuildCivicCommand,
+            view.EnrollCommand, view.CancelStudentCommand, view.CraftPencilsCommand,
+            view.AssignResearcherCommand, view.UnassignResearcherCommand,
+            view.ReturnResearcherCommand, view.BuyTechnologyCommand,
+            view.EnlistCommand, view.CancelRecruitsCommand, view.DischargeCommand
+        };
+        Assert.All(blockedCommands, command => Assert.False(command.CanExecute(null)));
+        // Executing an ICommand directly must also be harmless while confirmation is visible.
+        view.BuildSelectedCommand.Execute(null);
+        view.BuildProducerCommand.Execute(null);
+        view.BuildSchoolCommand.Execute(null);
+        Assert.Same(selected, view.SelectedBuilding);
+        Assert.Equal(initialCount, selected.Count);
+        Assert.Equal(resourcesBefore, view.Resources.Select(item => (item.Id, item.Quantity)).ToArray());
+
+        view.CancelNewGameCommand.Execute(null);
+        Assert.False(view.IsNewGameConfirmationVisible);
+        Assert.True(view.BuildSelectedCommand.CanExecute(null));
+        Assert.True(view.BuildSchoolCommand.CanExecute(null));
+        Assert.True(view.BuildProducerCommand.CanExecute(null));
+        view.BuildSelectedCommand.Execute(null);
+        Assert.Equal(initialCount + 1, selected.Count);
+    }
+
+    [Fact]
+    public void PendingNewGameBlocksAffordableResearchAndRestoresPurchaseAfterCancel()
+    {
+        var baseline = CivilGrowthScenario.Create();
+        var school = new SchoolResearchRules("food", ResourceAmount.FromUnits(10m),
+            120, 1, 2, 100, pencilsPerStudent: 2);
+        var catalog = TechnologyCatalog.ProposedTierTree;
+        var initial = V14CampaignSession.FromV13(baseline, GameSession.Create(baseline).Snapshot(),
+            school, catalog, V14SchoolConstructionRules.Candidate).Snapshot();
+        var folder = Path.Combine(Path.GetTempPath(),
+            "SimRisorse.UI.PendingResearch." + Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(folder, "preview-v14.sqlite3");
+        try
+        {
+            var store = new V14SqliteSaveStore(path, baseline, school, catalog);
+            store.Save(initial with { ResearchBalanceMilliPoints = 100_000L });
+            var view = new V14PreviewViewModel(baseline, store, school, catalog);
+            view.Initialize();
+            var technology = view.Technologies.Single(item => item.Id == "lavorazioni-1");
+            view.SelectedTechnology = technology;
+            Assert.Equal("Acquistabile", technology.Status);
+            Assert.True(view.BuyTechnologyCommand.CanExecute(null));
+            view.NewGameCommand.Execute(null);
+            Assert.False(view.CanBuySelectedTechnology);
+            Assert.False(view.BuyTechnologyCommand.CanExecute(null));
+            view.BuyTechnologyCommand.Execute(null);
+            Assert.Equal("Acquistabile", technology.Status);
+            Assert.Equal("100,00 punti", view.ResearchBalance);
+            view.CancelNewGameCommand.Execute(null);
+            Assert.True(view.CanBuySelectedTechnology);
+            Assert.True(view.BuyTechnologyCommand.CanExecute(null));
+            view.BuyTechnologyCommand.Execute(null);
+            Assert.Equal("Acquistata", technology.Status);
+            Assert.Equal("0,00 punti", view.ResearchBalance);
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true); }
+    }
+
+    [AvaloniaFact]
+    public void PendingNewGameVisiblyDisablesBuildWithoutHidingDetailsAndRestoresOnCancel()
+    {
+        var view = Fresh();
+        var window = new V14PreviewWindow(view, startTimer: false);
+        try
+        {
+            window.Show();
+            view.SelectedBuilding = view.Buildings.Single(item => item.FamilyId == "sawmill" &&
+                item.Tier == ProductionTier.Base);
+            Dispatcher.UIThread.RunJobs();
+            var build = window.FindControl<Button>("V14BuildSelected")!;
+            var pause = window.FindControl<Button>("V14PauseButton")!;
+            Assert.True(build.IsEffectivelyVisible);
+            Assert.True(build.IsEffectivelyEnabled);
+            view.NewGameCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(build.IsEffectivelyVisible);
+            Assert.False(build.IsEffectivelyEnabled);
+            Assert.False(pause.IsEffectivelyEnabled);
+            view.CancelNewGameCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(build.IsEffectivelyVisible);
+            Assert.True(build.IsEffectivelyEnabled);
+            Assert.True(pause.IsEffectivelyEnabled);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public void PauseButtonVisuallyDisablesDuringNewGameConfirmation()
+    {
+        var view = Fresh();
+        var window = new V14PreviewWindow(view, startTimer: false);
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var pause = window.FindControl<Button>("V14PauseButton")!;
+            Assert.True(pause.IsEffectivelyEnabled);
+            view.NewGameCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(pause.IsEffectivelyEnabled);
+            view.CancelNewGameCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(pause.IsEffectivelyEnabled);
+        }
+        finally { window.CloseWithoutSaving(); }
     }
 
     [AvaloniaFact]

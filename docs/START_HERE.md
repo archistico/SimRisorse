@@ -1,14 +1,15 @@
-# Inizia qui — SimRisorse RC14 / G1-D29-F1
+# Inizia qui — SimRisorse RC16 / G1-D31
 
-**Ultima suite confermata dall'utente:** RC12, tutti i test passati (**468 attesi**). **RC14** include roadmap in sei fasi, audit GUI iniziale e correzione tooltip Matite; **470 test attesi, da provare**. P0 visivo ancora aperto.
+**Baseline con test confermati:** RC15, **473 test attesi** dichiarati superati dall'utente. **Nuova RC16 candidata:** **476 test attesi**; la compilazione e xUnit non sono stati eseguiti nell'ambiente di confezionamento. Il gate grafico P0 è ancora aperto.
 
-1. [Stato e validazioni](CURRENT_STATE.md)
-2. [Roadmap ufficiale](ROADMAP.md)
-3. [Handoff completo](HANDOFF.md) / [Prompt per nuova chat](NEW_CHAT_HANDOFF.md)
-4. [Audit GUI v13/v14](validation/G1_D29_AUDIT_GUI_V13_V14.md) e [piano RC14](validation/G1_D29_RC14_TEST_PLAN.md)
-5. [Decisioni vincolanti](AUTHORITY_REGISTRY.md) e [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md)
+1. [Stato e verifiche](CURRENT_STATE.md)
+2. [Roadmap approvata in sei fasi](ROADMAP.md)
+3. [Handoff](HANDOFF.md) e [prompt per nuova chat](NEW_CHAT_HANDOFF.md)
+4. [Audit UI-01…UI-22](validation/G1_D29_AUDIT_GUI_V13_V14.md)
+5. [Report e test RC16](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano Windows](validation/G1_D31_RC16_TEST_PLAN.md)
+6. [Decisioni](AUTHORITY_REGISTRY.md) e [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md)
 
-Windows 11 con .NET SDK 10:
+Da Windows 11 con SDK .NET 10, su cartella nuova e con backup dei salvataggi:
 
 ```powershell
 .\validate.cmd
@@ -16,6 +17,4 @@ Windows 11 con .NET SDK 10:
 .\run-game.cmd --experimental-v14
 ```
 
-Non sovrascrivere database reali; usare cartelle nuove e backup prima delle prove. [Documentazione](README.md) · [Root README](../README.md).
-
-La **RC13 non compilava su Windows** per 2 CS0136; la RC14 contiene solo il fix dei nomi. [Piano di validazione RC14](validation/G1_D29_RC14_TEST_PLAN.md).
+Non sovrascrivere un database personale. [Documentazione](README.md) · [README generale](../README.md).

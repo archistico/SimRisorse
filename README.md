@@ -1,6 +1,8 @@
-# SimRisorse
+# SimRisorse — RC16 / G1-D31
 
-**RC14 / G1-D29-F1 (03/11/2026):** RC12 dichiarata verde dall’utente (**468 test attesi**). Avviata la roadmap in [sei fasi](docs/ROADMAP.md); RC13 ha introdotto la correzione del tooltip della capacità **Matite** in base agli edifici realmente posseduti, e aggiunge 2 test (**470 attesi**); RC13 non compilava per 2 errori CS0136, **corretti in RC14** rinominando due variabili locali. RC14 da compilare e testare. La **parità grafica P0 v13/v14 non è approvata**; E4 e navale restano sospesi. [Audit D29](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Piano test RC14](docs/validation/G1_D29_RC14_TEST_PLAN.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
+**Ultimo checkpoint Windows confermato:** RC15, 473 test attesi dichiarati passati. **Candidata RC16:** 476 test attesi, da eseguire su Windows. D31 blocca durante la conferma «Nuova partita?» tutte le azioni che possono modificare la colonia (Edifici, Scuola/Matite, Esercito e ricerca), oltre al pulsante Pausa/Riprendi già corretto in RC15. Gate grafico P0 ancora aperto, senza E4 o navale. [Rapporto RC16](docs/design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](docs/validation/G1_D31_RC16_TEST_PLAN.md).
+
+**Storico RC14 / G1-D29-F1 (03/11/2026):** RC12 era già stata dichiarata verde (**468 test attesi**). Avviata la roadmap in [sei fasi](docs/ROADMAP.md); RC13 ha introdotto la correzione del tooltip della capacità **Matite** in base agli edifici realmente posseduti, e aggiunge 2 test (**470 attesi**); RC13 non compilava per 2 errori CS0136, **corretti in RC14** rinominando due variabili locali. RC14 testata: 470 dichiarati passati; RC15 ora con test dichiarati passati; RC16 da compilare e testare. La **parità grafica P0 v13/v14 non è approvata**; E4 e navale restano sospesi. [Audit D29](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Piano test RC14](docs/validation/G1_D29_RC14_TEST_PLAN.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
 
 Gioco gestionale di risorse e popolazione in **C# / .NET 10**, interfaccia desktop **Avalonia 12** in stile pixel art retro 8-bit, persistenza **SQLite**, test **xUnit**.
 
@@ -9,7 +11,7 @@ Gioco gestionale di risorse e popolazione in **C# / .NET 10**, interfaccia deskt
 | Modalità | Comando | Stato | Salvataggi |
 | --- | --- | --- | --- |
 | **Gioco normale (`civil-growth-13`)** | `./run-game.cmd` | Campagna storica funzionante, da preservare | SQLite v2, profilo normale |
-| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC14 candidata** (fix compilazione tooltip Matite; roadmap/audit RC13 invariati), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
+| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC16 candidata** (azioni di gioco bloccate durante conferma nuova partita; RC15 validata), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
 
 ## Come avviare e validare
 

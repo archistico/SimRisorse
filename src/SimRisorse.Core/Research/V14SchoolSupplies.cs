@@ -13,6 +13,7 @@ public static class V14SchoolSupplies
 {
     public const string ResourceId = "pencils";
     public const int PencilsPerBatch = 4;
+    public const int SchoolPencilStorage = 50;
     public static ResourceBundle Inputs(int batches) => ResourceBundle.Create(
         ("planks", batches), ("coal", batches));
     public static ResourceBundle Output(int batches) => ResourceBundle.Create(
@@ -30,7 +31,7 @@ public static class V14SchoolSupplies
             var perBuilding = baseline.Catalog.BuildingsById[building.BuildingId].StoragePerBuilding;
             initial = checked(initial + building.Count * ((perBuilding is null ? 0m : perBuilding["planks"].Units)));
         }
-        return ResourceAmount.FromUnits(checked(initial + 50m * snapshot.SchoolCount));
+        return ResourceAmount.FromUnits(checked(initial + (decimal)SchoolPencilStorage * snapshot.SchoolCount));
     }
 }
 

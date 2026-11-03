@@ -237,6 +237,7 @@ public sealed partial class V14PreviewViewModel
         ];
         foreach (var name in properties) Notify(name);
         EnlistCommand.Refresh(); CancelRecruitsCommand.Refresh(); DischargeCommand.Refresh();
+        TogglePauseCommand.Refresh();
         NewGameCommand.Refresh(); ConfirmNewGameCommand.Refresh(); CancelNewGameCommand.Refresh();
     }
 }

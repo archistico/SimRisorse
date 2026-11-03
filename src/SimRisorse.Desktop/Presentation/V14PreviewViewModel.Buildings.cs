@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Research;
 using SimRisorse.Core.Sessions;
 
 namespace SimRisorse.Desktop.Presentation;
@@ -76,7 +77,7 @@ public sealed partial class V14PreviewViewModel
     public bool CanAssignSelectedFive => CanAssignSelectedQuantity(5);
     public bool CanAssignSelectedTen => CanAssignSelectedQuantity(10);
 
-    private bool CanAssignSelectedQuantity(int quantity) => quantity > 0 &&
+    private bool CanAssignSelectedQuantity(int quantity) => CanMutateColony && quantity > 0 &&
         SelectedBuilding is { Kind: V14BuildingKind.Producer, Tier: { }, Count: > 0 } selected &&
         (long)selected.Count * selected.Workplaces - selected.Workers >= quantity &&
         AvailablePopulation >= quantity;
@@ -89,9 +90,9 @@ public sealed partial class V14PreviewViewModel
     public bool ShowUpgradeDirectlyToAdvanced => SelectedBuilding is
         { Kind: V14BuildingKind.Producer, Tier: ProductionTier.Base, Count: > 0 } selected &&
         IsUpgradeUnlocked(selected, ProductionTier.Advanced);
-    public bool CanUpgradeNext => ShowUpgradeNext && CanUpgrade(SelectedBuilding!,
+    public bool CanUpgradeNext => CanMutateColony && ShowUpgradeNext && CanUpgrade(SelectedBuilding!,
         SelectedBuilding!.Tier == ProductionTier.Base ? ProductionTier.Large : ProductionTier.Advanced);
-    public bool CanUpgradeDirectlyToAdvanced => ShowUpgradeDirectlyToAdvanced &&
+    public bool CanUpgradeDirectlyToAdvanced => CanMutateColony && ShowUpgradeDirectlyToAdvanced &&
         CanUpgrade(SelectedBuilding!, ProductionTier.Advanced);
 
     private bool IsUpgradeUnlocked(V14BuildingEntry selected, ProductionTier destination) =>
@@ -138,7 +139,7 @@ public sealed partial class V14PreviewViewModel
     private bool CanBuildQuantity(int quantity)
     {
         var selected = SelectedBuilding;
-        if (selected is not { IsUnlocked: true } || selected.Kind == V14BuildingKind.Fixed || quantity <= 0)
+        if (!CanMutateColony || selected is not { IsUnlocked: true } || selected.Kind == V14BuildingKind.Fixed || quantity <= 0)
             return false;
         try { return _session.Snapshot().Resources.Covers(QuoteBuild(selected, quantity)); }
         catch (Exception exception) when (exception is OverflowException or ArgumentOutOfRangeException)
@@ -244,6 +245,15 @@ public sealed partial class V14PreviewViewModel
             {
                 var output = Array.Empty<ResourceDetailLine>();
                 var storage = ResourceLines(building.StoragePerBuilding ?? ResourceBundle.Empty);
+                if (building.Id is "town-hall" or "warehouse")
+                {
+                    // Matite follow the same per-building capacity as Legno lavorato.
+                    // This v14-only line mirrors V14SchoolSupplies without changing v13.
+                    var pencilStorage = (building.StoragePerBuilding ?? ResourceBundle.Empty)["planks"].Units;
+                    if (pencilStorage > 0m)
+                        storage = storage.Append(new ResourceDetailLine(V14SchoolSupplies.ResourceId,
+                            $"{pencilStorage.ToString("#,0.###", Italian)} Matite")).ToArray();
+                }
                 if (building.HousingPerBuilding > 0)
                     storage = storage.Append(new ResourceDetailLine("population",
                         $"{building.HousingPerBuilding} posti abitativi")).ToArray();
@@ -259,7 +269,10 @@ public sealed partial class V14PreviewViewModel
         Buildings.Add(new V14BuildingEntry(V14CampaignSnapshots.SchoolId, V14BuildingKind.School,
             null, "Scuola", "school", 0,
             "Forma gli abitanti in ricercatori. I punti ricerca si accumulano liberamente e si spendono quando vuoi.",
-            [], [], [new ResourceDetailLine("population", "1 posto formazione e 2 posti ricercatori per Scuola")]));
+            [], [],
+            [new ResourceDetailLine("population", "1 posto formazione e 2 posti ricercatori per Scuola"),
+             new ResourceDetailLine(V14SchoolSupplies.ResourceId,
+                 $"{V14SchoolSupplies.SchoolPencilStorage} Matite")]));
         // The old game uses a single alphabetical catalog; tiers remain adjacent.
         var sorted = Buildings.OrderBy(item => _baseline.Catalog.BuildingsById.TryGetValue(item.FamilyId, out var definition) ? definition.Name : item.Name, StringComparer.Ordinal)
             .ThenBy(item => item.Tier is null ? -1 : (int)item.Tier.Value).ToArray();
@@ -280,7 +293,7 @@ public sealed partial class V14PreviewViewModel
             if (selected is { Kind: V14BuildingKind.Producer, Tier: { } tier })
                 Perform(() => _session.ReleaseProducerWorkers(selected.FamilyId, tier, 1).ToString(),
                     "Lavoratore liberato.");
-        }, () => SelectedBuilding is { Kind: V14BuildingKind.Producer, Workers: > 0 });
+        }, () => CanMutateColony && SelectedBuilding is { Kind: V14BuildingKind.Producer, Workers: > 0 });
         UpgradeSelectedCommand = new UiCommand(() => UpgradeSelected(
             SelectedBuilding?.Tier == ProductionTier.Base ? ProductionTier.Large : ProductionTier.Advanced),
             () => CanUpgradeNext);

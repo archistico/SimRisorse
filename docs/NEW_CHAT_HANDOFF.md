@@ -1,15 +1,17 @@
-# Nuova chat — SimRisorse RC14 / G1-D29-F1
+# Nuova chat — SimRisorse RC16 / G1-D31
 
-**Allegare lo ZIP integrale RC14** e leggere, nell'ordine: [CURRENT_STATE](CURRENT_STATE.md), [ROADMAP](ROADMAP.md), [HANDOFF](HANDOFF.md), [audit UI](validation/G1_D29_AUDIT_GUI_V13_V14.md) e [piano test RC14](validation/G1_D29_RC14_TEST_PLAN.md).
+**Allegare il progetto integrale RC16.** Leggere nell'ordine: [CURRENT_STATE](CURRENT_STATE.md), [ROADMAP](ROADMAP.md), [HANDOFF](HANDOFF.md), [audit UI-01…UI-22](validation/G1_D29_AUDIT_GUI_V13_V14.md), [piano RC16](validation/G1_D31_RC16_TEST_PLAN.md) e [rapporto D31](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md).
 
 ## Prompt di ripresa
 
-> Continua SimRisorse da **RC14 / G1-D29-F1**. La RC12 è la **ultima versione con test dichiarati passati dall'utente** (468 attesi). La RC13 ha introdotto roadmap in sei fasi, audit UI-01…UI-22 e correzione tooltip Matite con 2 test aggiunti, ma la sua build Windows **è fallita per 2 CS0136** (`owned`, `free` in `V14PreviewViewModel.Parity.cs`): nessun test RC13 eseguito. La RC14 rinomina soltanto i due identificatori locali nel ramo Matite, mantenendo invariato il comportamento. **470 test attesi in RC14, da eseguire su Windows**; non dichiarare green prima del log. La GUI P0 non è approvata.
+> Continua SimRisorse dal checkpoint **RC16 / G1-D31**. **RC15 è l’ultimo gate Windows dichiarato superato (473 test attesi)**. RC16 aggiunge **3 test Desktop (476 attesi)**, non ancora compilati o eseguiti in Linux per assenza .NET SDK 10. Non dichiarare RC16 verde finché l’utente non conferma `./validate.cmd`.
 >
-> **Priorità P0:** completare parità GUI classica v13 / v14 con verifica visuale 1040×740 e 1240×850 e test, correggere difetti reali; poi Scuola/tecnologie, E4a audit numerico, E4b bilanciamento approvato, E4c migrazione con backup, solo infine M5.4–M7 navale.
+> **Correzione RC16:** durante la finestra «Nuova partita?» la v14 lasciava attivi comandi mutanti eccetto Pausa. Ora la proprietà `CanMutateColony` blocca costruzioni, personale, upgrade, Scuola, Matite, Esercito e acquisto ricerca; la visibilità dei dettagli rimane invariata. «Annulla» ripristina la possibilità di giocare. Il comportamento Salva/Carica durante tale conferma è una **questione aperta UI-20/UI-21**.
 >
-> Preservare GUI v13, Risorse a sette colonne, Edifici Base/Grande/Avanzato separati, pulsanti Costruisci +1/+5/+10 e Lavoratore −1/+1/+5/+10, Esercito completo, Scuola e Matite (minimo 2/studente), acquisti tecnologia con guard esatta; SQLite v2/v3 separati. Niente redesign, niente nuove meccaniche o approvazione implicita dei numeri economici.
+> La roadmap approvata resta in **sei fasi**: 1) parità GUI v13/v14 e audit UI-01…UI-22; 2) Scuola/tecnologie; 3) E4a benchmark economia; 4) E4b bilanciamento con approvazione; 5) E4c migrazione v14 non distruttiva; 6) M5.4–M7 navi, esplorazione separata dalla conquista e completamento. Il **gate P0 grafico è aperto**, necessita controllo Windows 1040×740 / 1240×850; niente E4/navale anticipati.
 >
-> **A ogni avanzamento:** ZIP completo di progetto/codice/test, roadmap, changelog, handoff, piano validazione; non inventare esiti xUnit.
+> Preservare GUI v13, SQLite v2/v3 separati, tabella Risorse 7 colonne, Edifici Base/Grande/Avanzato come righe selezionabili anche se bloccate, Costruisci +1/+5/+10, Lavoratore −1/+1/+5/+10, Esercito, Scuola e 2 Matite/studente, ricerca con due decimali e verifiche reali. Nessun redesign involontario o cambio dei costi/tempi.
+>
+> Ogni versione: ZIP integrale, test, changelog, roadmap, handoff, piano Windows, ADR se servono nuove scelte. Non includere DB personali. Registrare separatamente test statici vs test .NET e risultato visivo reale.
 
-[Fix CS0136 RC14](design/G1_D29_RC14_FIX_CS0136.md) · [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md) · [Registro decisioni](AUTHORITY_REGISTRY.md) · [Report D29](design/G1_D29_RC13_AUDIT_E_TOOLTIP_MATITE.md).
+[Stato corrente](CURRENT_STATE.md) · [Audit G1-D31](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Roadmap](ROADMAP.md).

@@ -1,6 +1,6 @@
-# SimRisorse — Roadmap operativa dopo RC12
+# SimRisorse — Roadmap operativa RC16 / G1-D31
 
-**Baseline di lavoro:** RC12 / G1-D28, suite Windows confermata superata dall'utente il 03/11/2026 (**468 test previsti**, conteggio TRX non fornito). **Candidata corrente:** RC14 / G1-D29-F1 (fix build RC13: 2 errori CS0136 nel tooltip Matite). RC13 non ha compilato su Windows; i suoi 470 test attesi non sono stati eseguiti. **Il gate grafico P0 rimane aperto.**
+**Baseline validata su Windows:** **RC15 / G1-D30, 473 test attesi dichiarati superati dall’utente il 03/11/2026** (TRX non allegato). **Candidata corrente:** RC16 / G1-D31, 476 test attesi, non eseguiti nell’ambiente di confezionamento. **Gate grafico P0 ancora aperto.**
 
 **Principio approvato:** consolidare e validare la GUI prima di nuove funzioni; analizzare l'economia prima di modificare i coefficienti; avviare navale/esplorazione soltanto dopo il consolidamento della campagna. La v13 resta una baseline intangibile quanto a funzionalità e salvataggi.
 
@@ -25,11 +25,15 @@
 2. Confrontare `MainWindow.axaml`/`MainViewModel.cs` con `V14PreviewWindow.axaml`/`V14PreviewViewModel*.cs` e test headless; conservare una [matrice d'audit osservabile](validation/G1_D29_AUDIT_GUI_V13_V14.md).
 3. Classificare le 22 voci UI-01…UI-22 in **copertura automatica**, **evidenza solo statica**, **controllo visivo ancora aperto**, **difetto identificato**.
 4. Correggere **solo** difetti circoscritti e dimostrabili con test. In RC13: capacità Matite nel tooltip, realmente scomposta per edifici posseduti e spazio libero; nessun redesign, niente nuove regole.
-5. Eseguire controlli statici locali, chiedere conferma della suite Windows per la nuova candidata; non dichiarare green test che non sono stati eseguiti. **RC13 ha fallito la compilazione per CS0136; RC14 corregge soltanto i nomi locali. Convalidare RC14 prima di proseguire D30.**
+5. Eseguire controlli statici locali, chiedere conferma della suite Windows per la nuova candidata; non dichiarare green test che non sono stati eseguiti. **Storico:** RC13 fallì la compilazione per CS0136; RC14 ha corretto i nomi locali ed è stata dichiarata validata dall’utente (470 test). D30 è avviato con RC15 candidata.
 
 **Uscita D29:** roadmap aggiornata + rapporto di audit iniziale + correzioni e test circoscritti + ZIP integrale. D29 **non** chiude P0 grafico.
 
 ### D30+ — Chiusura P0 visiva e funzionale
+
+**Avanzamento D30 / RC15, ora con test dichiarati passati:** corretti due scostamenti documentati: il dettaglio Edifici indica ora la capienza Matite per Municipio/Magazzino/Scuola e la conferma di nuova partita blocca Pausa/Riprendi come v13. Tre nuovi test Desktop (473 attesi). Non è un gate P0 completato: restano screenshot e confronto a due risoluzioni. [Rapporto](design/G1_D30_RC15_PARITA_DETTAGLI_E_CONFERMA.md) · [Piano test](validation/G1_D30_RC15_TEST_PLAN.md).
+
+**Avanzamento D31 / RC16:** rilevata la possibilità di modificare la colonia durante la conferma «Nuova partita?». Aggiunta una guardia comune a costruzione, personale, Esercito, Scuola, Matite e acquisti ricerca; +3 test Desktop, 476 attesi. Il layout resta invariato. Il flusso Salva/Carica durante la conferma è un controllo aperto UI-20/21, non una funzione convalidata. [Rapporto](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano](validation/G1_D31_RC16_TEST_PLAN.md).
 
 - **Risorse:** sette colonne esatte, ordinamento italiano, quantità arrotondate, tooltip di capacità reale (compreso Pane e Matite), produzione/consumo/saldo, riempimento `hh:mm:ss`, scrollbar non sovrapposta.
 - **Edifici:** Base/Grande/Avanzato elencati separatamente; bloccati grigi ma selezionabili; costo/prerequisiti/diagnostica; `Costruisci +1/+5/+10` sulla prima riga e `Lavoratore −1/+1/+5/+10` sulla seconda; hover ocra immobile e disabled grigio; upgrade distinto e lotti cumulativi.

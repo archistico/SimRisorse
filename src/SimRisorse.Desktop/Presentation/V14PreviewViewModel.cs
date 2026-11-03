@@ -35,6 +35,9 @@ public sealed partial class V14PreviewViewModel : ObservableObject
     private bool _initialized;
     private bool _saveAllowed = true;
     private bool _newGameConfirmation;
+    // Match the classic GUI: a pending new-game confirmation blocks colony mutations.
+    // This is a presentation gate; the save store and simulation rules are unchanged.
+    private bool CanMutateColony => !_newGameConfirmation;
 
     public V14PreviewViewModel(GameScenario baseline, V14SqliteSaveStore store,
         SchoolResearchRules schoolRules, TechnologyCatalog technologies)
@@ -62,68 +65,72 @@ public sealed partial class V14PreviewViewModel : ObservableObject
             .OrderBy(item => item.Name, StringComparer.Ordinal)
             .Select(item => new V14CivicChoice(item.Id, item.Name)));
         _selectedCivic = Civics.FirstOrDefault();
-        TogglePauseCommand = new(() => { if (_session.IsPaused) _session.Resume(); else _session.Pause(); Refresh(); });
-        BuildSchoolCommand = new(() => Perform(() => _session.BuildSchool(1).Failure.ToString(), "Scuola costruita."));
+        // Match the classic window: a pending new-game confirmation holds the
+        // simulation paused until the player confirms or cancels.
+        TogglePauseCommand = new(() => { if (_session.IsPaused) _session.Resume(); else _session.Pause(); Refresh(); },
+            () => !_newGameConfirmation);
+        BuildSchoolCommand = new(() => Perform(() => _session.BuildSchool(1).Failure.ToString(), "Scuola costruita."),
+            () => CanMutateColony);
         EnrollCommand = new(() => Perform(() => _session.EnrollStudents(SchoolQuantity).ToString(), "Studenti iscritti."),
-            () => SchoolCount > 0 && AvailablePopulation >= SchoolQuantity && SchoolCanAffordEnrollment);
+            () => CanMutateColony && SchoolCount > 0 && AvailablePopulation >= SchoolQuantity && SchoolCanAffordEnrollment);
         CancelStudentCommand = new(() => Perform(() => _session.CancelStudents(SchoolQuantity).ToString(), "Formazione annullata; materiali restituiti."),
-            () => SchoolCancellable >= SchoolQuantity && SchoolCanRefund);
+            () => CanMutateColony && SchoolCancellable >= SchoolQuantity && SchoolCanRefund);
         AssignResearcherCommand = new(() => Perform(() => _session.AssignResearchers(SchoolQuantity).ToString(), "Ricercatori assegnati."),
-            () => SchoolAvailableResearchers >= SchoolQuantity && SchoolFreeResearchPlaces >= SchoolQuantity);
+            () => CanMutateColony && SchoolAvailableResearchers >= SchoolQuantity && SchoolFreeResearchPlaces >= SchoolQuantity);
         UnassignResearcherCommand = new(() => Perform(() => _session.UnassignResearchers(SchoolQuantity).ToString(), "Ricercatori sospesi."),
-            () => ActiveResearchers >= SchoolQuantity);
+            () => CanMutateColony && ActiveResearchers >= SchoolQuantity);
         ReturnResearcherCommand = new(() => Perform(() => _session.ReturnResearchersToCivilian(SchoolQuantity).ToString(), "Ricercatori tornati civili."),
-            () => SchoolAvailableResearchers >= SchoolQuantity);
+            () => CanMutateColony && SchoolAvailableResearchers >= SchoolQuantity);
         CraftPencilsCommand = new(() => Perform(() => _session.CraftPencils(SchoolQuantity).ToString(), "Matite prodotte e depositate."),
-            () => SchoolCanCraft);
+            () => CanMutateColony && SchoolCanCraft);
         BuyTechnologyCommand = new(() =>
         {
             var selected = SelectedTechnology;
             if (selected is not null)
                 Perform(() => _session.BuyTechnology(selected.Id).ToString(),
                     $"Ricerca {selected.Name} acquistata.");
-        }, () => CanBuySelectedTechnology);
+        }, () => CanMutateColony && CanBuySelectedTechnology);
         BuildProducerCommand = new(() =>
         {
             var selected = SelectedProducer;
             if (selected is not null)
                 Perform(() => _session.BuildProducer(selected.Id, BuildTier.Tier, 1).Failure.ToString(),
                     "Edificio produttivo costruito.");
-        }, () => SelectedProducer is not null);
+        }, () => CanMutateColony && SelectedProducer is not null);
         UpgradeProducerCommand = new(() =>
         {
             var selected = SelectedProducer;
             if (selected is not null)
                 Perform(() => _session.UpgradeProducer(selected.Id, UpgradeFrom.Tier,
                     UpgradeTo.Tier).Failure.ToString(), "Edificio potenziato.");
-        }, () => SelectedProducer is not null);
+        }, () => CanMutateColony && SelectedProducer is not null);
         AssignWorkerCommand = new(() =>
         {
             var selected = SelectedProducer;
             if (selected is not null)
                 Perform(() => _session.AssignProducerWorkers(selected.Id, BuildTier.Tier, 1).ToString(),
                     "Lavoratore assegnato.");
-        }, () => SelectedProducer is not null);
+        }, () => CanMutateColony && SelectedProducer is not null);
         ReleaseWorkerCommand = new(() =>
         {
             var selected = SelectedProducer;
             if (selected is not null)
                 Perform(() => _session.ReleaseProducerWorkers(selected.Id, BuildTier.Tier, 1).ToString(),
                     "Lavoratore liberato.");
-        }, () => SelectedProducer is not null);
+        }, () => CanMutateColony && SelectedProducer is not null);
         BuildCivicCommand = new(() =>
         {
             var selected = SelectedCivic;
             if (selected is not null)
                 Perform(() => _session.BuildCivicBuilding(selected.Id, 1).Failure.ToString(),
                     "Edificio civile costruito.");
-        }, () => SelectedCivic is not null);
+        }, () => CanMutateColony && SelectedCivic is not null);
         EnlistCommand = new(() => Perform(() => _session.Enlist(MilitaryQuantity).Error.ToString(), "Reclute arruolate."),
-            () => MilitaryBarracks > 0 && AvailablePopulation >= MilitaryQuantity && AvailableSwords >= MilitarySwordCost);
+            () => CanMutateColony && MilitaryBarracks > 0 && AvailablePopulation >= MilitaryQuantity && AvailableSwords >= MilitarySwordCost);
         CancelRecruitsCommand = new(() => Perform(() => _session.CancelRecruits(MilitaryQuantity).Error.ToString(), "Reclute annullate; Spade restituite."),
-            () => MilitaryCancellable >= MilitaryQuantity && FreeSwordStorage >= MilitarySwordCost);
+            () => CanMutateColony && MilitaryCancellable >= MilitaryQuantity && FreeSwordStorage >= MilitarySwordCost);
         DischargeCommand = new(() => Perform(() => _session.DischargeSoldiers(MilitaryQuantity).Error.ToString(), "Soldati congedati."),
-            () => _baseline.MilitaryRules is { IndividualTraining: false } && AvailableSoldiers >= MilitaryQuantity);
+            () => CanMutateColony && _baseline.MilitaryRules is { IndividualTraining: false } && AvailableSoldiers >= MilitaryQuantity);
         NewGameCommand = new(() => { _session.Pause(); _newGameConfirmation = true; Refresh(); });
         ConfirmNewGameCommand = new(() => { _session = FreshSession(); _newGameConfirmation = false;
             _message = "Nuova colonia sperimentale in pausa. Salvala per sostituire il checkpoint v14."; Refresh(); },
@@ -183,7 +190,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
         ? Resources.Where(item => item.Id is "food" or "bread" or "planks")
         : Resources.Where(item => item.Id is "food" or "planks" or "stone");
 
-    public bool CanBuySelectedTechnology => SelectedTechnology?.CanPurchase == true;
+    public bool CanBuySelectedTechnology => CanMutateColony && SelectedTechnology?.CanPurchase == true;
 
     public V14TechnologyRow? SelectedTechnology
     {
@@ -263,6 +270,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
 
     private void Perform(Func<string> action, string success)
     {
+        if (!CanMutateColony) return;
         try
         {
             var failure = action();

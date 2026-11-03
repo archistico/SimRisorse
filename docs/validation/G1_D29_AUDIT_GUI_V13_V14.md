@@ -39,3 +39,26 @@
 Compilazione e xUnit Windows verdi; per ciascuna delle 22 voci, esito, scenario riproducibile, dimensione finestra, coppia di screenshot o nota di non applicabilità motivata; nessuna regressione non triagiata. Le novità Scuola/Albero non richiedono una scheda identica in v13, ma non devono far sparire funzioni precedenti. La v13 e i due percorsi SQLite devono restare invariati.
 
 [Matrice originale](G1_D19_MATRICE_PARITA_GUI.md) · [Piano RC13](G1_D29_RC13_TEST_PLAN.md) · [Roadmap](../ROADMAP.md).
+
+## Aggiornamento D30 / RC15 (03/11/2026)
+
+**RC14:** 470 test dichiarati superati dall’utente; D29-01 risolta automaticamente, visuale ancora da verificare.
+
+| ID | Area | Evidenza / regressione | Soluzione RC15 | Gate |
+| --- | --- | --- | --- | --- |
+| D30-01 | UI-04, UI-12 | Dettaglio Municipio/Magazzino/Scuola non esponeva i propri posti per Matite, ma il tooltip della tabella Risorse sì. | Righe Matite con icona e valori dalla regola di capienza; test Desktop aggiunto. | Candidato; controllo Windows pendente. |
+| D30-02 | UI-20 | V14 consentiva Riprendi durante «Nuova partita?»; v13 lo disabilita. | CanExecute e refresh del comando; 2 test Desktop, incluso Avalonia. | Candidato; controllo Windows pendente. |
+
+**Restano aperte:** validazione visiva completa 1040×740 / 1240×850, confronto screenshot e tutte le altre voci non ancora approvate. [Rapporto D30](../design/G1_D30_RC15_PARITA_DETTAGLI_E_CONFERMA.md) · [Piano RC15](G1_D30_RC15_TEST_PLAN.md).
+
+
+## Aggiornamento D31 / RC16 (03/11/2026)
+
+**RC15:** 473 test attesi, tutti dichiarati passati dall'utente; **RC16:** +3 nuovi test, **476 attesi**, esecuzione Windows pendente.
+
+| ID | Area | Difetto verificato staticamente | Intervento | Gate |
+| --- | --- | --- | --- | --- |
+| **D31-01** | **UI-20** / UI-09/10/15/16/17 | «Nuova partita?» disabilitava solo Pausa/Riprendi; costruzioni, lavoratori, Scuola, Matite, Esercito e acquisti ricerca restavano operativi. | Guardia unica dei comandi mutanti, senza nascondere righe, dettagli o alterare la sessione; 3 test Desktop aggiunti. | **Candidato RC16**, build e test Windows pendenti; prova visiva manuale in due viewport. |
+| **D31-02** | **UI-20/21** | Possibile interazione Salva/Carica durante conferma: comune alla v13, non affrontata in questo incremento. | Verificare flusso e decidere una soluzione coerente con le due GUI; nessuna modifica ai DB in RC16. | **Audit aperto**, non dichiarato risolto. |
+
+[Riproduzione e soluzione D31](../design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](G1_D31_RC16_TEST_PLAN.md).

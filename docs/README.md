@@ -1,29 +1,24 @@
-# Documentazione SimRisorse — indice operativo RC14 / G1-D29-F1
+# Documentazione SimRisorse — Indice RC16 / G1-D31
 
-**Baseline validata automaticamente:** RC12 (468 test previsti, dichiarati passati dall'utente). **Candidata:** RC14 con i 2 test RC13 (**470 attesi**); RC13 non compilava per due CS0136; parità grafica P0 da confermare su Windows.
+**Baseline confermata Windows:** RC15 (473 test attesi, dichiarati superati dall'utente). **Candidata RC16:** 476 test attesi, da validare su Windows. Gate grafico P0 non chiuso.
 
-## Fonti autorevoli
+## Documenti autorevoli
 
-- [Ripresa rapida](START_HERE.md), [Stato corrente](CURRENT_STATE.md), [Roadmap ufficiale in sei fasi](ROADMAP.md)
-- [Handoff tecnico](HANDOFF.md) e [nuova chat](NEW_CHAT_HANDOFF.md)
-- [Decisioni e priorità](AUTHORITY_REGISTRY.md), [Architettura](ARCHITECTURE.md), [Contratto pixel art](PIXEL_ART_UI.md)
-- [Changelog](../CHANGELOG.md), [Indice ADR](adr/README.md)
+- [Ripresa rapida](START_HERE.md) · [Stato operativo](CURRENT_STATE.md) · [Roadmap in sei fasi](ROADMAP.md)
+- [Handoff completo](HANDOFF.md) · [Nuova chat](NEW_CHAT_HANDOFF.md)
+- [Audit GUI UI-01…UI-22](validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Matrice storica](validation/G1_D19_MATRICE_PARITA_GUI.md)
+- [Rapporto G1-D31 / RC16](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano test RC16](validation/G1_D31_RC16_TEST_PLAN.md)
+- [Decisioni e priorità](AUTHORITY_REGISTRY.md) · [Architettura](ARCHITECTURE.md) · [Stile pixel art](PIXEL_ART_UI.md)
+- [Changelog](../CHANGELOG.md) · [ADR](adr/README.md)
 
-## Audit G1-D29 / RC13
+## Tappe recenti
 
-- [Matrice UI-01…UI-22 e registro difetti](validation/G1_D29_AUDIT_GUI_V13_V14.md)
-- [Matrice storica v13→v14](validation/G1_D19_MATRICE_PARITA_GUI.md)
-- [Rapporto correzione tooltip Matite](design/G1_D29_RC13_AUDIT_E_TOOLTIP_MATITE.md)
-- [Piano validazione RC13](validation/G1_D29_RC13_TEST_PLAN.md)
-- [ADR 0038 — gate, qualità GUI e capacità reali](adr/0038-roadmap-gate-gui-e-audit-matite.md)
+- [RC15: dettagli Matite e pausa durante conferma](design/G1_D30_RC15_PARITA_DETTAGLI_E_CONFERMA.md) · [Test RC15](validation/G1_D30_RC15_TEST_PLAN.md)
+- [RC14: correzione CS0136](design/G1_D29_RC14_FIX_CS0136.md) · [Test RC14](validation/G1_D29_RC14_TEST_PLAN.md)
+- [RC13: primo audit e tooltip capacità Matite](design/G1_D29_RC13_AUDIT_E_TOOLTIP_MATITE.md) · [Test RC13](validation/G1_D29_RC13_TEST_PLAN.md)
+- [RC12: ricerca a due decimali](design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Test RC12](validation/G1_D28_RC12_TEST_PLAN.md)
+- [RC11: layout Costruisci/Lavoratore](design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [Test RC11](validation/G1_D27_RC11_TEST_PLAN.md)
+- [RC9: Scuola e Matite](design/G1_D25_E3B4_RC9_SCUOLA_MATITE.md) · [Test RC9](validation/G1_D25_RC9_TEST_PLAN.md)
+- [Storico completo precedente G1-D19](history/operational/CHANGELOG_PRIMA_DEL_RIORDINO_G1_D19.md)
 
-## Storia e approfondimenti
-
-- [RC12 ricerca a due decimali e pulsante di acquisto](design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [test RC12](validation/G1_D28_RC12_TEST_PLAN.md)
-- [RC11 disposizione pulsanti Edifici e batch personale](design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [test RC11](validation/G1_D27_RC11_TEST_PLAN.md)
-- [RC9 Scuola e Matite](design/G1_D25_E3B4_RC9_SCUOLA_MATITE.md) · [test RC9](validation/G1_D25_RC9_TEST_PLAN.md)
-- [Documenti operativi G1-D28 archiviati](history/operational/HANDOFF_G1_D28_ARCHIVE.md) · [Roadmap G1-D28 archiviata](history/operational/ROADMAP_G1_D28_ARCHIVE.md)
-
-**Prevalenza:** requisiti espliciti dell'utente e ADR accettati → stato, roadmap e handoff correnti → storico e proposte. I numeri di bilanciamento non diventano approvati perché sono presenti nel codice.
-
-- [RC14: correzione conflitto CS0136](design/G1_D29_RC14_FIX_CS0136.md) e [piano Windows RC14](validation/G1_D29_RC14_TEST_PLAN.md).
+**Prevalenza:** richiesta utente e decisioni accettate → stato, roadmap, handoff correnti → archivi. I coefficienti di gioco sono candidati finché non approvati.
