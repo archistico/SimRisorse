@@ -7,7 +7,7 @@
 | UI-01 | Navigazione | Edifici, Risorse, Esercito invariati; Scuola e Albero aggiunti nella **sidebar**, non tabs nuove | Codice candidato | [ ] |
 | UI-02 | Risorse colonne | **Sette** colonne con ordine/intestazioni originali, senza sostituzioni | Codice RC3 usa `ResourceRow` | [ ] |
 | UI-03 | Risorse numeri | Quantità arrotondata in tabella, valori precisi disponibili; numeri allineati a destra | Da confrontare | [ ] |
-| UI-04 | Capacità | Tooltip con totale e ripartizione Municipio/Magazzino/edifici, Pane incluso | Codice candidato, screenshot necessario | [ ] |
+| UI-04 | Capacità | Tooltip con totale e ripartizione Municipio/Magazzino/edifici, Pane incluso | RC13 corregge tooltip Matite e aggiunge 2 test; **screenshot necessario** | [ ] |
 | UI-05 | Flussi e tempi | Produzione/Consumo/Saldo; `Si riempie tra` `hh:mm:ss`, casi capacità piena e saldo ≤ 0 | Codice candidato | [ ] |
 | UI-06 | Risorse layout | Ordinamento alfabetico, selezione ocra, hover stabile, colonna finale non coperta da scrollbar | Audit manuale necessario | [ ] |
 | UI-07 | Edifici elenco | Selezione e stato, quantità/personale, icone, stessa spaziatura e scroll | Audit manuale necessario | [ ] |

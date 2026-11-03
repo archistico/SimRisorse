@@ -71,3 +71,5 @@ Una decisione accettata non si riscrive per nascondere un cambio di direzione. S
 
 - [ADR 0033 — Preservazione funzionale GUI v13 → v14](0033-preservazione-funzionale-gui-v13-v14.md)
 - [ADR 0034 — Stati Edifici e layout delle azioni v14](0034-v14-stati-edifici-e-layout-azioni.md)
+
+- [ADR 0038 — Roadmap in sei fasi e tooltip capacità reale](0038-roadmap-gate-gui-e-audit-matite.md) — **Accettato**, RC13 con test Windows pendenti.

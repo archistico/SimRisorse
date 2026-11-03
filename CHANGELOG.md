@@ -1,3 +1,22 @@
+# Changelog — SimRisorse
+
+## v60-E3b4-RC14 / G1-D29-F1 — Fix compilazione tooltip Matite (CANDIDATA, 03/11/2026)
+
+- **Risultato RC13 su Windows:** compilazione bloccata in `SimRisorse.Desktop` con **2 CS0136** (`owned`, `free` in `V14PreviewViewModel.Parity.cs`); suite xUnit non avviata. Ultimo gate Windows verde: RC12, **468 test attesi**, dichiarati passati dall'utente.
+- **Causa:** nomi locali dichiarati nel ramo Matite che confliggono con nomi utilizzati nell'ambito contenitore dello stesso metodo C#.
+- **Fix esclusivamente lessicale:** `owned` → `ownedBuilding` e `free` → `freePencilSpace` nel ramo tooltip Matite. Nessun cambiamento a formule, testi visibili, condizioni o comportamento.
+- **Ambito:** un solo file C# di presentazione v14, più documentazione. Test invariati; **470 attesi RC14, da eseguire su Windows**. GUI v13/v14, Core, SQLite e salvataggi invariati. Audit grafico P0 e bilanciamento E4 ancora aperti.
+- [Diagnosi](docs/design/G1_D29_RC14_FIX_CS0136.md) · [Piano RC14](docs/validation/G1_D29_RC14_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+## v60-E3b4-RC13 / G1-D29 — Roadmap in sei fasi, audit GUI e tooltip Matite (CANDIDATA, 03/11/2026)
+
+- **Gate RC12:** test dichiarati tutti passati dall'utente (**468 previsti**, conteggio TRX effettivo non comunicato). La GUI P0 v13/v14 **non è ancora certificata visivamente**.
+- **Roadmap riscritta:** sequenza P0 GUI → Scuola/tecnologie → E4a benchmark → E4b bilanciamento approvato → E4c migrazione/backup → M5.4–M7 espansione navale; stop rule e gate espliciti.
+- **Audit iniziale D29:** inventario UI-01…UI-22 con evidenze, difetti e prove Windows ancora necessarie; nessun gate marcato verde senza verifiche.
+- **Correzione presentazione v14:** tooltip della capacità Matite con effettivi Municipio, Magazzini e Scuole posseduti, quantità e spazio libero, coerente col calcolo Core. Niente bonus fissi attribuiti a edifici non costruiti.
+- **Test:** +2 casi Desktop, iniziale e checkpoint con 2 Magazzini + 1 Scuola e selezione persistente dopo Load: **470 attesi**, non eseguiti qui per assenza SDK .NET 10.
+- **Ambito:** un solo file di sorgente Desktop v14 e un test Desktop; v13, XAML, Core, Application, SQLite, ricetta Matite e salvataggi invariati. [Roadmap](docs/ROADMAP.md) · [Audit](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Piano RC13](docs/validation/G1_D29_RC13_TEST_PLAN.md) · [ADR 0038](docs/adr/0038-roadmap-gate-gui-e-audit-matite.md).
+
 ## v60-E3b4-RC12 / G1-D28 — Albero tecnologico: punti e stato Acquista (CANDIDATA, 03/11/2026)
 
 - **Gate RC11:** test dichiarati tutti passati dall’utente (**466 attesi**; numero effettivo non comunicato). La parità visiva P0 non è ancora approvata.
@@ -6,8 +25,6 @@
 - **Test:** 2 nuovi casi Desktop (saldo 99,999 vs costo 100,000, acquisto esatto e stato post-acquisto; stile Avalonia grigio/verde/hover), **468 attesi**, non eseguiti qui per assenza SDK .NET 10. Verificata staticamente struttura XAML e diff circoscritto.
 - **Ambito:** solo presentazione/XAML v14, nuovo selettore di stile per il pulsante ricerca, test Desktop e documentazione. Campagna v13, motore, salvataggi SQLite e Scuola/Matite non modificati.
 - [Rapporto G1-D28](docs/design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano test](docs/validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](docs/adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
-
-# Changelog — SimRisorse
 
 ## v60-E3b4-RC11 / G1-D27 — Comandi Edifici in due righe (CANDIDATA, 03/11/2026)
 

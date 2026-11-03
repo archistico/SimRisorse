@@ -1,21 +1,15 @@
 # SimRisorse
 
-**AGGIORNAMENTO G1-D28 / RC12 (03/11/2026):** l’utente ha confermato i **test RC11 passati (466 attesi)**. RC12 corregge l'Albero tecnologico della sola v14: **punti e prezzi ricerca a due decimali**; pulsante **«Acquista ricerca» grigio e non azionabile** se manca il saldo effettivo o un prerequisito, verde/hover ocra solo se acquistabile. La precisione contabile in millipunti resta invariata. **468 test attesi**, non eseguiti qui per assenza SDK .NET 10; parità visiva P0 ancora aperta. [Report](docs/design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano](docs/validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](docs/adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
-
-**AGGIORNAMENTO G1-D27 / RC11 (03/11/2026):** l’utente conferma **test RC10 passati (464 attesi)**, senza comunicare un conteggio dettagliato. RC11 riordina il dettaglio Edifici della sola v14 in due righe: **Costruisci | +1 | +5 | +10** e **Lavoratore | +1 | +5 | +10**; il pulsante **−1** rimane compatto accanto alla label Lavoratore per non perdere la funzione di rilascio. Aggiunti comandi atomici per assegnare 5/10 persone, con limiti di popolazione libera e posti di lavoro, stati disabled espliciti e hover già previsto. **466 test attesi** (+2 casi), non eseguiti qui per assenza dell’SDK .NET 10; audit GUI P0 ancora aperto. [Rapporto RC11](docs/design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [Piano RC11](docs/validation/G1_D27_RC11_TEST_PLAN.md) · [ADR 0036](docs/adr/0036-v14-layout-costruzione-e-lotti-lavoratori.md).
+**RC14 / G1-D29-F1 (03/11/2026):** RC12 dichiarata verde dall’utente (**468 test attesi**). Avviata la roadmap in [sei fasi](docs/ROADMAP.md); RC13 ha introdotto la correzione del tooltip della capacità **Matite** in base agli edifici realmente posseduti, e aggiunge 2 test (**470 attesi**); RC13 non compilava per 2 errori CS0136, **corretti in RC14** rinominando due variabili locali. RC14 da compilare e testare. La **parità grafica P0 v13/v14 non è approvata**; E4 e navale restano sospesi. [Audit D29](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Piano test RC14](docs/validation/G1_D29_RC14_TEST_PLAN.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
 
 Gioco gestionale di risorse e popolazione in **C# / .NET 10**, interfaccia desktop **Avalonia 12** in stile pixel art retro 8-bit, persistenza **SQLite**, test **xUnit**.
-
-**AGGIORNAMENTO G1-D26 / RC10 (03/11/2026):** la compilazione Windows della RC9 si è interrotta con **CS0246** in `tests/SimRisorse.Application.Tests/V14SchoolSuppliesTests.cs` (riga 15): `GameScenario` è definito in `SimRisorse.Core.Content`, ma mancava il relativo `using`. **RC10 aggiunge esclusivamente tale import nel codice dei test.** Tutti gli altri progetti sono stati compilati nel log dell’utente; la suite xUnit RC9 non è partita. **Ultima suite verde: RC8, 456/456 test confermati. RC10: 464 test attesi, non ancora eseguiti; audit GUI P0 ancora aperto.** [Diagnosi RC10](docs/design/G1_D26_RC10_FIX_IMPORT_GAMESCENARIO.md) · [Piano RC10](docs/validation/G1_D26_RC10_TEST_PLAN.md).
 
 ## Quale versione utilizzare
 
 | Modalità | Comando | Stato | Salvataggi |
 | --- | --- | --- | --- |
 | **Gioco normale (`civil-growth-13`)** | `./run-game.cmd` | Campagna storica funzionante, da preservare | SQLite v2, profilo normale |
-| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC12 candidata** (ricerca a due decimali e pulsante Acquista), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
-
-**Stato storico e corrente (03/11/2026):** la **RC8 ha superato 456 test su Windows** (comunicato dall'utente). La **RC9 / G1-D25** rimuove «Esci senza salvare» e allinea la Scuola all'Esercito (coda, posti, progresso, ricercatori), introducendo le **Matite** nella sola v14. Fabbricazione manuale: 1 Legno lavorato + 1 Carbone → 4 Matite; ogni iscrizione richiede **10 Cibo e almeno 2 Matite**. Salvaguardati i vecchi salvataggi v14, con rimborsi delle sole Matite realmente pagate. **RC9: compilazione fallita per CS0246 in un test; RC10 ha corretto l’import ed è stata dichiarata verde dall’utente; RC11 ha 466 test attesi**; la parità grafica completa v13/v14 resta aperta.
+| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC14 candidata** (fix compilazione tooltip Matite; roadmap/audit RC13 invariati), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
 
 ## Come avviare e validare
 
@@ -57,3 +51,5 @@ La ricerca si **accumula liberamente** e si spende su decisione del giocatore. N
 **Ordine di sviluppo:** prima correggere e validare la **parità GUI**; poi audit del bilanciamento e migrazioni; infine riprendere il navale. Ogni incremento di codice richiede ZIP integrale, test, documentazione e stato esplicito.
 
 [RC12: acquisto ricerca e due decimali](docs/design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano RC12](docs/validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](docs/adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
+
+[RC14: diagnosi e fix CS0136](docs/design/G1_D29_RC14_FIX_CS0136.md) · [Validazione RC14](docs/validation/G1_D29_RC14_TEST_PLAN.md).

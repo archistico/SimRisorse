@@ -49,6 +49,65 @@ public sealed class V14UiParityRegressionTests
     }
 
     [Fact]
+    public void PencilCapacityTooltipShowsOwnedBuildingsAndAvailableSpace()
+    {
+        var view = Fresh();
+        view.Initialize();
+        var pencil = view.Resources.Single(item => item.Id == "pencils");
+        // A new colony has the Town Hall, but no warehouse or school.
+        Assert.Equal("1.000", pencil.Capacity);
+        Assert.Contains("Matite: 0 / 1.000; spazio libero 1.000", pencil.CapacityBreakdown);
+        Assert.Contains("1 Municipio × 1.000", pencil.CapacityBreakdown);
+        Assert.DoesNotContain("Magazzino ×", pencil.CapacityBreakdown);
+        Assert.DoesNotContain("Scuola ×", pencil.CapacityBreakdown);
+    }
+
+    [Fact]
+    public void PencilCapacityTooltipRecalculatesForWarehousesAndSchoolsWithoutLosingResourceSelection()
+    {
+        var baseline = CivilGrowthScenario.Create();
+        var school = new SchoolResearchRules("food", ResourceAmount.FromUnits(10m),
+            120, 1, 2, 100, pencilsPerStudent: 2);
+        var technologies = TechnologyCatalog.ProposedTierTree;
+        var initial = V14CampaignSession.FromV13(baseline, GameSession.Create(baseline).Snapshot(),
+            school, technologies, V14SchoolConstructionRules.Candidate).Snapshot();
+        var checkpoint = initial with
+        {
+            OtherBuildings = initial.OtherBuildings.Select(item => item.BuildingId == "warehouse"
+                ? item with { Count = 2 } : item).ToImmutableArray(),
+            SchoolCount = 1,
+            PurchaseCounters = initial.PurchaseCounters.Select(item => item.FamilyId switch
+            {
+                "warehouse" => item with { Acquired = 2 },
+                "school" => item with { Acquired = 1 },
+                _ => item
+            }).ToImmutableArray(),
+            Resources = initial.Resources + ResourceBundle.Create(("pencils", 10m))
+        };
+        var directory = Path.Combine(Path.GetTempPath(),
+            "SimRisorse.UI.PencilCapacity." + Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "preview-v14.sqlite3");
+        try
+        {
+            var store = new V14SqliteSaveStore(path, baseline, school, technologies);
+            store.Save(initial);
+            var view = new V14PreviewViewModel(baseline, store, school, technologies);
+            view.Initialize();
+            view.SelectedResource = view.Resources.Single(item => item.Id == "pencils");
+            var selected = view.SelectedResource;
+            store.Save(checkpoint);
+            Assert.True(view.Load());
+            Assert.Same(selected, view.SelectedResource);
+            Assert.Equal("2.050", selected!.Capacity);
+            Assert.Contains("Matite: 10 / 2.050; spazio libero 2.040", selected.CapacityBreakdown);
+            Assert.Contains("1 Municipio × 1.000", selected.CapacityBreakdown);
+            Assert.Contains("2 Magazzini × 500", selected.CapacityBreakdown);
+            Assert.Contains("1 Scuola × 50", selected.CapacityBreakdown);
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
     public void V14FirstAdvancedArrivalShowsTheSameDetailedBreadWarningAsV13()
     {
         var baseline = CivilGrowthScenario.Create();

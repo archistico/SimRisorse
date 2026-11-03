@@ -67,11 +67,41 @@ public sealed partial class V14PreviewViewModel
     {
         var parts = new List<string>();
         string number(decimal value) => value.ToString("#,0.###", Italian);
-        if (resourceId == "pencils")
+        if (resourceId == SimRisorse.Core.Research.V14SchoolSupplies.ResourceId)
         {
-            return $"Matite: {number(snapshot.Resources[resourceId].Units)} / {number(total)}. " +
-                "Capienza: Municipio (+1000), Magazzino (+500 ciascuno), Scuola (+50 ciascuna). " +
-                "Nella Scuola puoi produrre 4 Matite con 1 Legno lavorato e 1 Carbone.";
+            // Pencil storage follows the school-specific rule. The tooltip must explain
+            // the ACTUAL capacity (owned buildings), not list generic possible bonuses.
+            var contributions = new List<string>();
+            var accounted = _baseline.Capacity["planks"].Units;
+            if (accounted > 0m) contributions.Add($"{number(accounted)} iniziale");
+            foreach (var buildingId in new[] { "town-hall", "warehouse" })
+            {
+                var ownedBuilding = snapshot.OtherBuildings.FirstOrDefault(item => item.BuildingId == buildingId);
+                if (ownedBuilding is not { Count: > 0 }) continue;
+                var definition = _baseline.Catalog.BuildingsById[buildingId];
+                var perBuilding = definition.StoragePerBuilding is { } storage
+                    ? storage["planks"].Units : 0m;
+                if (perBuilding <= 0m) continue;
+                accounted += ownedBuilding.Count * perBuilding;
+                var label = buildingId == "warehouse" && ownedBuilding.Count != 1
+                    ? "Magazzini" : definition.Name;
+                contributions.Add($"{ownedBuilding.Count} {label} × {number(perBuilding)}");
+            }
+            if (snapshot.SchoolCount > 0)
+            {
+                // Read the effective school contribution from the core capacity rule,
+                // avoiding a second hard-coded '+50' that could drift during E4.
+                var schoolTotal = total - accounted;
+                if (schoolTotal > 0m)
+                    contributions.Add($"{snapshot.SchoolCount} " +
+                        $"{(snapshot.SchoolCount == 1 ? "Scuola" : "Scuole")} × {number(schoolTotal / snapshot.SchoolCount)}");
+            }
+            var stock = snapshot.Resources[resourceId].Units;
+            var freePencilSpace = Math.Max(0m, total - stock);
+            return $"Matite: {number(stock)} / {number(total)}; spazio libero {number(freePencilSpace)}. " +
+                $"Capienza: {string.Join(" + ", contributions)}. " +
+                "Per aumentarla, costruisci un Magazzino o una Scuola; " +
+                "puoi produrre 4 Matite con 1 Legno lavorato e 1 Carbone nella Scuola.";
         }
         var initial = _baseline.Capacity[resourceId].Units;
         if (initial > 0) parts.Add($"{number(initial)} iniziale");
