@@ -1,3 +1,47 @@
+# Handoff aggiornato — RC20 / G1-D35
+
+**Ultimo test Windows dichiarato superato:** RC16 (476 test). **Versioni non testate:** RC17 (481), RC18 (484), RC19 (487), **RC20 (490 attesi)**. RC20 include tutte le versioni intermedie; testare direttamente lo ZIP integrale RC20.
+
+**RC20 contiene solo test e documentazione.** Nuovo `tests/SimRisorse.Desktop.Tests/V14ResourcesAuditTests.cs` (3 casi) per verificare le sette colonne della GUI v14, gutter scrollbar, sei colonne numeriche, selezione ocra, tooltip Capacità, progressione tick, ordinamento e 17 risorse. La GUI v13, la GUI v14, il motore e gli schemi SQLite sono invariati. Nessuna correzione grafica è stata inventata senza una regressione dimostrata.
+
+**Prossimo G1-D36:** audit Edifici. Non perdere le due righe Costruisci/Lavoratore, edifici bloccati grigi ma selezionabili, costi cumulativi e stati `IsEffectivelyEnabled`. I test RC17 del checkpoint sono un gate delicato ancora da validare. P0 resta aperto finché Windows e screenshot non confermano le 22 voci; E4 e navale sospesi.
+
+[Rapporto](design/G1_D35_RC20_AUDIT_TABELLA_RISORSE.md) · [Piano RC20](validation/G1_D35_RC20_TEST_PLAN.md) · [Roadmap](ROADMAP.md).
+
+---
+
+# Handoff aggiornato — RC19 / G1-D34
+
+**RC16 è l'ultimo gate confermato:** 476 test Windows. **RC17** (481), **RC18** (484) non testate. **RC19** include RC17+RC18 e introduce 3 test, **487 totali attesi**, senza compilazione/test Windows in questo ambiente.
+
+**Patch RC19:** `src/SimRisorse.Desktop/Presentation/V14PreviewViewModel.Parity.cs` allinea i suggerimenti Esercito al blocco dei comandi durante la conferma «Nuova partita?» e mostra deficit numerici secondo lotto. Corretto «1 recluta». Nuovo `tests/SimRisorse.Desktop.Tests/V14MilitaryUiParityTests.cs` (3 casi). Invariati GUI v13, XAML, Core, Application, Infrastructure, SQLite, coefficienti, salvataggi. **RC17 è una modifica importante della protezione del checkpoint, ancora da convalidare su copia.**
+
+**Prossimo lavoro:** eseguire quando possibile ` .\validate.cmd` su RC19 (487 previsti); poi audit Risorse/Edifici e delle 22 voci a due risoluzioni. Non dichiarare P0 approvato con soli test automatici. E4 e navale restano sospesi.
+
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Rapporto D34](design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano RC19](validation/G1_D34_RC19_TEST_PLAN.md).
+
+---
+
+# Handoff aggiornato — RC18 / G1-D33
+
+**RC16:** 476 test Windows confermati dall'utente. **RC17:** 481 attesi, utente temporaneamente impossibilitato a testarli. **RC18:** 484 attesi, non compilati/eseguiti qui. Partire **dallo ZIP integrale RC18**, che contiene anche RC17; non dichiarare verde fino al test Windows.
+
+**RC18:** migliorati i messaggi di assegnazione dei ricercatori nei lotti, con posti di ricerca insufficienti anche se ne resta almeno uno; 3 test nuovi. Invariati algoritmo economico, Core, SQLite, v13, XAML v14. **RC17:** continua a proteggere checkpoint/autosalvataggio in nuova partita; richiede la validazione su Windows.
+
+Preservare tabella Risorse a sette colonne, lista Edifici Base/Grande/Avanzato, pulsanti Costruisci +1/+5/+10 e Lavoratore −1/+1/+5/+10, Esercito, Scuola/Matite, ricerca a due decimali, GUI retro v13. Gate P0 non chiuso. Prossima priorità: audit Risorse, Edifici ed Esercito e screenshot a 1040×740 / 1240×850. Niente E4, navale né cambi di DB.
+
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Matrice](validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Rapporto D33](design/G1_D33_RC18_AUDIT_SCUOLA_LOTTI.md) · [Piano test D33](validation/G1_D33_RC18_TEST_PLAN.md).
+
+---
+
+# Handoff aggiornato — RC17 / G1-D32
+
+**Ultimo gate Windows confermato:** RC16 con **476 test passati**. **Candidata RC17:** **481 test attesi** (+5 Desktop), test .NET non eseguiti in questo ambiente. D32 corregge la collisione Salva/Carica con la conferma «Nuova partita» e impedisce che il timer/chiusura sovrascriva il vecchio checkpoint v14 dopo Avvia nuova prima di un **Salva v14** manuale. Chiudere durante la conferma la annulla e salva la vecchia colonia. I salvataggi v13 e v14 restano separati. **Gate P0 visivo aperto, E4 rimandato.**
+
+**Leggere per la ripresa:** [CURRENT_STATE](CURRENT_STATE.md), [ROADMAP](ROADMAP.md), [audit 22 voci](validation/G1_D29_AUDIT_GUI_V13_V14.md), [rapporto G1-D32](design/G1_D32_RC17_PROTEZIONE_CHECKPOINT_NUOVA_PARTITA.md), [piano RC17](validation/G1_D32_RC17_TEST_PLAN.md), [ADR 0039](adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md).
+
+---
+
 # Handoff tecnico completo — SimRisorse RC16 / G1-D31
 
 **Baseline validata:** RC15 (473 test attesi, dichiarati superati dall’utente). **Candidata RC16:** +3 test Desktop, 476 attesi e non eseguiti nell’ambiente di produzione. La RC16 blocca le azioni che modificano la colonia durante «Nuova partita?», fino a Conferma o Annulla; mantiene visibilità e dettagli della GUI e preserva l’intero modello/salvataggi. Patch D30: capienza Matite nel dettaglio Edifici (Municipio/Magazzino/Scuola) e disabilitazione Pausa/Riprendi durante conferma nuova partita, come v13. Il Core v14 introduce soltanto una costante nominata per `50` posti Matite/Scuola senza modifica di formula; GUI v13, XAML, SQLite e salvataggi invariati. **Gate grafico P0 aperto; E4 sospeso.**

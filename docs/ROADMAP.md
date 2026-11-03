@@ -1,3 +1,39 @@
+# Checkpoint RC20 / G1-D35 — Audit Risorse UI-02/UI-03/UI-04
+
+**Ultimo gate verde:** RC16, 476 test. **RC17–RC19:** 481/484/487 attesi, ancora senza test Windows. **RC20 candidata:** 490 test (+3), solo test Desktop e documentazione. Verificata staticamente la parità del layout delle sette colonne v13/v14; aggiunti test sulle due viewport, scrollbar, stato di selezione, tooltip, refresh e ordinamento. **Non è stata modificata la tabella**, già ripristinata, senza evidenza di un difetto reale.
+
+**Prossimi passi:** (1) validazione automatica cumulativa RC20 con `validate.cmd` quando possibile, (2) prova manuale P0 e screenshot delle Risorse alle due risoluzioni, (3) **G1-D36 audit Edifici**: preventivi, upgrade, lavoratori, stati bloccato/abilitato, dettagli e scroll; (4) chiusura delle 22 voci con evidenza Windows; (5) P1 Scuola/tecnologie; (6) E4a → E4b → E4c; (7) M5.4–M7. Inalterata la roadmap in sei fasi; niente nuovi coefficienti.
+
+[Rapporto D35](design/G1_D35_RC20_AUDIT_TABELLA_RISORSE.md) · [Piano RC20](validation/G1_D35_RC20_TEST_PLAN.md).
+
+---
+
+# Checkpoint RC19 / G1-D34 — Audit Esercito UI-15
+
+**Baseline confermata:** RC16, 476 test. **RC17:** 481 e **RC18:** 484, entrambe senza validazione Windows. **RC19 candidata:** 487 test (+3), non eseguiti. Corretto un disallineamento del testo tra abilitazione dei comandi Esercito e messaggi durante «Nuova partita?», con dettagli numerici sui lotti e rimborsi. [Rapporto](design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano test](validation/G1_D34_RC19_TEST_PLAN.md).
+
+**Prossimi gate nell'ordine concordato:** (1) validare la suite complessiva RC17–RC19 quando possibile, inclusi salvataggi RC17; (2) continuare l'audit **UI-02…UI-13 Risorse ed Edifici**, concentrandosi su tooltip, allineamenti, stati e selezione durante tick, a 1040×740 e 1240×850; (3) chiudere tutte le 22 voci della matrice solo con evidenza Windows; (4) P1 Scuola/tecnologie; (5) E4a misurazioni, E4b bilanciamento, E4c migrazione protetta; (6) M5.4–M7. Nessun coefficiente modificato in RC19.
+
+---
+
+# Checkpoint RC18 / G1-D33 — Audit dei suggerimenti Scuola
+
+**Ultimo gate Windows confermato:** RC16, 476 test passati. **RC17:** 481 test attesi, non ancora verificata dall'utente. **RC18:** 484 test attesi (+3 Desktop), compilazione e xUnit non eseguiti qui. La nuova candidata comprende tutte le modifiche RC17.
+
+**G1-D33:** nel tab Scuola il messaggio per assegnare ricercatori teneva conto di zero posti ma non dei lotti +5/+10. Ora mostra la disponibilità esatta, distinguendo Scuola mancante, posti insufficienti e personale qualificato insufficiente. Non modifica `CanExecute` né i salvataggi. [Rapporto](design/G1_D33_RC18_AUDIT_SCUOLA_LOTTI.md) · [Piano](validation/G1_D33_RC18_TEST_PLAN.md).
+
+**Sequenza obbligatoria ancora aperta:** prima validare RC17+RC18 con `validate.cmd`; poi audit UI-01…UI-22, in particolare **Risorse (7 colonne e scrollbar), Edifici (stati e prezzi), Esercito (progressi e messaggi)** su Windows alle due risoluzioni; certificare P0 soltanto dopo verifica estetica reale. Poi P1 Scuola/tecnologie, E4a→E4b→E4c e M5.4–M7. Nessun valore economico modificato in RC18.
+
+---
+
+# Checkpoint roadmap RC17 / G1-D32 — Audit Salva/Carica
+
+**RC16 validata su Windows dall’utente: 476 test superati. RC17 candidata: 481 attesi (+5 Desktop).** D32 interviene sulle voci **UI-20/UI-21**: salvare/caricare durante la conferma Nuova partita e protezione del precedente checkpoint rispetto all'autosalvataggio/chiusura dopo Avvia nuova. Nessuna modifica economica o schema SQLite. [Rapporto G1-D32](design/G1_D32_RC17_PROTEZIONE_CHECKPOINT_NUOVA_PARTITA.md) · [Piano test](validation/G1_D32_RC17_TEST_PLAN.md).
+
+**Da fare dopo la validazione RC17:** completare audit visivo/funzionale UI-01…UI-22, due viewport e scenari salvataggio/restart, prioritariamente Risorse, Edifici ed Esercito; chiudere P0 soltanto dopo prove reali. Manteniamo invariata la sequenza delle sei fasi qui sotto; E4 e M5.4–M7 restano sospesi.
+
+---
+
 # SimRisorse — Roadmap operativa RC16 / G1-D31
 
 **Baseline validata su Windows:** **RC15 / G1-D30, 473 test attesi dichiarati superati dall’utente il 03/11/2026** (TRX non allegato). **Candidata corrente:** RC16 / G1-D31, 476 test attesi, non eseguiti nell’ambiente di confezionamento. **Gate grafico P0 ancora aperto.**

@@ -108,6 +108,108 @@ public sealed class V14UiParityRegressionTests
     }
 
     [Fact]
+    public void ResearchSeatHintUsesTheSelectedBatchSizeAndAgreesWithCommandState()
+    {
+        var baseline = CivilGrowthScenario.Create();
+        var school = new SchoolResearchRules("food", ResourceAmount.FromUnits(10m),
+            120, 1, 2, 100, pencilsPerStudent: 2);
+        var technologies = TechnologyCatalog.ProposedTierTree;
+        var initial = V14CampaignSession.FromV13(baseline, GameSession.Create(baseline).Snapshot(),
+            school, technologies, V14SchoolConstructionRules.Candidate).Snapshot();
+        // Five qualified researchers compete for just two seats in one School.
+        var checkpoint = initial with
+        {
+            SchoolCount = 1,
+            SchoolResearch = new SchoolResearchState(0, ImmutableArray<int>.Empty, 5, 0),
+            PurchaseCounters = initial.PurchaseCounters.Select(item => item.FamilyId == "school"
+                ? item with { Acquired = 1 } : item).ToImmutableArray()
+        };
+        var directory = Path.Combine(Path.GetTempPath(),
+            "SimRisorse.UI.ResearchSeats." + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var path = Path.Combine(directory, "preview-v14.sqlite3");
+            var store = new V14SqliteSaveStore(path, baseline, school, technologies);
+            store.Save(checkpoint);
+            var view = new V14PreviewViewModel(baseline, store, school, technologies);
+            view.Initialize();
+            Assert.Equal(2L, view.SchoolFreeResearchPlaces);
+            Assert.Equal(5, view.SchoolAvailableResearchers);
+
+            view.SchoolQuantity = 5;
+            Assert.False(view.AssignResearcherCommand.CanExecute(null));
+            Assert.Contains("Posti ricerca insufficienti per +5", view.SchoolResearchHint);
+            Assert.Contains("disponibili 2", view.SchoolResearchHint);
+
+            view.SchoolQuantity = 1;
+            Assert.True(view.AssignResearcherCommand.CanExecute(null));
+            Assert.Contains("Assegna i ricercatori qualificati", view.SchoolResearchHint);
+            view.AssignResearcherCommand.Execute(null);
+            Assert.Equal(1, view.ActiveResearchers);
+            Assert.Equal(1L, view.SchoolFreeResearchPlaces);
+
+            view.SchoolQuantity = 5;
+            Assert.False(view.AssignResearcherCommand.CanExecute(null));
+            Assert.Contains("disponibili 1", view.SchoolResearchHint);
+
+            // A pending new-game confirmation must not advertise an enabled action.
+            view.SchoolQuantity = 1;
+            Assert.True(view.AssignResearcherCommand.CanExecute(null));
+            view.NewGameCommand.Execute(null);
+            Assert.False(view.AssignResearcherCommand.CanExecute(null));
+            Assert.Contains("conferma di nuova partita", view.SchoolResearchHint);
+            view.CancelNewGameCommand.Execute(null);
+            Assert.True(view.AssignResearcherCommand.CanExecute(null));
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
+    public void SchoolResearchHintDistinguishesMissingSchoolFromMissingQualifiedResearchers()
+    {
+        var view = Fresh();
+        view.Initialize();
+        view.SchoolQuantity = 5;
+        Assert.Contains("Costruisci una Scuola", view.SchoolResearchHint);
+        Assert.False(view.AssignResearcherCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ResearchHintReportsMissingQualifiedPeopleWhenSeatsAreSufficient()
+    {
+        var baseline = CivilGrowthScenario.Create();
+        var school = new SchoolResearchRules("food", ResourceAmount.FromUnits(10m),
+            120, 1, 2, 100, pencilsPerStudent: 2);
+        var technologies = TechnologyCatalog.ProposedTierTree;
+        var initial = V14CampaignSession.FromV13(baseline, GameSession.Create(baseline).Snapshot(),
+            school, technologies, V14SchoolConstructionRules.Candidate).Snapshot();
+        var checkpoint = initial with
+        {
+            SchoolCount = 3,
+            SchoolResearch = new SchoolResearchState(0, ImmutableArray<int>.Empty, 1, 0),
+            PurchaseCounters = initial.PurchaseCounters.Select(item => item.FamilyId == "school"
+                ? item with { Acquired = 3 } : item).ToImmutableArray()
+        };
+        var directory = Path.Combine(Path.GetTempPath(),
+            "SimRisorse.UI.ResearchPeople." + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new V14SqliteSaveStore(Path.Combine(directory, "preview-v14.sqlite3"),
+                baseline, school, technologies);
+            store.Save(checkpoint);
+            var view = new V14PreviewViewModel(baseline, store, school, technologies);
+            view.Initialize();
+            view.SchoolQuantity = 5;
+            Assert.Equal(6L, view.SchoolFreeResearchPlaces);
+            Assert.Equal(1, view.SchoolAvailableResearchers);
+            Assert.False(view.AssignResearcherCommand.CanExecute(null));
+            Assert.Contains("Ricercatori qualificati liberi insufficienti per +5", view.SchoolResearchHint);
+            Assert.Contains("disponibili 1", view.SchoolResearchHint);
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true); }
+    }
+
+    [Fact]
     public void BuildingDetailsShowPencilStorageFromActualV14CapacityRules()
     {
         var baseline = CivilGrowthScenario.Create();
@@ -613,6 +715,158 @@ public sealed class V14UiParityRegressionTests
             Assert.True(pause.IsEffectivelyEnabled);
         }
         finally { window.CloseWithoutSaving(); }
+    }
+
+    [Fact]
+    public void PendingNewGameBlocksSaveLoadAndRepeatNewGameWithoutMutatingColony()
+    {
+        var view = Fresh();
+        view.Initialize();
+        view.SelectedBuilding = view.Buildings.Single(item => item.FamilyId == "sawmill" &&
+            item.Tier == ProductionTier.Base);
+        var selected = view.SelectedBuilding!;
+        var originalCount = selected.Count;
+        var resources = view.Resources.Select(item => (item.Id, item.Quantity)).ToArray();
+        Assert.True(view.CanSave);
+        Assert.True(view.CanAutoSave);
+        Assert.True(view.SaveCommand.CanExecute(null));
+        Assert.True(view.LoadCommand.CanExecute(null));
+
+        view.NewGameCommand.Execute(null);
+        Assert.True(view.IsNewGameConfirmationVisible);
+        Assert.False(view.CanSave);
+        Assert.False(view.CanAutoSave);
+        Assert.False(view.SaveCommand.CanExecute(null));
+        Assert.False(view.LoadCommand.CanExecute(null));
+        Assert.False(view.NewGameCommand.CanExecute(null));
+        Assert.False(view.Save()); // Public methods must enforce the same gate as buttons.
+        Assert.False(view.Load());
+        Assert.False(File.Exists(view.DatabasePath));
+        Assert.Equal(originalCount, selected.Count);
+        Assert.Equal(resources, view.Resources.Select(item => (item.Id, item.Quantity)).ToArray());
+
+        view.CancelNewGameCommand.Execute(null);
+        Assert.False(view.IsNewGameConfirmationVisible);
+        Assert.True(view.CanSave);
+        Assert.True(view.CanAutoSave);
+        Assert.True(view.SaveCommand.CanExecute(null));
+        Assert.True(view.LoadCommand.CanExecute(null));
+        Assert.True(view.NewGameCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ConfirmedNewGameNeedsExplicitSaveBeforeItMayReplaceExistingCheckpoint()
+    {
+        var baseline = CivilGrowthScenario.Create();
+        var school = new SchoolResearchRules("food", ResourceAmount.FromUnits(10m),
+            120, 1, 2, 100, pencilsPerStudent: 2);
+        var catalog = TechnologyCatalog.ProposedTierTree;
+        var folder = Path.Combine(Path.GetTempPath(), "SimRisorse.UI.SaveBoundary." + Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(folder, "preview-v14.sqlite3");
+        try
+        {
+            var store = new V14SqliteSaveStore(path, baseline, school, catalog);
+            var initial = V14CampaignSession.FromV13(baseline, GameSession.Create(baseline).Snapshot(),
+                school, catalog, V14SchoolConstructionRules.Candidate).Snapshot();
+            store.Save(initial with { ResearchBalanceMilliPoints = 100_000L });
+            var view = new V14PreviewViewModel(baseline, store, school, catalog);
+            view.Initialize();
+            Assert.Equal("100,00 punti", view.ResearchBalance);
+            Assert.True(view.CanAutoSave);
+
+            view.NewGameCommand.Execute(null);
+            view.ConfirmNewGameCommand.Execute(null);
+            Assert.False(view.IsNewGameConfirmationVisible);
+            Assert.Equal("0,00 punti", view.ResearchBalance);
+            Assert.True(view.CanSave); // The explicit Save button must still work.
+            Assert.True(view.SaveCommand.CanExecute(null));
+            Assert.True(view.LoadCommand.CanExecute(null));
+            Assert.False(view.CanAutoSave); // No one-minute / closing overwrite.
+            Assert.Equal(100_000L, store.Load().ResearchBalanceMilliPoints);
+
+            Assert.True(view.Save());
+            Assert.True(view.CanAutoSave);
+            Assert.Equal(0L, store.Load().ResearchBalanceMilliPoints);
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true); }
+    }
+
+    [AvaloniaFact]
+    public void PendingConfirmationDisablesSaveLoadButtonsAndRestoresThemOnCancel()
+    {
+        var view = Fresh();
+        var window = new V14PreviewWindow(view, startTimer: false);
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            var save = window.FindControl<Button>("V14Save")!;
+            var load = window.FindControl<Button>("V14Load")!;
+            Assert.True(save.IsEffectivelyEnabled);
+            Assert.True(load.IsEffectivelyEnabled);
+
+            view.NewGameCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.False(save.IsEffectivelyEnabled);
+            Assert.False(load.IsEffectivelyEnabled);
+            view.CancelNewGameCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(save.IsEffectivelyEnabled);
+            Assert.True(load.IsEffectivelyEnabled);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public void ClosingWhileNewGameConfirmationIsOpenSavesTheOldColony()
+    {
+        var view = Fresh();
+        var window = new V14PreviewWindow(view, startTimer: false);
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            view.SelectedBuilding = view.Buildings.Single(item => item.FamilyId == "sawmill" &&
+                item.Tier == ProductionTier.Base);
+            var count = view.SelectedBuilding!.Count;
+            view.BuildSelectedCommand.Execute(null);
+            Assert.Equal(count + 1, view.SelectedBuilding.Count);
+            view.NewGameCommand.Execute(null);
+            Assert.True(view.IsNewGameConfirmationVisible);
+            window.Close(); // Implicit Cancel + normal previous-session closing autosave.
+            Assert.False(view.IsNewGameConfirmationVisible);
+            var reopened = V14PreviewViewModel.CreateForPreview(view.DatabasePath);
+            reopened.Initialize();
+            Assert.Equal(count + 1, reopened.Buildings.Single(item => item.FamilyId == "sawmill" &&
+                item.Tier == ProductionTier.Base).Count);
+        }
+        finally { if (window.IsVisible) window.CloseWithoutSaving(); }
+    }
+
+    [AvaloniaFact]
+    public void ClosingAfterConfirmingNewGameWithoutSaveKeepsPreviousCheckpoint()
+    {
+        var view = Fresh();
+        var window = new V14PreviewWindow(view, startTimer: false);
+        try
+        {
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            view.SelectedBuilding = view.Buildings.Single(item => item.FamilyId == "sawmill" &&
+                item.Tier == ProductionTier.Base);
+            view.BuildSelectedCommand.Execute(null);
+            var storedCount = view.SelectedBuilding!.Count;
+            Assert.True(view.Save()); // Old checkpoint is committed.
+            view.NewGameCommand.Execute(null);
+            view.ConfirmNewGameCommand.Execute(null);
+            Assert.False(view.CanAutoSave);
+            window.Close(); // Must NOT commit the new colony implicitly.
+            var reopened = V14PreviewViewModel.CreateForPreview(view.DatabasePath);
+            reopened.Initialize();
+            Assert.Equal(storedCount, reopened.Buildings.Single(item => item.FamilyId == "sawmill" &&
+                item.Tier == ProductionTier.Base).Count);
+        }
+        finally { if (window.IsVisible) window.CloseWithoutSaving(); }
     }
 
     [AvaloniaFact]

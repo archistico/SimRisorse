@@ -1,6 +1,32 @@
-# SimRisorse — RC16 / G1-D31
+# SimRisorse — RC20 / G1-D35
 
-**Ultimo checkpoint Windows confermato:** RC15, 473 test attesi dichiarati passati. **Candidata RC16:** 476 test attesi, da eseguire su Windows. D31 blocca durante la conferma «Nuova partita?» tutte le azioni che possono modificare la colonia (Edifici, Scuola/Matite, Esercito e ricerca), oltre al pulsante Pausa/Riprendi già corretto in RC15. Gate grafico P0 ancora aperto, senza E4 o navale. [Rapporto RC16](docs/design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](docs/validation/G1_D31_RC16_TEST_PLAN.md).
+**Ultimo gate Windows confermato:** RC16, **476 test superati**. RC17 (481), RC18 (484), RC19 (487) **non sono state testate**. **RC20** aggiunge tre casi di regressione alla tabella Risorse v14, per **490 test attesi**, senza cambiare l'applicazione. La GUI classica e la tabella a sette colonne restano immutate. La verifica visiva P0 è ancora aperta; E4 sospeso.
+
+[Rapporto D35](docs/design/G1_D35_RC20_AUDIT_TABELLA_RISORSE.md) · [Piano Windows RC20](docs/validation/G1_D35_RC20_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+# SimRisorse — RC19 / G1-D34
+
+**RC16:** 476 test confermati. **RC17:** 481 attesi, non testata. **RC18:** 484 attesi, non testata. **RC19:** **487 test attesi**, non eseguiti qui. La RC19 include RC17+RC18 e corregge i **suggerimenti Esercito**: stato durante «Nuova partita?», costi e carenze numeriche per i lotti, singolare «1 recluta». Nessuna modifica a comandi, GUI v13, motore, database o bilanciamento. **Audit grafico P0 ancora aperto.**
+
+[Rapporto D34](docs/design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano test RC19](docs/validation/G1_D34_RC19_TEST_PLAN.md) · [Roadmap ufficiale](docs/ROADMAP.md).
+
+---
+
+# SimRisorse — RC18 / G1-D33
+
+**Baseline confermata:** RC16, 476 test superati. **RC17:** 481 attesi, non ancora testati. **RC18:** 484 test attesi (+3), non ancora testati. La nuova versione include integralmente la RC17 e corregge un suggerimento nella Scuola: se scegli +5/+10 ricercatori ma i posti liberi non bastano, il messaggio mostra il limite effettivo invece di indicare erroneamente che puoi assegnarli. I comandi e le regole di simulazione non cambiano. **Gate grafico P0 aperto**, E4 sospeso. [Rapporto RC18](docs/design/G1_D33_RC18_AUDIT_SCUOLA_LOTTI.md) · [Piano test](docs/validation/G1_D33_RC18_TEST_PLAN.md).
+
+---
+
+# SimRisorse — RC17 / G1-D32
+
+**Baseline Windows confermata:** RC16 (476 test superati dall'utente). **RC17 candidata:** 481 test attesi, non ancora compilati/eseguiti su Windows. Il flusso v14 **Nuova partita → Avvia nuova** non sovrascrive più automaticamente il checkpoint precedente: il nuovo gioco viene salvato soltanto premendo **Salva v14**; poi riprende l'autosalvataggio. Durante la conferma, **Salva/Carica** sono disabilitati; la chiusura della finestra conserva la colonia precedente. Nessun cambiamento a GUI v13, Core, SQLite o bilanciamento. **Gate grafico P0 aperto.** [Rapporto RC17](docs/design/G1_D32_RC17_PROTEZIONE_CHECKPOINT_NUOVA_PARTITA.md) · [Piano RC17](docs/validation/G1_D32_RC17_TEST_PLAN.md) · [ADR 0039](docs/adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md).
+
+## Contesto precedente — RC16 / G1-D31
+
+**RC16 confermata successivamente dall’utente:** 476 test passati. D31 blocca durante la conferma «Nuova partita?» tutte le azioni che possono modificare la colonia (Edifici, Scuola/Matite, Esercito e ricerca), oltre al pulsante Pausa/Riprendi già corretto in RC15. Gate grafico P0 ancora aperto, senza E4 o navale. [Rapporto RC16](docs/design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](docs/validation/G1_D31_RC16_TEST_PLAN.md).
 
 **Storico RC14 / G1-D29-F1 (03/11/2026):** RC12 era già stata dichiarata verde (**468 test attesi**). Avviata la roadmap in [sei fasi](docs/ROADMAP.md); RC13 ha introdotto la correzione del tooltip della capacità **Matite** in base agli edifici realmente posseduti, e aggiunge 2 test (**470 attesi**); RC13 non compilava per 2 errori CS0136, **corretti in RC14** rinominando due variabili locali. RC14 testata: 470 dichiarati passati; RC15 ora con test dichiarati passati; RC16 da compilare e testare. La **parità grafica P0 v13/v14 non è approvata**; E4 e navale restano sospesi. [Audit D29](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md) · [Piano test RC14](docs/validation/G1_D29_RC14_TEST_PLAN.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
 
@@ -11,7 +37,7 @@ Gioco gestionale di risorse e popolazione in **C# / .NET 10**, interfaccia deskt
 | Modalità | Comando | Stato | Salvataggi |
 | --- | --- | --- | --- |
 | **Gioco normale (`civil-growth-13`)** | `./run-game.cmd` | Campagna storica funzionante, da preservare | SQLite v2, profilo normale |
-| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC16 candidata** (azioni di gioco bloccate durante conferma nuova partita; RC15 validata), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
+| **Anteprima economia v14** | `./run-game.cmd --experimental-v14` | **RC20 candidata** (audit Risorse con 3 nuovi casi; salvaguardie RC17 ancora da validare; RC16 validata), GUI complessiva da validare visivamente | SQLite v3, profilo sperimentale separato |
 
 ## Come avviare e validare
 

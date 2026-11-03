@@ -1,3 +1,5 @@
+**Aggiornamento G1-D32 / RC17 (03/11/2026):** RC16 confermata verde dall’utente (**476 test passati**); RC17 candidata **481 attesi**. Decisione di sicurezza [ADR 0039](adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md): durante «Nuova partita?» Salva/Carica disabilitati; dopo Avvia nuova nessun autosalvataggio fino al primo Salva v14 esplicito. Chiudere durante la conferma la annulla e salva la vecchia colonia. Nessun cambiamento ai coefficienti economici o ai database. **P0 grafico ancora aperto.**
+
 # Registro decisioni attive — SimRisorse
 
 **Aggiornamento G1-D29 / RC13 (03/11/2026):** RC12 confermata con test tutti passati dall’utente (468 attesi); roadmap concordata in **sei fasi**: gate P0 GUI, rifinitura Scuola/tecnologie, E4a audit quantitativo, E4b bilanciamento con approvazione, E4c migrazione/rollback, M5.4–M7 navale. [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md). RC13 non introduce regole economiche.

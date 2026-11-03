@@ -34,6 +34,9 @@ public sealed partial class V14PreviewViewModel : ObservableObject
     private string _message = "Anteprima v14 isolata: nessun salvataggio v13 sarà modificato.";
     private bool _initialized;
     private bool _saveAllowed = true;
+    // A newly confirmed colony must not silently replace the previous checkpoint
+    // via the periodic or closing autosave. An explicit successful Save arms autosave.
+    private bool _autoSaveAllowed = true;
     private bool _newGameConfirmation;
     // Match the classic GUI: a pending new-game confirmation blocks colony mutations.
     // This is a presentation gate; the save store and simulation rules are unchanged.
@@ -131,13 +134,16 @@ public sealed partial class V14PreviewViewModel : ObservableObject
             () => CanMutateColony && MilitaryCancellable >= MilitaryQuantity && FreeSwordStorage >= MilitarySwordCost);
         DischargeCommand = new(() => Perform(() => _session.DischargeSoldiers(MilitaryQuantity).Error.ToString(), "Soldati congedati."),
             () => CanMutateColony && _baseline.MilitaryRules is { IndividualTraining: false } && AvailableSoldiers >= MilitaryQuantity);
-        NewGameCommand = new(() => { _session.Pause(); _newGameConfirmation = true; Refresh(); });
+        NewGameCommand = new(() => { _session.Pause(); _newGameConfirmation = true; Refresh(); },
+            () => !_newGameConfirmation);
         ConfirmNewGameCommand = new(() => { _session = FreshSession(); _newGameConfirmation = false;
-            _message = "Nuova colonia sperimentale in pausa. Salvala per sostituire il checkpoint v14."; Refresh(); },
+            _autoSaveAllowed = false; // Manual Save is required before autosave can overwrite the old checkpoint.
+            _message = "Nuova colonia in pausa. Salvataggio automatico sospeso: premi Salva v14 per sostituire il checkpoint precedente."; Refresh(); },
             () => _newGameConfirmation);
-        CancelNewGameCommand = new(() => { _newGameConfirmation = false; Refresh(); });
-        SaveCommand = new(() => Save());
-        LoadCommand = new(() => Load());
+        CancelNewGameCommand = new(() => { _newGameConfirmation = false; Refresh(); },
+            () => _newGameConfirmation);
+        SaveCommand = new(() => Save(), () => CanSave);
+        LoadCommand = new(() => Load(), () => _initialized && !_newGameConfirmation);
         InitializeBuildingEntries();
         Refresh();
     }
@@ -165,7 +171,10 @@ public sealed partial class V14PreviewViewModel : ObservableObject
 
     public string DatabasePath => _store.DatabasePath;
     public bool IsPaused => _session.IsPaused;
-    public bool CanSave => _saveAllowed && _initialized;
+    public bool CanSave => _saveAllowed && _initialized && !_newGameConfirmation;
+    // Manual Save remains available after confirming a new colony; periodic/closing
+    // saves resume only after the player deliberately commits that new checkpoint.
+    public bool CanAutoSave => CanSave && _autoSaveAllowed;
     public string PauseLabel => IsPaused ? "▶ Riprendi" : "Ⅱ Pausa";
     public string Clock => TimeSpan.FromTicks(_session.Snapshot().ElapsedTicks).ToString(@"d\.hh\:mm\:ss", Italian);
     public int Population => _session.Snapshot().Population;
@@ -338,6 +347,12 @@ public sealed partial class V14PreviewViewModel : ObservableObject
 
     public bool Save()
     {
+        if (_newGameConfirmation)
+        {
+            _message = "Chiudi la conferma di nuova partita prima di salvare.";
+            Refresh();
+            return false;
+        }
         if (!CanSave)
         {
             _message = "Salvataggio v14 bloccato: controlla il database esistente; nessun file è stato sovrascritto.";
@@ -347,6 +362,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
         try
         {
             _store.Save(_session.Snapshot());
+            _autoSaveAllowed = true;
             _message = "Anteprima v14 salvata separatamente in: " + _store.DatabasePath;
             Refresh();
             return true;
@@ -361,6 +377,12 @@ public sealed partial class V14PreviewViewModel : ObservableObject
 
     public bool Load()
     {
+        if (_newGameConfirmation)
+        {
+            _message = "Chiudi la conferma di nuova partita prima di caricare.";
+            Refresh();
+            return false;
+        }
         try
         {
             var snapshot = _store.Load();
@@ -368,6 +390,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
                 _technologies, V14SchoolConstructionRules.Candidate, _tierRules);
             _session = restored; // Only a complete, validated load replaces the current game.
             _saveAllowed = true;
+            _autoSaveAllowed = true;
             _message = "Salvataggio sperimentale v14 caricato. La sessione riparte in pausa.";
             Refresh();
             return true;
@@ -432,7 +455,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
         Notify(nameof(SelectedTechnologySummary)); Notify(nameof(CanBuySelectedTechnology));
         Notify(nameof(SelectedProducerSummary));
         Notify(nameof(SelectedBuildCost)); Notify(nameof(SelectedUpgradeCost)); Notify(nameof(SelectedCivicCost));
-        Notify(nameof(CanSave));
+        Notify(nameof(CanSave)); Notify(nameof(CanAutoSave));
         foreach (var command in AllCommands()) command.Refresh();
     }
 

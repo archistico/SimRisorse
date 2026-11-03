@@ -1,3 +1,49 @@
+# Stato corrente — RC20 / G1-D35
+
+- **Baseline verde Windows:** RC16, 476 test. RC17 (481), RC18 (484), RC19 (487) non testate. **RC20 candidata: 490 test attesi**, di cui +3 test Desktop, non eseguiti qui.
+- **Audit Risorse UI-02/UI-03/UI-04:** nuova protezione automatica per 7 colonne, scrollbar, selezione ocra, tooltip, refresh e ordine delle 17 risorse. Nessuna variazione del codice di produzione perché il confronto statico non dimostra una regressione.
+- **P0 visivo aperto** su 22 voci, alle risoluzioni 1040×740 e 1240×850. **G1-D36 Edifici** segue dopo questo checkpoint. P1 Scuola/tecnologie ed E4 differiti.
+- [Rapporto](design/G1_D35_RC20_AUDIT_TABELLA_RISORSE.md) · [Piano Windows](validation/G1_D35_RC20_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [Handoff](NEW_CHAT_HANDOFF.md).
+
+---
+
+# Stato corrente — RC19 / G1-D34
+
+**Baseline Windows confermata:** RC16, **476 test superati**. RC17 (481) e RC18 (484) **non verificate**; nuova candidata **RC19: 487 test attesi (+3 Desktop)**. .NET 10 e xUnit non eseguiti nell'ambiente di confezionamento. La RC19 incorpora RC17 e RC18.
+
+- **UI-15/UI-20:** suggerimenti Esercito allineati ai comandi durante la conferma «Nuova partita?»; quantificati deficit Spade, abitanti, reclute annullabili e capienza rimborso; corregge «1 recluta».
+- Tre test, di cui uno headless Avalonia. Un solo file C# v14 di presentazione modificato. Invariati XAML, motore, regole militari, GUI v13, SQLite e salvataggi.
+- **P0 visuale ancora aperto** sulle 22 voci e sulle due risoluzioni 1040×740 / 1240×850. Risorse ed Edifici restano nell'audit successivo; E4 sospeso.
+
+[Rapporto](design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano Windows](validation/G1_D34_RC19_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [Handoff](NEW_CHAT_HANDOFF.md).
+
+---
+
+# Stato corrente — RC18 / G1-D33
+
+**RC16:** ultima versione validata dall'utente, **476 test passati**. **RC17 non verificata:** 481 attesi. **RC18 candidata:** 484 test attesi, nessuna esecuzione .NET 10 nell'ambiente di confezionamento. P0 visivo **aperto**; E4 non avviato.
+
+- G1-D33 corregge solo il testo del suggerimento di assegnazione ricercatori: quantità +1/+5/+10, posti disponibili effettivi, assenza Scuola e qualificati liberi insufficienti. I comandi mantengono i controlli originali.
+- Tre test Desktop aggiunti. Nessun cambiamento alle regole di popolazione, produzione, capacità, ricerca, persistenza, GUI v13, né allo XAML della v14.
+- Il pacchetto RC18 **include la protezione dei checkpoint RC17 ancora da validare**, con tutti i 5 test introdotti da RC17. Non trattare RC17 come verde.
+
+[Rapporto](design/G1_D33_RC18_AUDIT_SCUOLA_LOTTI.md) · [Test](validation/G1_D33_RC18_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [Handoff](NEW_CHAT_HANDOFF.md).
+
+---
+
+# Stato corrente — RC17 / G1-D32
+
+**Baseline validata Windows:** RC16 (**476 test superati dichiarati dall'utente, log/TRX non allegati**). **Candidata RC17:** +5 test Desktop, **481 attesi** e non ancora compilati/eseguiti qui (manca SDK .NET 10). **P0 parità grafica:** ancora aperto. **E4:** non avviato.
+
+- **UI-20/UI-21:** Salva, Carica e ripetizione di Nuova partita bloccati durante la conferma; annullamento ripristina la sessione precedente.
+- Dopo conferma «Avvia nuova», il **checkpoint precedente resta intatto anche con autosalvataggio a minuto e chiusura**, fino a un Salva v14 riuscito; quel Save riattiva l'autosalvataggio.
+- Chiudere durante la conferma equivale ad annullarla, consentendo il normale salvataggio della colonia precedente. Protezione dei DB incompatibili invariata.
+- Solo **2 file C# v14 di presentazione/lifecycle** e **1 file test Desktop** modificati, oltre a documentazione. GUI v13, XAML, motore e SQLite invariati.
+
+[Rapporto](design/G1_D32_RC17_PROTEZIONE_CHECKPOINT_NUOVA_PARTITA.md) · [Piano test](validation/G1_D32_RC17_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [Audit](validation/G1_D29_AUDIT_GUI_V13_V14.md).
+
+---
+
 # Stato operativo — SimRisorse RC16 / G1-D31
 
 **Data:** 03/11/2026. **Ultimo gate Windows verde comunicato:** **RC15, 473 test attesi dichiarati passati**. **RC16:** protegge tutti i comandi che mutano la colonia durante la conferma «Nuova partita?»; **476 test attesi non eseguiti qui** per assenza SDK .NET 10. **Audit visivo P0:** resta aperto.

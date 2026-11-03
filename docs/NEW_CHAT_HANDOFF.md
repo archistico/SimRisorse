@@ -1,17 +1,49 @@
-# Nuova chat — SimRisorse RC16 / G1-D31
+# Nuova chat — SimRisorse RC20 / G1-D35
 
-**Allegare il progetto integrale RC16.** Leggere nell'ordine: [CURRENT_STATE](CURRENT_STATE.md), [ROADMAP](ROADMAP.md), [HANDOFF](HANDOFF.md), [audit UI-01…UI-22](validation/G1_D29_AUDIT_GUI_V13_V14.md), [piano RC16](validation/G1_D31_RC16_TEST_PLAN.md) e [rapporto D31](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md).
+**Allegare il progetto integrale RC20.** Leggere `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/HANDOFF.md`, `docs/validation/G1_D29_AUDIT_GUI_V13_V14.md` e `docs/validation/G1_D35_RC20_TEST_PLAN.md`.
 
-## Prompt di ripresa
+> Continua da RC20. **Ultimo gate Windows confermato: RC16, 476 test.** RC17 (481), RC18 (484), RC19 (487) e **RC20 (490 attesi)** non sono ancora state testate. RC20 include tutte le precedenti, senza cambiarne il codice applicativo.
+>
+> **D35:** audit statico della tabella Risorse: v14 conserva le sette colonne della v13, anche la scrollbar e il dato di capienza. Aggiunti 3 casi di test in `V14ResourcesAuditTests.cs` (due viewport Avalonia + identità/ordine/aggiornamento). Nessuna modifica arbitraria al layout. Eseguire un solo `./validate.cmd` su RC20 quando possibile, poi controllo visivo a 1040×740 e 1240×850. Non dichiarare P0 chiuso senza conferma visiva.
+>
+> **Priorità D36:** Edifici (grigi ma selezionabili, due righe Costruisci/Lavoratore, disabilitazione e hover, costo cumulativo, diagnosi). **RC17:** protezione Nuova partita/autosalvataggio: conferma Windows pendente, con salvataggio di prova.
+>
+> Roadmap: P0 grafico → P1 Scuola/tecnologie → E4a analisi → E4b bilanciamento → E4c consolidamento/migrazione → M5.4–M7. **Preservare v13 e SQLite**. Consegna sempre archivio integrale, changelog, roadmap, handoff e test. Separare prove statiche dai risultati Windows.
 
-> Continua SimRisorse dal checkpoint **RC16 / G1-D31**. **RC15 è l’ultimo gate Windows dichiarato superato (473 test attesi)**. RC16 aggiunge **3 test Desktop (476 attesi)**, non ancora compilati o eseguiti in Linux per assenza .NET SDK 10. Non dichiarare RC16 verde finché l’utente non conferma `./validate.cmd`.
->
-> **Correzione RC16:** durante la finestra «Nuova partita?» la v14 lasciava attivi comandi mutanti eccetto Pausa. Ora la proprietà `CanMutateColony` blocca costruzioni, personale, upgrade, Scuola, Matite, Esercito e acquisto ricerca; la visibilità dei dettagli rimane invariata. «Annulla» ripristina la possibilità di giocare. Il comportamento Salva/Carica durante tale conferma è una **questione aperta UI-20/UI-21**.
->
-> La roadmap approvata resta in **sei fasi**: 1) parità GUI v13/v14 e audit UI-01…UI-22; 2) Scuola/tecnologie; 3) E4a benchmark economia; 4) E4b bilanciamento con approvazione; 5) E4c migrazione v14 non distruttiva; 6) M5.4–M7 navi, esplorazione separata dalla conquista e completamento. Il **gate P0 grafico è aperto**, necessita controllo Windows 1040×740 / 1240×850; niente E4/navale anticipati.
->
-> Preservare GUI v13, SQLite v2/v3 separati, tabella Risorse 7 colonne, Edifici Base/Grande/Avanzato come righe selezionabili anche se bloccate, Costruisci +1/+5/+10, Lavoratore −1/+1/+5/+10, Esercito, Scuola e 2 Matite/studente, ricerca con due decimali e verifiche reali. Nessun redesign involontario o cambio dei costi/tempi.
->
-> Ogni versione: ZIP integrale, test, changelog, roadmap, handoff, piano Windows, ADR se servono nuove scelte. Non includere DB personali. Registrare separatamente test statici vs test .NET e risultato visivo reale.
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Piano RC20](validation/G1_D35_RC20_TEST_PLAN.md) · [Rapporto](design/G1_D35_RC20_AUDIT_TABELLA_RISORSE.md).
 
-[Stato corrente](CURRENT_STATE.md) · [Audit G1-D31](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Roadmap](ROADMAP.md).
+---
+
+# Nuova chat — SimRisorse RC19 / G1-D34
+
+**Allegare lo ZIP integrale RC19**. Leggere `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/HANDOFF.md`, `docs/validation/G1_D29_AUDIT_GUI_V13_V14.md` e `docs/validation/G1_D34_RC19_TEST_PLAN.md`.
+
+> Continua da **SimRisorse RC19 / G1-D34**. Ultimo checkpoint Windows dichiarato superato: **RC16, 476 test**. RC17 (**481**), RC18 (**484**) e RC19 (**487 attesi**) non sono state testate dall'utente. RC19 include tutte le modifiche RC17+RC18. **Non dichiararle verdi** prima del prossimo `validate.cmd`.
+>
+> **RC19:** `V14PreviewViewModel.Parity.cs` rende coerenti i suggerimenti Esercito con il blocco dei comandi durante «Nuova partita?»; mostra disponibili/richiesti per Spade, abitanti, reclute annullabili e spazio rimborso; singolare «1 recluta». +3 test Desktop in `V14MilitaryUiParityTests.cs`, incluso Avalonia headless. Nessuna variazione delle regole militari, del motore, del layout XAML, della GUI v13 o SQLite.
+>
+> **RC18:** suggerimenti Scuola coerenti con il lotto +5/+10, posti e ricercatori qualificati. **RC17:** protezione del checkpoint v14 fra creazione nuova colonia, autosalvataggio e chiusura; **richiede ancora test Windows di sicurezza su copia del salvataggio**.
+>
+> **Roadmap confermata:** Fase 1 P0 audit GUI 22 voci, 1040×740/1240×850 (ora Risorse/Edifici prioritari e verifica Esercito); poi P1 Scuola/tecnologie, E4a misurazioni, E4b bilanciamento, E4c migrazione con backup, M5.4–M7 navale/esplorazione/conquista. No E4 prima del gate P0 e nessun cambio di coefficienti.
+>
+> **Metodo:** consegna ZIP integrale, changelog, roadmap, handoff e test a ogni incremento. Evidenze statiche e Windows sempre separate; preservare la v13, percorsi SQLite, dati personali. Il confronto grafico necessita verifica Windows reale, non è ancora approvato.
+
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Piano RC19](validation/G1_D34_RC19_TEST_PLAN.md) · [Rapporto D34](design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md).
+
+---
+
+# Nuova chat — SimRisorse RC18 / G1-D33
+
+**Allegare ZIP integrale RC18**. Leggere `docs/CURRENT_STATE.md`, `docs/ROADMAP.md`, `docs/HANDOFF.md`, `docs/validation/G1_D29_AUDIT_GUI_V13_V14.md` e `docs/validation/G1_D33_RC18_TEST_PLAN.md`.
+
+> Continua da **SimRisorse RC18 / G1-D33**. Ultimo gate confermato su Windows: **RC16, 476 test passati**. RC17 (481 attesi) **non è stata testata**; RC18 include RC17 e ha 3 test aggiuntivi, **484 attesi**, ancora da verificare. Non dichiarare verdi RC17 o RC18 prima dell'esito Windows. L'utente ha esplicitamente chiesto di continuare anche in assenza temporanea di test.
+>
+> RC18 corregge il suggerimento della Scuola che presentava un lotto +5/+10 di ricercatori come assegnabile pur avendo meno posti liberi; distingue ora Scuola assente, posti insufficienti e qualificati insufficienti. Solo ViewModel v14, test, documentazione.
+>
+> RC17 protegge il checkpoint v14 durante «Nuova partita», salvataggi manuali e automatici; richiede verifica. Mai toccare GUI classica, file v13/SQLite, cataloghi economici o testimoni di una partita personale.
+>
+> Roadmap approvata: P0 audit GUI (22 voci, risoluzioni 1040×740 e 1240×850); P1 Scuola/tecnologie; E4a misure; E4b bilanciamento approvato; E4c migrazione con backup; M5.4–M7 navale/esplorazione/conquista. Prima validare RC17+RC18 quando possibile, poi Risorse/Edifici/Esercito. Test automatici non sostituiscono audit visivo.
+>
+> Ogni avanzamento: ZIP integrale, changelog, roadmap, handoff, piano test e ADR solo se decisioni architetturali nuove. Separare chiaramente verifiche statiche da test xUnit non eseguiti.
+
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Piano RC18](validation/G1_D33_RC18_TEST_PLAN.md).

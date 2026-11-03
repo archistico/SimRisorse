@@ -1,3 +1,19 @@
+# Indice corrente — RC19 / G1-D34
+
+**RC16 validata (476)**; RC17 (481) e RC18 (484) non testate; **RC19 candidata (487)**. [Audit Esercito](design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano RC19](validation/G1_D34_RC19_TEST_PLAN.md) · [Roadmap](ROADMAP.md). P0 visuale aperto, E4 sospeso.
+
+---
+
+# Indice corrente — RC18 / G1-D33
+
+**RC16 validata (476)**; **RC17 da validare (481)**; **RC18 candidata (484)**. [Correzione Scuola/lotti](design/G1_D33_RC18_AUDIT_SCUOLA_LOTTI.md) · [Piano test RC18](validation/G1_D33_RC18_TEST_PLAN.md). Nessuna modifica economica. Gate P0 visivo aperto.
+
+---
+
+# Indice aggiornato — RC17 / G1-D32
+
+**RC16:** 476 test dichiarati superati. **RC17:** 481 attesi, test Windows pendenti. [Rapporto sicurezza checkpoint](design/G1_D32_RC17_PROTEZIONE_CHECKPOINT_NUOVA_PARTITA.md) · [Piano RC17](validation/G1_D32_RC17_TEST_PLAN.md) · [ADR 0039](adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md). Gate grafico P0 ancora aperto.
+
 # Documentazione SimRisorse — Indice RC16 / G1-D31
 
 **Baseline confermata Windows:** RC15 (473 test attesi, dichiarati superati dall'utente). **Candidata RC16:** 476 test attesi, da validare su Windows. Gate grafico P0 non chiuso.

@@ -1,3 +1,43 @@
+## v60-E3b4-RC20 / G1-D35 — Audit e test di non-regressione Risorse (CANDIDATA, 03/11/2026)
+
+- **Ultima conferma Windows:** RC16 con 476 test. RC17 (481), RC18 (484), RC19 (487) non testate. **RC20:** 490 test attesi (+3), nessuna esecuzione .NET in questo ambiente.
+- Il confronto XAML/VM con v13 mostra sette colonne, margine scrollbar e righe stabili. **Nessuna regressione riproducibile dimostrata dal codice:** evita modifiche arbitrarie al layout già approvato.
+- +3 casi test: due viewport Avalonia headless (1040×740 / 1240×850), sei colonne numeriche allineate a destra, gutter, selezione ocra, tooltip e aggiornamenti; un test ordine alfabetico italiano/17 risorse/identità righe e dettagli Matite.
+- **Nessuna modifica ai sorgenti dell'applicazione**: GUI v13/v14, cataloghi, economia, SQLite e salvataggi immutati. P0 visivo aperto, E4 sospeso. Prossimo G1-D36 Edifici.
+- [Rapporto D35](docs/design/G1_D35_RC20_AUDIT_TABELLA_RISORSE.md) · [Piano Windows](docs/validation/G1_D35_RC20_TEST_PLAN.md) · [Matrice](docs/validation/G1_D29_AUDIT_GUI_V13_V14.md).
+
+---
+
+## v60-E3b4-RC19 / G1-D34 — Audit suggerimenti Esercito (CANDIDATA, 03/11/2026)
+
+- **Ultimo gate Windows verificato:** RC16, 476 test. RC17 (481), RC18 (484) non testate; **RC19 attende 487 test** (+3 Desktop) e include integralmente le due candidate precedenti.
+- **UI-15/UI-20:** nell'Esercito i suggerimenti di arruolamento, annullamento e limiti non potevano riconoscere la conferma «Nuova partita?» e potevano annunciare un comando possibile ma disabilitato. Ora indicano la sospensione temporanea e tornano coerenti dopo Annulla.
+- Le carenze di Spade, abitanti, reclute rimborsabili e spazio di deposito riportano lotto, quantità disponibili e richieste. Corretto anche «1 recluta» al singolare. **Nessuna modifica ai comandi militari o al gameplay.**
+- +3 test Desktop (stati, lotti e binding Avalonia); nessun cambiamento XAML, GUI v13, Core, SQLite, catalogo o salvataggi.
+- [Rapporto D34](docs/design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano RC19](docs/validation/G1_D34_RC19_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md). **P0 visivo aperto, E4 sospeso.**
+
+---
+
+## v60-E3b4-RC18 / G1-D33 — Coerenza suggerimenti Scuola e lotti ricercatori (CANDIDATA, 03/11/2026)
+
+- **Stato confermato:** RC16, 476 test Windows dichiarati superati dall'utente. **RC17 non ancora testata** (481 attesi); su richiesta dell'utente sviluppo proseguito. **RC18 candidata**, 3 nuovi test Desktop, **484 attesi**, suite .NET non eseguita in questo ambiente.
+- **Difetto UI-16:** con Scuola e qualche posto di ricerca ancora disponibile, il suggerimento indicava «Assegna» anche con lotto +5/+10 superiore ai posti liberi, nonostante il comando fosse correttamente disabilitato.
+- **Soluzione:** suggerimento ora confronta i posti ricerca disponibili con la quantità selezionata, distingue Scuola mancante, insufficienza di posti e insufficienza di ricercatori qualificati. Non cambia la possibilità di assegnare né i controlli del comando.
+- **Test:** verifica del lotto +5 con 2 posti, cambio a +1 seguito da assegnazione effettiva, Scuola assente, e 6 posti con un solo qualificato. Stessi stati di errore e di abilitazione nei test. Nessuna modifica a GUI v13, XAML, Core, economia, SQLite o salvataggi.
+- **Audit:** G1-D33 primo controllo aggiuntivo UI-16; UI-02/05/07/15 e verifica visiva 1040×740 / 1240×850 ancora aperti. E4 sospeso.
+- [Rapporto D33](docs/design/G1_D33_RC18_AUDIT_SCUOLA_LOTTI.md) · [Test RC18](docs/validation/G1_D33_RC18_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+## v60-E3b4-RC17 / G1-D32 — Conferma nuova partita e autosalvataggio protetto (CANDIDATA, 03/11/2026)
+
+- **Gate RC16:** l’utente ha comunicato **476 test superati**. RC17 aggiunge **5 test Desktop, 481 attesi**; compilazione/test Windows RC17 ancora pendenti.
+- **UI-20/UI-21:** durante la conferma «Nuova partita?» ora vengono disabilitati anche Salva v14, Carica v14 e l'apertura di una seconda conferma; metodi pubblici Save/Load rifiutano l’operazione senza modificare la sessione.
+- **Protezione del checkpoint:** dopo «Avvia nuova» l'autosalvataggio a intervalli e in chiusura resta disabilitato finché il giocatore non salva manualmente; conferma non ancora risolta + chiusura significa annullamento e salvataggio della vecchia colonia. Un caricamento riuscito ripristina il regime di autosalvataggio.
+- Nuovo messaggio esplicito sull'autosalvataggio sospeso, nessuna modifica a GUI v13, Core, SQLite, schema o coefficienti.
+- +5 test, ADR 0039, rapporto G1-D32 e piano Windows; **P0 visivo ancora aperto, E4 sospeso**.
+- [Rapporto](docs/design/G1_D32_RC17_PROTEZIONE_CHECKPOINT_NUOVA_PARTITA.md) · [Piano test](docs/validation/G1_D32_RC17_TEST_PLAN.md) · [ADR](docs/adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md).
+
 ## v60-E3b4-RC16 / G1-D31 — Blocco delle azioni durante «Nuova partita» (CANDIDATA, 03/11/2026)
 
 - **Gate RC15:** l'utente ha dichiarato superati i test Windows (**473 attesi**). RC16 **476 test attesi**, non compilati/eseguiti nell'ambiente di confezionamento privo di .NET 10.

@@ -39,7 +39,7 @@ public partial class V14PreviewWindow : Window
                 _autoSaveTimer.Tick += (_, _) =>
                 {
                     _clock.Pulse();
-                    if (viewModel.CanSave) viewModel.Save();
+                    if (viewModel.CanAutoSave) viewModel.Save();
                 };
                 _timer.Start();
                 _autoSaveTimer.Start();
@@ -49,11 +49,17 @@ public partial class V14PreviewWindow : Window
         {
             if (_allowClose) return;
             _clock.Pulse();
+            // Closing a pending confirmation means canceling it: preserve the
+            // existing colony and allow its ordinary closing autosave.
+            if (viewModel.IsNewGameConfirmationVisible)
+                viewModel.CancelNewGameCommand.Execute(null);
             viewModel.Interrupt();
             // An unrecognised or corrupt v14 checkpoint must never be overwritten;
             // equally, a blocked Save must not trap the player in a window that
             // cannot be closed. No write is attempted when saving is disallowed.
-            if (viewModel.CanSave && !viewModel.Save()) args.Cancel = true;
+            // A confirmed NEW colony is not automatically persisted: its previous
+            // checkpoint stays intact until the player manually chooses Save v14.
+            if (viewModel.CanAutoSave && !viewModel.Save()) args.Cancel = true;
         };
         Closed += (_, _) =>
         {

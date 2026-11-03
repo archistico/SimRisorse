@@ -106,9 +106,18 @@ public sealed partial class V14PreviewViewModel
         ? "Studenti da annullare insufficienti."
         : !SchoolCanRefund ? "Magazzino pieno: non c'è spazio per restituire Cibo e Matite."
         : "Annulla prima chi è in attesa, poi chi ha iniziato da meno. Restituisce Cibo e le Matite pagate (non quelle dei vecchi salvataggi).";
-    public string SchoolResearchHint => SchoolFreeResearchPlaces == 0
-        ? "Posti ricerca occupati o nessuna Scuola costruita."
-        : SchoolAvailableResearchers < SchoolQuantity ? "Non ci sono abbastanza ricercatori qualificati liberi."
+    // The message must use the same batch quantity as AssignResearcherCommand.
+    // A nonzero number of free seats is not sufficient for a +5/+10 order.
+    public string SchoolResearchHint => !CanMutateColony
+        ? "Completa o annulla la conferma di nuova partita prima di assegnare ricercatori."
+        : SchoolCount == 0
+        ? "Costruisci una Scuola dalla schermata Edifici per avere posti di ricerca."
+        : SchoolFreeResearchPlaces < SchoolQuantity
+            ? $"Posti ricerca insufficienti per +{SchoolQuantity}: " +
+              $"disponibili {SchoolFreeResearchPlaces}. Costruisci una Scuola o sospendi ricercatori."
+        : SchoolAvailableResearchers < SchoolQuantity
+            ? $"Ricercatori qualificati liberi insufficienti per +{SchoolQuantity}: " +
+              $"disponibili {SchoolAvailableResearchers}."
         : "Assegna i ricercatori qualificati per accumulare punti ricerca.";
 
     private void RefreshSchoolPanel()

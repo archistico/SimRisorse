@@ -183,7 +183,9 @@ public sealed partial class V14PreviewViewModel
     public decimal AvailableSwords => _session.Snapshot().Resources["swords"].Units;
     public decimal FreeSwordStorage => Math.Max(0m, CalculateStorageCapacity(_session.Snapshot())["swords"].Units - AvailableSwords);
     public int MilitaryCancellable => checked(WaitingRecruits + TrainingRecruits);
-    public string MilitaryLimitsNote => $"Arruolabili ora: " +
+    public string MilitaryLimitsNote => _newGameConfirmation
+        ? "Comandi Esercito sospesi durante la conferma di nuova partita."
+        : $"Arruolabili ora: " +
         $"{Math.Max(0, Math.Min(AvailablePopulation, MilitaryBarracks == 0 ? 0 : (int)(AvailableSwords / (_baseline.MilitaryRules?.SwordsPerRecruit ?? 5))))}" +
         $" · annullabili con rimborso: {Math.Min(MilitaryCancellable, (int)(FreeSwordStorage / (_baseline.MilitaryRules?.SwordsPerRecruit ?? 5)))}.";
     public string MilitaryRoster =>
@@ -194,7 +196,7 @@ public sealed partial class V14PreviewViewModel
         $"{TrainingRecruits}/{MilitarySeats} posti occupati · {FreeMilitarySeats} posti liberi";
     public string MilitarySeatsExplanation => "Una Caserma richiede la Forgia e ospita una recluta per volta.";
     public string MilitaryWeaponsStatus => $"Spade disponibili: {AvailableSwords.ToString("#,0.###", Italian)} · " +
-        $"Costo per {MilitaryQuantity} reclute: {MilitarySwordCost} Spade";
+        $"Costo per {MilitaryQuantity} {(MilitaryQuantity == 1 ? "recluta" : "reclute")}: {MilitarySwordCost} Spade";
     public string MilitaryArmamentExplanation => "Ogni recluta consuma cinque Spade. All'annullamento tornano nel magazzino; il congedo resta rinviato.";
     public string MilitaryTrainingHeading => "FORMAZIONE · 30 SECONDI PER RECLUTA";
     public string MilitaryQueueExplanation => "Le reclute eccedenti attendono in coda. L'annullamento perde il tempo già svolto.";
@@ -204,14 +206,28 @@ public sealed partial class V14PreviewViewModel
             _session.Snapshot().Military.TrainingProgressSeconds).ToString(@"mm\:ss", Italian) + ".";
     public double MilitaryTrainingPercent => TrainingRecruits > 0
         ? 100d * _session.Snapshot().Military.TrainingProgressSeconds / (_baseline.MilitaryRules?.TrainingSecondsPerGroup ?? 30) : 0d;
-    public string MilitaryRecruitmentHint => MilitaryBarracks == 0
-        ? "Costruisci una Caserma dalla scheda Edifici (richiede prima la Forgia)."
-        : AvailablePopulation < MilitaryQuantity ? "Abitanti liberi insufficienti: libera lavoratori o attendi nuova popolazione."
-        : AvailableSwords < MilitarySwordCost ? "Spade insufficienti: aumenta produzione e spazio della Forgia."
-        : "Arruolamento possibile: le reclute occupano alloggi e consumano le razioni normali.";
-    public string MilitaryCancelHint => MilitaryCancellable < MilitaryQuantity ? "Reclute annullabili insufficienti."
-        : FreeSwordStorage < MilitarySwordCost ? "Spazio insufficiente per restituire le Spade: costruisci un Magazzino."
-        : "Annulla prima la coda e poi gli allievi meno avanzati, restituendo le Spade.";
+    public string MilitaryRecruitmentHint => _newGameConfirmation
+        ? "Arruolamento sospeso: conferma o annulla la nuova partita."
+        : MilitaryBarracks == 0
+            ? "Costruisci una Caserma dalla scheda Edifici (richiede prima la Forgia)."
+            : AvailablePopulation < MilitaryQuantity
+                ? $"Abitanti liberi insufficienti per +{MilitaryQuantity}: disponibili {AvailablePopulation}, " +
+                  $"necessari {MilitaryQuantity}. Libera lavoratori o attendi nuova popolazione."
+                : AvailableSwords < MilitarySwordCost
+                    ? $"Spade insufficienti per +{MilitaryQuantity}: disponibili " +
+                      $"{AvailableSwords.ToString("#,0.###", Italian)}, necessarie {MilitarySwordCost}. " +
+                      "Aumenta la produzione della Forgia."
+                    : "Arruolamento possibile: le reclute occupano alloggi e consumano le razioni normali.";
+    public string MilitaryCancelHint => _newGameConfirmation
+        ? "Annullamento reclute sospeso: conferma o annulla la nuova partita."
+        : MilitaryCancellable < MilitaryQuantity
+            ? $"Reclute annullabili insufficienti per −{MilitaryQuantity}: " +
+              $"disponibili {MilitaryCancellable}, necessarie {MilitaryQuantity}."
+            : FreeSwordStorage < MilitarySwordCost
+                ? $"Spazio insufficiente per restituire {MilitarySwordCost} Spade: " +
+                  $"liberi {FreeSwordStorage.ToString("#,0.###", Italian)} posti in magazzino. " +
+                  "Costruisci un Magazzino."
+                : "Annulla prima la coda e poi gli allievi meno avanzati, restituendo le Spade.";
     public string MilitaryDischargeHint => "Congedo rinviato fino alle missioni: i soldati non possono ancora essere congedati.";
     public string EnlistLabel => $"Arruola +{MilitaryQuantity}";
     public string CancelRecruitsLabel => $"Annulla reclute −{MilitaryQuantity}";
