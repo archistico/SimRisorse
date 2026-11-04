@@ -26,10 +26,54 @@ if (args is ["--help"])
     Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-coal: three v9 coal strategies at 1800/3600 seconds, with replay and ledger checks.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-campaign: three real-start v9 routes to 240 swords/360 coins over 2400 seconds.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-military-capacity: controlled v13 comparison of 5/10/20 recruits and 1/2/4 barracks.");
-    Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-school [--output DIRECTORY]: measured v14 E4A-06/07, one vs two schools; optional JSON and CSV files.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-school [--output DIRECTORY]: controlled v14 E4A-06/07, one vs two schools.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-natural [--scenario E4A-01..05] [--output DIRECTORY]: unfunded v14 progression; JSON/CSV.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+if (args.Length > 0 && args[0] == "--benchmark-e4a-natural")
+{
+    string? requestedScenario = null;
+    string? outputDirectory = null;
+    var seenOptions = new HashSet<string>(StringComparer.Ordinal);
+    if ((args.Length - 1) % 2 != 0) return Usage();
+    for (var i = 1; i < args.Length; i += 2)
+    {
+        if (!seenOptions.Add(args[i])) return Usage();
+        if (args[i] == "--scenario") requestedScenario = args[i + 1];
+        else if (args[i] == "--output") outputDirectory = args[i + 1];
+        else return Usage();
+    }
+    if (requestedScenario is "" || outputDirectory is "") return Usage();
+    try
+    {
+        IReadOnlyList<E4aNaturalRun> runs = requestedScenario is null
+            ? E4aNaturalBenchmark.RunAll()
+            : new[] { E4aNaturalBenchmark.Run(requestedScenario) };
+        var report = JsonSerializer.Serialize(runs, json);
+        if (outputDirectory is not null)
+        {
+            Directory.CreateDirectory(outputDirectory);
+            var jsonPath = Path.Combine(outputDirectory, "e4a-natural-results.json");
+            var csvPath = Path.Combine(outputDirectory, "e4a-natural-results.csv");
+            if (File.Exists(jsonPath) || File.Exists(csvPath))
+            {
+                Console.Error.WriteLine("The requested output already exists: choose a new directory for this run.");
+                return 1;
+            }
+            File.WriteAllText(jsonPath, report);
+            File.WriteAllText(csvPath, E4aNaturalBenchmark.ToCsv(runs));
+        }
+        Console.WriteLine(report);
+        return runs.All(run => run.Outcome == "pass") ? 0 : 1;
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or
+        IOException or UnauthorizedAccessException or OverflowException)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+}
 if (args is ["--benchmark-e4a-school"] or ["--benchmark-e4a-school", "--output", _])
 {
     try

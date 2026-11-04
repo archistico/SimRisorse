@@ -1,3 +1,21 @@
+# Stato corrente — RC40 / F1-D01 (2026-11-04)
+
+**Decisione approvata:** riforma del Cibo con filiere Pesce, Pane, Carne (Caccia/Allevamento), Frutta, Verdura e Deposito alimentare unificato. Prima milestone F1-D01 implementata come **modello Core isolato**, non ancora collegato alla sessione. Comprende ricezione atomica, conversione a lotti/capacità/riserva Pane e 7 test. **RC40: 552 test attesi, non eseguiti qui**; **RC39: 545 test non confermati**; **RC38: 541 test confermati dall'utente**. Nessuna variazione alla GUI, cataloghi, versioni delle regole, SQLite, salvataggi, produzione corrente o benchmarking. E4b fermo.
+
+**Prossimo F1-D02:** Stalla (Grano+Acqua → Bovini), Cacciatore (Selvaggina), Macellaio (due ricette → Carne) con nuove risorse, prerequisiti, tier, tecnologia e test. Evitare attivazioni parziali senza il percorso di migrazione e non trasformare mai automaticamente il Pane riservato in Cibo. [Roadmap](ROADMAP.md) · [Modello](design/F1_D01_RC40_MODELLO_ALIMENTARE.md) · [Piano](validation/F1_D01_RC40_TEST_PLAN.md)
+
+---
+
+# Stato corrente — RC39 / E4a-D02 (2026-11-04)
+
+**RC38: 541/541 test superati secondo conferma Windows dell'utente.** **RC39 candidata: 545 test attesi, da eseguire.** Avviato il benchmark delle strategie naturali E4A-01…05, con la sessione v14 autentica e inventario iniziale invariato. La policy `natural-reference-v1` è esplicita e non ottimizzata. Esporta campioni 60 s, log di azioni riuscite/rifiutate, esiti `pass`/`timeout`/`blocked`, JSON/CSV. I cinque nomi della strategia nel manifest sono etichette di obiettivo, non cinque algoritmi distinti.
+
+**Misure realmente eseguite qui:** nessuna. **Manifest E4a:** tutte le 10 righe `not-run`; le prove E4A-06/07 controllate restano distinte. **Nessuna modifica:** GUI predefinita v14, v13 legacy, Core, SQLite, salvataggi, economia o ricette. Prossimo gate Windows `./validate.cmd` (545 test), poi runner naturale e controllo degli esiti; E4a-D03 carbone/stoccaggio, D04 salvataggio/ripresa; E4b solo dopo dati e approvazione.
+
+[Rapporto RC39](design/E4A_D02_RC39_BENCHMARK_NATURALI.md) · [Piano Windows](validation/E4A_D02_RC39_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [ADR 0049](adr/0049-benchmark-naturali-politica-esplicita.md)
+
+---
+
 # Stato corrente — RC38 / E4a-D01-F1 (2026-11-04)
 
 **RC37 eseguita su Windows: 540/541 test PASS, uno FAIL** per `OtherBuildings` confrontati come sequenza nel test end-to-end dopo round-trip SQLite. **RC38 candidata: 541 test attesi, ancora da eseguire su Windows**. Ultima RC con suite interamente confermata: RC30 (511). RC38 corregge soltanto il confronto dei record in `V14SchoolResearchEndToEndTests.cs`, normalizzando gli insiemi per chiave (edifici, famiglie, contatori, tecnologie), e conserva l'ordine significativo degli studenti. Nessun sorgente applicativo, schema SQLite, interfaccia o coefficiente modificato.

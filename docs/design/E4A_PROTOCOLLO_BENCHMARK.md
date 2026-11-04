@@ -1,3 +1,5 @@
+**Aggiornamento E4a-D02 / RC39 (candidata):** disponibile il runner naturale E4A-01…05 (`--benchmark-e4a-natural`), costruito sulla sessione v14 senza alcuna aggiunta allo stock iniziale, con eventi, campioni a 60 s ed esiti pass/timeout/blocked. La prima politica è comune ai cinque obiettivi e non rappresenta cinque strategie ottimizzate. Nessuna esecuzione qui: manifest `not-run`. [Rapporto RC39](E4A_D02_RC39_BENCHMARK_NATURALI.md).
+
 **Aggiornamento E4a-D01 / RC37 (non eseguita):** è disponibile il primo runner per gli scenari controllati E4A-06/07 (`dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-school --output .local-cache/e4a/school-run-001`). Esporta serie temporali JSON/CSV solo quando viene eseguito. **Non è una misura di raggiungibilità naturale**; i 10 stati nel manifest restano `not-run` fino a conferma. [Rapporto e fixture](E4A_D01_RC37_BENCHMARK_SCUOLE.md).
 
 # E4a — Protocollo di analisi economica, prima del bilanciamento

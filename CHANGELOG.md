@@ -1,3 +1,23 @@
+# RC40 / F1-D01 — Modello di deposito alimentare (2026-11-04)
+
+- Recepita la riforma approvata: Pesce, Pane, Carne, Frutta e Verdura passano dal Deposito alimentare; Stalla e Cacciatore alimentano due vie verso il Macellaio; Orto e Frutteto sono filiere distinte. Pane necessario anche alle abitazioni avanzate, con riserva non convertibile due volte.
+- Creato `SimRisorse.Core/Food/FoodDepotModel.cs`: inventario grezzo/Cibo pronto, ricezione atomica per capacità, trasformazione a lotti interi entro i limiti di personale e capienza, priorità deterministica e protezione della riserva Pane.
+- **7 test Core aggiunti** in `FoodDepotFoundationTests.cs`; **552 test complessivi attesi**. Ultima conferma RC38: **541/541**; RC39 (545) e RC40 (552) da validare. Nessun benchmark E4a misurato.
+- Implementazione **isolata**: il nuovo planner NON è ancora collegato a V14CampaignSession, GUI, catalogo, save SQLite o motore. Nessuna modifica ai parametri produttivi, al bilanciamento o ai salvataggi esistenti.
+- Nuovi [modello F1-D01](docs/design/F1_D01_RC40_MODELLO_ALIMENTARE.md), [ADR 0050](docs/adr/0050-filiera-alimentare-unificata-deposito.md), [piano Windows](docs/validation/F1_D01_RC40_TEST_PLAN.md). Roadmap/handoff aggiornati; E4a storica resta utilizzabile solo come precedente economico, E4b rimandata.
+
+---
+
+# RC39 / E4a-D02 — Benchmark di progressione naturale (2026-11-04)
+
+- **Baseline RC38:** 541 test Windows confermati superati dall'utente. **RC39 candidata:** +4 test, **545 attesi**, non eseguiti nel confezionamento.
+- Aggiunto `E4aNaturalBenchmark` per E4A-01…05: stessa partita iniziale v14 non finanziata, politica `natural-reference-v1` dichiarata, eventi dei comandi, checkpoint periodici ogni 60 secondi simulati e obiettivi osservabili (Cibo, Pane/abitante avanzato, Scuola, tecnologia, Segheria Grande).
+- Comando CLI `--benchmark-e4a-natural [--scenario E4A-0X] [--output DIRECTORY]`: JSON/CSV, prevenzione sovrascritture e esiti `pass`/`timeout`/`blocked` senza tempi inventati. Quattro test Application su stock iniziale, avanzamento reale, determinismo, formato e parametri.
+- Documentazione E4a-D02, ADR 0049, piano Windows e handoff aggiornati. `benchmarks/e4a/scenarios.csv` resta **not-run**: nessun benchmark dichiarato misurato.
+- **Invariati:** Core, GUI v13/v14, SQLite, salvataggi, costi, ricette e coefficienti. E4b subordinato ad analisi e approvazione.
+
+---
+
 # RC38 / E4a-D01-F1 — Confronto snapshot SQLite indipendente dall'ordine (2026-11-04)
 
 - **Evidenza RC37 su Windows:** 541 test eseguiti, 540 superati e 1 fallito: `V14SchoolResearchEndToEndTests.PencilsToStudentToResearchToLargeTierSurvivesTwoSqliteRoundTrips`, per ordine di `OtherBuildings` diverso dopo caricamento SQLite.

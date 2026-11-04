@@ -1,3 +1,21 @@
+# Handoff operativo — RC40 / F1-D01
+
+Partire dal pacchetto **RC40 integrale**. **RC38: 541/541 test confermati**. **RC39: 545 attesi, test non eseguiti**. **RC40: 552 attesi, non eseguiti**. L'utente ha approvato la riforma delle filiere alimentari: Pesce, Pane, Carne (Stalla oppure Cacciatore → Macellaio), Frutta (Frutteto), Verdura (Orto) → Deposito alimentare → Cibo pronto. Il Pane va protetto per gli abitanti avanzati; solo l'eccedenza è convertibile. Decisione di usare deposito produttivo con lavoratori, capacità e ricette alternative.
+
+**F1-D01 implementata ma inattiva nel gameplay:** `src/SimRisorse.Core/Food/FoodDepotModel.cs` e sette test `tests/SimRisorse.Core.Tests/FoodDepotFoundationTests.cs`. Non modificati `CivilGrowthScenario`, `V14CampaignSession`, `PopulationPlanner`, GUI, SQLite, save e benchmark. Mai dichiarare nuovo gameplay già disponibile. La riforma attiva parte da F1-D02/D03/D04/D05 con migrazioni versionate, quindi E4a nuova economia → E4b solo con approvazione → E4c → M5.4–M7. Le misure E4a storiche sono ancora `not-run`.
+
+[Roadmap](ROADMAP.md) · [Specifica](design/F1_D01_RC40_MODELLO_ALIMENTARE.md) · [ADR 0050](adr/0050-filiera-alimentare-unificata-deposito.md) · [Piano di validazione](validation/F1_D01_RC40_TEST_PLAN.md)
+
+---
+
+# Handoff operativo — RC39 / E4a-D02
+
+RC38 **541 test confermati superati**. RC39 **545 test attesi**, non eseguiti qui. Aggiunto benchmark delle colonie naturali E4A-01…05: scorte e popolazione iniziali invariate, policy `natural-reference-v1`, progressione attraverso le azioni v14 reali, CSV/JSON, eventi e tempi solo se misurati. **Tutti gli scenari E4a restano not-run**; E4A-06/07 (fixture controllate) non equivalgono a una partita naturale. Gate `validate.cmd` e runner prima di qualunque proposta E4b; proseguire poi D03 carbone/stoccaggio e D04 persistenza/rapporto. Nessuna modifica a GUI, motore, save o coefficienti.
+
+[Rapporto](design/E4A_D02_RC39_BENCHMARK_NATURALI.md) · [Piano](validation/E4A_D02_RC39_TEST_PLAN.md) · [Roadmap](ROADMAP.md).
+
+---
+
 # Handoff operativo — RC38 / E4a-D01-F1
 
 **Usare l'archivio RC38 integrale.** Il test cumulativo Windows RC37 ha dato **540/541 PASS**. Unico fallimento in `V14SchoolResearchEndToEndTests` per diversa posizione di record `OtherBuildings` equivalenti dopo SQLite: il test RC38 normalizza le collezioni con identità, senza modificare simulazione o database. **541 test attesi su RC38; non ancora validata**. Ultima versione interamente confermata RC30 (511). Il benchmark E4A-06/07 non è stato ancora eseguito: non attribuire misure o tempi. Eseguire prima `./validate.cmd`, poi due run distinte del benchmark se verde.

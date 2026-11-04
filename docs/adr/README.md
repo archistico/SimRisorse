@@ -1,3 +1,15 @@
+# ADR corrente — RC40 / F1-D01
+
+[ADR 0050 — Deposito alimentare unificato e filiere alternative](0050-filiera-alimentare-unificata-deposito.md). Direzione approvata; solo nucleo Core isolato e test in RC40, **non gameplay attivo**. RC38 541 test confermati; RC39 545 e RC40 552 attesi, non eseguiti.
+
+---
+
+# ADR corrente — RC39 / E4a-D02
+
+[ADR 0049 — Benchmark naturali con policy deterministica esplicita](0049-benchmark-naturali-politica-esplicita.md). RC38 confermata (541 test); RC39 candidata (545 attesi). Nessun nuovo valore di bilanciamento approvato e nessuna misura economica generata nel confezionamento.
+
+---
+
 # ADR corrente — RC36 / P1-D50
 
 [ADR 0047 — Gate P1 e misure E4a senza rebalance](0047-gate-p1-e-misure-e4a.md) · [Rapporto](../design/P1_D50_RC36_CONSOLIDAMENTO_E_GATE_E4A.md). Stato: protocolli predisposti e test aggiunti, validazione Windows pendente.

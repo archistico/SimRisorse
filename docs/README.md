@@ -1,3 +1,9 @@
+# Documentazione corrente — RC40 / F1-D01
+
+Approvata la riforma alimentare. Modello Core puro della lavorazione nel deposito, senza attivazione nel gioco e senza alterare salvataggi. [Specifica F1-D01](design/F1_D01_RC40_MODELLO_ALIMENTARE.md) · [ADR 0050](adr/0050-filiera-alimentare-unificata-deposito.md) · [Roadmap](ROADMAP.md) · [Piano test](validation/F1_D01_RC40_TEST_PLAN.md). Ultimo gate confermato RC38 (541 test), RC40 552 attesi.
+
+---
+
 # Documentazione corrente — RC36 / P1-D50
 
 **538 test attesi (non eseguiti qui); ultimo checkpoint Windows confermato RC30 / 511.** [Rapporto consolidamento](design/P1_D50_RC36_CONSOLIDAMENTO_E_GATE_E4A.md), [piano test](validation/P1_D50_RC36_TEST_PLAN.md), [roadmap](ROADMAP.md), [protocollo E4a](design/E4A_PROTOCOLLO_BENCHMARK.md) e [ADR 0047](adr/0047-gate-p1-e-misure-e4a.md). Nessun dato di benchmark E4a ancora misurato.

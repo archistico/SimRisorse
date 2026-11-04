@@ -1,3 +1,19 @@
+<!-- RC40 F1-D01: nuova architettura alimentare in sviluppo, non ancora attiva nel gameplay. -->
+> **F1-D01 / RC40:** approvata la riforma alimentare (Pesce, Pane, Carne, Frutta, Verdura → Deposito alimentare → Cibo pronto). Aggiunto il modello **Core isolato** con prove di capacità e riserva Pane; le nuove filiere NON sono ancora costruibili nella partita e le regole RC39 restano identiche. [Roadmap](docs/ROADMAP.md) · [Specifica](docs/design/F1_D01_RC40_MODELLO_ALIMENTARE.md). Baseline Windows RC38 541 test verdi; RC40 552 attesi, da validare.
+
+# Aggiornamento RC39 / E4a-D02 (2026-11-04)
+
+**Ultimo checkpoint confermato:** RC38 con **541 test passati**. **RC39** aggiunge 4 test (**545 attesi, non ancora eseguiti**). La v14 resta il gioco predefinito. Il benchmark E4a-D02 per scenari **naturali E4A-01…05** parte dalle risorse e dalla popolazione della partita nuova, senza fondi artificiali; produce JSON/CSV e distingue successi, timeout e blocchi.
+
+```powershell
+.\validate.cmd
+dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-natural --scenario E4A-01 --output .local-cache/e4a/natural-01-run1
+```
+
+**Nessun risultato economico è stato ancora misurato con RC39.** [Rapporto E4a-D02](docs/design/E4A_D02_RC39_BENCHMARK_NATURALI.md) · [Piano test](docs/validation/E4A_D02_RC39_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
 ## RC38 — Correzione test SQLite (2026-11-04)
 
 Dopo il riscontro Windows **540/541 sulla RC37**, corretto un test end-to-end che confrontava gli edifici per posizione anziché per identificativo. **Nessuna modifica al gioco**: RC38 mantiene **541 test attesi, ancora da eseguire**. Vedi [rapporto F1](docs/design/E4A_D01_RC38_FIX_ORDERING_SQLITE.md) e [piano di validazione](docs/validation/E4A_D01_RC38_TEST_PLAN.md). Avvio ordinario v14 invariato.

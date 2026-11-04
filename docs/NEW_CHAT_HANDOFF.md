@@ -1,3 +1,25 @@
+# Nuova chat — RC40 / F1-D01 (2026-11-04)
+
+**Base da usare: RC40 integrale.** Ultima suite confermata su Windows: **RC38 541/541**. RC39 545 test non confermati; RC40 552 attesi, non compilati in questo ambiente. L'utente ha esplicitamente approvato la nuova architettura alimentare: Pesce, Pane, Carne (Stalla e Caccia come due ingressi al Macellaio), Frutta e Verdura; solo il Deposito alimentare, con lavoratori e capienza, genera Cibo ordinario. Quota di Pane intoccabile per residenti avanzati; il resto può diventare Cibo; nessuna unità va contata due volte. Orto/Frutteto separati. Il Macellaio dovrà avere ricette alternative automatiche, nessuna combobox.
+
+**RC40 ha solo il dominio isolato** `FoodDepotModel.cs` e sette test Core; NON è attivo in v14, NON ha nuove risorse visibili e NON cambia la versione del DB. Non aggiornare i salvataggi in questa fase. La nuova roadmap ufficiale è F1-D02 carne → D03 ortofrutta → D04 deposito/consumi → D05 migrazione/stabilità → E4a nuova economia → E4b coefficienti approvati → E4c → navale. RC39 ed E4a precedente rimangono storici/not-run; non inventare benchmark. Conservare GUI v14 predefinita e v13 legacy isolata. Consegnare ZIP integrale con ADR/changelog/roadmap/handoff.
+
+[Modello](design/F1_D01_RC40_MODELLO_ALIMENTARE.md) · [Roadmap](ROADMAP.md) · [ADR](adr/0050-filiera-alimentare-unificata-deposito.md) · [Test plan](validation/F1_D01_RC40_TEST_PLAN.md)
+
+---
+
+# Nuova chat — RC39 / E4a-D02 (2026-11-04)
+
+**Ripartire dall'archivio RC39 integrale.** **RC38 ha superato 541/541 test Windows** su conferma dell'utente. **RC39 candidata: 545 test attesi**, non eseguiti in questo ambiente. Nuovo `E4aNaturalBenchmark` per E4A-01…05, politica `natural-reference-v1`, avvio da partita reale appena creata (nessuna aggiunta di stock/popolo/ricerca), comandi v14, serie da 60 s, log di tentativi, `pass`/`timeout`/`blocked`, export CSV e JSON via `--benchmark-e4a-natural`. Quattro test nuovi e ADR 0049.
+
+**Non sono stati ancora misurati tempi naturali:** `benchmarks/e4a/scenarios.csv` resta `not-run` per tutte le righe. E4A-06/07 restano runner separati con finanziamento controllato. Le cinque strategie manifest sono etichette-obiettivo, non algoritmi ottimizzati distinti. Non inventare risultati. Nessun cambiamento di GUI (v14 ordinaria; v13 `--legacy-v13`), Core, SQLite, salvataggi o coefficiente E4b.
+
+**Prossimo gate:** `./validate.cmd` per 545 test; poi due run indipendenti E4A-01 e un run E4A-01…05, salvare gli esiti. Proseguire E4a-D03 Carbone/stoccaggio, D04 persistenza e analisi, E4b **solo su approvazione dei valori**. Consegna sempre archivio ZIP integrale con roadmap, changelog e handoff.
+
+[Rapporto](design/E4A_D02_RC39_BENCHMARK_NATURALI.md) · [Piano](validation/E4A_D02_RC39_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [ADR 0049](adr/0049-benchmark-naturali-politica-esplicita.md)
+
+---
+
 # Nuova chat — RC38 / E4a-D01-F1 (2026-11-04)
 
 Ripartire da RC38. RC37 ha completato l'esecuzione di **541 test** con **540 superati e un fallimento** in `V14SchoolResearchEndToEndTests`, dovuto all'ordine di `OtherBuildings` restituiti da SQLite. RC38 modifica soltanto il test: confronta per chiave edifici, famiglie, contatori e tecnologie; i progressi degli studenti restano posizionali. **RC38 non validata: 541 attesi.** Invariati gioco, GUI, salvataggi, benchmark. Ultima suite interamente confermata RC30/511. Procedere con `./validate.cmd` su Windows e poi benchmark controllato E4A-06/07; scenari ancora `not-run`. Conservare v14 predefinita, v13 `--legacy-v13`, slot separati, e nessun E4b senza misure e approvazione.

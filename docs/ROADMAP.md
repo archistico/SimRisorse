@@ -1,3 +1,43 @@
+# Roadmap aggiornata — RC40 / F1-D01 (2026-11-04)
+
+**Decisione approvata:** introdurre filiere alternative Pesce, Pane, Carne (Stalla o Caccia → Macellaio), Frutta (Frutteto) e Verdura (Orto), con conversione esclusiva nel Deposito alimentare e riserva del Pane per abitazioni avanzate. **RC38: 541 test verdi confermati. RC39: 545 pendenti. RC40: 552 pendenti.** La GUI v14 resta predefinita, v13 è legacy separata. Nessun coefficiente E4b viene modificato in questa fase.
+
+| Sequenza | Milestone | Attività e criterio di accettazione | Stato |
+| --- | --- | --- | --- |
+| 1 | **F1-D01 — Contratto alimentare** | Modello Core puro scorte grezze/Cibo pronto, capacità, ricette multiple, riserva Pane; ADR, test, invarianti senza cambiare gioco | **Implementata RC40, 7 test da eseguire** |
+| 2 | **F1-D02 — Carne** | Risorse `cattle`, `game`, `meat`; Stalla Grano+Acqua, Cacciatore Selvaggina, Macellaio con due ricette; ricette alternative deterministiche, nuove famiglie tier/tecnologie, test di transizione e carenze | Da sviluppare |
+| 3 | **F1-D03 — Ortofrutta** | Orto e Frutteto separati, risorse `vegetables` e `fruit`, capacità, produzioni e compatibilità progressione; nessuna combobox | Da sviluppare |
+| 4 | **F1-D04 — Deposito alimentare unificato** | Routing dei 5 ingredienti, lavorazione limitata dai dipendenti, Cibo pronto consumato dalla popolazione, Pane protetto per abitazioni avanzate, capacità e diagnostica nella GUI v14; tick atomico senza duplicazioni | Da sviluppare |
+| 5 | **F1-D05 — Persistenza e consolidamento** | Migrazione versionata SQLite e regole, backup degli slot, 30 Cibo iniziali nel Municipio, vecchie scorte preservate, test end-to-end, approvazione in Windows | Da sviluppare |
+| 6 | **E4a nuova economia** | Benchmark naturali e controllati confrontando caccia/pesca/allevamento/orto/frutteto/pane, resa netta per lavoratore/input, stalli e spazio di deposito | Dopo F1 |
+| 7 | **E4b** | Proporre e applicare coefficienti di resa, costi, consumo e riserva solo dopo risultati e approvazione esplicita | Sospesa |
+| 8 | **E4c** | Consolidamento e compatibilità salvataggi, stabilità e regressioni | Dopo E4b |
+| 9 | **M5.4–M7** | Navi, esplorazione, conquista e fine gioco | Successiva |
+
+**Vincolo transitorio:** i runner RC37/RC39 e i 10 scenari E4a restano nel repository con stato `not-run` e regole precedenti. RC40 non li altera e non li esegue; dopo il nuovo catalogo vanno versionati per evitare confronti impropri. **F1-D01 non attiva alcuna nuova risorsa nella partita.**
+
+[Modello tecnico F1-D01](design/F1_D01_RC40_MODELLO_ALIMENTARE.md) · [ADR 0050](adr/0050-filiera-alimentare-unificata-deposito.md) · [Test Windows](validation/F1_D01_RC40_TEST_PLAN.md)
+
+---
+
+# E4a-D02 / RC39 — Misura della progressione naturale (2026-11-04)
+
+**Gate precedente:** RC38 **541 test confermati**. **RC39** introduce 4 test e il runner E4A-01…05, **545 test attesi**, compilazione/xUnit e benchmark non eseguiti qui. La politica `natural-reference-v1` utilizza soltanto i comandi reali v14 e le scorte iniziali; registra eventi e campioni (60 s), risultati e blocchi senza attribuire tempi non misurati. Anche i 10 scenari del manifest restano `not-run`.
+
+| Fase | Stato | Criterio di uscita |
+| --- | --- | --- |
+| **E4a-D02 / RC39** | Implementata, gate aperto | 545 test, avvio ripetibile E4A-01…05, valutazione degli esiti, nessun finanziamento artificiale |
+| **E4a-D03** | Prossima | E4A-08/09: misurare contesa Carbone/Matite e capacità, inattività e scorte |
+| **E4a-D04** | Pianificata | E4A-10: equivalenza salvataggio/ripresa, aggregazione e classificazione dei colli di bottiglia |
+| **E4b** | Sospesa | Proposte numeriche **basate su risultati eseguiti**, applicare solo dopo approvazione |
+| **E4c e M5.4–M7** | Future | Stabilità/compatibilità; successivamente navale, esplorazione, conquista e Castello |
+
+**Nota:** i nomi delle strategie nel manifest non rappresentano ancora algoritmi indipendenti: E4A-01…05 usano tutti una stessa politica di riferimento con obiettivi differenti. Un timeout non certifica l'impossibilità di giocare; può derivare dalla policy. Nessuna modifica ai parametri economici.
+
+[Rapporto](design/E4A_D02_RC39_BENCHMARK_NATURALI.md) · [Piano](validation/E4A_D02_RC39_TEST_PLAN.md) · [Protocollo](design/E4A_PROTOCOLLO_BENCHMARK.md).
+
+---
+
 # Milestone E4a-D01-F1 / RC38 — Correzione test dopo gate parziale (2026-11-04)
 
 **RC37 su Windows: 540/541 test PASS**; il test d'integrazione SQLite confrontava impropriamente l'ordine degli edifici, non la loro identità. RC38 modifica solo le asserzioni della prova end-to-end, confrontando gli insiemi identificati per chiave. **Gate RC38 ancora aperto: 541/541 attesi.** Fino alla validazione non considerare conclusa P1-D50. Il benchmark E4a-D01 è implementato ma non misurato; gli scenari E4A-06/07 rimangono `not-run`.
