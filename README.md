@@ -1,3 +1,8 @@
+> **RC42 / F1-D03 (2026-11-04):** correzione del Salva v14 dopo 100 backup occupati, senza cancellare file esistenti; nuovo modello Core Orto/Frutteto **non ancora attivo nel gioco**. RC41 validata (563 test); RC42 richiede 577 test. [Roadmap](docs/ROADMAP.md) · [Rapporto](docs/design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md) · [Piano test](docs/validation/F1_D03_RC42_TEST_PLAN.md).
+
+<!-- RC41 / F1-D02: filiere carne preparate nel Core, ancora non attive nel gioco. -->
+> **RC41 — F1-D02:** Stalla (Grano+Acqua→Bovini), Cacciatore (Selvaggina) e Macellaio con **due ricette alternative** ora dispongono di un planner Core puro, non ancora collegato al gameplay. 11 nuovi test, **563 attesi**. **RC40 confermata dall'utente: 552 test superati**. Nessun cambiamento a GUI v14, catalogo attivo, motore RC39 o SQLite. [Specifica](docs/design/F1_D02_RC41_FILIERA_CARNE.md) · [Test](docs/validation/F1_D02_RC41_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
 <!-- RC40 F1-D01: nuova architettura alimentare in sviluppo, non ancora attiva nel gameplay. -->
 > **F1-D01 / RC40:** approvata la riforma alimentare (Pesce, Pane, Carne, Frutta, Verdura → Deposito alimentare → Cibo pronto). Aggiunto il modello **Core isolato** con prove di capacità e riserva Pane; le nuove filiere NON sono ancora costruibili nella partita e le regole RC39 restano identiche. [Roadmap](docs/ROADMAP.md) · [Specifica](docs/design/F1_D01_RC40_MODELLO_ALIMENTARE.md). Baseline Windows RC38 541 test verdi; RC40 552 attesi, da validare.
 

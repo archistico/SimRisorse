@@ -1,3 +1,23 @@
+# RC42 / F1-D03 — Ortofrutta e correzione urgente backup v14 (2026-11-04)
+
+- **RC41 validata dall'utente: 563/563 test superati**. **RC42 candidata: 577 test attesi**, 14 nuovi, esecuzione Windows pendente.
+- Corretto `V14SqliteSaveStore.BackupExisting`: dopo i 100 backup storici occupati crea backup aggiuntivi **senza limiti di slot**, con nome univoco e `VACUUM INTO`, conservando **tutti** i backup precedenti. Nessuna rotazione automatica; lo spazio disco può crescere. Due nuovi test Infrastructure su backup 101/102 e checkpoint invalidi.
+- Introdotto `HorticultureModel.cs` Core **isolato**: Orto→Verdura e Frutteto→Frutta, personale e capienza indipendenti, uso facoltativo di Acqua configurabile e lotti atomici. 12 test Core. Nessun costo/ricetta definitiva approvata.
+- **Gioco corrente invariato salvo il fix del salvataggio:** catalogo, GUI v14/v13, motore di produzione, schema SQLite e regole alimentari attive non modificati. Ortofrutta non ancora costruibile; collegamento al deposito e migrazioni in F1-D04/D05.
+- Documentazione: [rapporto](docs/design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md) · [validazione](docs/validation/F1_D03_RC42_TEST_PLAN.md) · [ADR 0052](docs/adr/0052-backup-v14-oltre-cento-slot.md) · [ADR 0053](docs/adr/0053-orto-frutteto-modello-isolato.md) · [roadmap](docs/ROADMAP.md).
+
+---
+
+# RC41 / F1-D02 — Stalla, Cacciatore e Macellaio a ricette alternative (2026-11-04)
+
+- RC40 **validata dall'utente, 552 test superati**; nuova RC41 **563 test attesi e non eseguiti qui**.
+- Creato `src/SimRisorse.Core/Food/MeatChainModel.cs`: produzione distinta Grano+Acqua→Bovini, Cacciatore→Selvaggina e due ricette alternative Macellaio→Carne, con lotti interi, capienza, lavoratori condivisi, priorità configurabile e divieto di macellazione nello stesso tick degli animali appena prodotti.
+- Aggiunti **11 test Core** in `MeatChainFoundationTests.cs`, incluso il passaggio obbligato Carne→Deposito→Cibo pronto e la verifica di assenza di sprechi. Rese dei test solo illustrative, **nessun nuovo coefficiente approvato**.
+- **Dominio isolato:** nessuna attivazione delle tre nuove risorse o degli edifici nella v14; invariati la GUI, il catalogo della partita, le regole economiche, SQLite e i salvataggi. La migrazione e i nuovi tier restano in F1-D04/D05.
+- Aggiornati [rapporto F1-D02](docs/design/F1_D02_RC41_FILIERA_CARNE.md), [piano test](docs/validation/F1_D02_RC41_TEST_PLAN.md), [ADR 0051](docs/adr/0051-due-origini-carne-e-priorita-macellaio.md), roadmap, stato corrente e handoff.
+
+---
+
 # RC40 / F1-D01 — Modello di deposito alimentare (2026-11-04)
 
 - Recepita la riforma approvata: Pesce, Pane, Carne, Frutta e Verdura passano dal Deposito alimentare; Stalla e Cacciatore alimentano due vie verso il Macellaio; Orto e Frutteto sono filiere distinte. Pane necessario anche alle abitazioni avanzate, con riserva non convertibile due volte.

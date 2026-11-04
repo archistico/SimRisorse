@@ -189,6 +189,65 @@ public sealed class V14SqliteSaveStoreTests
     }
 
     [Fact]
+    public void SaveBeyond100OccupiedBackupSlotsKeepsAllOldBackupsAndValidPrimary()
+    {
+        using var sandbox = new Sandbox();
+        var store = sandbox.Store();
+        var original = Migrated();
+        store.Save(original);
+        for (var i = 1; i <= 100; i++)
+        {
+            var name = $"advanced.v14.backup{(i == 1 ? "" : "-" + i)}.sqlite3";
+            File.WriteAllText(Path.Combine(sandbox.DirectoryName, name), $"existing-{i}");
+        }
+
+        var updated = original with { ResearchBalanceMilliPoints = 123_000 };
+        store.Save(updated); // Used to throw when slots 1..100 were full.
+        Equivalent(updated, store.Load());
+
+        var overflow = Directory.GetFiles(sandbox.DirectoryName,
+            "advanced.v14.backup-extra-*.sqlite3");
+        Assert.Single(overflow);
+        Equivalent(original, new V14SqliteSaveStore(overflow[0],
+            CivilGrowthScenario.Create(), School, Technologies).Load());
+        for (var i = 1; i <= 100; i++)
+        {
+            var name = $"advanced.v14.backup{(i == 1 ? "" : "-" + i)}.sqlite3";
+            Assert.Equal($"existing-{i}", File.ReadAllText(Path.Combine(sandbox.DirectoryName, name)));
+        }
+
+        var next = updated with { ResearchBalanceMilliPoints = 456_000 };
+        store.Save(next);
+        Equivalent(next, store.Load());
+        var newOverflow = Directory.GetFiles(sandbox.DirectoryName,
+            "advanced.v14.backup-extra-*.sqlite3");
+        Assert.Equal(2, newOverflow.Length);
+        Assert.Contains(overflow[0], newOverflow);
+        Equivalent(updated, new V14SqliteSaveStore(
+            newOverflow.Single(file => file != overflow[0]),
+            CivilGrowthScenario.Create(), School, Technologies).Load());
+    }
+
+    [Fact]
+    public void InvalidSaveAtBackupCapacityDoesNotCreateExtraBackupOrDamageCheckpoint()
+    {
+        using var sandbox = new Sandbox();
+        var store = sandbox.Store();
+        var original = Migrated();
+        store.Save(original);
+        var bytes = File.ReadAllBytes(sandbox.V14);
+        for (var i = 1; i <= 100; i++)
+        {
+            var name = $"advanced.v14.backup{(i == 1 ? "" : "-" + i)}.sqlite3";
+            File.WriteAllText(Path.Combine(sandbox.DirectoryName, name), "keep");
+        }
+        Invalid(() => store.Save(original with { ResearchBalanceMilliPoints = -1 }));
+        Assert.Equal(bytes, File.ReadAllBytes(sandbox.V14));
+        Assert.Empty(Directory.GetFiles(sandbox.DirectoryName,
+            "advanced.v14.backup-extra-*.sqlite3"));
+    }
+
+    [Fact]
     public void MissingTierAndMissingTrainingPositionAreRejected()
     {
         using var sandbox = new Sandbox();

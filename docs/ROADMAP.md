@@ -1,3 +1,40 @@
+# Roadmap RC42 / F1-D03 — 4 novembre 2026
+
+**RC41 validata: 563 test**. **RC42 candidata: 577 test attesi** (12 Core + 2 Infrastructure). Il bug reale `All v14 backup slots are occupied` è corretto con un fallback sicuro oltre 100 backup (senza cancellazione automatica). La nuova filiera Ortofrutta è nel Core **ma non attiva** nel gioco.
+
+| Ordine | Milestone | Gate | Stato |
+| --- | --- | --- | --- |
+| 1 | **RC42 / salvataggi v14** | 100 slot saturi → backup extra coerente, checkpoint integro, niente vecchie copie eliminate | **Implementato; test Windows pendenti** |
+| 2 | **F1-D03 / Ortofrutta** | Orto e Frutteto indipendenti, Verdura e Frutta, capacità, opzione Acqua, passaggio nel deposito | **Core isolato + 12 test; gate pendente** |
+| 3 | **F1-D04 / Deposito alimentare attivo** | Routing Pesce, Pane, Carne, Frutta e Verdura, capacità lavorazione e personale; riserva Pane senza doppio conteggio | **Prossima** |
+| 4 | **F1-D05 / Attivazione e migrazione** | Risorse/edifici/tier/GUI, migrazione SQLite sicura, salvataggi v14 esistenti preservati | Pianificata |
+| 5 | **E4a → E4b → E4c** | Nuove misure di rendimento, approvazione del bilanciamento, stabilizzazione | Dopo F1 |
+| 6 | **M5.4–M7** | Navale, esplorazione e conquista | Successiva |
+
+**Nota backup:** nessuna retention automatica approvata. La crescita dello spazio disco è un rischio esplicito: proporre in futuro una retention configurabile e una funzione di esportazione sicura, senza cancellare copie storiche implicitamente. Non alterare la v13 legacy.
+
+[Specifica D03](design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md) · [Piano Windows](validation/F1_D03_RC42_TEST_PLAN.md) · [ADR 0052](adr/0052-backup-v14-oltre-cento-slot.md) · [ADR 0053](adr/0053-orto-frutteto-modello-isolato.md)
+
+---
+
+# Roadmap aggiornata — RC41 / F1-D02 (2026-11-04)
+
+**Baseline confermata:** RC40, **552 test superati** secondo riscontro dell'utente. **Candidata RC41:** 563 test attesi (11 nuovi Core.Tests), non compilati/testati in questo ambiente. La v14 rimane la GUI predefinita; v13 legacy separata. Il nuovo sistema alimentare continua a essere un **modello isolato**, non ancora attivo nel gioco.
+
+| Ordine | Milestone | Deliverable e gate | Stato |
+| --- | --- | --- | --- |
+| 1 | **F1-D01 — Deposito** | Scorte grezze / Cibo pronto, riserva Pane, capienza, lotti e personale | **RC40 validata (552 test)** |
+| 2 | **F1-D02 — Carne** | Stalla Grano+Acqua→Bovini, Cacciatore→Selvaggina, Macellaio con due ricette automatiche; planner isolato e 11 test | **RC41 implementata, 563 test pendenti** |
+| 3 | **F1-D03 — Ortofrutta** | Orto→Verdura e Frutteto→Frutta distinti; produzione e capienze, test Core | **Prossima** |
+| 4 | **F1-D04 — Deposito attivo** | Collegare tutte e cinque le famiglie alimentari alla conversione nel deposito, lavoratori e razioni; proteggere la riserva Pane e impedire doppio conteggio | **Pianificata** |
+| 5 | **F1-D05 — Attivazione sicura** | Catalogo/GUI/tier/tecnologie, nuova versione regole, migrazione SQLite di salvataggi v14, test end-to-end, rollback; nessuna sovrascrittura silenziosa | **Pianificata** |
+| 6 | **E4a → E4b → E4c** | Benchmark effettivi su tutte le filiere → proposta coefficenti da approvare → consolidamento | **Dopo F1** |
+| 7 | **M5.4–M7** | Navi, esplorazione, conquista, obiettivo finale | **Futuro** |
+
+**Vincoli:** non attivare Carne, Selvaggina o Bovini nel catalogo giocabile fino al collegamento del deposito e alla strategia di migrazione; il Macellaio non deve richiedere la Stalla, perché deve restare utilizzabile dalla Caccia. I valori di prova (es. 1 Grano+1 Acqua→2 Bovini) sono fixture, **non bilanciamento approvato**. I benchmark E4a precedenti non sono nuove misure sul modello alimentare. [Report D02](design/F1_D02_RC41_FILIERA_CARNE.md) · [Piano RC41](validation/F1_D02_RC41_TEST_PLAN.md) · [ADR 0051](adr/0051-due-origini-carne-e-priorita-macellaio.md)
+
+---
+
 # Roadmap aggiornata — RC40 / F1-D01 (2026-11-04)
 
 **Decisione approvata:** introdurre filiere alternative Pesce, Pane, Carne (Stalla o Caccia → Macellaio), Frutta (Frutteto) e Verdura (Orto), con conversione esclusiva nel Deposito alimentare e riserva del Pane per abitazioni avanzate. **RC38: 541 test verdi confermati. RC39: 545 pendenti. RC40: 552 pendenti.** La GUI v14 resta predefinita, v13 è legacy separata. Nessun coefficiente E4b viene modificato in questa fase.

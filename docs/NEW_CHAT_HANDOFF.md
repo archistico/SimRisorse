@@ -1,3 +1,23 @@
+# NEW CHAT HANDOFF — RC42 / F1-D03 (2026-11-04)
+
+**Usare lo ZIP integrale RC42.** Ultimo gate Windows **RC41: 563 test passati**. RC42: **577 test attesi, non ancora validati**. L'utente ha segnalato `All v14 backup slots are occupied` nel normale Salva della v14. Causa: `V14SqliteSaveStore.BackupExisting` esauriva 100 nomi. Correzione RC42: oltre 100, backup extra SQLite coerenti a nome timestamp UTC + GUID, nessuna rimozione/rotazione dei vecchi backup. Fare attenzione allo spazio disco. Due test di regressione.
+
+Aggiunto Core `HorticultureModel` isolato: Orto→Verdura, Frutteto→Frutta, 12 test, acqua opzionale e rese configurabili. Le nuove risorse non sono ancora nella partita: F1-D04 deposito alimentare, F1-D05 catalogo/GUI/migrazione. Non cambiare coefficienti prima di E4a/E4b. Mantenere v14 predefinita e v13 legacy in store separato. Nessuna pulizia di backup senza consenso.
+
+Leggere [rapporto](design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md), [roadmap](ROADMAP.md), [piano Windows](validation/F1_D03_RC42_TEST_PLAN.md) e [stato](CURRENT_STATE.md) prima delle nuove modifiche.
+
+---
+
+# Nuova chat — RC41 / F1-D02 (2026-11-04)
+
+**Usare lo ZIP integrale RC41**. **Ultimo gate confermato:** RC40, 552 test superati secondo l'utente. **RC41:** 563 test attesi (11 nuovi), da verificare Windows. In RC41 `MeatChainModel.cs` offre un planner Core isolato per Stalla (Grano+Acqua→Bovini), Cacciatore (Selvaggina) e Macellaio (Bovini o Selvaggina→Carne). Le ricette alternative condividono lo stesso personale, sono ordinate deterministicamente e hanno rese configurabili. Non trasformare Carne in Cibo senza il Deposito alimentare di F1-D01; il Pane resta protetto contro il doppio consumo.
+
+**Attenzione:** le risorse/edifici della Carne NON sono nel catalogo v14, GUI e salvataggi sono invariati. I coefficienti usati dai nuovi test sono solo dati di prova. Nessun benchmark nuovo misurato, nessun bilanciamento E4b. Prossime tappe: **F1-D03 Orto+Frutteto**, **F1-D04 deposito unificato e consumo**, **F1-D05 catalogo/tier/migrazione e prove di compatibilità**, poi E4a nuova economia → E4b valori approvati → E4c → navale. Non perdere la scelta v14 predefinita e v13 legacy con DB separato. Consegnare sempre ZIP integrale e documentazione aggiornata.
+
+[Rapporto](design/F1_D02_RC41_FILIERA_CARNE.md) · [Piano test](validation/F1_D02_RC41_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [Stato](CURRENT_STATE.md)
+
+---
+
 # Nuova chat — RC40 / F1-D01 (2026-11-04)
 
 **Base da usare: RC40 integrale.** Ultima suite confermata su Windows: **RC38 541/541**. RC39 545 test non confermati; RC40 552 attesi, non compilati in questo ambiente. L'utente ha esplicitamente approvato la nuova architettura alimentare: Pesce, Pane, Carne (Stalla e Caccia come due ingressi al Macellaio), Frutta e Verdura; solo il Deposito alimentare, con lavoratori e capienza, genera Cibo ordinario. Quota di Pane intoccabile per residenti avanzati; il resto può diventare Cibo; nessuna unità va contata due volte. Orto/Frutteto separati. Il Macellaio dovrà avere ricette alternative automatiche, nessuna combobox.

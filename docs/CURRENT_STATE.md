@@ -1,3 +1,23 @@
+# Stato corrente — RC42 / F1-D03 (2026-11-04)
+
+**Ultimo gate verde:** RC41, 563 test confermati dall'utente. **RC42:** 577 test attesi (14 nuovi), non eseguiti qui. Risolto il bug di blocco del Salva dopo 100 backup v14: 100 nomi storici invariati, backup successivi con timestamp/GUID e copia consistente `VACUUM INTO`, senza sovrascritture o cancellazioni. Rischio spazio disco non ancora gestito da retention.
+
+Creato `HorticultureModel.cs` Core isolato: Orto→Verdura, Frutteto→Frutta; personale/capienze distinte, opzione Acqua configurabile, priorità deterministica, lotti interi e conversione in Cibo demandata al deposito. **L'ortofrutta non è ancora giocabile**: catalogo, GUI, simulazione e SQLite non registrano queste risorse fino a F1-D04/D05. La correzione backup invece si applica già alla v14, senza cambiare lo schema DB.
+
+Prossimo gate `./validate.cmd` su Windows (577 test) e verifica manuale del Salva su copia dei dati. Successivo F1-D04 Deposito unificato, F1-D05 attivazione/migrazione; poi E4a/E4b. [Roadmap](ROADMAP.md) · [Rapporto](design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md) · [Validazione](validation/F1_D03_RC42_TEST_PLAN.md).
+
+---
+
+# Stato corrente — RC41 / F1-D02 (2026-11-04)
+
+**RC40 è stata validata dall'utente: 552 test superati.** RC41 introduce un nuovo modello Core puro per Stalla/Cacciatore/Macellaio e 11 test (totale **563 attesi**, ancora da eseguire). Gli input sono Grano e Acqua per la Stalla, nessun input agricolo per la Caccia, Bovini o Selvaggina per il Macellaio; la Carne rimane grezza finché non passa dal Deposito alimentare F1-D01. Le ricette alternative usano un solo budget lavoratori, con priorità deterministica e controllo lotti/capienze. **I valori dei test non sono valori approvati per la partita.**
+
+**Invariati** in RC41: Catalogo v14 e le sue risorse/edifici, UI ordinaria v14, UI v13 legacy, `V14CampaignSession`, SQLite, salvataggi, coefficienti e tutti i benchmark. La Carne **non è ancora giocabile**; attivazione solo dopo F1-D03 ortofrutta, F1-D04 deposito+consumo e F1-D05 catalogo/migrazione. E4b resta sospesa fino a E4a e approvazione.
+
+[Roadmap](ROADMAP.md) · [Rapporto D02](design/F1_D02_RC41_FILIERA_CARNE.md) · [Test plan](validation/F1_D02_RC41_TEST_PLAN.md) · [ADR 0051](adr/0051-due-origini-carne-e-priorita-macellaio.md)
+
+---
+
 # Stato corrente — RC40 / F1-D01 (2026-11-04)
 
 **Decisione approvata:** riforma del Cibo con filiere Pesce, Pane, Carne (Caccia/Allevamento), Frutta, Verdura e Deposito alimentare unificato. Prima milestone F1-D01 implementata come **modello Core isolato**, non ancora collegato alla sessione. Comprende ricezione atomica, conversione a lotti/capacità/riserva Pane e 7 test. **RC40: 552 test attesi, non eseguiti qui**; **RC39: 545 test non confermati**; **RC38: 541 test confermati dall'utente**. Nessuna variazione alla GUI, cataloghi, versioni delle regole, SQLite, salvataggi, produzione corrente o benchmarking. E4b fermo.

@@ -419,6 +419,16 @@ public sealed class V14SqliteSaveStore
             command.ExecuteNonQuery();
             return;
         }
-        throw new GameSaveException(GameSaveError.Unavailable, "All v14 backup slots are occupied.");
+        // Historical numbered slots must never be deleted or recycled automatically.
+        // Once all 100 legacy slots are taken, use a collision-resistant name for
+        // each additional SQLite-consistent backup. No existing backup is touched.
+        // Users may archive old backups themselves; there is intentionally no
+        // silent retention/deletion policy.
+        var overflow = Path.Combine(directory,
+            $"{stem}.v14.backup-extra-{DateTime.UtcNow:yyyyMMddTHHmmssfffZ}-{Guid.NewGuid():N}{extension}");
+        using var overflowCommand = source.CreateCommand();
+        overflowCommand.CommandText = "VACUUM INTO $path;";
+        overflowCommand.Parameters.AddWithValue("$path", overflow);
+        overflowCommand.ExecuteNonQuery();
     }
 }

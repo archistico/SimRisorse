@@ -1,3 +1,17 @@
+# Handoff RC42 / F1-D03
+
+RC41 è la base verificata (563 test). RC42 contiene fix salvataggio v14 oltre 100 backup e modello Core isolato Orto/Frutteto, 14 test aggiunti, totale 577 **ancora da validare** su Windows. Non cancellare i backup reali. F1-D04: collegare deposito alimentare; F1-D05: catalogo e migrazione versionata. [Dettagli](design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md) · [Piano](validation/F1_D03_RC42_TEST_PLAN.md) · [Roadmap](ROADMAP.md).
+
+---
+
+# Handoff operativo — RC41 / F1-D02 (2026-11-04)
+
+**RC40 validata:** 552/552 test. **RC41 candidata:** +11 test Core, 563 attesi; non eseguiti qui. Aggiunto soltanto `MeatChainModel.cs` e test Core per Grano+Acqua→Bovini, Cacciatore→Selvaggina, macellazione alternativa→Carne. Nessuna modifica attiva a partita v14, UI, SQLite o salvataggi; rese di test non sono bilanciamento. Prossimo F1-D03 Orto e Frutteto; poi D04 Deposito/consumo e D05 catalogo+tier+migrazione. Non dichiarare nuove risorse giocabili prima dell'integrazione.
+
+[Roadmap](ROADMAP.md) · [Report F1-D02](design/F1_D02_RC41_FILIERA_CARNE.md) · [Piano Windows](validation/F1_D02_RC41_TEST_PLAN.md)
+
+---
+
 # Handoff operativo — RC40 / F1-D01
 
 Partire dal pacchetto **RC40 integrale**. **RC38: 541/541 test confermati**. **RC39: 545 attesi, test non eseguiti**. **RC40: 552 attesi, non eseguiti**. L'utente ha approvato la riforma delle filiere alimentari: Pesce, Pane, Carne (Stalla oppure Cacciatore → Macellaio), Frutta (Frutteto), Verdura (Orto) → Deposito alimentare → Cibo pronto. Il Pane va protetto per gli abitanti avanzati; solo l'eccedenza è convertibile. Decisione di usare deposito produttivo con lavoratori, capacità e ricette alternative.
