@@ -18,10 +18,10 @@ public partial class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var options = DesktopOptions.Parse(desktop.Args ?? []);
-            if (options.ExperimentalV14)
+            if (options.UseV14)
             {
-                // The v14 preview has its own window, session and v3 store. Never hand
-                // this path to the live v13 GameRuntime or SqliteGameSaveStore.
+                // The default v14 game has an isolated v3 store. The legacy v13
+                // runtime and v2 store remain accessible only through an explicit route.
                 desktop.MainWindow = new V14PreviewWindow(V14PreviewViewModel.CreateForPreview(options.SavePath));
             }
             else

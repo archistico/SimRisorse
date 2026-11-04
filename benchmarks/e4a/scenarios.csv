@@ -1,0 +1,11 @@
+scenario_id,fixture,strategy,objective,stop_condition,max_game_seconds,status
+E4A-01,natural,manual-reference,Prime filiere e primo Cibo,Primo deposito alimentare operativo,14400,not-run
+E4A-02,natural,growth-first,Prima produzione Pane e crescita avanzata,Primo saldo Pane positivo e abitante avanzato,28800,not-run
+E4A-03,natural,research-first,Prima Scuola da campagna ordinaria,Scuola costruita e primo studente iscritto,28800,not-run
+E4A-04,natural,research-first,Prima ricerca acquistata dalla campagna ordinaria,Lavorazioni I acquistata,43200,not-run
+E4A-05,natural,research-first,Primo tier Grande raggiungibile,Prima Segheria Grande costruita o aggiornata,57600,not-run
+E4A-06,controlled,school-one,Effetto di una Scuola sulla coda,Due studenti qualificati,1800,not-run
+E4A-07,controlled,school-two,Effetto di due Scuole a parita di input,Due studenti qualificati,1800,not-run
+E4A-08,controlled,coal-competition,Competizione Carbone Matite e industria,Registrati input mancanti e tempi di inattivita,3600,not-run
+E4A-09,controlled,storage-limits,Capacita magazzini e blocco output,Registrate durate di deposito pieno,3600,not-run
+E4A-10,controlled,save-resume,Invarianza checkpoint e simulazione in pausa,Confronto snapshot prima e dopo ripresa,3600,not-run

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SimRisorse.Application;
+using SimRisorse.Application.Benchmarks;
 using SimRisorse.Application.Features.Construction.ConstructBuildings;
 using SimRisorse.Application.Features.Military.EnlistRecruits;
 using SimRisorse.Application.Features.Population.AssignWorkers;
@@ -25,9 +26,39 @@ if (args is ["--help"])
     Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-coal: three v9 coal strategies at 1800/3600 seconds, with replay and ledger checks.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-campaign: three real-start v9 routes to 240 swords/360 coins over 2400 seconds.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-military-capacity: controlled v13 comparison of 5/10/20 recruits and 1/2/4 barracks.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-school [--output DIRECTORY]: measured v14 E4A-06/07, one vs two schools; optional JSON and CSV files.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+if (args is ["--benchmark-e4a-school"] or ["--benchmark-e4a-school", "--output", _])
+{
+    try
+    {
+        var runs = E4aSchoolBenchmark.Run();
+        var report = JsonSerializer.Serialize(runs, json);
+        if (args.Length == 3)
+        {
+            if (string.IsNullOrWhiteSpace(args[2])) return Usage();
+            Directory.CreateDirectory(args[2]);
+            var jsonPath = Path.Combine(args[2], "e4a-school-results.json");
+            var csvPath = Path.Combine(args[2], "e4a-school-results.csv");
+            if (File.Exists(jsonPath) || File.Exists(csvPath))
+            {
+                Console.Error.WriteLine("The requested output already exists: choose a new directory for this run.");
+                return 1;
+            }
+            File.WriteAllText(jsonPath, report);
+            File.WriteAllText(csvPath, E4aSchoolBenchmark.ToCsv(runs));
+        }
+        Console.WriteLine(report);
+        return runs.All(run => run.Outcome == "pass") ? 0 : 1;
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or IOException or UnauthorizedAccessException)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+}
 if (args is ["--benchmark-housing"])
 {
     try { Console.WriteLine(JsonSerializer.Serialize(HousingBenchmark.Run(), json)); return 0; }

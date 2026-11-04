@@ -137,4 +137,42 @@ public sealed class V14MilitaryUiParityTests
             if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
         }
     }
+
+    [AvaloniaFact]
+    public void TrainingProgressAndCountdownRefreshOnTicksAndCompletion()
+    {
+        var directory = Path.Combine(Path.GetTempPath(),
+            "SimRisorse.UI.MilitaryProgress." + Guid.NewGuid().ToString("N"));
+        V14PreviewWindow? window = null;
+        try
+        {
+            var view = WithBarracksAndFiveSwords(Path.Combine(directory, "preview-v14.sqlite3"));
+            window = new V14PreviewWindow(view, startTimer: false) { Width = 1040, Height = 740 };
+            window.Show();
+            window.FindControl<TabControl>("V14Sections")!.SelectedIndex = 2;
+            Dispatcher.UIThread.RunJobs();
+            var progress = window.FindControl<ProgressBar>("MilitaryProgressBar")!;
+            var status = window.FindControl<TextBlock>("MilitaryTrainingText")!;
+            view.EnlistCommand.Execute(null);
+            Assert.Equal(1, view.TrainingRecruits);
+            view.TogglePauseCommand.Execute(null);
+            view.Advance(TimeSpan.FromSeconds(10));
+            Dispatcher.UIThread.RunJobs();
+            Assert.InRange(view.MilitaryTrainingPercent, 33, 34);
+            Assert.InRange(progress.Value, 33, 34);
+            Assert.Contains("00:20", status.Text);
+            view.Advance(TimeSpan.FromSeconds(20));
+            Dispatcher.UIThread.RunJobs();
+            Assert.Equal(0, view.TrainingRecruits);
+            Assert.Equal(1, view.AvailableSoldiers);
+            Assert.Equal(0d, progress.Value);
+            Assert.Contains("Nessuna recluta", status.Text);
+        }
+        finally
+        {
+            if (window is { IsVisible: true }) window.CloseWithoutSaving();
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
 }

@@ -1,3 +1,9 @@
+# Decisione corrente — 04/11/2026 (ADR 0042)
+
+La GUI v14 è approvata dall'utente come interfaccia ordinaria; avvio predefinito v14, v13 accessibile con `--legacy-v13`. Non spostare i database né migrare la v13 automaticamente. Le 44 prove P0 con screenshot non sono state raccolte e non vanno considerate superate. I parametri E4 rimangono candidati. [Dettaglio](adr/0042-promozione-v14-e-conservazione-slot.md).
+
+---
+
 **Aggiornamento G1-D32 / RC17 (03/11/2026):** RC16 confermata verde dall’utente (**476 test passati**); RC17 candidata **481 attesi**. Decisione di sicurezza [ADR 0039](adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md): durante «Nuova partita?» Salva/Carica disabilitati; dopo Avvia nuova nessun autosalvataggio fino al primo Salva v14 esplicito. Chiudere durante la conferma la annulla e salva la vecchia colonia. Nessun cambiamento ai coefficienti economici o ai database. **P0 grafico ancora aperto.**
 
 # Registro decisioni attive — SimRisorse

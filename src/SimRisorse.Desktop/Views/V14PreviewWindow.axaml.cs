@@ -8,7 +8,7 @@ using SimRisorse.Desktop.Presentation;
 
 namespace SimRisorse.Desktop.Views;
 
-/// <summary>Separate opt-in v14 window. The ordinary MainWindow stays untouched.</summary>
+/// <summary>Default v14 desktop window. The legacy MainWindow remains available by explicit option.</summary>
 public partial class V14PreviewWindow : Window
 {
     private readonly DispatcherTimer _timer;
@@ -23,6 +23,18 @@ public partial class V14PreviewWindow : Window
         _autoSaveTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
         { Interval = TimeSpan.FromMinutes(1) };
         AvaloniaXamlLoader.Load(this);
+    }
+
+    private void OnBuildingSelectionChanged(object? sender, SelectionChangedEventArgs args)
+    {
+        // The TabControl can recreate the Edifici content when changing pages:
+        // connect through XAML, not through a reference cached at window startup.
+        // A selection notification may also arrive while the template is loading.
+        var detail = this.FindControl<ScrollViewer>("V14BuildingDetailScroll");
+        if (detail is not null) detail.Offset = default;
+        var diagnosis = this.FindControl<ScrollViewer>("V14BuildingDiagnosisScroll");
+        if (diagnosis is not null) diagnosis.Offset = default;
+        // Do not call Focus(): keyboard navigation remains in the building list.
     }
 
     public V14PreviewWindow(V14PreviewViewModel viewModel, bool startTimer = true) : this()

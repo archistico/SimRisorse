@@ -1,0 +1,1 @@
+run_id,scenario_id,build_sha256,rules_version,fixture,strategy,elapsed_seconds,checkpoint_id,population,available_population,workers,students_waiting,students_training,researchers_qualified,researchers_active,research_millipoints,food_units,bread_units,planks_units,coal_units,pencils_units,technology_ids,large_buildings,advanced_buildings,action_or_block_reason,outcome,notes

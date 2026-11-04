@@ -121,4 +121,96 @@ public sealed class V14SchoolSuppliesTests
         Assert.Equal(0, session.Snapshot().PencilPaidStudents);
         Assert.Equal(1, session.Snapshot().SchoolResearch.QualifiedResearchers);
     }
+    [Fact]
+    public void CraftPreviewIsReadOnlyAndUsesTheSamePreconditionsAsTheCommand()
+    {
+        var (_, session) = Ready(coal: 0m);
+        var original = session.Snapshot();
+        Assert.Equal(PencilCraftFailure.InvalidQuantity, session.CheckPencilCraft(0));
+        Assert.Equal(PencilCraftFailure.InsufficientMaterials, session.CheckPencilCraft(1));
+        Assert.Same(original, session.Snapshot());
+        Assert.Equal(PencilCraftFailure.InsufficientMaterials, session.CraftPencils(1));
+        Assert.Same(original, session.Snapshot());
+
+        var (baseline, withSchool) = Ready();
+        var saved = withSchool.Snapshot();
+        var withoutSchool = V14CampaignSession.Restore(baseline, saved with
+        {
+            SchoolCount = 0,
+            PurchaseCounters = saved.PurchaseCounters.Select(item => item.FamilyId == "school"
+                ? item with { Acquired = 0 } : item).ToImmutableArray()
+        }, PencilRules, TechnologyCatalog.ProposedTierTree, V14SchoolConstructionRules.Candidate);
+        Assert.Equal(PencilCraftFailure.MissingSchool, withoutSchool.CheckPencilCraft(1));
+        Assert.Equal(PencilCraftFailure.MissingSchool, withoutSchool.CraftPencils(1));
+    }
+
+    [Fact]
+    public void BatchCraftingIsAtomicWithInsufficientCoalAndPreviewNeverConsumesInputs()
+    {
+        var (_, session) = Ready(coal: 4m);
+        var start = session.Snapshot();
+        Assert.Equal(PencilCraftFailure.InsufficientMaterials, session.CheckPencilCraft(5));
+        Assert.Same(start, session.Snapshot());
+        Assert.Equal(PencilCraftFailure.InsufficientMaterials, session.CraftPencils(5));
+        Assert.Same(start, session.Snapshot());
+        Assert.Equal(PencilCraftFailure.None, session.CheckPencilCraft(1));
+        Assert.Same(start, session.Snapshot());
+        Assert.Equal(PencilCraftFailure.None, session.CraftPencils(1));
+        Assert.Equal(4m, session.Snapshot().Resources["pencils"].Units);
+        Assert.Equal(3m, session.Snapshot().Resources["coal"].Units);
+    }
+
+    [Fact]
+    public void BatchCraftingNeedsSpaceForFullOutputAndNeverPartiallyCommits()
+    {
+        var (baseline, session) = Ready();
+        var original = session.Snapshot();
+        var capacity = V14SchoolSupplies.Capacity(baseline, original).Units;
+        var nearlyFull = V14CampaignSession.Restore(baseline, original with
+        {
+            Resources = original.Resources + ResourceBundle.Create(("pencils", capacity - 8m))
+        }, PencilRules, TechnologyCatalog.ProposedTierTree, V14SchoolConstructionRules.Candidate);
+        var before = nearlyFull.Snapshot();
+        Assert.Equal(PencilCraftFailure.InsufficientStorage, nearlyFull.CheckPencilCraft(5));
+        Assert.Equal(PencilCraftFailure.InsufficientStorage, nearlyFull.CraftPencils(5));
+        Assert.Same(before, nearlyFull.Snapshot());
+        Assert.Equal(PencilCraftFailure.None, nearlyFull.CheckPencilCraft(1));
+        Assert.Same(before, nearlyFull.Snapshot());
+        Assert.Equal(PencilCraftFailure.None, nearlyFull.CraftPencils(1));
+        Assert.Equal(capacity - 4m, nearlyFull.Snapshot().Resources["pencils"].Units);
+    }
+
+    [Fact]
+    public void CancellingNewestPrepaidStudentDoesNotRefundOlderLegacyStudent()
+    {
+        var (baseline, seed) = Ready();
+        var original = seed.Snapshot();
+        var legacyRules = new SchoolResearchRules("food", ResourceAmount.FromUnits(10m),
+            120, 1, 2, 100);
+        var legacyEnrollment = SchoolResearch.Enroll(legacyRules, original.SchoolResearch,
+            original.Resources, original.Population, 0, 0, 1, 1);
+        Assert.True(legacyEnrollment.Succeeded);
+        var mixed = V14CampaignSession.Restore(baseline, original with
+        {
+            SchoolResearch = legacyEnrollment.State,
+            Resources = legacyEnrollment.Resources,
+            PencilPaidStudents = 0
+        }, PencilRules, TechnologyCatalog.ProposedTierTree, V14SchoolConstructionRules.Candidate);
+        Assert.Equal(PencilCraftFailure.None, mixed.CraftPencils(1));
+        Assert.Equal(SchoolActionFailure.None, mixed.EnrollStudents(1));
+        Assert.Equal(1, mixed.Snapshot().SchoolResearch.WaitingStudents);
+        Assert.Equal(1, mixed.Snapshot().PencilPaidStudents);
+        Assert.Equal(2m, mixed.Snapshot().Resources["pencils"].Units);
+
+        Assert.Equal(SchoolActionFailure.None, mixed.CancelStudents(1));
+        Assert.Equal(0, mixed.Snapshot().SchoolResearch.WaitingStudents);
+        Assert.Equal(1, mixed.Snapshot().SchoolResearch.TrainingStudents);
+        Assert.Equal(0, mixed.Snapshot().PencilPaidStudents);
+        Assert.Equal(4m, mixed.Snapshot().Resources["pencils"].Units);
+
+        Assert.Equal(SchoolActionFailure.None, mixed.CancelStudents(1));
+        Assert.Equal(0, mixed.Snapshot().PencilPaidStudents);
+        Assert.Equal(4m, mixed.Snapshot().Resources["pencils"].Units);
+    }
+
 }

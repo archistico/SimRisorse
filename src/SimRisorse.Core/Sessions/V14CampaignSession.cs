@@ -76,6 +76,9 @@ public sealed class V14CampaignSession
         _productiveCatalog = TieredProductionCatalog.FromCatalog(_baseline.Catalog,
             _tierConstruction.LargeMultiplier, _tierConstruction.AdvancedMultiplier)
             .ToDictionary(item => item.FamilyId, StringComparer.Ordinal);
+        // Never admit purchasable research without an actual effect in the tier rules.
+        // Validate before accepting a restored checkpoint or starting a new colony.
+        TechnologyTierEffects.ValidateCatalog(_technologies, _productiveCatalog.Values);
         _baseline.Catalog.ValidateBundle(_schoolBuilding.Cost);
         foreach (var prerequisite in _schoolBuilding.Prerequisites)
             if (!_baseline.Catalog.BuildingsById.ContainsKey(prerequisite))
@@ -291,24 +294,45 @@ public sealed class V14CampaignSession
             (long)item.Base.Buildings + item.Large.Buildings + item.Advanced.Buildings > 0) ||
         (buildingId == V14CampaignSnapshots.SchoolId && _snapshot.SchoolCount > 0);
 
+    /// <summary>
+    /// Read-only workshop check. The same evaluation drives the GUI's enabled state
+    /// and the actual production command, so the two cannot drift apart.
+    /// </summary>
+    public PencilCraftFailure CheckPencilCraft(int batches) => EvaluatePencilCraft(batches).Failure;
+
     /// <summary>Craft pencils in the school workshop: 1 Legno lavorato + 1 Carbone -> 4 Matite.</summary>
     public PencilCraftFailure CraftPencils(int batches)
     {
-        if (batches <= 0) return PencilCraftFailure.InvalidQuantity;
-        if (_snapshot.SchoolCount == 0) return PencilCraftFailure.MissingSchool;
+        var (failure, resources) = EvaluatePencilCraft(batches);
+        if (failure != PencilCraftFailure.None) return failure;
         try
         {
-            var cost = V14SchoolSupplies.Inputs(batches);
-            if (!_snapshot.Resources.Covers(cost)) return PencilCraftFailure.InsufficientMaterials;
-            var output = V14SchoolSupplies.Output(batches);
-            var result = _snapshot.Resources - cost + output;
-            if (!StorageCapacity().Covers(result)) return PencilCraftFailure.InsufficientStorage;
-            Commit(_snapshot with { Resources = result });
+            Commit(resources is null ? throw new InvalidOperationException("Missing workshop result.") :
+                _snapshot with { Resources = resources });
             return PencilCraftFailure.None;
         }
         catch (Exception e) when (e is OverflowException or ArgumentOutOfRangeException)
         {
             return PencilCraftFailure.NumericLimit;
+        }
+    }
+
+    private (PencilCraftFailure Failure, ResourceBundle? Resources) EvaluatePencilCraft(int batches)
+    {
+        if (batches <= 0) return (PencilCraftFailure.InvalidQuantity, null);
+        if (_snapshot.SchoolCount == 0) return (PencilCraftFailure.MissingSchool, null);
+        try
+        {
+            var cost = V14SchoolSupplies.Inputs(batches);
+            if (!_snapshot.Resources.Covers(cost)) return (PencilCraftFailure.InsufficientMaterials, null);
+            var output = V14SchoolSupplies.Output(batches);
+            var result = _snapshot.Resources - cost + output;
+            if (!StorageCapacity().Covers(result)) return (PencilCraftFailure.InsufficientStorage, null);
+            return (PencilCraftFailure.None, result);
+        }
+        catch (Exception e) when (e is OverflowException or ArgumentOutOfRangeException)
+        {
+            return (PencilCraftFailure.NumericLimit, null);
         }
     }
 

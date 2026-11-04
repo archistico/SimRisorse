@@ -12,8 +12,8 @@ using SimRisorse.Infrastructure.Persistence;
 namespace SimRisorse.Desktop.Presentation;
 
 /// <summary>
-/// Explicit opt-in preview of the isolated v14 ruleset. It never instantiates the live
-/// v13 GameRuntime and never writes to a v13 database. All commands run on the UI thread.
+/// Default v14 desktop session with an isolated v3 save store. It never instantiates
+/// the legacy v13 GameRuntime and never writes to a v13 database. All commands run on the UI thread.
 /// </summary>
 public sealed partial class V14PreviewViewModel : ObservableObject
 {
@@ -31,7 +31,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
     private V14TierChoice _buildTier;
     private V14TierChoice _upgradeFrom;
     private V14TierChoice _upgradeTo;
-    private string _message = "Anteprima v14 isolata: nessun salvataggio v13 sarà modificato.";
+    private string _message = "Versione v14: i salvataggi della v13 rimangono separati.";
     private bool _initialized;
     private bool _saveAllowed = true;
     // A newly confirmed colony must not silently replace the previous checkpoint
@@ -166,7 +166,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
         if (_initialized) return;
         _initialized = true;
         if (File.Exists(_store.DatabasePath)) Load();
-        else { _message = "Nuova anteprima v14 in pausa. Salvataggio separato: " + _store.DatabasePath; Refresh(); }
+        else { _message = "Nuova partita v14 in pausa. Salvataggio separato: " + _store.DatabasePath; Refresh(); }
     }
 
     public string DatabasePath => _store.DatabasePath;
@@ -189,7 +189,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
     public string SchoolRequirements => "Costo iniziale: 120 Legno lavorato, 80 Pietra (crescita proposta +15%). Richiede Casa piccola e Deposito alimentare.";
     public string SchoolTrainingInfo => $"{_schoolRules.TrainingSeatsPerSchool} posto formazione/Scuola · {_schoolRules.TrainingSeconds} s, {_schoolRules.FoodPerStudent.Units:0} Cibo e {_schoolRules.PencilsPerStudent} Matite per persona · {_schoolRules.ResearcherPlacesPerSchool} posti ricerca/Scuola.";
     public string Message => _message;
-    public string GameMode => "ANTEPRIMA SPERIMENTALE · civil-growth-14 · SQLite v3 separato";
+    public string GameMode => "CAMPAGNA v14 · civil-growth-14 · SQLite v3 separato";
     public ObservableCollection<V14TechnologyRow> Technologies { get; }
     public ObservableCollection<V14ProducerRow> Producers { get; }
     public ObservableCollection<V14CivicChoice> Civics { get; }
@@ -236,7 +236,21 @@ public sealed partial class V14PreviewViewModel : ObservableObject
 
     public string SelectedTechnologySummary => SelectedTechnology is null ? "Seleziona una tecnologia." :
         $"{SelectedTechnology.Name}: {SelectedTechnology.Status} · {SelectedTechnology.Cost} punti.\n" +
-        $"Prerequisiti ricerca: {TechnologyNames(SelectedTechnology.Prerequisites)}. Edifici: {BuildingNames(SelectedTechnology.RequiredBuildings)}.";
+        $"Prerequisiti ricerca: {TechnologyNames(SelectedTechnology.Prerequisites)}. Edifici: {BuildingNames(SelectedTechnology.RequiredBuildings)}.\n" +
+        DescribeTechnologyBenefit(SelectedTechnology.Id);
+
+    private string DescribeTechnologyBenefit(string technologyId)
+    {
+        var benefit = TechnologyTierEffects.ForTechnology(technologyId, _families.Values);
+        if (!benefit.HasEffect)
+            return "Effetto non implementato: questa ricerca non è acquistabile.";
+        var lines = new List<string>();
+        if (!benefit.LargeFamilies.IsEmpty)
+            lines.Add("Sblocca edifici Grande: " + BuildingNames(benefit.LargeFamilies));
+        if (!benefit.AdvancedFamilies.IsEmpty)
+            lines.Add("Sblocca edifici Avanzato: " + BuildingNames(benefit.AdvancedFamilies));
+        return string.Join(". ", lines) + ".";
+    }
     public string SelectedProducerSummary => SelectedProducer is null ? "Seleziona una struttura produttiva." :
         $"{SelectedProducer.Name}: {SelectedProducer.Description}\n" +
         $"Prerequisiti edifici: {BuildingNames(_families[SelectedProducer.Id].Source.Prerequisites)}.\n" +
@@ -363,7 +377,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
         {
             _store.Save(_session.Snapshot());
             _autoSaveAllowed = true;
-            _message = "Anteprima v14 salvata separatamente in: " + _store.DatabasePath;
+            _message = "Partita v14 salvata in: " + _store.DatabasePath;
             Refresh();
             return true;
         }
@@ -391,7 +405,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
             _session = restored; // Only a complete, validated load replaces the current game.
             _saveAllowed = true;
             _autoSaveAllowed = true;
-            _message = "Salvataggio sperimentale v14 caricato. La sessione riparte in pausa.";
+            _message = "Salvataggio v14 caricato. La sessione riparte in pausa.";
             Refresh();
             return true;
         }

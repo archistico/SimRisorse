@@ -46,6 +46,25 @@ public sealed partial class V14PreviewViewModel
         : $"{SchoolTraining} in formazione · primo ricercatore pronto tra " +
           TimeSpan.FromSeconds(_schoolRules.TrainingSeconds -
               _session.Snapshot().SchoolResearch.TrainingProgressSeconds[0]).ToString(@"mm\:ss", Italian) + ".";
+    // Read-only progress of the individual trainees. Keep the existing first-finisher
+    // bar for continuity, while exposing the other occupied seats in the Scuola panel.
+    // The view uses snapshot state only; neither queue order nor game rules change.
+    public string SchoolTrainingDetails
+    {
+        get
+        {
+            var progress = _session.Snapshot().SchoolResearch.TrainingProgressSeconds;
+            if (progress.IsEmpty) return string.Empty;
+            const int visibleSeats = 6;
+            var displayed = progress.Take(visibleSeats).Select((elapsed, index) =>
+                $"Allievo {index + 1}: {elapsed}/{_schoolRules.TrainingSeconds} s · " +
+                $"{TimeSpan.FromSeconds(_schoolRules.TrainingSeconds - elapsed).ToString(@"mm\:ss", Italian)} rimanenti");
+            var lines = displayed.ToList();
+            if (progress.Length > visibleSeats)
+                lines.Add($"Altri {progress.Length - visibleSeats} allievi in formazione.");
+            return string.Join(Environment.NewLine, lines);
+        }
+    }
     public string SchoolQueueExplanation => "Ogni Scuola forma un allievo alla volta. Gli altri aspettano; " +
         "gli studenti conclusi diventano ricercatori qualificati, non automaticamente attivi.";
     public string SchoolSuppliesStatus => $"{SchoolPencils:#,0} / {SchoolPencilCapacity:#,0} Matite · " +
@@ -53,13 +72,47 @@ public sealed partial class V14PreviewViewModel
         $"{(_schoolRules.FoodPerStudent.Units * SchoolQuantity):#,0.###} Cibo.";
     public string SchoolCraftStatus => "Laboratorio della Scuola: 1 Legno lavorato + 1 Carbone = 4 Matite. " +
         "Il Municipio, i Magazzini e le Scuole conservano le Matite.";
-    public string SchoolCraftHint => SchoolCount == 0 ? "Costruisci prima una Scuola."
-        : _session.Snapshot().Resources["planks"].Units < SchoolQuantity
-            ? "Legno lavorato insufficiente: assegna lavoratori alla Segheria."
-        : _session.Snapshot().Resources["coal"].Units < SchoolQuantity
-            ? "Carbone insufficiente: costruisci una Miniera di carbone e assegna lavoratori."
-        : !SchoolCanCraft ? "Spazio Matite insufficiente: costruisci un Magazzino."
-        : "Materiali e spazio disponibili: puoi produrre le Matite.";
+    public string SchoolCraftHint
+    {
+        get
+        {
+            if (!CanMutateColony)
+                return "Produzione Matite sospesa: conferma o annulla la nuova partita.";
+            var failure = _session.CheckPencilCraft(SchoolQuantity);
+            if (failure == PencilCraftFailure.MissingSchool)
+                return "Costruisci prima una Scuola.";
+            if (failure == PencilCraftFailure.InsufficientMaterials)
+            {
+                var stock = _session.Snapshot().Resources;
+                var missing = new List<string>();
+                var planks = stock["planks"].Units;
+                var coal = stock["coal"].Units;
+                if (planks < SchoolQuantity)
+                    missing.Add($"Legno lavorato insufficiente: {FormatSchoolSupply(planks)}/{SchoolQuantity} " +
+                        $"(mancano {FormatSchoolSupply(SchoolQuantity - planks)})");
+                if (coal < SchoolQuantity)
+                    missing.Add($"Carbone insufficiente: {FormatSchoolSupply(coal)}/{SchoolQuantity} " +
+                        $"(mancano {FormatSchoolSupply(SchoolQuantity - coal)})");
+                return string.Join("; ", missing) + ".";
+            }
+            if (failure == PencilCraftFailure.InsufficientStorage)
+            {
+                var needed = (decimal)V14SchoolSupplies.PencilsPerBatch * SchoolQuantity;
+                var available = Math.Max(0m, SchoolPencilCapacity - SchoolPencils);
+                return $"Spazio Matite insufficiente: {FormatSchoolSupply(available)} libero, " +
+                    $"{FormatSchoolSupply(needed)} necessario per +{SchoolQuantity} lotti. " +
+                    "Costruisci un Magazzino o usa le Matite disponibili.";
+            }
+            if (failure != PencilCraftFailure.None)
+                return "Impossibile produrre Matite: quantità non valida o limite numerico.";
+            return $"Puoi produrre {V14SchoolSupplies.PencilsPerBatch * SchoolQuantity} Matite " +
+                $"con {SchoolQuantity} Legno lavorato e {SchoolQuantity} Carbone; " +
+                $"spazio disponibile {FormatSchoolSupply(SchoolPencilCapacity - SchoolPencils)}.";
+        }
+    }
+
+    private static string FormatSchoolSupply(decimal quantity) => quantity.ToString("#,0.###", Italian);
+
     public string SchoolEnrollLabel => $"Iscrivi +{SchoolQuantity}";
     public string SchoolCancelLabel => $"Annulla −{SchoolQuantity}";
     public string SchoolAssignLabel => $"Assegna +{SchoolQuantity}";
@@ -86,23 +139,19 @@ public sealed partial class V14PreviewViewModel
             catch (OverflowException) { return false; }
         }
     }
-    public bool SchoolCanCraft
-    {
-        get
-        {
-            if (SchoolCount == 0 || !_session.Snapshot().Resources.Covers(V14SchoolSupplies.Inputs(SchoolQuantity)))
-                return false;
-            return SchoolPencils + (decimal)V14SchoolSupplies.PencilsPerBatch * SchoolQuantity <= SchoolPencilCapacity;
-        }
-    }
-    public string SchoolEnrollmentHint => SchoolCount == 0
+    public bool SchoolCanCraft => _session.CheckPencilCraft(SchoolQuantity) == PencilCraftFailure.None;
+    public string SchoolEnrollmentHint => !CanMutateColony
+        ? "Iscrizioni sospese: conferma o annulla la nuova partita."
+        : SchoolCount == 0
         ? "Costruisci una Scuola dalla schermata Edifici."
         : AvailablePopulation < SchoolQuantity ? "Abitanti liberi insufficienti."
         : SchoolFood < _schoolRules.FoodPerStudent.Units * SchoolQuantity ? "Cibo insufficiente per le iscrizioni."
         : SchoolPencils < (decimal)_schoolRules.PencilsPerStudent * SchoolQuantity
             ? "Matite insufficienti: produci Matite nel laboratorio della Scuola."
         : "L'iscrizione paga subito Cibo e Matite e riserva gli abitanti.";
-    public string SchoolCancelHint => SchoolCancellable < SchoolQuantity
+    public string SchoolCancelHint => !CanMutateColony
+        ? "Annullamento studenti sospeso: conferma o annulla la nuova partita."
+        : SchoolCancellable < SchoolQuantity
         ? "Studenti da annullare insufficienti."
         : !SchoolCanRefund ? "Magazzino pieno: non c'è spazio per restituire Cibo e Matite."
         : "Annulla prima chi è in attesa, poi chi ha iniziato da meno. Restituisce Cibo e le Matite pagate (non quelle dei vecchi salvataggi).";
@@ -127,6 +176,7 @@ public sealed partial class V14PreviewViewModel
             nameof(SchoolQuantity), nameof(SchoolRoster), nameof(SchoolSeatsStatus),
             nameof(SchoolTrainingHeading), nameof(SchoolWaitingLabel), nameof(SchoolTrainingLabel),
             nameof(SchoolReadyLabel), nameof(SchoolTrainingPercent), nameof(SchoolTrainingStatus),
+            nameof(SchoolTrainingDetails),
             nameof(SchoolQueueExplanation), nameof(SchoolSuppliesStatus), nameof(SchoolCraftStatus), nameof(SchoolCraftHint),
             nameof(SchoolEnrollLabel), nameof(SchoolCancelLabel), nameof(SchoolAssignLabel),
             nameof(SchoolUnassignLabel), nameof(SchoolReturnLabel), nameof(SchoolCraftLabel),

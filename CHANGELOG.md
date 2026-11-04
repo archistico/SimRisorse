@@ -1,3 +1,173 @@
+# RC38 / E4a-D01-F1 — Confronto snapshot SQLite indipendente dall'ordine (2026-11-04)
+
+- **Evidenza RC37 su Windows:** 541 test eseguiti, 540 superati e 1 fallito: `V14SchoolResearchEndToEndTests.PencilsToStudentToResearchToLargeTierSurvivesTwoSqliteRoundTrips`, per ordine di `OtherBuildings` diverso dopo caricamento SQLite.
+- Corretto esclusivamente il confronto nel test: `OtherBuildings` per `BuildingId`, `ProductiveFamilies` e `PurchaseCounters` per `FamilyId`, `UnlockedTechnologyIds` per ID, sempre con `StringComparer.Ordinal`. Confronto **integrale** dei record e verifica ordinata della formazione invariati.
+- Nessuna modifica a GUI, Core, Application, SQLite, save schema, ricette o benchmark; **541 test attesi, RC38 non ancora validata**.
+- [Rapporto](docs/design/E4A_D01_RC38_FIX_ORDERING_SQLITE.md) · [Piano Windows](docs/validation/E4A_D01_RC38_TEST_PLAN.md).
+
+---
+
+# RC37 / E4a-D01 — Runner riproducibile per confronto Scuole (2026-11-04)
+
+- Primo benchmark **v14 realmente eseguibile** nella CLI `SimRisorse.Simulation --benchmark-e4a-school`, scenari controllati E4A-06/07 (1 o 2 Scuole): stessa dotazione di partenza dichiarata, comandi veri, 30 s per campione, CSV/JSON senza tempi o checkpoint fittizi.
+- Nuovo componente `SimRisorse.Application.Benchmarks.E4aSchoolBenchmark`: nessun cambiamento alle regole del gioco, ai coefficienti, alla GUI, ai salvataggi. Output non sovrascrivibile.
+- **3 test nuovi** (esito/tempi, ripetibilità, CSV): **541 test cumulativi attesi; NON eseguiti qui.** Ultimo gate Windows confermato RC30 (511); RC31–RC37 ancora candidate.
+- Protocollo, report, piano di validazione, ADR 0048 e handoff aggiornati. **E4a non ha ancora risultati misurati; E4b non iniziata.**
+- [Rapporto E4a-D01](docs/design/E4A_D01_RC37_BENCHMARK_SCUOLE.md) · [Test plan](docs/validation/E4A_D01_RC37_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+# RC36 / P1-D50 — Consolidamento Scuola/Ricerca e preparazione E4a (2026-11-04)
+
+- Aggiunti **2 test** a `V14SchoolPencilPersistenceTests.cs`: salvataggio SQLite pre-Matite con uno studente realmente in formazione e assenza fisica della colonna `pencil_paid_students`; rifiuto del ledger Matite impossibile, senza sovrascrivere il checkpoint valido.
+- Creati registro dei 10 scenari E4a (`natural`/`controlled`), template risultati e protocollo di misurazione; **non eseguiti**, nessun dato prestazionale dichiarato.
+- Aggiornati piano test, roadmap, stato, handoff e ADR 0047. **Nessuna modifica al codice applicativo, GUI, costi, ricette, ricerca o formato SQLite.**
+- **538 test cumulativi attesi; non eseguiti qui** (RC35: 536). Ultimo gate Windows confermato: RC30 (511). Gate P1 ancora aperto.
+
+---
+
+## RC35 / P1-D49 — Verifica end-to-end scuola, ricerca e tier (2026-11-04)
+
+- Aggiunti tre test di integrazione `V14SchoolResearchEndToEndTests` su sessione v14 e SQLite v3: filiera Matite, iscrizione, 120 s formazione, assegnazione, accumulo 100 punti, acquisto Lavorazioni I, upgrade Segheria Grande, due round-trip e ripresa in pausa.
+- Coperti anche formazione parziale e fallimenti atomici senza mutazioni; fixture con fondi entro capacità, nessun punto ricerca o tecnologia conferiti artificialmente.
+- **536 test cumulativi attesi (533 + 3), non eseguiti qui**. Ultima conferma utente RC30 511; RC31–RC34 ancora candidate.
+- **Nessuna modifica ai sorgenti dell'applicazione**, alla GUI v13/v14, al DB SQLite, a ricette o costi. Prossimo gate: P1-D50, dossier di consolidamento prima di E4a.
+- [Rapporto](docs/design/P1_D49_RC35_INTEGRAZIONE_PROGRESSIVA.md) · [Validazione](docs/validation/P1_D49_RC35_TEST_PLAN.md) · [ADR 0046](docs/adr/0046-catena-integrata-scuola-ricerca-tier.md).
+
+## RC34 / P1-D48 — Benefici effettivi dell'Albero tecnologico (2026-11-04)
+
+- Introdotto `TechnologyTierEffects`: proiezione da regole tier concrete, verifica di copertura dichiarata e dipendenze Grande→Avanzato, rifiuto di ricerche acquistabili senza effetto.
+- La sessione v14 valida il catalogo prima di accettare una nuova partita o un caricamento. Il dettaglio della ricerca ora mostra esplicitamente gli edifici Grande/Avanzato sbloccati; Logistica e Navigazione rimangono non disponibili.
+- **9 test aggiunti, 533 cumulativi attesi; compilazione/xUnit pendenti su Windows.** Baseline RC30 (511 test confermati). RC31–RC33 incluse cumulativamente.
+- Nessuna modifica a costi, produzione, personale, Matite, GUI v13, salvataggi o schema SQLite.
+- [Rapporto](docs/design/P1_D48_RC34_ALBERO_TECNOLOGICO.md) · [Piano](docs/validation/P1_D48_RC34_TEST_PLAN.md) · [ADR 0045](docs/adr/0045-tecnologie-effetti-verificati.md).
+
+## RC33 / P1-D47 — Filiera Matite e stato comandi (2026-11-04)
+
+- Unificata la verifica della produzione Matite in `V14CampaignSession.CheckPencilCraft`: stessa valutazione del comando reale, senza modifiche durante la consultazione.
+- Scuola v14: quantità mancanti di Legno lavorato e Carbone per +1/+5/+10, spazio Matite disponibile/necessario e pulsante coerente col dominio.
+- Rafforzata l'atomicità dei lotti tramite test; test per annullamenti misti legacy/prepagati. Nessuna variazione a ricette, rimborsi, capacità, economia, SQLite o v13.
+- **6 nuovi test (524 cumulativi attesi), da validare su Windows.** RC30 è l'ultimo checkpoint testato (511 confermati); RC31 e RC32 restano candidate incluse nella RC33.
+- [Rapporto](docs/design/P1_D47_RC33_FILIERA_MATITE.md) · [Piano test](docs/validation/P1_D47_RC33_TEST_PLAN.md) · [ADR 0044](docs/adr/0044-unica-verifica-laboratorio-matite.md).
+
+## RC32 / P1-D46 — Scuola: progressi individuali (2026-11-04)
+
+- Aggiunto nella Scuola v14 un riepilogo di sola lettura degli avanzamenti individuali (fino a 6 posti con altri aggregati), aggiornato a ogni tick/caricamento.
+- Conservati la barra del primo completamento e i comandi esistenti; invariati formazione, Matite, ricercatori, costi e SQLite.
+- Aggiunti 3 test: UI binding headless, ripresa di due progressi differenziati con coda e test Core di formazione parallela.
+- RC30 confermata 511 test; RC31 (515) non testata; RC32 **518 attesi e non testati**. Si richiede validazione Windows cumulativa.
+- Documenti: [Rapporto](docs/design/P1_D46_RC32_CICLO_FORMAZIONE_SCUOLA.md), [Piano](docs/validation/P1_D46_RC32_TEST_PLAN.md), [ADR 0043](docs/adr/0043-dettaglio-individuale-formazione-scuola.md).
+
+## 2026-11-04 — G1-D45 / RC31 — Promozione v14 a GUI predefinita (candidata)
+
+- Dopo la conferma dell'utente sulla RC30 (511 test), la GUI v14 diventa la modalità **normale** all'avvio senza argomenti; v13 disponibile come `--legacy-v13`.
+- `--v14` e `--experimental-v14` rimangono alias v14; `--scenario` e `--smoke-test` preservano il routing legacy degli script esistenti.
+- Nessun trasferimento dei checkpoint: la v14 utilizza lo **stesso** file `experiments/civil-growth-v14.sqlite3`; protezione dei percorsi riservati contro aperture incrociate v13/v14.
+- Eliminati i testi «sperimentale» dai banner della v14; struttura grafica e caratteristiche del gioco invariate. Aggiunti **4 test xUnit** per il routing (totale **515 attesi**, non ancora eseguiti qui).
+- **Accettazione della GUI comunicata dall'utente**, non confondere con il dossier P0 di 44 screenshot mai acquisiti. ADR 0042, rapporto D45, piano RC31 e handoff aggiornati. Prossimo P1-D46 Scuola; E4 successivo.
+
+---
+
+## 2026-11-04 — G1-D44 / RC30 — Robustezza raccolta evidenze P0
+
+- `scripts/p0-ui-evidence.ps1`: PNG controllati per contenuto leggibile, formato e dimensioni compatibili con viewport; false evidenze segnalate come `EVIDENZA_MANCANTE`.
+- Le eccezioni `NA` non fanno risultare completata l'intera matrice; introdotta azione `Verify` con codici uscita 0/2 e messaggio di gate sempre subordinato ad approvazione manuale.
+- Nuovo auto-test PowerShell autonomo `scripts/test-p0-ui-evidence.ps1`, rapporto D44, piano di validazione e ADR 0041.
+- **Nessun cambiamento** a sorgenti dell'app, UI v13/v14, economia, salvataggi o ai 511 test .NET della candidata.
+- **Baseline confermata:** RC27 507 test; RC28–RC30 511 attesi e **non eseguiti qui**; P0 visivo senza evidenze reali, aperto.
+
+---
+
+## v60-E3b4-RC29 / G1-D43 — Preparazione confronto visivo P0 (CANDIDATA, 04/11/2026)
+
+- RC27 rimane l'ultima suite confermata dall'utente: **507 test**. RC28 introduce +4 test headless (511 attesi); **RC29 mantiene invariati 511 test, non eseguiti** qui.
+- Creato `scripts/p0-ui-evidence.ps1`: inizializza registro da **44 scenari** senza sovrascrivere prove esistenti, opzionalmente salva PNG espliciti dalla clipboard Windows, e genera report HTML offline affiancando v13 e v14. Il report segnala evidenze mancanti e non chiude mai automaticamente P0.
+- Audit statico delle due finestre: dimensioni condivise, sidebar 240, stessa griglia Risorse 7 colonne; differenza Edifici 310/410 e sezioni nuove Scuola/Albero; nessuna prova visiva reale disponibile. Documenti G1-D43 e handoff aggiornati. **P0 APERTO, 0/44 scenari visivi eseguiti qui.**
+- Sorgenti applicativi, test xUnit, GUI v13, SQLite, costi, capacità e ricette **immutati** rispetto a RC28. Nessuna pretesa di build/test Windows o di prova runtime PowerShell. E4 sospeso.
+
+---
+
+## v60-E3b4-RC28 / G1-D42 — Focus e tastiera v14 (CANDIDATA, 04/11/2026)
+
+- **Baseline valida Windows:** RC27, **507 test superati** confermati dall'utente. **RC28:** +4 esecuzioni Desktop headless (2 scenari, due risoluzioni), **511 test attesi**, non ancora compilati/testati in questo ambiente.
+- Inseriti solo nella finestra v14 stili di **focus visibile** per menu laterale e liste Edifici/Risorse/Tecnologie. Bordo a larghezza costante (trasparente → ocra quando focalizzato); colori di selezione e hover immutati, nessun salto di layout da bordo di focus.
+- Test di focus, frecce del menu, sincronizzazione delle schede, colore di selezione e geometria alle viewport 1040×740 e 1240×850. TAB/Shift+TAB e confronto visivo P0 restano da verificare realmente su Windows.
+- Invariati GUI v13, Core, Application, SQLite v2/v3, ricette, prezzi, Matite e salvataggi; E4 non avviato. [Rapporto](docs/design/G1_D42_RC28_FOCUS_TASTIERA.md) · [Piano](docs/validation/G1_D42_RC28_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+## G1-D42 — 04/11/2026 — Roadmap dettagliata post-RC27 (solo documentazione)
+
+- **RC27 validata dall'utente:** 507 test superati su Windows; resta la stessa baseline applicativa, **nessuna RC28** e nessun nuovo test.
+- `docs/ROADMAP.md` riscritta come piano canonico per D42–D45 (P0), P1-D46–D50, E4a, E4b, E4c e M5.4–M7; precedente roadmap storicizzata in `docs/history/operational/ROADMAP_G1_D41_RC27_ARCHIVE.md`.
+- Nuovo `docs/validation/G1_D42_P0_RUNBOOK.md` per evidenze UI-01…UI-22, due viewport, focus, stato, salvataggi e gating; nuovo ADR 0040 sulla disciplina dei gate.
+- Allineati README, START_HERE, CURRENT_STATE e handoff. **Nessun sorgente, test, schemi SQLite, salvataggio o coefficiente economico modificato.** P0 grafico non dichiarato chiuso.
+
+---
+
+## v60-E3b4-RC27 / G1-D41 — Reset scorrimento sul cambio edificio (CANDIDATA, 04/11/2026)
+
+- **RC26 verde su Windows, 504 test superati**, confermati dall’utente. RC27: tre nuovi casi Desktop headless, **507 attesi**, non compilati/eseguiti qui per assenza di .NET 10.
+- **UI-07/UI-12/UI-18:** reset degli offset del dettaglio principale e della diagnostica v14 al `SelectionChanged` dell’elenco Edifici. Refresh e aggiornamenti dello stesso edificio non causano reset, nessun trasferimento forzato del focus.
+- Lo XAML aggiunge soltanto un nome al viewer principale; evento XAML collegato al code-behind; nuovi test a 1040×740 e 1240×850 più conservazione della posizione sullo stesso edificio.
+- **Invariati:** GUI v13, disposizione pulsanti, tabella Risorse, economica/ricerca, motore, SQLite, salvataggi e ricette. Gate P0 aperto, E4 sospeso.
+- [Rapporto D41](docs/design/G1_D41_RC27_AUDIT_SCORRIMENTO_DETTAGLI.md) · [Piano](docs/validation/G1_D41_RC27_TEST_PLAN.md).
+
+## v60-E3b4-RC26 / G1-D40 — Presentazione crescita e audit flussi (CANDIDATA, 04/11/2026)
+
+- **RC25 confermata su Windows dall’utente:** 501 test passati. **RC26:** +3 test Desktop, **504 attesi**, build e xUnit non eseguiti nell’ambiente di confezionamento.
+- **UI-14:** nella v14 il testo di crescita perdeva i ventesimi di progresso e l’ETA del prossimo abitante dopo l’accelerazione; riutilizzata la logica di formattazione della GUI v13 con `GrowthActiveStatus`, tempo residuo arrotondato per eccesso e precisione 0,05 s. I blocchi Cibo/Pane/abitazioni conservano la precedenza.
+- **UI-05:** test di regressione della stima `si riempie tra` basata su produzione meno consumo, con casi pieno, senza capienza, saldo nullo/negativo e tempi lunghi.
+- **Invariati:** GUI v13, XAML, motore, regole E4, SQLite e salvataggi; P0 grafico delle 22 voci ancora aperto.
+- [Rapporto](docs/design/G1_D40_RC26_FLUSSI_POPOLAZIONE.md) · [Piano](docs/validation/G1_D40_RC26_TEST_PLAN.md) · [Matrice](docs/validation/G1_D39_P0_UI_MATRIX.md).
+
+## RC25 / G1-D39-F1 — 2026-11-04 — Correzione compilazione test CS1061
+
+- **RC24:** compilazione `SimRisorse.Desktop.Tests` fallita prima dei test per `CS1061` su `V14PreviewWindow.MouseMove` (righe 71 e 136 di `V14BuildingUpgradeAuditTests.cs`).
+- **RC25:** aggiunto `using Avalonia.Headless;` al file test; `MouseMove` è un metodo di estensione già usato con lo stesso namespace in altri test.
+- **Nessun nuovo test:** 501 attesi, esecuzione Windows pendente; ultima suite confermata RC20, 490 passati. Nessuna modifica a codice applicativo, GUI, SQLite, prezzi o salvataggi; P0 visuale ancora aperto.
+- Documentazione: [report](docs/design/G1_D39_RC25_FIX_CS1061_HEADLESS.md), [piano test](docs/validation/G1_D39_RC25_TEST_PLAN.md), roadmap e handoff aggiornati.
+
+## v60-E3b4-RC24 / G1-D39 — Coerenza suggerimenti Scuola e matrice gate P0 (CANDIDATA, 04/11/2026)
+
+- **Baseline confermata Windows:** RC20, 490 test. **RC21/RC22/RC23:** 493/496/499 attesi, non verificati singolarmente. **RC24:** +2 test Desktop, **501 attesi**, da validare cumulativamente su Windows.
+- **D39-01 / UI-16, UI-20:** durante la conferma «Nuova partita?» i comandi iscrizione, annullamento studenti e produzione Matite erano bloccati, ma i messaggi della Scuola non lo indicavano. I tre suggerimenti ora mostrano «sospeso/a/i» e tornano allo stato precedente con Annulla.
+- Nuovi test ViewModel + Avalonia: `V14SchoolConfirmationHintsAuditTests.cs`. Non cambiati costo 2 Matite/studente, simulazione, GUI v13, XAML, SQLite, salvataggi o bilanciamento.
+- **D39-02:** nuova [matrice operativa delle 22 verifiche P0](docs/validation/G1_D39_P0_UI_MATRIX.md), con evidenza test/stato e controlli visivi 1040×740 e 1240×850 ancora da registrare.
+- [Rapporto D39](docs/design/G1_D39_RC24_AUDIT_SCUOLA_E_GATE_P0.md) · [Piano Windows](docs/validation/G1_D39_RC24_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md). **P0 aperto, E4 sospeso.**
+
+---
+
+## v60-E3b4-RC23 / G1-D38 — Audit navigazione e selezione (CANDIDATA, 04/11/2026)
+
+- **Ultima baseline Windows confermata:** RC20 (490 test). RC21 (493), RC22 (496), RC23 (**499 attesi**) non ancora eseguite su Windows.
+- **UI-01/UI-19:** 3 nuovi test Desktop in `V14NavigationSelectionAuditTests.cs` (due viewport sidebar/schede/tick e uno Save/Load + identità selezioni); nessun bug di layout certo rilevato, pertanto nessuna modifica arbitraria a GUI o gameplay.
+- **Invariati:** XAML v13 e v14, Core/Application/Infrastructure, SQLite e salvataggi, coefficienti. P0 visivo resta aperto; E4 sospeso.
+- [Rapporto D38](docs/design/G1_D38_RC23_AUDIT_NAVIGAZIONE_SELEZIONE.md) · [Piano test](docs/validation/G1_D38_RC23_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+## v60-E3b4-RC22 / G1-D37 — Scorrimento diagnosi Edifici e audit progressi Esercito (CANDIDATA, 03/11/2026)
+
+- **Baseline verde confermata:** RC20, 490 test. **RC21 ancora non testata** (493 attesi); RC22 cumulativa, **496 test attesi** (+3), da validare su Windows.
+- **Correzione GUI v14:** diagnosi produttiva nel box Edifici con scroll indipendente e altezza massima di 104 px; testi invariati, comandi costruzione/lavoratori e upgrade protetti dalla compressione verticale. La descrizione resta scrollabile a parte.
+- **Test:** 2 casi Avalonia a 1040×740 e 1240×850 con diagnosi volutamente lunga, controllo di visibilità/scroll e selezione; 1 nuovo caso Avalonia sui progressi delle reclute dopo 10/30 secondi.
+- **Ambito:** XAML v14 + test Desktop + documentazione. GUI classica v13, Core, economia, SQLite, schemi e salvataggi invariati. Nessun E4.
+- **Gate:** ZIP/XAML verificabili staticamente, build .NET 10 e xUnit **non eseguiti qui**; P0 grafico resta aperto.
+- [Rapporto D37](docs/design/G1_D37_RC22_SCORRIMENTO_DETTAGLI_ESERCITO.md) · [Piano RC22](docs/validation/G1_D37_RC22_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+## v60-E3b4-RC21 / G1-D36 — Stati espliciti degli upgrade Edifici (CANDIDATA, 03/11/2026)
+
+- **RC20 validata dall'utente:** 490 test attesi, tutti dichiarati passati. **RC21:** +3 casi Desktop, **493 attesi**; non compilati/eseguiti qui per assenza SDK .NET 10.
+- **D36-01 / UI-10/UI-12/UI-18:** `V14UpgradeNext` e `V14UpgradeAdvanced` si affidavano solo a `CanExecute`, senza il binding `IsEnabled` e lo stile coerente con Costruisci. Ora sono grigi se non pagabili; verde + hover ocra solo quando pagabili, senza salti geometrici. Potenziamenti sbloccati ma non pagabili **restano visibili** con costo e carenze.
+- **Tre test**: 1040×740, 1240×850, aggiornamento dinamico della disponibilità dal costo esatto e upgrade atomico Base→Grande.
+- **Ambito ristretto:** solo XAML v14, nuovo file test, documentazione. Invariati GUI v13, Core, Application, Infrastructure, prezzi, SQLite e salvataggi. **Audit visivo P0 ancora aperto**. E4 sospeso.
+- [Rapporto D36](docs/design/G1_D36_RC21_AUDIT_EDIFICI_UPGRADE.md) · [Piano RC21](docs/validation/G1_D36_RC21_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
 ## v60-E3b4-RC20 / G1-D35 — Audit e test di non-regressione Risorse (CANDIDATA, 03/11/2026)
 
 - **Ultima conferma Windows:** RC16 con 476 test. RC17 (481), RC18 (484), RC19 (487) non testate. **RC20:** 490 test attesi (+3), nessuna esecuzione .NET in questo ambiente.

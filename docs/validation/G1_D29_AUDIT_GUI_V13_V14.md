@@ -1,3 +1,21 @@
+# Aggiornamento G1-D39 / RC24 — UI-16/UI-20 e gate P0
+
+**RC20** è l'ultimo checkpoint verde (490 test); RC24 è una candidata cumulativa da **501 test attesi**, non eseguiti su Windows. Corretto un nuovo difetto di coerenza nei suggerimenti Scuola durante la conferma «Nuova partita?» (D39-01), con due test Desktop. La [matrice operativa D39](G1_D39_P0_UI_MATRIX.md) classifica tutte le 22 voci per evidenza esistente e verifica visiva mancante; **nessuna viene promossa a chiusa** solo perché esiste un test. [Rapporto](../design/G1_D39_RC24_AUDIT_SCUOLA_E_GATE_P0.md) · [Validazione](G1_D39_RC24_TEST_PLAN.md).
+
+---
+
+# Aggiornamento G1-D38 / RC23 — UI-01 / UI-19 (candidato)
+
+**RC20 confermata: 490 test.** RC21/RC22 non testate. RC23: **499 test attesi** (+3 D38) e gate Windows aperto. Ispezione statica: sidebar e tab v14 già collegati bidirezionalmente; selezioni basate su oggetti di riga stabili. Aggiunti due test headless 1040×740/1240×850 per cinque pagine e selezioni preservate dopo tick, più un test Save/Load con selezioni e read-model vivi. Nessun difetto grafico certo e nessuna modifica al layout. **UI-01/UI-19: automatizzazione candidata, validazione visiva non approvata**. [Rapporto](../design/G1_D38_RC23_AUDIT_NAVIGAZIONE_SELEZIONE.md) · [Piano](G1_D38_RC23_TEST_PLAN.md).
+
+---
+
+# Aggiornamento G1-D36 / RC21 — UI-10/UI-12/UI-18 (candidato)
+
+**RC20 dichiarata verde dall'utente (490 test attesi)**. Audit Edifici: individuato uno scostamento statico per `V14UpgradeNext`/`V14UpgradeAdvanced`: assenza di `IsEnabled` esplicito e dello stile `primary build` già usato per Costruisci. Applicati i due binding e lo stile condiviso; +3 casi Desktop. **RC21: 493 test attesi, non ancora eseguiti.** P0 estetico non chiuso: resta verifica di tutti i 22 punti in Windows alle due risoluzioni. [Report](../design/G1_D36_RC21_AUDIT_EDIFICI_UPGRADE.md) · [Piano](G1_D36_RC21_TEST_PLAN.md).
+
+---
+
 # Aggiornamento G1-D35 / RC20 — UI-02/UI-03/UI-04 (candidato)
 
 **Baseline confermata:** RC16, 476 test. RC17–RC19 non testate; **RC20 490 attesi**, inclusi 3 test nuovi (2 viewport + un test refresh). Nella v14 la tabella Risorse conserva il tracciato delle sette colonne della v13: nessuna modifica alla GUI senza evidenza. I nuovi test coprono scrollbar, right alignment, selezione ocra, tooltip capacità, refresh e ordine alfabetico/17 risorse. **Audit grafico manuale ancora aperto**, non certificare UI-02/UI-03/UI-04 fino alla prova a entrambe le risoluzioni.
@@ -88,3 +106,8 @@ Compilazione e xUnit Windows verdi; per ciascuna delle 22 voci, esito, scenario 
 | **D31-02** | **UI-20/21** | Possibile interazione Salva/Carica durante conferma: comune alla v13, non affrontata in questo incremento. | Verificare flusso e decidere una soluzione coerente con le due GUI; nessuna modifica ai DB in RC16. | **Audit aperto**, non dichiarato risolto. |
 
 [Riproduzione e soluzione D31](../design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano RC16](G1_D31_RC16_TEST_PLAN.md).
+
+
+## Aggiornamento D37 / RC22 — UI-12/UI-15/UI-18
+
+**RC20:** 490 test dichiarati passati; **RC21 (493) e RC22 (496 attesi)** ancora non validati Windows. In RC21 la diagnosi Edifici era una sezione `Auto` senza limite d'altezza: testi lunghi potevano comprimere la zona dei dettagli e dei comandi. RC22 introduce un contenitore scrollabile con massimo 104 px e +2 test headless per 1040×740/1240×850. Terzo test: barra addestramento Esercito e completamento recluta a 30 s. **Stato: candidato**; attendere Windows e riscontro visivo prima di chiudere UI-12, UI-15, UI-18 o P0. [Report](../design/G1_D37_RC22_SCORRIMENTO_DETTAGLI_ESERCITO.md) · [Test](G1_D37_RC22_TEST_PLAN.md).

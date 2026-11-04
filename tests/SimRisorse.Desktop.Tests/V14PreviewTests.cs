@@ -18,21 +18,67 @@ namespace SimRisorse.Desktop.Tests;
 public sealed class V14PreviewTests
 {
     [Fact]
-    public void ExperimentalModeIsExplicitAndHasItsOwnSavePath()
+    public void DefaultLaunchUsesV14AndPreservesTheExistingV14SaveSlot()
     {
-        var live = DesktopOptions.Parse([]);
-        var experimental = DesktopOptions.Parse(["--experimental-v14"]);
-        Assert.False(live.ExperimentalV14);
-        Assert.True(experimental.ExperimentalV14);
-        Assert.NotEqual(live.SavePath, experimental.SavePath);
-        Assert.Contains("experiments", experimental.SavePath, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal("civil-growth-13", experimental.Scenario.Catalog.RulesVersion);
+        var normal = DesktopOptions.Parse([]);
+        var oldShortcut = DesktopOptions.Parse(["--experimental-v14"]);
+        var explicitV14 = DesktopOptions.Parse(["--v14"]);
+        Assert.True(normal.UseV14);
+        Assert.True(oldShortcut.UseV14);
+        Assert.True(explicitV14.UseV14);
+        Assert.Equal(normal.SavePath, oldShortcut.SavePath);
+        Assert.Equal(normal.SavePath, explicitV14.SavePath);
+        Assert.EndsWith("civil-growth-v14.sqlite3", normal.SavePath);
+        Assert.Contains("experiments", normal.SavePath, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("civil-growth-13", normal.Scenario.Catalog.RulesVersion);
+    }
+
+    [Fact]
+    public void LegacyModeIsExplicitAndKeepsTheV13SaveSlot()
+    {
+        var legacy = DesktopOptions.Parse(["--legacy-v13"]);
+        var historicShortcut = DesktopOptions.Parse(["--scenario", "civil-growth"]);
+        var normal = DesktopOptions.Parse([]);
+        Assert.False(legacy.UseV14);
+        Assert.False(historicShortcut.UseV14);
+        Assert.Equal(legacy.SavePath, historicShortcut.SavePath);
+        Assert.EndsWith("civil-growth.sqlite3", legacy.SavePath);
+        Assert.NotEqual(legacy.SavePath, normal.SavePath);
+    }
+
+    [Fact]
+    public void LegacySmokeAndHistoricalScenarioStayOnTheirOriginalRuntime()
+    {
+        var smoke = DesktopOptions.Parse(["--smoke-test"]);
+        var historical = DesktopOptions.Parse(["--scenario", "economy-foundation"]);
+        Assert.False(smoke.UseV14);
+        Assert.True(smoke.SmokeTest);
+        Assert.False(historical.UseV14);
+        Assert.EndsWith("game.sqlite3", historical.SavePath);
+        Assert.NotEqual(smoke.SavePath, DesktopOptions.Parse([]).SavePath);
+    }
+
+    [Fact]
+    public void BothModesRejectTheOtherModesReservedSavePaths()
+    {
+        var v14 = DesktopOptions.Parse([]);
+        var v13 = DesktopOptions.Parse(["--legacy-v13"]);
+        var historical = DesktopOptions.Parse(["--scenario", "economy-foundation"]);
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--v14", "--save-path", v13.SavePath]));
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--v14", "--save-path", historical.SavePath]));
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--legacy-v13", "--save-path", v14.SavePath]));
         Assert.Throws<ArgumentException>(() => DesktopOptions.Parse([
-            "--experimental-v14", "--scenario", "economy-foundation"]));
+            "--scenario", "civil-growth", "--save-path", v14.SavePath]));
+    }
+
+    [Fact]
+    public void ConflictingModeOptionsFailWithoutOpeningAnySave()
+    {
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--legacy-v13", "--v14"]));
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--experimental-v14", "--smoke-test"]));
         Assert.Throws<ArgumentException>(() => DesktopOptions.Parse([
-            "--experimental-v14", "--smoke-test"]));
-        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse([
-            "--experimental-v14", "--save-path", live.SavePath]));
+            "--v14", "--scenario", "economy-foundation"]));
+        Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--unknown-option"]));
     }
 
     [Fact]
@@ -53,6 +99,32 @@ public sealed class V14PreviewTests
         var initialTime = vm.Clock;
         vm.Advance(TimeSpan.FromSeconds(40));
         Assert.Equal(initialTime, vm.Clock); // Paused by default.
+    }
+
+    [Theory]
+    [InlineData("lavorazioni-1", "Sblocca edifici Grande:", "Segheria")]
+    [InlineData("lavorazioni-2", "Sblocca edifici Avanzato:", "Segheria")]
+    [InlineData("alimentazione-1", "Sblocca edifici Grande:", "Forno")]
+    public void TechnologyDetailsShowTheRealBuildingTierBenefit(string technologyId,
+        string expectedEffect, string expectedBuilding)
+    {
+        using var sandbox = new TestDirectory();
+        var vm = V14PreviewViewModel.CreateForPreview(sandbox.V14);
+        vm.SelectedTechnology = vm.Technologies.Single(item => item.Id == technologyId);
+        Assert.Contains(expectedEffect, vm.SelectedTechnologySummary);
+        Assert.Contains(expectedBuilding, vm.SelectedTechnologySummary);
+        Assert.Contains("Prerequisiti ricerca:", vm.SelectedTechnologySummary);
+    }
+
+    [Fact]
+    public void DeferredResearchShowsNoImplementedBenefitAndRemainsUnpurchasable()
+    {
+        using var sandbox = new TestDirectory();
+        var vm = V14PreviewViewModel.CreateForPreview(sandbox.V14);
+        vm.SelectedTechnology = vm.Technologies.Single(item => item.Id == "logistica-1");
+        Assert.Contains("Effetto non implementato", vm.SelectedTechnologySummary);
+        Assert.False(vm.CanBuySelectedTechnology);
+        Assert.False(vm.BuyTechnologyCommand.CanExecute(null));
     }
 
     [Fact]

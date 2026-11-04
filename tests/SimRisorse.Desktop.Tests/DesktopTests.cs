@@ -736,12 +736,17 @@ public sealed class DesktopTests
     public void ScenariosHaveDistinctPersonalSlotsAndSmokeTestsUsePrivatePaths()
     {
         var current = DesktopOptions.Parse([]);
+        var legacy = DesktopOptions.Parse(["--legacy-v13"]);
         var historical = DesktopOptions.Parse(["--scenario", "economy-foundation"]);
         Assert.Equal("civil-growth", current.Scenario.Id);
-        Assert.EndsWith("civil-growth.sqlite3", current.SavePath);
+        Assert.True(current.UseV14);
+        Assert.EndsWith("civil-growth-v14.sqlite3", current.SavePath);
+        Assert.EndsWith("civil-growth.sqlite3", legacy.SavePath);
         Assert.EndsWith("game.sqlite3", historical.SavePath);
         Assert.NotEqual(current.SavePath, historical.SavePath);
+        Assert.NotEqual(current.SavePath, legacy.SavePath);
         var smoke = DesktopOptions.Parse(["--smoke-test"]);
+        Assert.False(smoke.UseV14);
         Assert.NotEqual(current.SavePath, smoke.SavePath);
         Assert.NotEqual(historical.SavePath, smoke.SavePath);
         Assert.Contains("SimRisorse.NativeSmoke", smoke.SavePath);

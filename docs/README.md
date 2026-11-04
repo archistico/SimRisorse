@@ -1,3 +1,51 @@
+# Documentazione corrente — RC36 / P1-D50
+
+**538 test attesi (non eseguiti qui); ultimo checkpoint Windows confermato RC30 / 511.** [Rapporto consolidamento](design/P1_D50_RC36_CONSOLIDAMENTO_E_GATE_E4A.md), [piano test](validation/P1_D50_RC36_TEST_PLAN.md), [roadmap](ROADMAP.md), [protocollo E4a](design/E4A_PROTOCOLLO_BENCHMARK.md) e [ADR 0047](adr/0047-gate-p1-e-misure-e4a.md). Nessun dato di benchmark E4a ancora misurato.
+
+---
+
+# Documentazione corrente — RC33
+
+RC30: ultimo checkpoint Windows confermato (511 test). RC33: 524 test attesi, da verificare, include RC31 e RC32. Filiera Matite con un'unica verifica dominio/UI senza modificare la ricetta. [Rapporto D47](design/P1_D47_RC33_FILIERA_MATITE.md) · [Piano RC33](validation/P1_D47_RC33_TEST_PLAN.md) · [ADR 0044](adr/0044-unica-verifica-laboratorio-matite.md) · [Roadmap](ROADMAP.md).
+
+---
+
+# Documentazione corrente — RC31
+
+La GUI v14 è stata approvata come modalità normale; `run-game.cmd` apre v14, `--legacy-v13` conserva la GUI precedente. **RC30 validata dall'utente**, RC31 candidata a 515 test. [Avvio rapido](START_HERE.md) · [Roadmap](ROADMAP.md) · [ADR 0042](adr/0042-promozione-v14-e-conservazione-slot.md).
+
+---
+
+# Documentazione operativa — aggiornamento G1-D42
+
+RC27 è la baseline applicativa validata dall'utente con **507 test superati**. La nuova [roadmap dettagliata](ROADMAP.md) contiene attività, dipendenze e criteri di uscita D42–D50, E4a/b/c e M5.4–M7; il [runbook P0](validation/G1_D42_P0_RUNBOOK.md) specifica come raccogliere le prove visive delle 22 voci. G1-D42 è solo documentazione, senza incremento dei test o nuovo rilascio applicativo. P0 visivo aperto.
+
+---
+
+# Indice corrente — RC25 / G1-D39-F1
+
+**RC20** ultimo gate Windows verde (490 test). **RC24** build fallita per due CS1061 nel test upgrade. **RC25 candidata:** corretto l'import Avalonia Headless, **501 test attesi**. [Rapporto F1](design/G1_D39_RC25_FIX_CS1061_HEADLESS.md) · [Piano RC25](validation/G1_D39_RC25_TEST_PLAN.md) · [Matrice P0](validation/G1_D39_P0_UI_MATRIX.md) · [Roadmap](ROADMAP.md). Il gate grafico resta aperto.
+
+---
+
+# Indice corrente — RC24 / G1-D39
+
+RC20 (490) è l'ultimo checkpoint Windows confermato. RC24 (501 test attesi, RC21–RC23 inclusi) è una **candidata**. [Audit Scuola](design/G1_D39_RC24_AUDIT_SCUOLA_E_GATE_P0.md) · [Matrice gate P0](validation/G1_D39_P0_UI_MATRIX.md) · [Validazione RC24](validation/G1_D39_RC24_TEST_PLAN.md) · [Roadmap](ROADMAP.md). Il confronto grafico delle 22 voci è ancora aperto.
+
+---
+
+# Indice corrente — RC22 / G1-D37
+
+**RC20 validata:** 490 test. **RC21 pendente:** 493. **RC22 candidata:** 496 attesi, +3 test. [Rapporto scorrimento Edifici / Esercito](design/G1_D37_RC22_SCORRIMENTO_DETTAGLI_ESERCITO.md) · [Piano Windows](validation/G1_D37_RC22_TEST_PLAN.md) · [Roadmap](ROADMAP.md) · [Audit](validation/G1_D29_AUDIT_GUI_V13_V14.md). **P0 visivo aperto**, nessun E4.
+
+---
+
+# Indice corrente — RC21 / G1-D36
+
+**RC20 validata dall'utente (490 attesi)**; **RC21 candidata (493 attesi, +3 test)**. Audit Edifici: [report D36](design/G1_D36_RC21_AUDIT_EDIFICI_UPGRADE.md) · [test Windows](validation/G1_D36_RC21_TEST_PLAN.md) · [roadmap](ROADMAP.md) · [audit 22 voci](validation/G1_D29_AUDIT_GUI_V13_V14.md). P0 visuale aperto, E4 sospeso.
+
+---
+
 # Indice corrente — RC19 / G1-D34
 
 **RC16 validata (476)**; RC17 (481) e RC18 (484) non testate; **RC19 candidata (487)**. [Audit Esercito](design/G1_D34_RC19_AUDIT_ESERCITO_SUGGERIMENTI.md) · [Piano RC19](validation/G1_D34_RC19_TEST_PLAN.md) · [Roadmap](ROADMAP.md). P0 visuale aperto, E4 sospeso.

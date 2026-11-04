@@ -152,10 +152,28 @@ public sealed partial class V14PreviewViewModel
         GrowthBlockReason.MissingFood => "Manca cibo: crescita sospesa",
         GrowthBlockReason.MissingBread => "Manca pane: crescita avanzata sospesa",
         GrowthBlockReason.HousingFull => "Case piene: costruisci abitazioni",
-        GrowthBlockReason.None => $"Prossimo abitante: {Growth.ProgressSeconds} / {Growth.IntervalSeconds} s · " +
-            $"×{(Growth.GrowthRateTwentieths / (decimal)HousingGrowthRules.UnitsPerSecond).ToString("0.##", Italian)}",
+        GrowthBlockReason.None => GrowthActiveStatus(),
         _ => "Popolazione fissa"
     };
+    // Match the classic GUI: fractional growth progress and remaining time are
+    // read from the forecast, never approximated by the displayed integer seconds.
+    // The game session is not mutated and no E4 growth coefficients change.
+    private string GrowthActiveStatus()
+    {
+        var growth = Growth;
+        var progress = growth.ProgressSeconds +
+            growth.GrowthRemainderTwentieths / (decimal)HousingGrowthRules.UnitsPerSecond;
+        var speed = growth.GrowthRateTwentieths / (decimal)HousingGrowthRules.UnitsPerSecond;
+        var position = $"{progress.ToString("0.##", Italian)} / {growth.IntervalSeconds} s";
+        if (speed == 1m) return $"Prossimo abitante: {position}";
+
+        // Integer growth units preserve the exact 1/20-second remainder.
+        var remainingUnits = (long)(growth.IntervalSeconds - growth.ProgressSeconds) *
+            HousingGrowthRules.UnitsPerSecond - growth.GrowthRemainderTwentieths;
+        var seconds = (long)Math.Ceiling(remainingUnits / (decimal)growth.GrowthRateTwentieths);
+        return $"Abitante: {position} · ×{speed.ToString("0.##", Italian)} · ~{seconds}s";
+    }
+
     public double GrowthPercent => Growth.IntervalSeconds > 0
         ? 100d * (Growth.ProgressSeconds + Growth.GrowthRemainderTwentieths / (double)HousingGrowthRules.UnitsPerSecond) /
             Growth.IntervalSeconds : 0d;

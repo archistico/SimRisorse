@@ -1,3 +1,9 @@
+# Uso ordinario v14 — RC31 (senza migrazione automatica)
+
+Dal passaggio RC31 l'avvio senza argomenti apre la GUI v14, usando il **medesimo** SQLite v3 già usato in RC9–RC30: `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`. Il nome `experiments` è conservato intenzionalmente per non far sembrare perdute le partite esistenti. La v13 conserva `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3` (SQLite v2) ed è avviabile tramite `--legacy-v13`. Non si convertono file e nessun database viene spostato. Un percorso riservato dell'altra modalità viene rifiutato. [ADR 0042](adr/0042-promozione-v14-e-conservazione-slot.md).
+
+---
+
 > **Aggiornamento 03/11/2026 · v58-RC2 (non validata):** questo documento contiene materiale del precedente checkpoint v57 e alcune parti sono storiche. Per lo stato attuale del ramo unificato leggere [docs/CURRENT_STATE.md](CURRENT_STATE.md), [docs/ROADMAP.md](ROADMAP.md) e [docs/validation/V58_RECONCILIATION.md](validation/V58_RECONCILIATION.md). Nuovo ruleset candidato: `civil-growth-13` (addestramento individuale); flotta non implementata.
 
 # Salvataggi desktop

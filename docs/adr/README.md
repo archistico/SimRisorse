@@ -1,3 +1,9 @@
+# ADR corrente — RC36 / P1-D50
+
+[ADR 0047 — Gate P1 e misure E4a senza rebalance](0047-gate-p1-e-misure-e4a.md) · [Rapporto](../design/P1_D50_RC36_CONSOLIDAMENTO_E_GATE_E4A.md). Stato: protocolli predisposti e test aggiunti, validazione Windows pendente.
+
+---
+
 > **G1-D24 / RC8:** [ADR 0034 — Stati Edifici, comandi separati e Scuola](0034-v14-stati-edifici-e-layout-azioni.md), requisito UX accettato; test Windows 456 attesi, non eseguiti.
 
 > **Ultimo ADR tecnico sperimentale:** [0030 — Civili e replay v14](0030-e3b3e-edifici-civili-replay-v14.md). Coefficienti e soglie numeriche restano candidati.

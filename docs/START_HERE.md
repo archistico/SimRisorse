@@ -1,38 +1,25 @@
-# Ripresa rapida — RC19 / G1-D34
+# Inizia qui — SimRisorse RC31 / G1-D45
 
-**RC16:** 476 test superati (ultimo gate Windows confermato). **RC17:** 481, **RC18:** 484, non testate. **RC19:** **487 attesi**, da validare su Windows. Migliorati i messaggi nell'Esercito per il blocco «Nuova partita?» e le carenze dei lotti. Include integralmente RC17+RC18. [Stato](CURRENT_STATE.md) · [Piano RC19](validation/G1_D34_RC19_TEST_PLAN.md) · [Roadmap](ROADMAP.md).
+**RC30:** 511 test .NET attesi dichiarati superati dall'utente. **RC31:** 515 test attesi, ancora da eseguire su Windows. La v14 è stata approvata per l'utilizzo quotidiano ed è ora **la modalità predefinita**. L'archivio delle 44 prove visive P0 rimane senza screenshot: non è una verifica dichiarata completata.
 
----
-
-# Ripresa rapida — RC18 / G1-D33
-
-Ultimo test Windows confermato **RC16 (476)**; RC17 non verificata (**481 attesi**); RC18 candidata (**484 attesi**, contiene tutte le modifiche RC17). Eseguire `./validate.cmd` quando possibile; fare backup dei salvataggi prima delle prove GUI. Correzione RC18: messaggio sui posti ricerca insufficienti per lotti +5/+10. [Stato](CURRENT_STATE.md) · [Piano RC18](validation/G1_D33_RC18_TEST_PLAN.md) · [Roadmap](ROADMAP.md).
-
----
-
-# Ripresa corrente — SimRisorse RC17 / G1-D32
-
-**Baseline Windows dichiarata passata:** RC16 con **476 test**. **Candidata corrente:** RC17 (+5 test Desktop, **481 attesi**, da eseguire Windows). [Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Handoff](HANDOFF.md) · [Piano test RC17](validation/G1_D32_RC17_TEST_PLAN.md). La nuova protezione Salva/Carica impedisce che la creazione di una nuova colonia sovrascriva il precedente checkpoint fino al salvataggio manuale. Gate P0 grafico ancora aperto.
-
----
-
-# Inizia qui — SimRisorse RC16 / G1-D31
-
-**Baseline con test confermati:** RC15, **473 test attesi** dichiarati superati dall'utente. **Nuova RC16 candidata:** **476 test attesi**; la compilazione e xUnit non sono stati eseguiti nell'ambiente di confezionamento. Il gate grafico P0 è ancora aperto.
-
-1. [Stato e verifiche](CURRENT_STATE.md)
-2. [Roadmap approvata in sei fasi](ROADMAP.md)
-3. [Handoff](HANDOFF.md) e [prompt per nuova chat](NEW_CHAT_HANDOFF.md)
-4. [Audit UI-01…UI-22](validation/G1_D29_AUDIT_GUI_V13_V14.md)
-5. [Report e test RC16](design/G1_D31_RC16_GUARDIA_CONFERMA_NUOVA_PARTITA.md) · [Piano Windows](validation/G1_D31_RC16_TEST_PLAN.md)
-6. [Decisioni](AUTHORITY_REGISTRY.md) e [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md)
-
-Da Windows 11 con SDK .NET 10, su cartella nuova e con backup dei salvataggi:
+## Avvio rapido (Windows / .NET 10)
 
 ```powershell
 .\validate.cmd
-.\run-game.cmd
-.\run-game.cmd --experimental-v14
+.\run-game.cmd                  # v14 ordinaria
+.\run-game.cmd --legacy-v13     # v13 per compatibilità
 ```
 
-Non sovrascrivere un database personale. [Documentazione](README.md) · [README generale](../README.md).
+Per una vecchia scorciatoia `--experimental-v14` rimane supportato; `--v14` è il nuovo alias esplicito. L'avvio normale non cambia né sposta il salvataggio v14, che rimane in `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`. La v13 conserva uno slot distinto, `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`. Non copiare un DB v13 nel percorso v14; non esiste una migrazione automatica. Eseguire copie di sicurezza a gioco chiuso.
+
+## Documenti in ordine di lettura
+
+1. [Stato corrente](CURRENT_STATE.md) e [roadmap](ROADMAP.md)
+2. [Nuovo handoff](NEW_CHAT_HANDOFF.md) e [handoff completo](HANDOFF.md)
+3. [ADR 0042: decisione sulla promozione](adr/0042-promozione-v14-e-conservazione-slot.md)
+4. [Rapporto G1-D45](design/G1_D45_RC31_PROMOZIONE_V14.md) e [piano di validazione](validation/G1_D45_RC31_TEST_PLAN.md)
+5. [Formato dei salvataggi](SAVE_FORMAT.md) e [registro delle decisioni](AUTHORITY_REGISTRY.md)
+
+## Prossima milestone
+
+**P1-D46: Scuola** — audit iscrizione, progressione individuale, annullamento e rimborsi. D47 Matite; D48 tecnologie; D49 integrazione; D50 gate. Poi E4a misurazione, E4b bilanciamento approvato, E4c migrazione controllata, M5.4–M7.

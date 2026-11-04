@@ -2,7 +2,7 @@
         xmlns:vm="using:SimRisorse.Desktop.Presentation"
         xmlns:pixel="using:SimRisorse.Desktop.Presentation"
         x:Class="SimRisorse.Desktop.Views.V14PreviewWindow" x:DataType="vm:V14PreviewViewModel"
-        Title="SimRisorse · Economia v14 sperimentale"
+        Title="SimRisorse · Economia v14"
         Width="1240" Height="850" MinWidth="1040" MinHeight="740"
         Background="#EAE8DC" Foreground="#263349"
         FontFamily="{DynamicResource ContentControlThemeFontFamily}">
@@ -14,6 +14,25 @@
       </Grid>
     </DataTemplate>
   </Window.Resources>
+  <!-- G1-D42: focus visibility is scoped to v14. A constant transparent border
+       reserves the same pixels both before and after keyboard focus; changing
+       only its brush cannot move a row or replace the selected ochre fill. -->
+  <Window.Styles>
+    <Style Selector="ListBox.gutter-list ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBox.gutter-list ListBoxItem:focus /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="#9A6947" />
+    </Style>
+    <Style Selector="ListBox.navigation ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBox.navigation ListBoxItem:focus /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="#F2D49B" />
+    </Style>
+  </Window.Styles>
   <!-- Same two-column workspace, sidebar, cards, list and detail panel as MainWindow. -->
   <Grid ColumnDefinitions="240,*">
     <Border x:Name="V14SidebarPanel" Background="#263349" Padding="16,14" BorderBrush="#F2D49B" BorderThickness="0,0,2,0">
@@ -51,7 +70,7 @@
         </StackPanel></Border>
         </ScrollViewer>
         <StackPanel Grid.Row="3" Spacing="6">
-          <TextBlock Text="ANTEPRIMA v14 · salvataggi separati" Foreground="#E2D1A2" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <TextBlock Text="VERSIONE v14 · salvataggi separati" Foreground="#E2D1A2" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" />
         </StackPanel>
       </Grid>
     </Border>
@@ -112,7 +131,8 @@
                   <TextBlock Grid.Column="2" Text="PERSONALE" Classes="label" />
                 </Grid>
                 <ListBox x:Name="V14Buildings" Grid.Row="1" Classes="gutter-list" ItemsSource="{Binding Buildings}"
-                         SelectedItem="{Binding SelectedBuilding, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0"
+                         SelectedItem="{Binding SelectedBuilding, Mode=TwoWay}" SelectionChanged="OnBuildingSelectionChanged"
+                         Background="Transparent" BorderThickness="0" Padding="0"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                   <ListBox.ItemTemplate><DataTemplate x:DataType="vm:V14BuildingEntry">
                     <Grid x:Name="V14BuildingRow" Opacity="{Binding RowOpacity}" ColumnDefinitions="34,*,55,76" RowDefinitions="Auto,Auto" Margin="3,6" ColumnSpacing="6" RowSpacing="4">
@@ -130,7 +150,7 @@
             </Border>
             <Border Grid.Column="1" Background="#DFE7E3" BorderBrush="#303B50" BorderThickness="1" CornerRadius="0" Padding="14,10">
               <Grid RowDefinitions="*,Auto" RowSpacing="6">
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled"><StackPanel Spacing="6">
+                <ScrollViewer x:Name="V14BuildingDetailScroll" HorizontalScrollBarVisibility="Disabled"><StackPanel Spacing="6">
                   <TextBlock Text="{Binding SelectedBuilding.Name}" FontSize="21" FontWeight="SemiBold" />
                   <TextBlock Text="{Binding SelectedBuilding.Description}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" LineHeight="17" />
                   <TextBlock Text="COSTO DEL PROSSIMO EDIFICIO" Classes="label" FontSize="11" Margin="0,4,0,0" IsVisible="{Binding SelectedBuilding.HasCost}" />
@@ -163,11 +183,17 @@
                              FontSize="12" TextWrapping="Wrap" Foreground="#735A37" />
                 </StackPanel></ScrollViewer>
                 <StackPanel Grid.Row="1" Spacing="6">
-                  <Border x:Name="V14BuildingDiagnosisPanel" Background="#F5EADB" BorderBrush="#9A6947"
-                          BorderThickness="1" Padding="9,7" IsVisible="{Binding SelectedBuilding.HasDiagnosis}">
-                    <TextBlock Text="{Binding SelectedBuilding.Diagnosis}" TextWrapping="Wrap"
-                               FontSize="12" Foreground="#735A37" />
-                  </Border>
+                  <!-- The diagnosis may contain several simultaneous resource and production warnings.
+                       Cap its height so long messages scroll instead of hiding build/staffing actions. -->
+                  <ScrollViewer x:Name="V14BuildingDiagnosisScroll" MaxHeight="104"
+                                VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                IsVisible="{Binding SelectedBuilding.HasDiagnosis}">
+                    <Border x:Name="V14BuildingDiagnosisPanel" Background="#F5EADB" BorderBrush="#9A6947"
+                            BorderThickness="1" Padding="9,7">
+                      <TextBlock Text="{Binding SelectedBuilding.Diagnosis}" TextWrapping="Wrap"
+                                 FontSize="12" Foreground="#735A37" />
+                    </Border>
+                  </ScrollViewer>
                   <Border Background="#CBD7C9" Height="1" Margin="0,1" />
                   <!-- Keep construction and staffing in separate rows. The first cell names
                        the action, the next three show the actual order quantities. -->
@@ -208,11 +234,15 @@
                   </Grid>
                   <StackPanel Spacing="4" IsVisible="{Binding ShowUpgradeNext}">
                     <TextBlock Text="{Binding NextUpgradeCost}" FontSize="11" Foreground="#53685C" TextWrapping="Wrap" />
-                    <Button x:Name="V14UpgradeNext" Content="{Binding NextUpgradeLabel}" Command="{Binding UpgradeSelectedCommand}" />
+                    <Button x:Name="V14UpgradeNext" Classes="primary build" Content="{Binding NextUpgradeLabel}"
+                            Command="{Binding UpgradeSelectedCommand}" IsEnabled="{Binding CanUpgradeNext}"
+                            HorizontalAlignment="Stretch" />
                   </StackPanel>
                   <StackPanel Spacing="4" IsVisible="{Binding ShowUpgradeDirectlyToAdvanced}">
                     <TextBlock Text="{Binding DirectUpgradeCost}" FontSize="11" Foreground="#53685C" TextWrapping="Wrap" />
-                    <Button x:Name="V14UpgradeAdvanced" Content="{Binding DirectUpgradeLabel}" Command="{Binding UpgradeSelectedToAdvancedCommand}" />
+                    <Button x:Name="V14UpgradeAdvanced" Classes="primary build" Content="{Binding DirectUpgradeLabel}"
+                            Command="{Binding UpgradeSelectedToAdvancedCommand}" IsEnabled="{Binding CanUpgradeDirectlyToAdvanced}"
+                            HorizontalAlignment="Stretch" />
                   </StackPanel>
                 </StackPanel>
               </Grid>
@@ -349,6 +379,8 @@
                     <ProgressBar x:Name="V14SchoolProgressBar" Value="{Binding SchoolTrainingPercent}" Minimum="0" Maximum="100"
                                  Height="7" MinWidth="0" Foreground="#A67C38" />
                     <TextBlock x:Name="V14SchoolTrainingStatus" Text="{Binding SchoolTrainingStatus}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" />
+                    <TextBlock x:Name="V14SchoolIndividualProgress" Text="{Binding SchoolTrainingDetails}"
+                               TextWrapping="Wrap" FontSize="11" Foreground="#53685C" />
                     <TextBlock Text="{Binding SchoolQueueExplanation}" TextWrapping="Wrap" FontSize="11" Foreground="#66766E" />
                   </StackPanel>
                 </Border>
@@ -451,7 +483,7 @@
           </Grid>
         </Border>
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="9">
-          <TextBlock Text="Costi sperimentali · salvataggio v14 separato" Classes="label" VerticalAlignment="Center" TextWrapping="Wrap" />
+          <TextBlock Text="Economia v14 · salvataggio separato dalla v13" Classes="label" VerticalAlignment="Center" TextWrapping="Wrap" />
           <Button Grid.Column="1" x:Name="V14NewGame" Content="Nuova partita" Command="{Binding NewGameCommand}" />
           <Button Grid.Column="2" x:Name="V14Load" Content="Carica v14" Command="{Binding LoadCommand}" />
           <Button Grid.Column="3" x:Name="V14Save" Content="Salva v14" Command="{Binding SaveCommand}" />
