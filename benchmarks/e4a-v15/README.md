@@ -1,6 +1,16 @@
-# E4a v15 — benchmark naturali e analisi (RC73–RC74)
+# E4a v15 — benchmark naturali e recupero controllato (RC73–RC77)
 
-Questa cartella contiene solo il **manifest dichiarativo degli scenari**; i valori `not-run` non sono risultati di simulazione. Non sostituire con dati di v14 o con gli audit *controlled* delle filiere.
+I manifest naturali `scenarios.csv` e `industrial-scenarios.csv` restano **not-run**: non sostituirli con dati v14 o controllati. Il manifest separato [recovery-scenarios.csv](recovery-scenarios.csv) riporta invece le misure controllate RC77.
+
+## RC77 — Produzione non realizzata e recupero controllato
+
+```powershell
+dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-recovery --output DIRECTORY_NUOVA
+```
+
+Tre scenari, due politiche ciascuno e 120s dichiarati: Spade sature, Monete sature e contesa del Carbone. Il checkpoint iniziale è finanziato e dichiarato; Magazzino e assegnazioni usano comandi reali. Ogni secondo è riconciliato e distingue deficit per solo spazio, soli input o vincoli misti. Output JSON, campioni CSV, azioni CSV e Markdown; nessuna sovrascrittura. I run sono stati eseguiti e ripetuti con quattro file identici. [Specifica](../../docs/design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md) · [Risultati](../../docs/validation/E4A_V15_RC77_TEST_PLAN.md).
+
+## Runner naturali RC73–RC76
 
 La CLI dedicata usa `V15NaturalProgressionBenchmark` nel progetto Application e **non** scrive sui database personali. Parte da `GameSession.Create(CivilGrowthScenario.Create())`, usa la stessa conversione iniziale in memoria della GUI v15, acquista realmente tramite la sessione v15 e non aggiunge inventario, popolazione, lavoratori, tecnologie o edifici fittizi.
 

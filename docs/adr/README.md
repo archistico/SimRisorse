@@ -129,3 +129,5 @@ Una decisione accettata non si riscrive per nascondere un cambio di direzione. S
 - [ADR 0057 — SQLite v15 alimentare separato](0057-sqlite-v15-separato-per-deposito-alimentare.md): schema, scorte non duplicate e protezione dei checkpoint v14; codice candidato RC46.
 
 - [ADR 0060 — Salvataggi di sviluppo e checkpoint completo delle filiere](0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md): **accettato**, RC49; sostituisce l’obbligo di migrare ciascun vecchio DB nelle ADR 0057–0059, conserva isolamento e integrità.
+
+- [ADR 0085 — Produzione non realizzata e recupero controllato](0085-misure-produzione-non-realizzata-e-recupero-controllato.md): implementata RC77; misure dal clock reale e confronti finanziati dichiarati, separati dalle partite naturali.

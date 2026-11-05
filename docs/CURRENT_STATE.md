@@ -1,6 +1,10 @@
-# Stato corrente — RC76-HF04 validata automaticamente (05/11/2026)
+# Stato corrente — RC77 / E4a.3 verificata tecnicamente (05/11/2026)
 
-**Esito nel workspace Windows:** `validate-f1.cmd`, incluso `validate.cmd`, completato con uscita 0, **885/885 test superati**, nessun fallito o saltato, compilazione senza errori o avvisi. Smoke nativo esistente e audit v15 baseline/combinato da 120 secondi superati. [Evidenze HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md).
+**Esito nel workspace Windows:** `validate-f1.cmd`, incluso `validate.cmd`, completato con uscita 0, **899/899 test superati**, nessun fallito o saltato, compilazione senza errori o avvisi. Smoke nativo esistente, audit alimentari e sei run controllati RC77 da 120s superati. [Evidenze RC77](validation/E4A_V15_RC77_TEST_PLAN.md).
+
+**RC77 implementata:** diagnostica opzionale del planner realmente eseguito dal clock; nominale/prodotto e deficit per solo spazio, soli input o vincoli misti. Nuova CLI `--benchmark-e4a-v15-recovery`, tre scenari controllati e due politiche ciascuno, checkpoint iniziali dichiarati, azioni reali e ricevute, riconciliazione fisica per secondo, JSON/CSV/Markdown. Quattordici nuovi test. Nessuna modifica a GUI, formule o SQLite.
+
+**Misure controllate:** Magazzino pagato → 240 Spade o 360 Monete in 120s; due addetti aggiuntivi al Carbone → 238 Spade e 357 Monete, con un secondo di avvio. Replay: quattro file identici byte per byte. Sono esperimenti finanziati, non tempi di progressione naturale. [Specifica](design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md).
 
 **Modifiche HF04 richieste dall'utente:** nuove icone Bovini/Pane/Pescatore/Tagliapietre; intestazione Abitanti, Cibo, Legno lavorato e Pietra; pulsanti «Carica» e «Salva». Crescita v15 con gli stessi bonus abitativi ma tetto elevato a **×20**: al massimo un abitante ogni 3 secondi, subordinato ad alloggi e alimentazione. Undici nuovi casi verificano rate, clock, ripresa, pausa e vincoli. Formato SQLite invariato.
 
@@ -10,7 +14,7 @@ Corretta la regressione del test sul personale: il campione a zero secondi segue
 
 **Diagnostica RC76 eseguita:** V15-I01 / `research-first`, 120 secondi, esito `timeout` classificato `diagnostic-only`; attesa della Scuola con deficit di 73 unità di Legname lavorato. Rianalisi JSON verificata: sei report identici byte per byte. Nessuna misura a orizzonte pieno; manifest completi ancora `not-run`.
 
-**F1-D05e:** gate automatico superato e render v15 ispezionati; confronto interattivo Windows ancora da confermare (focus/hover, tooltip, scorrimento e progressi attivi). RC63 resta il riferimento grafico approvato. Prossimo sviluppo dopo la verifica grafica: RC77 / E4a.3, produzione persa e politiche controllate di recupero; prezzi e squadre minime E4b restano successivi alle misure.
+**F1-D05e:** gate automatico superato e render v15 ispezionati; confronto interattivo Windows ancora da confermare. RC77 è stata svolta come strumento di analisi indipendente senza promuovere la GUI. Prossimo passo: misure naturali a orizzonte pieno e verifica delle politiche prima dello studio quantitativo E4b/RC78; coefficienti di prezzo e squadre minime restano da decidere.
 
 Le sezioni seguenti conservano lo stato precedente all'esecuzione; conteggi e verifiche pendenti di allora sono superati dall'esito sopra. Per riprendere usare [handoff](NEW_CHAT_HANDOFF.md) e [rapporto Windows](validation/RC76_WINDOWS_VALIDATION.md).
 

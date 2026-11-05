@@ -6,7 +6,7 @@ Gestionale locale nel quale si sviluppano produzione, popolazione, alimentazione
 
 ## Situazione reale del gioco
 
-La **RC76-HF04** include una campagna v15 con Deposito alimentare a cinque ingredienti, edifici produttivi con tier Base/Grande/Avanzato, Scuola, ricerca, militari e SQLite generation 6. La GUI conserva il layout canonico con le modifiche HF04 richieste dall'utente. **885/885 test verificati**, gate automatico superato; confronto interattivo Windows ancora da confermare. [Esiti HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md).
+La **RC77** include una campagna v15 con Deposito alimentare, tier produttivi, Scuola, ricerca, militari e SQLite generation 6. La GUI e la crescita ×20 HF04 sono conservate. **899/899 test verificati**; il nuovo strumento misura produzione non realizzata e recupero su scenari controllati, senza cambiare le regole. Confronto interattivo Windows ancora da confermare. [Esiti RC77](validation/E4A_V15_RC77_TEST_PLAN.md).
 
 ## Regole già stabilite
 

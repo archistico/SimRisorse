@@ -1,3 +1,10 @@
+# RC77 — 05/11/2026 · E4a.3, produzione non realizzata e recupero controllato
+
+- Telemetria opzionale del planner eseguito dal clock v15: nominale/prodotto e deficit esclusivi per spazio/input, con vincoli misti distinti. Tick e flussi invariati quando la diagnostica è attivata; nessuna modifica a GUI, prezzi, crescita o SQLite.
+- Nuovo benchmark controllato con tre scenari e due politiche, checkpoint finanziati dichiarati, comandi reali, ricevute e riconciliazione fisica per secondo. CLI, JSON, CSV campioni/azioni e Markdown, senza sovrascritture.
+- Misurati in 120s: Magazzino → 240 Spade o 360 Monete; due addetti aggiuntivi al Carbone → 238 Spade e 357 Monete. Replay identico su quattro file; i manifest naturali restano `not-run`.
+- Quattordici regressioni nuove; gate esteso ai sei esperimenti. **899/899 test superati** su Windows, build senza errori o avvisi, smoke nativo esistente e audit superati. [Specifica](docs/design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md), [evidenze](docs/validation/E4A_V15_RC77_TEST_PLAN.md), [ADR 0085](docs/adr/0085-misure-produzione-non-realizzata-e-recupero-controllato.md).
+
 # RC76-HF04 — 05/11/2026 · icone, intestazione e crescita ×20
 
 - Su richiesta: Bovini con testa di mucca, Pane più marrone, Pescatore con pesce, Tagliapietre con cubo grigio. Palette dedicata al Pane senza modificare grano o tetti.

@@ -19,7 +19,8 @@ namespace SimRisorse.Core.Food;
 public sealed record V15CampaignAdvancePlan(V15FoodCampaignCheckpoint Next,
     long SecondsAdvanced, long MealsServed, long MealsMissed,
     ResourceAmount ReadyFoodProduced,
-    ResourceBundle FirstSecondProduction, ResourceBundle FirstSecondConsumption);
+    ResourceBundle FirstSecondProduction, ResourceBundle FirstSecondConsumption,
+    IReadOnlyList<BuildingProduction>? FirstSecondBuildings = null);
 
 public static class V15UnifiedCampaignClock
 {
@@ -32,7 +33,7 @@ public static class V15UnifiedCampaignClock
         SchoolResearchRules schoolRules, TechnologyCatalog technologies,
         FoodIndustryConstructionCatalog foodCatalog, MeatChainPolicy meatPolicy,
         HorticulturePolicy cropsPolicy, FoodConversionPolicy depotPolicy,
-        TimeSpan elapsed)
+        TimeSpan elapsed, bool includeProductionDiagnostics = false)
     {
         ArgumentNullException.ThrowIfNull(baseline);
         ArgumentNullException.ThrowIfNull(schoolRules);
@@ -105,6 +106,7 @@ public static class V15UnifiedCampaignClock
         // reconstruction from the final inventory (deliveries are transfers).
         var firstProduced = ResourceBundle.Empty;
         var firstConsumed = ResourceBundle.Empty;
+        IReadOnlyList<BuildingProduction>? firstBuildings = null;
 
         for (long i = 0; i < wholeSeconds; i++)
         {
@@ -113,10 +115,12 @@ public static class V15UnifiedCampaignClock
             // not have an entry in this roster.
             var pencilStock = resources[V14SchoolSupplies.ResourceId];
             var industry = ProductionPlanner.Plan(baseline.Catalog, resources, capacity, buildings,
+                includeDiagnostics: includeProductionDiagnostics && i == 0,
                 suppressedProducerIds: DisabledLegacyProducers);
             resources = industry.Resources;
             if (i == 0)
             {
+                if (includeProductionDiagnostics) firstBuildings = industry.Buildings;
                 foreach (var report in industry.Buildings)
                 {
                     if (report.RunnableWorkers == 0 ||
@@ -220,7 +224,7 @@ public static class V15UnifiedCampaignClock
         };
         V15FoodCampaignCheckpoints.Validate(next, baseline, schoolRules, technologies, depotPolicy);
         return new(next, wholeSeconds, mealsServed, mealsMissed, producedReadyFood,
-            firstProduced, firstConsumed);
+            firstProduced, firstConsumed, firstBuildings);
     }
 
 }

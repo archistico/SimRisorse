@@ -1,4 +1,6 @@
-> **Richiesta utente HF04:** crescita v15 fino a ×20, nuove icone Bovini/Pane/Pescatore/Tagliapietre, riepilogo Abitanti/Cibo/Legno lavorato/Pietra, pulsanti Carica/Salva senza suffisso. Questi cambiamenti sono autorizzati e aggiornano il riferimento grafico e il limite ×2 precedenti. **885/885 test verificati**; [dettagli ed evidenze](validation/RC76_HF04_ICONS_AND_GROWTH.md).
+> **RC77 / ADR 0085:** produzione non realizzata misurata dal clock e recupero controllato con grants dichiarati, senza modificare regole o GUI. **899/899 test verificati** e sei run completi misurati; [decisione](adr/0085-misure-produzione-non-realizzata-e-recupero-controllato.md), [evidenze](validation/E4A_V15_RC77_TEST_PLAN.md). Il confronto interattivo F1 rimane distinto.
+
+> **Richiesta utente HF04:** crescita v15 fino a ×20, nuove icone Bovini/Pane/Pescatore/Tagliapietre, riepilogo Abitanti/Cibo/Legno lavorato/Pietra, pulsanti Carica/Salva senza suffisso. Questi cambiamenti sono autorizzati e aggiornano il riferimento grafico e il limite ×2 precedenti. **885/885 test verificati nella HF04**; [dettagli ed evidenze](validation/RC76_HF04_ICONS_AND_GROWTH.md).
 
 > **Storico RC76 / ADR 0084:** gli ammanchi dei benchmark e le saturazioni sono osservazioni, non diagnosi di stallo strutturale. 867 test erano attesi nella consegna originale. [Dettaglio](adr/0084-telemetria-vincoli-benchmark-v15-senza-diagnosi-automatica-stallo.md).
 

@@ -1,6 +1,6 @@
-# Avvio rapido — SimRisorse RC76-HF04
+# Avvio rapido — SimRisorse RC77
 
-**Codice:** RC76-HF04, **885/885 test superati su Windows**; gate automatico, smoke nativo esistente e audit v15 superati. [Evidenze HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md). Icone e intestazione aggiornate; crescita v15 fino a ×20. Render ispezionati alle due risoluzioni; confronto interattivo Windows ancora da confermare.
+**Codice:** RC77, **899/899 test superati su Windows**; gate automatico, smoke nativo esistente, audit alimentari e recupero industriale superati. [Evidenze RC77](validation/E4A_V15_RC77_TEST_PLAN.md). Conservate icone/intestazione HF04 e crescita v15 fino a ×20. Confronto interattivo Windows della GUI ancora da confermare.
 
 Dalla radice su Windows, con .NET SDK 10 installato:
 
@@ -11,7 +11,7 @@ Dalla radice su Windows, con .NET SDK 10 installato:
 .\run-game.cmd --v14
 ```
 
-`validate-f1.cmd` esegue a sua volta `validate.cmd`: non è necessario lanciare entrambi. Esegue anche due audit v15 da 120 secondi (base e combinato) e controlla il conteggio **esatto** degli 885 test. Richiede anche le otto catture v15 di Edifici, Scuola ed Esercito. I file di prova sono in `.local-cache/m4/f1-gates/<id>/`. Per uno stress combinato opzionale di 24h: `./validate-f1.cmd -Combined24Hours`. Non legge né modifica salvataggi personali.
+`validate-f1.cmd` esegue a sua volta `validate.cmd`: non è necessario lanciare entrambi. Controlla **899 test**, audit alimentari da 120s, sei esperimenti industriali controllati e catture v15. Le prove sono in `.local-cache/m4/f1-gates/<id>/`, con report industriali in `industrial-recovery/`. Stress combinato 24h opzionale: `./validate-f1.cmd -Combined24Hours`. Non legge né modifica salvataggi personali.
 
 La GUI v15 mostra gli edifici alimentari tramite **Edifici → Filiere alimentari**. Edifici bloccati grigi ma consultabili; produzione, consumi, capacità e costi con icone; pulsanti e sidebar come la v14; Risorse a sette colonne.
 
@@ -22,6 +22,8 @@ La GUI v15 mostra gli edifici alimentari tramite **Edifici → Filiere alimentar
 [Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Handoff](NEW_CHAT_HANDOFF.md) · [Piano RC72](validation/F1_D05E3_RC72_GATE_PLAN.md).
 
 ## Benchmark E4a v15
+
+RC77: `dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-recovery --output DIRECTORY_NUOVA` esegue tre confronti controllati da 120s. [Specifica e provenienza](design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md).
 
 `dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-natural --scenario V15-N01 --max-seconds 120` produce una diagnostica abbreviata. Il comando senza `--max-seconds` misura gli orizzonti completi quando il gate F1 sarà verde. [Dettagli](../benchmarks/e4a-v15/README.md).
 

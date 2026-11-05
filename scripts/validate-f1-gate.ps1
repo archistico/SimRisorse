@@ -1,5 +1,5 @@
 param(
-    [int]$ExpectedTests = 885,
+    [int]$ExpectedTests = 899,
     [int]$StressSeconds = 120,
     [switch]$Combined24Hours
 )
@@ -15,7 +15,7 @@ $gateDirectory = Join-Path $cache ('f1-gates\' + [Guid]::NewGuid().ToString('N')
 New-Item -ItemType Directory -Path $gateDirectory -Force | Out-Null
 $reportFile = Join-Path $gateDirectory 'f1-gate.json'
 $report = [ordered]@{
-    milestone = 'F1-D05e / RC76-HF04 icons, header and twentyfold v15 growth (RC72 gate)'
+    milestone = 'F1-D05e / RC77 controlled production loss and recovery (RC72 gate)'
     status = 'incomplete'
     startedUtc = $started.ToString('o')
     expectedTests = $ExpectedTests
@@ -28,6 +28,7 @@ $report = [ordered]@{
     nativeSmoke = $null
     baselineAudit = $null
     combinedAudit = $null
+    recoveryBenchmark = $null
     longAudit = $null
     error = $null
 }
@@ -121,6 +122,37 @@ try {
     $report.combinedAudit = Invoke-Audit -Name 'combined' -Seconds $StressSeconds -Combined $true `
         -Arguments @('--audit-v15', '--seconds', $StressSeconds.ToString(), '--profile', 'combined')
 
+    # RC77: run the actual CLI and preserve complete, fresh controlled evidence.
+    $recoveryDirectory = Join-Path $gateDirectory 'industrial-recovery'
+    $simulation = Join-Path $root 'tools\SimRisorse.Simulation\bin\Release\net10.0\SimRisorse.Simulation.dll'
+    $recoveryLines = @(& dotnet $simulation --benchmark-e4a-v15-recovery --output $recoveryDirectory)
+    Assert-Condition ($LASTEXITCODE -eq 0) 'Controlled recovery benchmark failed.'
+    # Windows PowerShell 5.1 preserves the JSON array as one pipeline object;
+    # wrapping that pipeline in @() would introduce a second array level.
+    $recoveryRuns = ($recoveryLines -join "`n") | ConvertFrom-Json
+    Assert-Condition ($recoveryRuns.Count -eq 6) 'Expected all six controlled recovery runs.'
+    foreach ($run in $recoveryRuns) {
+        Assert-Condition ($run.Fixture -eq 'controlled/declared-grants' -and -not $run.Diagnostic -and
+            $run.DeclaredHorizonSeconds -eq 120 -and $run.EffectiveHorizonSeconds -eq 120) `
+            'Recovery benchmark has incorrect provenance or duration.'
+        Assert-Condition ($run.MealsServed -eq 120 -and $run.MealsMissed -eq 0) `
+            'Recovery fixture was not fed for every measured second.'
+        Assert-Condition (@($run.Actions | Where-Object { -not $_.Succeeded }).Count -eq 0) `
+            'A controlled recovery action failed.'
+        foreach ($total in $run.Totals) {
+            Assert-Condition ($total.NominalMilliunits -eq ($total.ProducedMilliunits +
+                $total.StorageOnlyUnproducedMilliunits + $total.InputsOnlyUnproducedMilliunits +
+                $total.MixedUnproducedMilliunits + $total.OtherUnproducedMilliunits)) `
+                'Production-loss categories do not reconcile.'
+        }
+    }
+    foreach ($name in @('e4a-v15-recovery-results.json', 'e4a-v15-recovery-samples.csv',
+        'e4a-v15-recovery-actions.csv', 'e4a-v15-recovery.md')) {
+        Assert-Condition (Test-Path -LiteralPath (Join-Path $recoveryDirectory $name)) `
+            "A controlled recovery report is missing: $name"
+    }
+    $report.recoveryBenchmark = Join-Path $recoveryDirectory 'e4a-v15-recovery-results.json'
+
     if ($Combined24Hours) {
         $report.longAudit = Invoke-Audit -Name 'combined-24h' -Seconds 86400 -Combined $true `
             -Arguments @('--audit-v15', '--hours', '24', '--profile', 'combined')
@@ -128,7 +160,7 @@ try {
     $report.status = 'passed'
     $report.finishedUtc = [DateTime]::UtcNow.ToString('o')
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFile -Encoding UTF8
-    Write-Host "F1 GATE PASSED: $ExpectedTests/$ExpectedTests tests, baseline + combined audit."
+    Write-Host "F1 GATE PASSED: $ExpectedTests/$ExpectedTests tests, baseline + combined audit, controlled recovery."
     Write-Host "Evidence: $reportFile"
 }
 catch {

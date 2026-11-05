@@ -1,0 +1,7 @@
+scenario_id,policy_id,profile,experiment_version,declared_horizon_seconds,status,target_resource,produced_milli,first_production_second,notes
+V15-R01,baseline,controlled,v15-controlled-industrial-recovery-1,120,measured,swords,0,,Full sword inventory; assigned forge and supplied inputs
+V15-R01,build-warehouse,controlled,v15-controlled-industrial-recovery-1,120,measured,swords,240000,1,Same initial checkpoint; one paid warehouse at t=0
+V15-R02,baseline,controlled,v15-controlled-industrial-recovery-1,120,measured,coins,0,,Full coin inventory; assigned mint and supplied inputs
+V15-R02,build-warehouse,controlled,v15-controlled-industrial-recovery-1,120,measured,coins,360000,1,Same initial checkpoint; one paid warehouse at t=0
+V15-R03,baseline,controlled,v15-controlled-industrial-recovery-1,120,measured,coins,0,,One coal worker; iron and gold smelters compete with forge and mint
+V15-R03,assign-coal-workers,controlled,v15-controlled-industrial-recovery-1,120,measured,coins,357000,2,Same initial checkpoint; assign two real free residents to preowned coal mines

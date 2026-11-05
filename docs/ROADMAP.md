@@ -1,10 +1,10 @@
 # Aggiornamento operativo — 05/11/2026
 
-**Passi completati:** gate `validate-f1.cmd`, incluso `validate.cmd`, verde sul workspace RC76-HF04: **885/885 test**, nessuno saltato, compilazione senza errori o avvisi, smoke nativo esistente e audit alimentari baseline/combinato superati. Applicate le richieste dell'utente su icone, intestazione, pulsanti e crescita v15 fino a ×20. [Esiti HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md). Restano documentate le correzioni grafiche [HF03](validation/RC76_HF03_VISUAL_REGRESSIONS.md) e la diagnostica industriale [HF02](validation/RC76_WINDOWS_VALIDATION.md).
+**Passi completati:** RC77 / E4a.3 implementata e verificata tecnicamente: diagnostica del clock, produzione non realizzata per spazio/input/vincoli misti, tre esperimenti controllati con due politiche e ricevute reali. Gate `validate-f1.cmd` completo: **899/899 test**, zero saltati, build senza errori o avvisi, smoke, audit alimentari e sei run industriali superati. [Esiti RC77](validation/E4A_V15_RC77_TEST_PLAN.md). Conservate le richieste grafiche e di crescita [HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md).
 
-**Passi rimanenti:** confronto interattivo Windows della GUI (hover/focus, tooltip, scorrimento, progressi attivi) per chiudere formalmente F1-D05e; quindi RC77/E4a.3, misure a orizzonte pieno e studio E4b. I render ispezionati sono Headless/Skia; lo smoke nativo esistente usa MainWindow storico. Le richieste HF04 autorizzano il tetto di crescita ×20 e aggiornano il riferimento grafico precedente; gli altri coefficienti economici restano subordinati alle misure e decisioni previste.
+**Passi rimanenti:** confronto interattivo Windows per promuovere formalmente F1; benchmark naturali a orizzonte pieno e interpretazione delle politiche; poi RC78/E4b, studio quantitativo delle curve senza applicare coefficienti non approvati. RC77 è stata completata come strumento indipendente, senza dichiarare chiusa la verifica GUI. Le misure finanziate non dimostrano tempi naturali o softlock. La crescita ×20 HF04 resta approvata.
 
-I conteggi attesi e i gate indicati come non eseguiti nella pianificazione storica sotto descrivono le consegne precedenti; lo stato automatico corrente è **885/885 verificati**. Le richieste HF04 prevalgono sui riferimenti storici della GUI e del tetto di crescita.
+I conteggi attesi e i gate indicati come non eseguiti nelle sezioni storiche descrivono le consegne precedenti; lo stato tecnico corrente è **899/899 verificati**. Le richieste HF04 prevalgono sui riferimenti storici della GUI e del tetto di crescita.
 
 ---
 
@@ -61,17 +61,17 @@ Il comando scrive i risultati in `.local-cache/m4/f1-gates/<id>/f1-gate.json`, m
 | Fase | Obiettivo | Stato e criterio d'uscita |
 | --- | --- | --- |
 | RC63 | Parità GUI v14 validata nella v15 | **771/771 confermati**; riferimento visivo canonico |
-| RC64–RC68 | Stato/validazione/comandi civici nativi in progressione | Implementati, test cumulativi non confermati |
-| RC69 | Radice `V15CityCampaignSnapshot` nativa + SQLite | Implementata, non validata |
-| RC70 | Equivalenza del file SQLite temporaneo + capacità Matite v15 | Implementata, non validata |
-| RC71 | Planner senza `food-store` fittizio | Implementata, non validata |
-| **RC72** | Test end-to-end e gate F1-D05e riproducibile | Implementata, gate Windows non eseguito; 826 test al momento RC72 |
-| **E4a.1 / RC73** | Runner v15 con partenza naturale (N01–N03), JSON/CSV e risultati non inventati | **Implementata, compilazione/test pendenti**; misure complete solo dopo gate F1 verde |
-| E4a.2a / RC74 | Analisi evidence-based dei report naturali v15 | **Implementata, test pendenti**; nessuna misura completa ancora eseguita |
-| **E4a.2b / RC75** | Scenari avanzati v15, due politiche, ledger materiali e ricerca | **Implementata, test pendenti**; manifest in stato `not-run` |
-| E4a.2c / RC76 | Deficit misurabili e pressione capacità (non prova di stallo) | Implementata, test pendenti |
-| E4a.3 / RC77 | Produzione persa e politiche controllate di recupero | Prossima: richiede validazione dei report RC76 |
-| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Parametri da approvare, non ancora implementati |
+| RC64–RC68 | Stato/validazione/comandi civici nativi in progressione | Suite cumulativa verificata nel gate RC77 |
+| RC69 | Radice `V15CityCampaignSnapshot` nativa + SQLite | Verificata nel gate cumulativo |
+| RC70 | Equivalenza del file SQLite temporaneo + capacità Matite v15 | Verificata nel gate cumulativo |
+| RC71 | Planner senza `food-store` fittizio | Verificata nel gate cumulativo |
+| **RC72** | Test end-to-end e gate F1-D05e riproducibile | Gate automatico verde; confronto interattivo GUI pendente |
+| **E4a.1 / RC73** | Runner v15 con partenza naturale (N01–N03), JSON/CSV | Codice/test verificati; misure naturali complete ancora da eseguire |
+| E4a.2a / RC74 | Analisi evidence-based dei report naturali v15 | Test verificati; nessuna misura naturale completa disponibile |
+| **E4a.2b / RC75** | Scenari avanzati v15, due politiche, ledger materiali e ricerca | Test verificati; manifest naturale `not-run` |
+| E4a.2c / RC76 | Deficit misurabili e pressione capacità | Verificata; diagnostica V15-I01 da 120s eseguita |
+| **E4a.3 / RC77** | Produzione non realizzata e politiche controllate di recupero | **Verificata**: sei run da 120s, 899 test cumulativi, report riconciliati e replay identico |
+| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Successivo alle misure naturali e alla loro interpretazione; coefficienti da approvare |
 | E4b.2 / RC79+ | Costi e squadre minime per edificio | Zecca con ≥10 lavoratori/unità; verificare softlock e batch |
 | M5.4–M7 | Navale, conquiste, Castello, vittoria | Dopo E4b consolidata |
 

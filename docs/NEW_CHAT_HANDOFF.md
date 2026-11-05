@@ -1,6 +1,8 @@
-# Handoff corrente — RC76-HF04, icone e crescita ×20 (05/11/2026)
+# Handoff corrente — RC77 / E4a.3 verificata tecnicamente (05/11/2026)
 
-**Sorgente:** workspace RC76-HF04. `validate-f1.cmd`, incluso `validate.cmd`, eseguito da Codex su Windows/.NET SDK 10.0.201: **885/885 test verdi**, zero saltati, build senza errori o avvisi, smoke nativo esistente e audit v15 baseline/combinato da 120 secondi superati. [Rapporto HF04 con evidenze](validation/RC76_HF04_ICONS_AND_GROWTH.md).
+**Sorgente:** workspace RC77. Gate completo eseguito da Codex su Windows/.NET SDK 10.0.201: **899/899 test verdi**, zero saltati, build senza errori o avvisi, smoke nativo esistente, audit alimentari e sei esperimenti controllati superati. [Esiti RC77](validation/E4A_V15_RC77_TEST_PLAN.md).
+
+**RC77:** diagnostica opzionale del primo secondo dal clock reale e CLI `--benchmark-e4a-v15-recovery`; tre scenari controllati, due politiche ciascuno, 120s, inventari riconciliati e pagamenti reali. Registrati 240 Spade/360 Monete dopo un Magazzino e 238 Spade+357 Monete dopo due assegnazioni al Carbone. Checkpoint finanziati dichiarati; nessun dato di progressione naturale inventato. Quattordici nuove regressioni. GUI, prezzi, crescita ×20 e SQLite invariati.
 
 **Richiesta corrente applicata:** Bovini/testa di mucca, Pane più marrone, Pescatore/pesce, Tagliapietre/cubo grigio. Intestazione v15 fissa Abitanti/Cibo/Legno lavorato/Pietra; pulsanti Carica/Salva senza suffisso. Crescita v15 autorizzata fino a ×20 con i bonus per casa precedenti: al massimo un arrivo ogni 3 secondi. Non ripristinare il limite ×2 per applicare le vecchie note sul congelamento del bilanciamento. Undici nuovi test; formato SQLite invariato.
 
@@ -10,7 +12,7 @@ La regressione confrontava lo stato iniziale (5 lavoratori liberi) con il campio
 
 **E4a diagnostica verificata:** V15-I01 / research-first a 120 secondi, `diagnostic-only`, in attesa della Scuola per 73 unità mancanti di Legname lavorato. Rianalisi dei risultati: 6/6 report identici byte per byte. Benchmark a orizzonte pieno ancora `not-run`.
 
-**Ripresa:** completare il confronto interattivo Windows della GUI canonica prima di promuovere F1-D05e; i render Headless/Skia sono stati ispezionati, ma non verificano hover/focus, tooltip, scorrimento e progressi attivi in una sessione Windows. Lo smoke nativo esistente usa MainWindow storico. Poi RC77/E4a.3 per produzione persa e recupero controllato. Il gate automatico è già verde: ripeterlo quando cambiano codice o test. Non modificare bilanciamento o salvataggi personali; conservare il contratto grafico. Stress 24h non eseguito. Le sezioni sotto sono lo storico precedente alla validazione.
+**Ripresa:** RC77 è implementata e verificata come analisi indipendente; completare il confronto interattivo Windows prima di promuovere F1-D05e. I render Headless/Skia non sostituiscono hover/focus, tooltip, scorrimento e progressi attivi; lo smoke nativo esistente usa MainWindow storico. Raccogliere poi benchmark naturali a orizzonte pieno e interpretare le politiche prima di RC78/E4b. Il gate è già verde: ripeterlo quando cambiano codice o test. Non modificare coefficienti non approvati o salvataggi personali. Stress 24h non eseguito. Le sezioni sotto sono storiche.
 
 ---
 

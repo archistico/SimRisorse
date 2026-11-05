@@ -2,7 +2,9 @@
 
 Progetto desktop C# / .NET 10 / Avalonia / SQLite in sviluppo, con GUI pixel art e campagna v15 comprendente industria, nuove filiere alimentari, Scuola, ricerca e militari.
 
-**Codice corrente:** RC76-HF04 / E4a.2c, **885/885 test verificati su Windows** con `validate-f1.cmd`, incluso `validate.cmd`; compilazione senza errori o avvisi, smoke nativo esistente e audit v15 superati. [Rapporto HF04](docs/validation/RC76_HF04_ICONS_AND_GROWTH.md). Render v15 ispezionati alle due risoluzioni; confronto interattivo Windows ancora da confermare.
+**Codice corrente:** RC77 / E4a.3, **899/899 test verificati su Windows** con `validate-f1.cmd`, incluso `validate.cmd`; compilazione senza errori o avvisi, smoke nativo esistente, audit alimentari e sei esperimenti di recupero superati. [Rapporto RC77](docs/validation/E4A_V15_RC77_TEST_PLAN.md). Confronto interattivo Windows della GUI ancora da confermare.
+
+**RC77:** misure della produzione non realizzata per spazio/input/vincoli misti e confronto di azioni di recupero reali su checkpoint finanziati dichiarati. Nuova CLI `--benchmark-e4a-v15-recovery`; [specifica](docs/design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md). Gli esperimenti controllati non sono benchmark di progressione naturale.
 
 **RC76-HF04:** icone aggiornate su richiesta, intestazione Abitanti/Cibo/Legno lavorato/Pietra e pulsanti Carica/Salva. La crescita v15 sale fino a **×20**, mantenendo i bonus per casa: al massimo un abitante ogni 3 secondi con alloggi e alimentazione sufficienti. Undici nuovi test di crescita e ripresa.
 
@@ -15,8 +17,8 @@ Progetto desktop C# / .NET 10 / Avalonia / SQLite in sviluppo, con GUI pixel art
 ## Comandi Windows
 
 ```powershell
-.\validate.cmd          # suite e smoke; 885 test, comprese le catture v15
-.\validate-f1.cmd       # gate F1: validate + verifica TRX + audit v15 120 s
+.\validate.cmd          # suite e smoke; 899 test, comprese le catture v15
+.\validate-f1.cmd       # validate + TRX + audit alimentari e recupero industriale
 .\run-game.cmd          # v15 predefinita
 .\run-game.cmd --v14    # v14, partita/salvataggio separato
 ```
