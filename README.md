@@ -4,6 +4,8 @@ Progetto desktop C# / .NET 10 / Avalonia / SQLite in sviluppo, con GUI pixel art
 
 **Codice corrente:** RC77 / E4a.3, **899/899 test verificati su Windows** con `validate-f1.cmd`, incluso `validate.cmd`; compilazione senza errori o avvisi, smoke nativo esistente, audit alimentari e sei esperimenti di recupero superati. [Rapporto RC77](docs/validation/E4A_V15_RC77_TEST_PLAN.md). Confronto interattivo Windows della GUI ancora da confermare.
 
+**RC77-M01:** eseguiti i nove run naturali con orizzonti integrali: **9/9 obiettivi osservati**, nessun grant o run diagnostico; 21 confronti di file identici fra replay e rianalisi. Pane a 8m 01s, Estrazione I a 42m e prime Spade/Monete a 1h 16m 03s con `bread-first`. [Rapporto delle misure](docs/validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Codice e bilanciamento invariati.
+
 **RC77:** misure della produzione non realizzata per spazio/input/vincoli misti e confronto di azioni di recupero reali su checkpoint finanziati dichiarati. Nuova CLI `--benchmark-e4a-v15-recovery`; [specifica](docs/design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md). Gli esperimenti controllati non sono benchmark di progressione naturale.
 
 **RC76-HF04:** icone aggiornate su richiesta, intestazione Abitanti/Cibo/Legno lavorato/Pietra e pulsanti Carica/Salva. La crescita v15 sale fino a **×20**, mantenendo i bonus per casa: al massimo un abitante ogni 3 secondi con alloggi e alimentazione sufficienti. Undici nuovi test di crescita e ripresa.
@@ -29,7 +31,7 @@ Il gate F1 produce un report in `.local-cache/m4/f1-gates/`: l'esecuzione del 05
 
 **Documentazione operativa:** [avvio](docs/START_HERE.md) · [stato](docs/CURRENT_STATE.md) · [roadmap](docs/ROADMAP.md) · [handoff](docs/NEW_CHAT_HANDOFF.md) · [decisioni](docs/AUTHORITY_REGISTRY.md) · [salvataggi](docs/SAVE_FORMAT.md) · [contratto grafico](docs/adr/0071-gui-v14-contratto-canonico-v15.md).
 
-La RC73 ha introdotto il **benchmark naturale v15**; la RC74 aggiunge l’**analizzatore dei report** (tempi e cause registrate, senza nuove simulazioni). I due strumenti rimangono separati da v14 e dagli audit tecnici con scorte prefinanziate. Non sono ancora stati eseguiti benchmark completi, né modificati i costi. Il gate automatico è superato; F1-D05e rimane aperta per la conferma visiva della GUI.
+La RC73 ha introdotto il **benchmark naturale v15**; la RC74 aggiunge l’**analizzatore dei report**. Le misure integrali RC77-M01 sono eseguite e documentate, separate dagli audit controllati con scorte prefinanziate. Nessun costo è stato modificato. Il gate automatico è superato; F1-D05e rimane aperta per la conferma interattiva della GUI.
 
 ```powershell
 # Prova diagnostica breve, non misura economica definitiva:
@@ -43,11 +45,11 @@ dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v
 dotnet run --project tools/SimRisorse.Simulation -c Release -- --analyze-e4a-v15-natural --input .local-cache/e4a-v15/misura-001 --output .local-cache/e4a-v15/analisi-001
 ```
 
-[Specifiche analisi RC74](docs/design/E4A_V15_RC74_ANALISI_PROGRESSI.md) · [Piano test RC74](docs/validation/E4A_V15_RC74_TEST_PLAN.md) · [ADR 0082](docs/adr/0082-analisi-basata-su-evidenze-benchmark-v15.md). Nessuna misura a orizzonte pieno disponibile.
+[Specifiche analisi RC74](docs/design/E4A_V15_RC74_ANALISI_PROGRESSI.md) · [Piano test RC74](docs/validation/E4A_V15_RC74_TEST_PLAN.md) · [ADR 0082](docs/adr/0082-analisi-basata-su-evidenze-benchmark-v15.md) · [Misure integrali RC77-M01](docs/validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md).
 
 ## RC75 — Ricerca, Forgia e Zecca, senza cambiare il gioco
 
-Il benchmark v15 confronta `research-first` e `bread-first` per le prime tecnologie, Spade e Monete, registrando tutte le spese effettive delle azioni e i punti ricerca separatamente. Eseguita la diagnostica V15-I01 / research-first da 120 secondi e verificata la rianalisi dei report; le misure a orizzonte pieno restano `not-run` e il bilanciamento non cambia.
+Il benchmark v15 confronta `research-first` e `bread-first` per le prime tecnologie, Spade e Monete, registrando pagamenti effettivi e punti ricerca separati. Tutti i sei abbinamenti sono stati misurati senza abbreviare gli orizzonti; `bread-first` anticipa di 60s a parità di spesa in questi script. Il bilanciamento non cambia.
 
 ```powershell
 dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-industry --scenario V15-I01 --policy research-first --max-seconds 120

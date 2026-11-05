@@ -23,8 +23,10 @@ La GUI v15 mostra gli edifici alimentari tramite **Edifici → Filiere alimentar
 
 ## Benchmark E4a v15
 
+Le misure naturali complete **RC77-M01 sono eseguite**: 9/9 obiettivi raggiunti, 21/21 confronti di file identici. [Risultati, limiti e riproduzione](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md).
+
 RC77: `dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-recovery --output DIRECTORY_NUOVA` esegue tre confronti controllati da 120s. [Specifica e provenienza](design/E4A_V15_RC77_PRODUZIONE_PERSA_E_RECUPERO.md).
 
 `dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-natural --scenario V15-N01 --max-seconds 120` produce una diagnostica abbreviata. Il comando senza `--max-seconds` misura gli orizzonti completi quando il gate F1 sarà verde. [Dettagli](../benchmarks/e4a-v15/README.md).
 
-Diagnostica industriale V15-I01 / research-first da 120 secondi già eseguita, con rianalisi coerente; risultati completi ancora `not-run`. [Esiti e comandi](validation/RC76_WINDOWS_VALIDATION.md).
+La diagnostica industriale da 120s della HF02 rimane [documentata come storico](validation/RC76_WINDOWS_VALIDATION.md); i manifest correnti riportano invece le misure integrali RC77-M01.

@@ -2,7 +2,9 @@
 
 **Passi completati:** RC77 / E4a.3 implementata e verificata tecnicamente: diagnostica del clock, produzione non realizzata per spazio/input/vincoli misti, tre esperimenti controllati con due politiche e ricevute reali. Gate `validate-f1.cmd` completo: **899/899 test**, zero saltati, build senza errori o avvisi, smoke, audit alimentari e sei run industriali superati. [Esiti RC77](validation/E4A_V15_RC77_TEST_PLAN.md). Conservate le richieste grafiche e di crescita [HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md).
 
-**Passi rimanenti:** confronto interattivo Windows per promuovere formalmente F1; benchmark naturali a orizzonte pieno e interpretazione delle politiche; poi RC78/E4b, studio quantitativo delle curve senza applicare coefficienti non approvati. RC77 è stata completata come strumento indipendente, senza dichiarare chiusa la verifica GUI. Le misure finanziate non dimostrano tempi naturali o softlock. La crescita ×20 HF04 resta approvata.
+**Misure RC77-M01 concluse:** nove run naturali con orizzonti integrali, **9/9 pass** e **21/21 file identici** fra replay e rianalisi. Pane 481s; Estrazione I 2520s/2580s; Spade/Monete 4563s/4623s. `bread-first` anticipa di 60s con gli stessi pagamenti; la ricerca domina le attese. [Rapporto quantitativo](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Nessuna regola modificata.
+
+**Passi rimanenti:** RC78/E4b, confronto delle tre curve candidate includendo costi diretti/indiretti, personale, ricerca e storage. Le misure naturali di riferimento ora esistono; non sono tempi di campagna completa né strategie ottimali. I coefficienti richiedono la decisione prevista prima di essere applicati. Il confronto interattivo Windows resta necessario per promuovere formalmente F1, distinto da questi strumenti di analisi. La crescita ×20 HF04 resta approvata.
 
 I conteggi attesi e i gate indicati come non eseguiti nelle sezioni storiche descrivono le consegne precedenti; lo stato tecnico corrente è **899/899 verificati**. Le richieste HF04 prevalgono sui riferimenti storici della GUI e del tetto di crescita.
 
@@ -66,12 +68,12 @@ Il comando scrive i risultati in `.local-cache/m4/f1-gates/<id>/f1-gate.json`, m
 | RC70 | Equivalenza del file SQLite temporaneo + capacità Matite v15 | Verificata nel gate cumulativo |
 | RC71 | Planner senza `food-store` fittizio | Verificata nel gate cumulativo |
 | **RC72** | Test end-to-end e gate F1-D05e riproducibile | Gate automatico verde; confronto interattivo GUI pendente |
-| **E4a.1 / RC73** | Runner v15 con partenza naturale (N01–N03), JSON/CSV | Codice/test verificati; misure naturali complete ancora da eseguire |
-| E4a.2a / RC74 | Analisi evidence-based dei report naturali v15 | Test verificati; nessuna misura naturale completa disponibile |
-| **E4a.2b / RC75** | Scenari avanzati v15, due politiche, ledger materiali e ricerca | Test verificati; manifest naturale `not-run` |
+| **E4a.1 / RC73** | Runner v15 con partenza naturale (N01–N03), JSON/CSV | RC77-M01: 3/3 milestone osservate senza grants e senza abbreviare gli orizzonti |
+| E4a.2a / RC74 | Analisi evidence-based dei report naturali v15 | Analisi RC77-M01 eseguita e riprodotta |
+| **E4a.2b / RC75** | Scenari avanzati v15, due politiche, ledger materiali e ricerca | RC77-M01: 6/6 abbinamenti misurati, costi e confronti documentati |
 | E4a.2c / RC76 | Deficit misurabili e pressione capacità | Verificata; diagnostica V15-I01 da 120s eseguita |
 | **E4a.3 / RC77** | Produzione non realizzata e politiche controllate di recupero | **Verificata**: sei run da 120s, 899 test cumulativi, report riconciliati e replay identico |
-| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Successivo alle misure naturali e alla loro interpretazione; coefficienti da approvare |
+| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Prossimo: usare la baseline misurata RC77-M01; coefficienti da approvare |
 | E4b.2 / RC79+ | Costi e squadre minime per edificio | Zecca con ≥10 lavoratori/unità; verificare softlock e batch |
 | M5.4–M7 | Navale, conquiste, Castello, vittoria | Dopo E4b consolidata |
 
@@ -216,4 +218,4 @@ Riferimenti storici: [proposta prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md
 | Benchmark v14 scambiati per misure v15 | Alta | Runner v15 dedicato, report versionati e `not-run` finché non eseguiti |
 | Roadmap diventa una cronologia di RC e perde autorità | Media | Unica roadmap attiva, cronologia nel CHANGELOG/ADR |
 
-**Prossimo passo effettivo:** eseguire il gate cumulativo RC74 (843 test attesi) e la verifica visiva; poi misurare i benchmark naturali v15, analizzare blocchi, ampliare gli scenari E4a.2. Non iniziare E4b prima della misura E4a e non sacrificare la GUI per velocizzare l'architettura.
+**Prossimo passo effettivo:** studio RC78/E4b delle tre curve candidate sulla baseline RC77-M01 ora misurata, senza applicare coefficienti non approvati. Confronto interattivo Windows ancora da completare per la promozione F1; ultimo gate tecnico del codice 899/899.

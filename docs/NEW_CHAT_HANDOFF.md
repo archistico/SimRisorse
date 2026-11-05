@@ -1,4 +1,6 @@
-# Handoff corrente — RC77 / E4a.3 verificata tecnicamente (05/11/2026)
+# Handoff corrente — RC77-M01, misure naturali complete (05/11/2026)
+
+**Misure concluse:** nove run naturali senza `--max-seconds`, **9/9 pass**, zero timeout/blocchi/diagnostiche. Pane 481s; Estrazione I 2520s (`bread-first`) o 2580s; Spade/Monete 4563s o 4623s. **21/21 file identici** fra replay e rianalisi. Manifest naturali aggiornati con dati effettivi; [rapporto RC77-M01](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md), provenienza con SHA-256 di sorgenti e assembly nella cache. Nessun codice o coefficiente modificato.
 
 **Sorgente:** workspace RC77. Gate completo eseguito da Codex su Windows/.NET SDK 10.0.201: **899/899 test verdi**, zero saltati, build senza errori o avvisi, smoke nativo esistente, audit alimentari e sei esperimenti controllati superati. [Esiti RC77](validation/E4A_V15_RC77_TEST_PLAN.md).
 
@@ -10,9 +12,9 @@
 
 La regressione confrontava lo stato iniziale (5 lavoratori liberi) con il campione dopo le assegnazioni al secondo zero (3 liberi). Il test ora applica le quattro azioni reali prima del confronto; nessuna modifica al motore.
 
-**E4a diagnostica verificata:** V15-I01 / research-first a 120 secondi, `diagnostic-only`, in attesa della Scuola per 73 unità mancanti di Legname lavorato. Rianalisi dei risultati: 6/6 report identici byte per byte. Benchmark a orizzonte pieno ancora `not-run`.
+**E4a diagnostica storica:** V15-I01 da 120s e relativa rianalisi restano evidenze della HF02. Sono seguite le misure naturali integrali RC77-M01 riportate sopra.
 
-**Ripresa:** RC77 è implementata e verificata come analisi indipendente; completare il confronto interattivo Windows prima di promuovere F1-D05e. I render Headless/Skia non sostituiscono hover/focus, tooltip, scorrimento e progressi attivi; lo smoke nativo esistente usa MainWindow storico. Raccogliere poi benchmark naturali a orizzonte pieno e interpretare le politiche prima di RC78/E4b. Il gate è già verde: ripeterlo quando cambiano codice o test. Non modificare coefficienti non approvati o salvataggi personali. Stress 24h non eseguito. Le sezioni sotto sono storiche.
+**Ripresa:** avviare RC78/E4b, studio delle tre curve candidate sulla base delle misure ora disponibili. Non applicare coefficienti non approvati. Nei run industriali 3540s sono attesa ricerca, 900/960s materiali e 120s formazione; il requisito futuro della Zecca a 10 addetti non è implementato. Il confronto interattivo Windows resta distinto e necessario per promuovere F1; il gate del codice è già verde (899 test). Ripeterlo quando cambiano codice o test, non per questi soli dati/documenti. Stress 24h non eseguito. Le sezioni sotto sono storiche.
 
 ---
 

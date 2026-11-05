@@ -1,3 +1,5 @@
+> **RC77-M01:** misure naturali complete eseguite: 9/9 obiettivi osservati, senza grants, con 21/21 confronti di file identici. [Rapporto e limiti](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Questi dati forniscono la baseline E4b ma non approvano nuovi coefficienti né dimostrano una durata di campagna completa.
+
 > **RC77 / ADR 0085:** produzione non realizzata misurata dal clock e recupero controllato con grants dichiarati, senza modificare regole o GUI. **899/899 test verificati** e sei run completi misurati; [decisione](adr/0085-misure-produzione-non-realizzata-e-recupero-controllato.md), [evidenze](validation/E4A_V15_RC77_TEST_PLAN.md). Il confronto interattivo F1 rimane distinto.
 
 > **Richiesta utente HF04:** crescita v15 fino a ×20, nuove icone Bovini/Pane/Pescatore/Tagliapietre, riepilogo Abitanti/Cibo/Legno lavorato/Pietra, pulsanti Carica/Salva senza suffisso. Questi cambiamenti sono autorizzati e aggiornano il riferimento grafico e il limite ×2 precedenti. **885/885 test verificati nella HF04**; [dettagli ed evidenze](validation/RC76_HF04_ICONS_AND_GROWTH.md).

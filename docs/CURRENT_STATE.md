@@ -1,4 +1,6 @@
-# Stato corrente — RC77 / E4a.3 verificata tecnicamente (05/11/2026)
+# Stato corrente — RC77-M01, misure naturali complete (05/11/2026)
+
+**Nuove misure:** eseguiti tutti i nove run naturali con l'intero orizzonte dichiarato, senza grants: **9/9 milestone osservate**, nessun timeout/blocco/diagnostica. Pane a 481s; Estrazione I a 2520s/2580s; prime Spade e Monete a 4563s/4623s (`bread-first`/`research-first`). Replay e rianalisi: **21/21 file identici**. Manifest aggiornati con tempi effettivi e [rapporto RC77-M01](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Codice e regole invariati; il gate del codice sottostante resta quello RC77 indicato sotto.
 
 **Esito nel workspace Windows:** `validate-f1.cmd`, incluso `validate.cmd`, completato con uscita 0, **899/899 test superati**, nessun fallito o saltato, compilazione senza errori o avvisi. Smoke nativo esistente, audit alimentari e sei run controllati RC77 da 120s superati. [Evidenze RC77](validation/E4A_V15_RC77_TEST_PLAN.md).
 
@@ -12,9 +14,9 @@
 
 Corretta la regressione del test sul personale: il campione a zero secondi segue già le assegnazioni a Pescatore e Deposito; il confronto con la sessione avviene ora dopo le stesse azioni (3 lavoratori liberi, contro i 5 iniziali). Il codice di gioco non è cambiato.
 
-**Diagnostica RC76 eseguita:** V15-I01 / `research-first`, 120 secondi, esito `timeout` classificato `diagnostic-only`; attesa della Scuola con deficit di 73 unità di Legname lavorato. Rianalisi JSON verificata: sei report identici byte per byte. Nessuna misura a orizzonte pieno; manifest completi ancora `not-run`.
+**Diagnostica RC76 storica:** il run V15-I01 da 120s era `diagnostic-only`. Le successive misure RC77-M01 raggiungono tutti gli obiettivi con orizzonti integrali e sono ora riportate nei manifest naturali.
 
-**F1-D05e:** gate automatico superato e render v15 ispezionati; confronto interattivo Windows ancora da confermare. RC77 è stata svolta come strumento di analisi indipendente senza promuovere la GUI. Prossimo passo: misure naturali a orizzonte pieno e verifica delle politiche prima dello studio quantitativo E4b/RC78; coefficienti di prezzo e squadre minime restano da decidere.
+**Prossimo passo:** RC78/E4b, confronto quantitativo delle tre curve candidate con costi diretti/indiretti, ricerca, storage e personale. Nei percorsi misurati la ricerca domina l'attesa e `bread-first` anticipa di 60s a parità di spesa; non è dimostrata l'ottimalità. Il requisito futuro di 10 addetti per Zecca e i coefficienti restano da studiare/decidere. Il confronto interattivo Windows rimane necessario per promuovere formalmente F1; queste misure indipendenti non lo sostituiscono.
 
 Le sezioni seguenti conservano lo stato precedente all'esecuzione; conteggi e verifiche pendenti di allora sono superati dall'esito sopra. Per riprendere usare [handoff](NEW_CHAT_HANDOFF.md) e [rapporto Windows](validation/RC76_WINDOWS_VALIDATION.md).
 

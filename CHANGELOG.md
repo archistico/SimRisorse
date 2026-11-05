@@ -1,3 +1,10 @@
+# RC77-M01 — 05/11/2026 · misure naturali complete
+
+- Eseguiti i tre scenari alimentari e i sei abbinamenti industria/politica con orizzonti integrali, senza grants: **9/9 milestone osservate**, zero timeout/blocchi/diagnostiche.
+- Pane a 481s; Estrazione I a 2520s/2580s; prime Spade/Monete a 4563s/4623s (`bread-first`/`research-first`). A parità di spesa `bread-first` anticipa di 60s; la ricerca domina l'attesa industriale. Non sono tempi di una campagna completa o di un giocatore ottimale.
+- Ripetuti i run e rianalizzati i JSON: **21/21 file identici**. Provenienza con SHA-256 di 144 sorgenti/configurazioni e tre assembly. Manifest aggiornati solo con esiti osservati; [rapporto](docs/validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md).
+- Nessuna modifica al codice, alla GUI, alla crescita o ai prezzi; ultimo gate del codice **899/899**. Prossimo studio: tre curve E4b/RC78, coefficienti da approvare. Confronto interattivo F1 ancora distinto.
+
 # RC77 — 05/11/2026 · E4a.3, produzione non realizzata e recupero controllato
 
 - Telemetria opzionale del planner eseguito dal clock v15: nominale/prodotto e deficit esclusivi per spazio/input, con vincoli misti distinti. Tick e flussi invariati quando la diagnostica è attivata; nessuna modifica a GUI, prezzi, crescita o SQLite.
