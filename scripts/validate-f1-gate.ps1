@@ -1,5 +1,5 @@
 param(
-    [int]$ExpectedTests = 899,
+    [int]$ExpectedTests = 926,
     [int]$StressSeconds = 120,
     [switch]$Combined24Hours
 )
@@ -15,7 +15,7 @@ $gateDirectory = Join-Path $cache ('f1-gates\' + [Guid]::NewGuid().ToString('N')
 New-Item -ItemType Directory -Path $gateDirectory -Force | Out-Null
 $reportFile = Join-Path $gateDirectory 'f1-gate.json'
 $report = [ordered]@{
-    milestone = 'F1-D05e / RC77 controlled production loss and recovery (RC72 gate)'
+    milestone = 'F1-D05e / RC78 analytical economic curve comparison (RC72 gate)'
     status = 'incomplete'
     startedUtc = $started.ToString('o')
     expectedTests = $ExpectedTests
@@ -29,6 +29,7 @@ $report = [ordered]@{
     baselineAudit = $null
     combinedAudit = $null
     recoveryBenchmark = $null
+    economicCurveStudy = $null
     longAudit = $null
     error = $null
 }
@@ -153,6 +154,20 @@ try {
     }
     $report.recoveryBenchmark = Join-Path $recoveryDirectory 'e4a-v15-recovery-results.json'
 
+    # RC78: isolated analytical proposals; never install them in a live catalog.
+    $studyDirectory = Join-Path $gateDirectory 'economic-curves'
+    $studyLines = @(& dotnet $simulation --study-e4b-curves --output $studyDirectory)
+    Assert-Condition ($LASTEXITCODE -eq 0) 'Economic curve study failed.'
+    $study = ($studyLines -join "`n") | ConvertFrom-Json
+    Assert-Condition ($study.Mode -eq 'analytical-proposal/not-applied' -and
+        $study.Curves -eq 3 -and $study.Quotes -eq 81 -and $study.Investments -eq 18 -and
+        $study.MeasuredBaselineRuns -eq 0) 'Economic study has inconsistent scope or invented baseline.'
+    foreach ($name in @('e4b-curves.json', 'e4b-quotes.csv', 'e4b-investments.csv',
+        'e4b-curves.md', 'baseline-source.json')) {
+        Assert-Condition (Test-Path -LiteralPath (Join-Path $studyDirectory $name)) "Study output missing: $name"
+    }
+    $report.economicCurveStudy = Join-Path $studyDirectory 'e4b-curves.json'
+
     if ($Combined24Hours) {
         $report.longAudit = Invoke-Audit -Name 'combined-24h' -Seconds 86400 -Combined $true `
             -Arguments @('--audit-v15', '--hours', '24', '--profile', 'combined')
@@ -160,7 +175,7 @@ try {
     $report.status = 'passed'
     $report.finishedUtc = [DateTime]::UtcNow.ToString('o')
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFile -Encoding UTF8
-    Write-Host "F1 GATE PASSED: $ExpectedTests/$ExpectedTests tests, baseline + combined audit, controlled recovery."
+    Write-Host "F1 GATE PASSED: $ExpectedTests/$ExpectedTests tests, baseline + combined audit, controlled recovery, economic study."
     Write-Host "Evidence: $reportFile"
 }
 catch {

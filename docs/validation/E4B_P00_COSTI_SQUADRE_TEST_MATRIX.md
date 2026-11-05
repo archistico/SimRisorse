@@ -1,12 +1,12 @@
 # E4b-P00 — Piano di misurazione e gate per nuovi costi e squadre
 
-**Stato:** progettazione, nessun test nuovo eseguito, nessun dato economico nuovo misurato. Baseline RC45: 600 test dichiarati superati dall'utente. Gli scenari E4a precedenti alla riforma F1 non descrivono la nuova economia.
+**Stato aggiornato RC78:** baseline naturale RC77-M01 misurata, tre curve analitiche confrontate e **926/926 test verificati**. [Risultati](E4B_RC78_CURVE_COMPARISON.md) · [Prove](E4B_RC78_TEST_PLAN.md). Coefficienti e moduli tier candidati, non applicati. Le proiezioni delle squadre non equivalgono a test di clock/save/load con le nuove regole.
 
 | ID | Scenario / prova | Condizione di uscita | Implementazione |
 | --- | --- | --- | --- |
-| K01 | Prima Zecca con prezzi correnti e progressione naturale | Tempo, materie, output e bottleneck misurati | Da realizzare dopo F1 |
-| K02 | Equivalenza costo 100/300/1.000 Tagliapietre base | Confronto investimenti reali, niente overflow | Proposta E4b |
-| K03 | Crescita copie 1–10, tier Base/Grande/Avanzato | Costi monotoni e prezzi lotti corretti | Proposta E4b |
+| K01 | Prima Zecca con prezzi correnti e progressione naturale | Tempo, materie, output e bottleneck misurati | RC77-M01: I03 completo per entrambe le politiche |
+| K02 | Equivalenza costo 100/300/1.000 Tagliapietre base | Confronto investimenti reali, niente overflow | RC78: confronto analitico, nessun tempo di nuova campagna |
+| K03 | Crescita copie 1–10, tier Base/Grande/Avanzato | Costi monotoni e prezzi lotti corretti | RC78: preventivi e test delle tre proposte; regole live future |
 | K04 | Esecuzione con disponibilità 0/9/10 addetti per 1 Zecca | Zero sotto 10; produzione da 10, se input e spazio adeguati | Da implementare |
 | K05 | Esecuzione con 10/19/20 addetti per 2 Zecche | Rispettivamente 1/1/2 moduli attivi, a parità di input | Da implementare |
 | K06 | Zecca Grande e Avanzata | Moduli, personale, throughput e upgrade coerenti; nessuna doppia assegnazione | Da decidere e implementare |

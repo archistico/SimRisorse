@@ -1,6 +1,6 @@
-# Avvio rapido — SimRisorse RC77
+# Avvio rapido — SimRisorse RC78
 
-**Codice:** RC77, **899/899 test superati su Windows**; gate automatico, smoke nativo esistente, audit alimentari e recupero industriale superati. [Evidenze RC77](validation/E4A_V15_RC77_TEST_PLAN.md). Conservate icone/intestazione HF04 e crescita v15 fino a ×20. Confronto interattivo Windows della GUI ancora da confermare.
+**Codice:** RC78, **926/926 test superati su Windows**; gate automatico, smoke nativo esistente, audit alimentari, recupero industriale e studio delle curve superati. [Evidenze RC78](validation/E4B_RC78_TEST_PLAN.md). Conservate icone/intestazione HF04 e crescita v15 fino a ×20. Confronto interattivo Windows della GUI ancora da confermare.
 
 Dalla radice su Windows, con .NET SDK 10 installato:
 
@@ -11,7 +11,9 @@ Dalla radice su Windows, con .NET SDK 10 installato:
 .\run-game.cmd --v14
 ```
 
-`validate-f1.cmd` esegue a sua volta `validate.cmd`: non è necessario lanciare entrambi. Controlla **899 test**, audit alimentari da 120s, sei esperimenti industriali controllati e catture v15. Le prove sono in `.local-cache/m4/f1-gates/<id>/`, con report industriali in `industrial-recovery/`. Stress combinato 24h opzionale: `./validate-f1.cmd -Combined24Hours`. Non legge né modifica salvataggi personali.
+`validate-f1.cmd` esegue a sua volta `validate.cmd`: non è necessario lanciare entrambi. Controlla **926 test**, audit alimentari da 120s, sei esperimenti industriali controllati, studio delle tre curve e catture v15. Le prove sono in `.local-cache/m4/f1-gates/<id>/`, con report industriali in `industrial-recovery/` e studio in `economic-curves/`. Stress combinato 24h opzionale: `./validate-f1.cmd -Combined24Hours`. Non legge né modifica salvataggi personali.
+
+RC78 confronta proposte, senza applicare coefficienti o squadre: [rapporto](validation/E4B_RC78_CURVE_COMPARISON.md). Prossima decisione: curva e moduli tier prima dell'implementazione versionata RC79+.
 
 La GUI v15 mostra gli edifici alimentari tramite **Edifici → Filiere alimentari**. Edifici bloccati grigi ma consultabili; produzione, consumi, capacità e costi con icone; pulsanti e sidebar come la v14; Risorse a sette colonne.
 

@@ -131,3 +131,5 @@ Una decisione accettata non si riscrive per nascondere un cambio di direzione. S
 - [ADR 0060 — Salvataggi di sviluppo e checkpoint completo delle filiere](0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md): **accettato**, RC49; sostituisce l’obbligo di migrare ciascun vecchio DB nelle ADR 0057–0059, conserva isolamento e integrità.
 
 - [ADR 0085 — Produzione non realizzata e recupero controllato](0085-misure-produzione-non-realizzata-e-recupero-controllato.md): implementata RC77; misure dal clock reale e confronti finanziati dichiarati, separati dalle partite naturali.
+
+- [ADR 0086 — Confronto isolato delle curve economiche](0086-confronto-curve-economiche-isolato.md): strumento RC78 verificato; parametri candidati, audit di liquidità circoscritto e squadre analitiche senza applicazione al gioco.

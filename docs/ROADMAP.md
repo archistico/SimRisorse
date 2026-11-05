@@ -1,4 +1,14 @@
-# Aggiornamento operativo — 05/11/2026
+# Aggiornamento operativo — RC78 / 06/11/2026
+
+**RC78/E4b.1 completata:** tre curve confrontate, 81 preventivi e 18 investimenti, studio isolato con costi diretti/di filiera, ricerca, liquidità dei Magazzini e budget di personale. **926/926 test superati**, build senza errori o avvisi; gate, smoke, audit e recupero verdi. Studio con i sei run naturali RC77-M01 importati e 5/5 output identici al replay. [Rapporto](validation/E4B_RC78_CURVE_COMPARISON.md) · [Verifiche](validation/E4B_RC78_TEST_PLAN.md).
+
+**Prossimo passo:** decisione su curva e moduli tier, quindi RC79+ con implementazione versionata, scenari naturali della curva scelta, concorrenza personale, save/load e gestione dei salvataggi. Raccomandata A come partenza; nuovi prezzi e squadre non sono applicati. Il confronto interattivo F1 resta distinto. Le richieste HF04 e crescita ×20 restano vigenti.
+
+Gli aggiornamenti sotto sono storici; il conteggio tecnico corrente è 926, non quelli delle consegne precedenti.
+
+---
+
+# Storico operativo — 05/11/2026
 
 **Passi completati:** RC77 / E4a.3 implementata e verificata tecnicamente: diagnostica del clock, produzione non realizzata per spazio/input/vincoli misti, tre esperimenti controllati con due politiche e ricevute reali. Gate `validate-f1.cmd` completo: **899/899 test**, zero saltati, build senza errori o avvisi, smoke, audit alimentari e sei run industriali superati. [Esiti RC77](validation/E4A_V15_RC77_TEST_PLAN.md). Conservate le richieste grafiche e di crescita [HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md).
 
@@ -73,7 +83,7 @@ Il comando scrive i risultati in `.local-cache/m4/f1-gates/<id>/f1-gate.json`, m
 | **E4a.2b / RC75** | Scenari avanzati v15, due politiche, ledger materiali e ricerca | RC77-M01: 6/6 abbinamenti misurati, costi e confronti documentati |
 | E4a.2c / RC76 | Deficit misurabili e pressione capacità | Verificata; diagnostica V15-I01 da 120s eseguita |
 | **E4a.3 / RC77** | Produzione non realizzata e politiche controllate di recupero | **Verificata**: sei run da 120s, 899 test cumulativi, report riconciliati e replay identico |
-| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Prossimo: usare la baseline misurata RC77-M01; coefficienti da approvare |
+| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Completato: 3 curve, 81 preventivi, 18 investimenti, replay 5/5; coefficienti da approvare |
 | E4b.2 / RC79+ | Costi e squadre minime per edificio | Zecca con ≥10 lavoratori/unità; verificare softlock e batch |
 | M5.4–M7 | Navale, conquiste, Castello, vittoria | Dopo E4b consolidata |
 

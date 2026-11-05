@@ -1,3 +1,11 @@
+# RC78 — 06/11/2026 · confronto analitico di tre curve economiche
+
+- Studio isolato con 81 preventivi, prima/seconda copia e lotti 5/10 per tutti i tier, 18 investimenti di filiera, ricerca e personale alimentato/alloggiato. Nessuna modifica al gioco corrente.
+- Audit di liquidità con Magazzini pagati, lotti atomici e upgrade separati: un percorso bloccato non viene chiamato stallo globale. Proiezione delle squadre Zecca da dieci e moduli candidati 1/3/10.
+- CLI `--study-e4b-curves`, importazione opzionale e hash della baseline naturale, JSON/CSV/Markdown; cinque file identici al replay e cinque rifiuti CLI verificati.
+- **926/926 test**, 27 nuovi casi; gate completo, build senza errori o avvisi, audit e smoke superati. [Rapporto](docs/validation/E4B_RC78_CURVE_COMPARISON.md), [verifiche](docs/validation/E4B_RC78_TEST_PLAN.md), [ADR 0086](docs/adr/0086-confronto-curve-economiche-isolato.md).
+- Raccomandata A come base da decidere; nessun coefficiente applicato. Costi di filiera iniziale compresi Magazzini: circa 325/948/1.405 equivalenti di lavoro Tagliapietre per A/B/C. Tempi delle proposte non misurati; moduli tier e parametri da approvare prima dell'implementazione versionata.
+
 # RC77-M01 — 05/11/2026 · misure naturali complete
 
 - Eseguiti i tre scenari alimentari e i sei abbinamenti industria/politica con orizzonti integrali, senza grants: **9/9 milestone osservate**, zero timeout/blocchi/diagnostiche.

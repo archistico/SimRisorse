@@ -1,5 +1,7 @@
 # E4a v15 — benchmark naturali e recupero controllato (RC73–RC77)
 
+La baseline RC77-M01 è stata importata nello [studio RC78 delle tre curve](../e4b/README.md), ora concluso. I tempi restano quelli delle regole correnti: lo studio non applica nuovi prezzi né simula nuove campagne.
+
 I manifest naturali `scenarios.csv` e `industrial-scenarios.csv` riportano le misure integrali **RC77-M01: 9/9 pass**, senza grants e con replay verificato. Non sostituirli con dati v14 o controllati. Il manifest separato [recovery-scenarios.csv](recovery-scenarios.csv) riporta gli esperimenti finanziati RC77. [Rapporto naturale con provenienza, tempi, costi e limiti](../../docs/validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md).
 
 ## RC77 — Produzione non realizzata e recupero controllato

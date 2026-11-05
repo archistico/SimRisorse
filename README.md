@@ -2,7 +2,9 @@
 
 Progetto desktop C# / .NET 10 / Avalonia / SQLite in sviluppo, con GUI pixel art e campagna v15 comprendente industria, nuove filiere alimentari, Scuola, ricerca e militari.
 
-**Codice corrente:** RC77 / E4a.3, **899/899 test verificati su Windows** con `validate-f1.cmd`, incluso `validate.cmd`; compilazione senza errori o avvisi, smoke nativo esistente, audit alimentari e sei esperimenti di recupero superati. [Rapporto RC77](docs/validation/E4A_V15_RC77_TEST_PLAN.md). Confronto interattivo Windows della GUI ancora da confermare.
+**Codice corrente:** RC78 / E4b.1, **926/926 test verificati su Windows** con `validate-f1.cmd`, incluso `validate.cmd`; build senza errori o avvisi, smoke nativo esistente, audit alimentari, recupero industriale e studio economico superati. [Verifiche RC78](docs/validation/E4B_RC78_TEST_PLAN.md). Confronto interattivo Windows della GUI ancora da confermare.
+
+**RC78:** confronto isolato di tre curve, 81 preventivi e 18 investimenti, ricerca/storage/personale inclusi. Suggerita A: prima filiera Zecca Base circa 325 equivalenti Tagliapietre in lavoro materiale, Magazzini compresi; B circa 948, C circa 1.405. Cinque file identici al replay. **Parametri e moduli tier proposti, non applicati al gioco.** [Rapporto e limiti](docs/validation/E4B_RC78_CURVE_COMPARISON.md).
 
 **RC77-M01:** eseguiti i nove run naturali con orizzonti integrali: **9/9 obiettivi osservati**, nessun grant o run diagnostico; 21 confronti di file identici fra replay e rianalisi. Pane a 8m 01s, Estrazione I a 42m e prime Spade/Monete a 1h 16m 03s con `bread-first`. [Rapporto delle misure](docs/validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Codice e bilanciamento invariati.
 
@@ -19,8 +21,8 @@ Progetto desktop C# / .NET 10 / Avalonia / SQLite in sviluppo, con GUI pixel art
 ## Comandi Windows
 
 ```powershell
-.\validate.cmd          # suite e smoke; 899 test, comprese le catture v15
-.\validate-f1.cmd       # validate + TRX + audit alimentari e recupero industriale
+.\validate.cmd          # suite e smoke; 926 test, comprese le catture v15
+.\validate-f1.cmd       # validate + TRX + audit alimentari, recupero e curve economiche
 .\run-game.cmd          # v15 predefinita
 .\run-game.cmd --v14    # v14, partita/salvataggio separato
 ```

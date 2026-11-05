@@ -34,9 +34,12 @@ if (args is ["--help"])
     Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-v15-industry [--scenario V15-I01|V15-I02|V15-I03] [--policy research-first|bread-first] [--max-seconds N] [--output DIRECTORY]: unfunded school/research/forge/mint strategies with full material receipts.");
     Console.WriteLine("SimRisorse.Simulation --analyze-e4a-v15-industry --input RESULTS_JSON [--output DIRECTORY]: economic analysis and measured RC76 shortage/capacity evidence; never simulates or modifies saves.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-v15-recovery [--scenario V15-R01|V15-R02|V15-R03] [--max-seconds 0..120] [--output DIRECTORY]: controlled, declared-grant production-loss and recovery experiments; not natural progression.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-curves [--baseline INDUSTRY_JSON_OR_DIRECTORY] [--output DIRECTORY]: three analytical proposals; no live rules changed.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+if (args.Length > 0 && args[0] == "--study-e4b-curves")
+    return E4bCurveStudyCommand.Run(args);
 if (args.Length > 0 && args[0] == "--benchmark-e4a-v15-recovery")
     return V15IndustrialRecoveryCommand.Run(args);
 if (args.Length > 0 && args[0] == "--audit-v15")

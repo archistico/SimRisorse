@@ -1,4 +1,16 @@
-# Handoff corrente — RC77-M01, misure naturali complete (05/11/2026)
+# Handoff corrente — RC78 / E4b.1 (06/11/2026)
+
+**Completato:** confronto analitico di tre curve con 81 preventivi e 18 investimenti, studio isolato in Application/Benchmarks. CLI `--study-e4b-curves`, baseline opzionale validata/hashata, JSON/CSV/Markdown; non modifica cataloghi, clock, GUI o SQLite. [Specifica](design/E4B_RC78_THREE_CURVES_STUDY.md) · [Confronto](validation/E4B_RC78_CURVE_COMPARISON.md).
+
+**Gate eseguito:** `validate-f1.cmd` incluso `validate.cmd`, **926/926 verdi**, zero saltati, build senza errori/avvisi; smoke, audit Base/Combinato, sei esperimenti di recupero e studio senza baseline superati. 27 nuovi casi Application. Studio con sei run RC77-M01: replay identico di cinque file e cinque comandi errati rifiutati senza alterare output. [Evidenze](validation/E4B_RC78_TEST_PLAN.md).
+
+**Raccomandazione, non decisione:** A come base di calibrazione; circa 325 equivalenti di lavoro Tagliapietre per la prima filiera Zecca Base compresi Magazzini (B 948, C 1.405). B Avanzata diretta bloccata nel percorso Magazzini, ma upgrade frazionati possibili; C richiede rivedere lo stoccaggio. Anche A lotto 10 Zecche Base supera il percorso. Nessun tempo delle nuove campagne misurato; nessuna prova di stallo globale.
+
+**Ripresa:** scelta dei coefficienti e dei moduli tier prima di applicare RC79+. Dieci addetti per unità Zecca è il principio approvato; moduli 1/3/10 e tutti i coefficienti delle tre proposte restano candidati. Servono poi regole versionate, clock, concorrenza reale, GUI, save/load e nuove misure naturali. Non attivare silenziosamente la curva A. Preservare richieste HF04, crescita ×20 e salvataggi separati. Confronto interattivo F1 pendente; stress 24h non eseguito. Sotto: storico delle consegne precedenti.
+
+---
+
+# Storico RC77-M01, misure naturali complete (05/11/2026)
 
 **Misure concluse:** nove run naturali senza `--max-seconds`, **9/9 pass**, zero timeout/blocchi/diagnostiche. Pane 481s; Estrazione I 2520s (`bread-first`) o 2580s; Spade/Monete 4563s o 4623s. **21/21 file identici** fra replay e rianalisi. Manifest naturali aggiornati con dati effettivi; [rapporto RC77-M01](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md), provenienza con SHA-256 di sorgenti e assembly nella cache. Nessun codice o coefficiente modificato.
 

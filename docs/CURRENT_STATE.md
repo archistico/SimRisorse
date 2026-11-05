@@ -1,4 +1,16 @@
-# Stato corrente — RC77-M01, misure naturali complete (05/11/2026)
+# Stato corrente — RC78 / E4b.1 (06/11/2026)
+
+**Verificato:** gate `validate-f1.cmd`, incluso `validate.cmd`, **926/926 test**, nessun fallito o saltato, build senza errori o avvisi, smoke nativo esistente, audit alimentari, recupero industriale e nuovo studio economico superati. [Prove RC78](validation/E4B_RC78_TEST_PLAN.md).
+
+**Studio concluso:** tre curve, 81 preventivi e 18 investimenti con filiera, ricerca, personale e liquidità. Baseline naturale RC77-M01 importata e verificata, cinque output identici al replay. Suggerita A: prima filiera Zecca Base circa 325 equivalenti di lavoro Tagliapietre compresi Magazzini; B 948, C 1.405. [Rapporto e limiti](validation/E4B_RC78_CURVE_COMPARISON.md) · [Specifica](design/E4B_RC78_THREE_CURVES_STUDY.md).
+
+**Prossimo:** decidere curva e moduli tier, poi implementare regole versionate e misurare campagne naturali nuove. Prezzi e produzione attuali restano quelli precedenti: le squadre sono una proiezione isolata. GUI, SQLite e crescita ×20 HF04 invariati. Confronto interattivo F1 ancora distinto e pendente.
+
+Le sezioni seguenti sono storiche; per riprendere usare [handoff](NEW_CHAT_HANDOFF.md).
+
+---
+
+# Storico RC77-M01, misure naturali complete (05/11/2026)
 
 **Nuove misure:** eseguiti tutti i nove run naturali con l'intero orizzonte dichiarato, senza grants: **9/9 milestone osservate**, nessun timeout/blocco/diagnostica. Pane a 481s; Estrazione I a 2520s/2580s; prime Spade e Monete a 4563s/4623s (`bread-first`/`research-first`). Replay e rianalisi: **21/21 file identici**. Manifest aggiornati con tempi effettivi e [rapporto RC77-M01](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Codice e regole invariati; il gate del codice sottostante resta quello RC77 indicato sotto.
 
