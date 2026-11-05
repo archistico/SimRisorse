@@ -18,9 +18,9 @@ namespace SimRisorse.Desktop.Tests;
 public sealed class V14PreviewTests
 {
     [Fact]
-    public void DefaultLaunchUsesV14AndPreservesTheExistingV14SaveSlot()
+    public void ExplicitV14LaunchPreservesTheExistingV14SaveSlot()
     {
-        var normal = DesktopOptions.Parse([]);
+        var normal = DesktopOptions.Parse(["--v14"]);
         var oldShortcut = DesktopOptions.Parse(["--experimental-v14"]);
         var explicitV14 = DesktopOptions.Parse(["--v14"]);
         Assert.True(normal.UseV14);
@@ -61,7 +61,7 @@ public sealed class V14PreviewTests
     [Fact]
     public void BothModesRejectTheOtherModesReservedSavePaths()
     {
-        var v14 = DesktopOptions.Parse([]);
+        var v14 = DesktopOptions.Parse(["--v14"]);
         var v13 = DesktopOptions.Parse(["--legacy-v13"]);
         var historical = DesktopOptions.Parse(["--scenario", "economy-foundation"]);
         Assert.Throws<ArgumentException>(() => DesktopOptions.Parse(["--v14", "--save-path", v13.SavePath]));

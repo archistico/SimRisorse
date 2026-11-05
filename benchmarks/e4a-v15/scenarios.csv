@@ -1,0 +1,4 @@
+scenario_id,profile,goal,declared_horizon_seconds,decision_policy,status,completion_seconds,notes
+V15-N01,natural,first-new-depot-prepared-food,14400,v15-scripted-natural-reference-1,not-run,,No artificial stock or population; fisher and new depot
+V15-N02,natural,first-bread-produced,28800,v15-scripted-natural-reference-1,not-run,,Food startup and bread chain; housing built by paid game command
+V15-N03,natural,first-hunter-game-produced,14400,v15-scripted-natural-reference-1,not-run,,Hunter added using paid game command

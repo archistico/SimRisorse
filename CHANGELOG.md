@@ -1,3 +1,382 @@
+# RC76-HF04 — 05/11/2026 · icone, intestazione e crescita ×20
+
+- Su richiesta: Bovini con testa di mucca, Pane più marrone, Pescatore con pesce, Tagliapietre con cubo grigio. Palette dedicata al Pane senza modificare grano o tetti.
+- Intestazione v15 fissa Abitanti, Cibo, Legno lavorato, Pietra; pulsanti «Carica» e «Salva» senza suffisso.
+- Tetto della crescita v15 elevato a ×20, con bonus abitativi precedenti e calcolo unico per clock e forecast. A pieno bonus arriva un abitante ogni 3 secondi, se alloggi e razioni lo consentono; checkpoint e schema SQLite invariati.
+- Undici regressioni nuove: **885/885 test superati** nel gate completo `validate-f1.cmd`, incluso `validate.cmd`; build senza errori o avvisi, smoke e audit baseline/combinato superati. [Rapporto HF04](docs/validation/RC76_HF04_ICONS_AND_GROWTH.md).
+
+# RC76-HF03 — 05/11/2026 · correzioni grafiche v15
+
+- Filtro filiere su una riga dedicata per non sovrapporre le intestazioni a 1040×740; costi con nomi italiani coerenti con le righe con icone; materiali Scuola/Esercito dentro le card con testo che va a capo.
+- Cinque nuove regressioni Desktop e otto catture v15 richieste da `validate.cmd`; gate F1 aggiornato a **874 test** e milestone HF03.
+- `validate-f1.cmd`, incluso `validate.cmd`, superato su Windows: **874/874**, zero falliti o saltati, build senza errori o avvisi, smoke nativo esistente e audit baseline/combinato da 120s superati.
+- Ispezionate le otto catture v15 a 1040×740 e 1240×850. Il confronto interattivo Windows resta pendente; F1-D05e formalmente aperta. [Rapporto e limiti](docs/validation/RC76_HF03_VISUAL_REGRESSIONS.md).
+- Nessuna modifica a regole economiche, formule produttive, prezzi o SQLite.
+
+# RC76-HF02 — 05/11/2026 · validazione Windows e diagnostica E4a
+
+- Corretto il test di regressione sul personale: confronto tra sessione e benchmark dopo le stesse quattro azioni al secondo zero, verificando 5 lavoratori iniziali e 3 dopo le assegnazioni.
+- Eseguiti `validate.cmd` e `validate-f1.cmd` su Windows con SDK 10.0.201: **869/869 superati**, zero falliti o saltati, build senza errori o avvisi; smoke nativo e audit v15 baseline/combinato superati.
+- Eseguita diagnostica industriale V15-I01 / research-first da 120 secondi; `diagnostic-only`, Scuola in attesa di 73 unità di Legname lavorato. Rianalisi con sei report identici byte per byte. Manifest a orizzonte pieno ancora `not-run`.
+- Aggiornati documenti operativi e [rapporto delle esecuzioni](docs/validation/RC76_WINDOWS_VALIDATION.md). Verifica visiva GUI ancora da confermare, F1-D05e formalmente aperta; nessun cambiamento al motore, bilanciamento o SQLite.
+
+# RC76-HF02 — 05/11/2026 · ripristino contratto CityCatalog (candidata al momento della consegna)
+
+- Corretti gli 8 errori CS1061 in `SimRisorse.Desktop`, `SimRisorse.Application.Tests` e `SimRisorse.Infrastructure.Tests`: dopo i refactoring v15 mancava l'esposizione pubblica di `V15FoodIndustryCampaignSession.CityCatalog`.
+- Ripristinata la proprietà pubblica di tipo `V15CampaignCatalogView`, delegando a `V15CampaignCatalogProjection.Project(_baseline, _current, _catalog)`. La proiezione legge lo snapshot corrente, senza cache e senza alterare lo stato; l'elenco degli edifici e la tabella delle risorse v15 rimangono quelli già previsti.
+- Nessuna modifica a XAML, ViewModel, produzione, costi, SQLite o API dei benchmark. Gli otto utilizzi già presenti in sorgenti/test costituiscono il controllo di compilazione del contratto; **nessun nuovo test aggiunto**. Totale atteso invariato: **869**.
+- Gate F1 interrotto finora in fase di compilazione, non nei test o negli audit. Compilazione .NET 10 e test **non eseguiti qui**; [piano di validazione RC76-HF02](docs/validation/RC76_HF02_CITY_CATALOG_TEST_PLAN.md). Ultimo checkpoint effettivamente validato: RC63, 771 test.
+
+# RC76-HF01 — 05/11/2026 · correzione compilazione E4a v15 (candidata)
+
+- Corretti i due errori CS0117 dei runner `V15NaturalProgressionBenchmark` e `V15IndustrialProgressionBenchmark`: il metodo Core `BusyOutsideFood` era `internal` e non era utilizzabile da Application. Le due proiezioni ora richiamano `V15FoodCampaignCheckpoints.AvailableWorkers(checkpoint)`, API pubblica che conteggia anche le sei filiere alimentari.
+- La sessione giocabile v15 usa la medesima API per `AvailableWorkers`, mantenendo una sola formula autoritativa. Nessun cambiamento a regole, formule produttive, salvataggi o UI.
+- Due nuovi test di regressione sulla concordanza sessione/benchmark e sui **2 lavoratori liberi** nello scenario combinato da 24 abitanti: **869 test cumulativi attesi** (867 RC76 + 2); nessuna validazione .NET 10 eseguita in questo ambiente.
+- `validate-f1.cmd` aggiornato a 869 test. Il messaggio generico `dotnet failed with exit code 1` era conseguenza degli errori di compilazione; il gate F1 resta aperto finché non passa su Windows e non viene confermata la GUI.
+- [Piano di verifica](docs/validation/RC76_HF01_COMPILATION_TEST_PLAN.md). I risultati RC76 antecedenti a questa correzione rimangono documentati come storico.
+
+# RC76 — 05/11/2026 · E4a.2c (candidata)
+
+- Telemetria opzionale sui tentativi falliti: deficit materiali quotati (al millesimo), preservando le ricevute delle sole azioni riuscite.
+- Campioni di scorte/capacità cittadine per Legname lavorato, Pietra, Carbone, Minerale di ferro, Ferro, Minerale d'oro e Oro.
+- Nuovo `V15IndustrialConstraintAnalysis`: evidenze distinte tra mancanza misurata, codice di errore e saturazione osservata; output JSON/CSV/Markdown aggiuntivi dal runner e dall'analizzatore RC75; compatibilità di lettura con i JSON RC75.
+- 10 test Application, totale cumulativo atteso **867**; gate F1 aggiornato, nessun test .NET 10 eseguito qui.
+- Documentazione: ADR 0084, specifica, piano test, roadmap, stato, handoff. Nessuna modifica a GUI, Core, regole di gioco o SQLite; benchmark completi `not-run`.
+
+## RC75 / E4a.2b — Benchmark industriale/tecnologico v15 (CANDIDATA, 05/11/2026)
+
+- `V15IndustrialProgressionBenchmark` e fixture naturale: scenari I01 (Scuola/Estrazione I), I02 (Industria I e prime Spade), I03 (Industria I e prime Monete); due strategie dallo stesso checkpoint, nessun grant. Percorsi con Pane/Casa grande/Carbone e Matite (2 per studente), coerenti con la GUI v15; allineato anche il contratto di Scuola del runner RC73, senza cambiarne le ricette alimentari.
+- Costi materiali effettivi completi per azione eseguita e punti ricerca acquistati separatamente; `V15IndustrialProgressionAnalysis` riporta classificazioni prudenti e confronta durate solo quando entrambe le strategie osservano il completamento senza orizzonti abbreviati.
+- CLI per benchmark e analisi da JSON; risultati JSON/CSV/Markdown, protezione da sovrascritture; manifest iniziale in stato `not-run`.
+- **14 nuovi test, 857 cumulativi attesi**, compilazione .NET 10 non eseguita; RC63 ultimo checkpoint validato con 771 test. Gate F1 aggiornato a 857, F1 ancora aperta.
+- Nessuna modifica a GUI, Core, database, v14, prezzi, ricette o fabbisogno di lavoratori. [ADR 0083](docs/adr/0083-benchmark-industria-ricerca-v15-senza-grants.md) · [Specifica](docs/design/E4A_V15_RC75_INDUSTRIA_RICERCA.md) · [Piano test](docs/validation/E4A_V15_RC75_TEST_PLAN.md).
+
+## RC74 / E4a.2a — Analisi naturale v15 senza alterare il gioco (CANDIDATA)
+
+- Nuovo postprocessore `V15NaturalProgressionAnalysis` dei JSON RC73: classificazione dei risultati, tempi d'attesa e spese tracciate, controllo di coerenza dei dati.
+- Nuova CLI `--analyze-e4a-v15-natural` con report JSON, CSV e Markdown e nessuna sovrascrittura dei file già presenti.
+- Nove test xUnit nuovi; suite cumulativa attesa **843**. Aggiornato il gate F1 alla nuova dimensione.
+- GUI, C# del motore economico, cataloghi, SQLite e runner RC73 invariati. Nessun test .NET o benchmark di progressione completo eseguito qui; RC63 (771 test) ultimo checkpoint confermato.
+- [Specifiche RC74](docs/design/E4A_V15_RC74_ANALISI_PROGRESSI.md), [piano test](docs/validation/E4A_V15_RC74_TEST_PLAN.md), [ADR 0082](docs/adr/0082-analisi-basata-su-evidenze-benchmark-v15.md).
+
+## v60-E3b4-RC73 — Runner E4a.1 naturale v15 (CANDIDATA, 05/11/2026)
+
+- Nuovo `V15NaturalProgressionBenchmark` per avvii autentici v15 senza finanziamenti artificiali: tre scenari V15-N01/N02/N03, policy seriale versionata, eventi/campioni, timeout/blocked senza durate inventate.
+- CLI separata `--benchmark-e4a-v15-natural` con JSON + due CSV e protezione dalla sovrascrittura; `--benchmark-e4a-natural` v14 invariato.
+- Aggiunti 8 test Application; **834 test attesi** (826 RC72 + 8), non eseguiti qui. Aggiornato il default del gate F1 a 834, senza chiudere F1.
+- GUI, motore, persistente SQLite, prezzi/ricette, strumenti v14 invariati. Manifest degli scenari v15 in stato `not-run`.
+- [Specifica RC73](docs/design/E4A_V15_RC73_NATURAL_RUNNER.md) · [Piano test](docs/validation/E4A_V15_RC73_TEST_PLAN.md) · [ADR 0081](docs/adr/0081-runner-naturale-v15-separato-dai-benchmark-v14.md).
+
+# RC72 — F1-D05e.3 · Gate finale riproducibile (05/11/2026)
+
+- Quattro test di regressione cumulativi (3 Application, 1 Infrastructure): filiere combinate 120s, ledger al millesimo, clock frazionato/nullo, tre riprese SQLite generation 6. **826 test attesi** (RC71: 822); non eseguiti su .NET 10 in questo ambiente, RC63 771/771 resta l'ultimo checkpoint confermato.
+- `validate-f1.cmd` e `scripts/validate-f1-gate.ps1`: eseguono `validate.cmd`, controllano TRX, smoke nativo Windows, screenshot, audit v15 base e combinato; producono `f1-gate.json` con esito ed evidenze. Stress combinato 24h opzionale. Nessun risultato è presunto prima dell'esecuzione.
+- Riordinati README, stato corrente, roadmap e handoff; aggiunto ADR 0080, specifica RC72, piano test. Nessun cambiamento a C# produttivo, GUI/XAML, SQLite, prezzi, ricette o `validate.cmd`. F1-D05e resta aperta fino al gate cumulativo verde e alla verifica grafica.
+
+---
+
+## RC71 — 05/11/2026 — F1-D05e.2b.2b.2f, planner senza slot legacy (candidata)
+
+- `ProductionPlanner.Plan` salta i produttori espressamente soppressi **prima** di cercarne il `BuildingState`; se assente restituisce il report disabilitato senza introdurre uno stato fittizio. I produttori attivi continuano a richiedere la propria riga.
+- `V15UnifiedCampaignClock` non crea più `BuildingState(food-store,0,0)`; nessun cambiamento a ricette, flussi, costi o SQLite generation 6.
+- +4 test Application per filiere combinate senza slot, importazioni legacy occupate ma non operative, frazioni di secondo, rigetto di portfolio incompleti: **822 test cumulativi attesi**, non eseguiti. RC63 771/771 ultimo checkpoint validato.
+- Nessuna modifica a Desktop/XAML, al motore delle sessioni v14 o ai formati di salvataggio. [ADR 0079](docs/adr/0079-planner-v15-senza-slot-produttore-ritirato.md) · [Specifica](docs/design/F1_D05E2B2B2F_RC71_PLANNER_SENZA_SLOT.md) · [Piano test](docs/validation/F1_D05E2B2B2F_RC71_TEST_PLAN.md).
+
+## RC70 — 05/11/2026 — F1-D05e.2b.2b.2e, audit persistenza (candidata)
+
+- `V15SqliteFoodSaveStore.Save`: confronto semantico completo fra checkpoint canonico e file SQLite temporaneo riletto, **prima** di backup e promozione. Campi scalari, progresso individuale, risorse e inventari per proprietario verificati; collezioni indicizzate confrontate per ID.
+- `V15CityStorage.Calculate`: capacità Matite calcolata direttamente da città v15, con identica formula storica per Municipio/Magazzini/Scuola ma senza bridge `ToInherited()`.
+- +4 test xUnit (2 Application, 2 Infrastructure), **818 cumulativi attesi**; non eseguiti. RC63 (771) ultimo checkpoint con test confermati.
+- Nessun file Desktop/XAML, motore v14 o schema SQLite modificato. Generation 6 invariata. [ADR 0078](docs/adr/0078-verifica-semantica-salvataggio-v15.md) · [Specifica](docs/design/F1_D05E2B2B2E_RC70_AUDIT_SQLITE.md) · [Piano test](docs/validation/F1_D05E2B2B2E_RC70_TEST_PLAN.md).
+
+## RC69 — 05/11/2026 — F1-D05e.2b.2b.2d, checkpoint civico v15 nativo (candidata)
+
+- `V15FoodCampaignCheckpoint.CityCampaign` è ora `V15CityCampaignSnapshot` come unico stato civico. `NativeCityCampaign` diventa alias di lettura dello stesso oggetto.
+- Comandi civici operano su tipi di famiglie e contatori v15; validazione e clock non ricostruiscono snapshot v14. `food-store` resta soltanto come slot temporaneo del `ProductionPlanner` (RC71) o nell'importazione storica esplicita.
+- `V15SqliteFoodSaveStore` carica direttamente i DTO v15, senza passaggi attraverso `V14CampaignSnapshot`; resta **SQLite generation 6** (stesso schema). L'eventuale famiglia legacy vuota viene omessa prima di salvare, quella occupata resta rifiutata.
+- 8 nuovi test xUnit (6 Application, 2 Infrastructure); **814 cumulativi attesi**, non eseguiti. Ultimo gate validato dall'utente: RC63 (771).
+- Desktop/XAML, sistema economico, ricette, costi, schemi SQLite e gioco v14 invariati.
+- [ADR 0077](docs/adr/0077-radice-civica-v15-nativa.md) · [Specifica](docs/design/F1_D05E2B2B2D_RC69_RADICE_CHECKPOINT_NATIVE.md) · [Piano test](docs/validation/F1_D05E2B2B2D_RC69_TEST_PLAN.md).
+
+## RC68-DOC01 — 05/11/2026 — Riordino documentale e pianificazione dettagliata (solo documenti)
+
+- Nessuna modifica al codice RC68, ai test, alla GUI, agli asset o allo schema SQLite generation 6. L'ultima RC confermata rimane RC63 (771/771); RC68 è candidata con 806 test attesi da Windows.
+- Consolidati README, START_HERE, indice documentale, CURRENT_STATE, ROADMAP, NEW_CHAT_HANDOFF, registro delle decisioni, catalogo, game design e contratto salvataggi. `docs/HANDOFF.md` ridotto a rimando per retrocompatibilità dei link.
+- Roadmap sequenziale con gate G0, refactoring nativo RC69–72, benchmark v15 E4a, proposta costi/squadre E4b e sviluppo M5.4–M7; esplicitate dipendenze, criteri di uscita, rischi e vincoli GUI.
+- Preservati ADR 0001–0076, specifiche, test, storia e dossier; vecchi archivi esclusi dalla navigazione corrente ma non eliminati senza audit storico. Nuovo piano di pulizia in [RC68-DOC01](docs/validation/RC68_DOC01_DOCUMENTATION_AUDIT.md).
+
+## RC68 — 05/11/2026 — F1-D05e.2b.2b.2c
+
+- Introdotti i record nativi v15 `V15ProductiveFamilySnapshot` e `V15PurchaseCounter` per portafogli per tier e storicità degli acquisti. `V15CityCampaignSnapshot` usa i nuovi tipi; adattamento 1:1 solo su `FromInherited`/`ToInherited`.
+- Rifiutate le collezioni non inizializzate durante le conversioni. Preservati identità delle famiglie, quantità, personale, contatori inclusa la storia `food-store` e ordine degli elementi.
+- Adeguati due confronti di test RC67 che equiparavano erroneamente la backing-array identity al contenuto degli `ImmutableArray`; nove nuovi test RC68. **806 test cumulativi attesi**, .NET 10 non eseguito; **RC63** ultima versione validata 771/771.
+- Nessuna modifica a GUI, SQLite generation 6, formule produttive, risorse, costi, progressione o alla partita v14. Consumer persistenti e slot del planner ancora in roadmap.
+- [ADR 0076](docs/adr/0076-portafogli-contatori-v15-nativi.md) · [Specifica](docs/design/F1_D05E2B2B2C_RC68_PORTAFOGLI_CONTATORI_V15.md) · [Piano test](docs/validation/F1_D05E2B2B2C_RC68_TEST_PLAN.md).
+
+## RC67 — 05/11/2026 — F1-D05e.2b.2b.2b, contratto civico v15 nativo (incremento)
+
+- Nuovo record `V15CityCampaignSnapshot` senza header di versione v14. Conversione `FromInherited` stretta e `ToInherited` senza trasformazioni economiche.
+- `V15CityCampaignValidator.ValidateNative` e `V15FoodCampaignCheckpoint.NativeCityCampaign`: validazione sul modello v15 senza introdurre `food-store` artificiale.
+- `V15CityStorage.Calculate` accetta anche il nuovo tipo, mantenendo una sola fonte per la capacità delle Matite.
+- Sei nuovi test Application; **797 cumulativi attesi**, SDK .NET 10 non disponibile qui. RC63 resta ultima RC validata, 771 test. GUI/SQLite generation 6/costi/ricette invariati.
+- Residui dichiarati: DTO primario `V14CampaignSnapshot`, contatore storico `food-store`, slot locale del planner. [ADR 0075](docs/adr/0075-contratto-civico-v15-proiezione-nativa.md) · [Specifica](docs/design/F1_D05E2B2B2B_RC67_CONTRATTO_CIVICO_V15.md) · [Test](docs/validation/F1_D05E2B2B2B_RC67_TEST_PLAN.md).
+
+## RC66 — 05/11/2026 — F1-D05e.2b.2b.2a, validazione civica v15 indipendente
+
+- Introduzione di `V15CityCampaignValidator` in Core/Food; elimina la proiezione sintetica `food-store` dal percorso ordinario di validazione `V15FoodCampaignCheckpoints.Validate`.
+- Validazione dei 15 produttori, tier, tecnologie, cronologia degli acquisti, Municipio, Scuola, militari, popolazione e capienza fisica della città v15, senza ritoccare il modello economico.
+- Importazioni con `food-store` ancora occupato verificabili prima del ritiro esplicito, ma SQLite generation 6 continua a rifiutarne il salvataggio.
+- 7 nuovi test Application: **791 totali attesi**; RC63 confermata a 771, RC64/65/66 ancora da compilare/validare su Windows.
+- Nessuna modifica Desktop/XAML, store SQLite, ricette, costi, salvataggi v14; DTO civico e contatore legacy rimandati ad incremento successivo. [ADR 0074](docs/adr/0074-validatore-civico-v15-senza-proiezione-v14.md).
+
+# RC65 — 2026-11-05 — F1-D05e.2b.2b.1 (candidata)
+
+- **Refactoring funzionale:** eliminate le invocazioni a `V14CampaignSession.Restore` dalla superficie dei comandi civici v15; nove entry point pubblici operano direttamente su `V15FoodCampaignCheckpoint` attraverso la nuova classe parziale `V15NativeCityCommands.cs`.
+- Un solo catalogo di famiglie produttive valido per la sessione, filtrando `food-store` prima di costruzioni/upgrade/personale.
+- Riuso di `TieredConstruction`, `ProgressiveConstructionPricing`, `TechnologyPurchases`, `V14SchoolSupplies`, `V15CityStorage` senza riscriverne costi o formule. Risultati atomici e stessi codici errore; risorse scuola sempre fisicamente separate dal Cibo del Deposito.
+- Test nuovi: 6 Application (`F1D05e2b2bNativeCityCommandTests`) e 1 Infrastructure (`F1D05e2b2bNativeCityPersistenceTests`). **784 attesi** a partire da RC64 777; non validati in .NET in questo ambiente.
+- Nessuna modifica all'interfaccia Desktop, XAML, v14, al formato SQLite generation 6 o ai coefficienti economici. Validazione `V14CampaignSnapshot` e contatore legacy rimangono per l'incremento seguente.
+- Documentati ADR 0073, specifica RC65, piano di validazione, roadmap, stato e handoff.
+
+# RC64 — F1-D05e.2b.2a · Stato v15 senza lo slot produttivo `food-store` (05/11/2026)
+
+**Baseline verificata dall'utente:** RC63, **771/771 test superati**; aspetto della GUI v14 ripristinato nella v15 e giudicato conforme. **RC64:** +6 test (5 Application, 1 Infrastructure), **777 attesi**, compilazione .NET 10 non eseguibile in questo ambiente. Non descrivere RC64 come già validata.
+
+**Obiettivo incrementale:** il normale checkpoint v15 conserva **15 famiglie produttive attive**, senza ricostruire stabilmente la sedicesima `food-store` dopo una nuova partita, un comando civico o la rilettura SQLite. Una proiezione *temporanea* a 16 famiglie rimane confinata all'uso del validatore e dei comandi civici v14 ancora riutilizzati. Il clock aggiunge localmente un produttore disabilitato a zero lavoratori solo per soddisfare il catalogo storico del `ProductionPlanner`; questa riga **non** torna nello stato v15. La generazione SQLite rimane **6**, senza migrazioni né modifica del percorso di salvataggio. Il contatore storico `food-store` è conservato finché non riscriviamo i comandi nativi v15.
+
+**Protezione dello stato:** un `food-store` ereditato con edifici/lavoratori occupati non viene scartato automaticamente: richiede `RetireLegacyFoodStore` prima di poter salvare; il ritiro non rimborsa costi né altera scorte. Nessuna modifica a formule, ricette, prezzi, capacità, tecnologie, GUI storica, XAML o salvataggi v14.
+
+**Test da eseguire su Windows:** ` .\validate.cmd ` (**777 test attesi**). Poi ` .\run-game.cmd ` (v15 predefinita) e confronto visuale con ` .\run-game.cmd --v14 `; facoltativo `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --audit-v15 --seconds 120 --profile combined` e stress 24 ore. Confermare che la v15 mostri Stalla, Cacciatore, Macellaio, Orto, Frutteto, Deposito e mantenga tutti i vincoli visivi v14 della RC63.
+
+**Resta F1-D05e.2b.2b:** eliminare anche l'adattatore `V14CampaignSession`, rendere nativi i comandi civici e la struttura del checkpoint, rimuovere il contatore storico e sostituire la dipendenza di validazione da `V14CampaignSnapshot`. **Poi E4a** (benchmark economici), **E4b** (costi quasi esponenziali e almeno 10 addetti minimi per ciascuna Zecca operativa). Non anticipare modifiche di GUI o coefficenti economici.
+
+[ADR 0072](docs/adr/0072-checkpoint-v15-famiglie-attive-senza-slot-legacy.md) · [Specifica](docs/design/F1_D05E2B2A_RC64_PORTFOLIO_V15.md) · [Test](docs/validation/F1_D05E2B2A_RC64_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
+
+---
+
+# RC63 — F1-D05e · Ripristino contratto grafico v14 nella GUI v15 (5 novembre 2026)
+
+**Motivo:** la RC62 ha reso v15 predefinita ma il pannello grafico v15 era una semplificazione non autorizzata delle scelte già validate in v14. È una regressione di prodotto, non un'occasione per ridisegnare la GUI.
+
+**Obiettivo RC63:** la v14 è il riferimento **vincolante** per layout e interazioni. Le sei nuove filiere sono estensioni del catalogo e del simulatore, NON un nuovo design. Nessuna modifica ai coefficienti economici, al clock, alla persistenza SQLite generation 6 o alla partita v14.
+
+- Edifici: lista con colonne **STRUTTURA / EDIFICI / PERSONALE**, icona 24×24 in riquadro, righe bloccate attenuate (`Opacity=0.48`) ma sempre selezionabili. Nessun tasto Costruisci per strutture bloccate; prerequisiti leggibili in dettaglio.
+- Dettaglio: descrizione, costi del prossimo edificio come elenco di icone, prezzi cumulativi +5/+10, prerequisiti, **produce / consuma / capacità** per risorsa con PixelGlyph e allineamenti della v14; diagnosi limitata e scorrevole.
+- Comandi: due righe **Costruisci +1 / +5 / +10** e **Lavoratore −1, +1 / +5 / +10**, pulsanti di upgrade in fondo al box come v14. Per le nuove filiere, le ricette alternative di Macellaio e Deposito sono esplicitamente indicate come alternative, non simultanee.
+- Sidebar: tornano **CRESCITA**, progress bar, fabbisogni Cibo/Pane, posti abitativi e abitanti disponibili. Proiezione v15 sola lettura che usa il `PopulationPlanner` del motore e i medesimi coefficienti di housing.
+- Risorse: resta la tabella a sette colonne della v14 (quantità arrotondata, saldo colorato, hover della capienza, selezione stabile); cambiano soltanto i valori, derivati dal clock v15.
+- Esercito e Scuola: ripristinati layout di dettaglio, posti, progress bar individuali, materiali, selector quantitativi 1/5/10 e relative operazioni v15. Congedo rinviato come nella v14; tecnologie a livello diretto (no ComboBox nel dettaglio edifici).
+- Filtro "Filiere alimentari (6)" resta un'aggiunta localizzata nell'intestazione della lista, non sostituisce l'elenco generale. È ancora possibile mostrare tutti gli edifici.
+- Le differenze v14/v15 sono contrattualizzate tramite **9 nuovi test Desktop di regressione**. **Totale atteso RC63: 771 test** (RC62 762 previsti + 9; RC62 non ancora confermata integralmente su Windows).
+
+**Validazione in questo ambiente:** XML/XAML e controlli statici verificati; compilazione/Headless xUnit **non eseguibili qui** (SDK .NET 10 assente). Eseguire `./validate.cmd` su Windows; risolvere eventuali errori prima di proseguire con D05e.2b.2. Nessuna affermazione che i 771 test siano già verdi.
+
+**Prossimo gate:** RC63 build + 771 test, controllo visivo delle cinque sezioni e dei due stati bloccato/disponibile a 1040×740 e 1240×850. Poi completamento disaccoppiamento del checkpoint v15 (F1-D05e.2b.2), benchmark E4a, progressione E4b (costi e squadre minime).
+
+---
+
+# RC62 — F1-D05e.2b.1-fix · 05/11/2026
+
+- Ricevuto il risultato RC61: compilazione C# OK, 760/761 test superati, **1 test Infrastructure fallito** per `user_version`: expected 5 / actual 6 (test `SchemaFiveRoundTripPreservesEveryIntermediateMilliunitAndSixBuildingCounts`).
+- Aggiornato il test allo **schema 6** (entrambi `PRAGMA user_version` e `game_save.snapshot_version`), rinominato e aggiornati i percorsi temporanei/backup; nessuna modifica al motore né allo store SQLite.
+- **GUI v15 predefinita** per l'avvio normale, vecchia GUI **v14 esplicita** (`--v14`) con salvataggio personale separato. `--v15`, v13/legacy e smoke-test continuano a funzionare.
+- Aggiunto filtro **Filiere alimentari (6)** nella lista Edifici v15, con ritorno a **Tutti gli edifici**; nessuna modifica a catalogo, prerequisiti, costi, clock, layout Risorse a sette colonne.
+- Aggiornati i test Desktop d'avvio, aggiunto un caso per filtro/ripristino (`+1`). **762 test cumulativi attesi**, non eseguiti in questo ambiente.
+- Nuovo ADR 0070, specifica tecnica, piano dei test, roadmap, stato, handoff e README aggiornati. La rottura dei soli DB sperimentali generation 5 rimane esplicita. Base validata RC60 (756/756); RC61 760/761.
+
+---
+
+# RC61 — F1-D05e.2b.1 — SQLite v15 gen. 6 senza famiglia legacy persistita (5/11/2026)
+
+- **RC60 confermata: 756/756 test.** `V15FoodCampaignCheckpoints.FileVersion=6`, store SQLite `user_version=6` e `snapshot_version=6`.
+- La tabella `progression_family` salva **45 righe** per le 15 famiglie v15 attive; `food-store` non viene persistito ed è vietato dal `CHECK` SQL. Il solo `V15LegacyProducerAdapter` lo ricrea vuoto **in RAM** per i comandi/validatori storici. Restano temporaneamente il contatore `progression_acquisitions` e la dipendenza dello snapshot civico dal v14.
+- Persistenza rifiutata se lo slot legacy ha ancora edifici o lavoratori; ritiro esplicito necessario, nessuna perdita implicita. La vecchia generation 5 è rifiutata senza sovrascrittura, in linea con la decisione di tagliare i DB sperimentali.
+- **5 test Infrastructure nuovi**, totale **761 attesi**. SQLite DDL verificato staticamente, SDK .NET 10 e xUnit da verificare su Windows. Invariati motore del clock, inventari, UI v14/v15, costi e ricette.
+- [Specifica](docs/design/F1_D05E2B1_RC61_FORMATO6_PERSISTENZA.md) · [Piano test](docs/validation/F1_D05E2B1_RC61_TEST_PLAN.md) · [ADR](docs/adr/0069-generazione6-senza-famiglia-produttiva-legacy.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+# RC60 — F1-D05e.2a-fix · Correzione budget occupazionale fixture combinata (05/11/2026)
+
+- **Gate RC59 reale (Windows/.NET 10):** 755 test, **754 riusciti, 1 fallito** (`FixtureHasEveryNewSiteStaffedWithoutExceedingTheSharedPopulationBudget`, atteso 5 contro effettivo 2). Infrastructure e Desktop riusciti. Il messaggio conclusivo `dotnet failed with exit code 1` deriva dal test fallito, non da un errore di sintassi/compilazione C#.
+- **Causa:** `CivilGrowthScenario.Create()` porta tre addetti già occupati (Taglialegna, Segheria, Tagliapietra). La fixture aggiunge 13 occupati alimentari storici e 6 nuovi, per **22 lavoratori su 24**, **2 disponibili**. Il vecchio test dimenticava il personale iniziale; il motore calcolava correttamente.
+- **Correzione:** atteso aggiornato a 2; nuova regressione sul budget completo, compresi impieghi storici, nuovi, civici, Scuola e militari. Aggiornato il commento della fixture e rettificate le cifre RC59 nelle specifiche, nel piano di test e nell'ADR 0068.
+- **Totale atteso RC60: 756 test (+1).** .NET 10 non disponibile in questo ambiente; validazione da eseguire su Windows. Nessun cambiamento alle regole economiche, allo stato delle partite, alla GUI o allo schema SQLite generation 5.
+
+[Analisi](docs/design/F1_D05E2A_RC60_FIX_PERSONALE.md) · [Piano RC60](docs/validation/F1_D05E2A_RC60_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
+---
+
+# RC59 — F1-D05e.2a · Stress simultaneo delle filiere (05/11/2026)
+
+- **Gate precedente superato:** RC58, **744 test** verdi comunicati dall’utente; audit v15 standard 24 h: 86.400/86.400 secondi, 0 pasti mancati, 0 squilibri, 0 produzione legacy.
+- **Nuovo:** `V15CombinedFoodStressScenario` in Application, 24 abitanti e 22 occupati (3 iniziali, 13 filiera storica, 6 nuove filiere; rettificato in RC60), scorte iniziali dichiaratamente sintetiche.
+- **Nuovo:** `V15CombinedStressAudit` e `--audit-v15 ... --profile combined`: riconcilia ogni secondo e rende il cumulato della produzione di Bovini, Selvaggina, Carne, Verdura, Frutta, Pane e Cibo; eccezione esplicita in caso di squilibrio.
+- **Test:** 9 casi Application (4 Fact + Theory a 5 dati) e 2 Infrastructure = **+11**, **755 attesi**. Nessun test .NET eseguito durante la pacchettizzazione.
+- **Immutati:** GUI pixel art v14 e v15, schema SQLite, clock e regole, migrazioni, costi, cartelle dei salvataggi.
+- **Prossima:** F1-D05e.2b, scomposizione del checkpoint v15 dallo slot strutturale `food-store`; E4a benchmark e E4b costi/organici restano successivi.
+
+[Specifica](docs/design/F1_D05E2A_RC59_STRESS_FILIERE.md) · [Test](docs/validation/F1_D05E2A_RC59_TEST_PLAN.md) · [ADR](docs/adr/0068-stress-combinato-filiere-e-checkpoint-legacy.md).
+
+---
+
+# RC58 / F1-D05e.1-fix — 5 novembre 2026 — Confronto logico del checkpoint SQLite
+
+- **Evidenza RC57 su Windows:** 743 casi eseguiti; **741 superati e 2 falliti** nella suite Infrastructure, mentre la suite Desktop è verde. Il messaggio finale `dotnet failed with exit code 1` è conseguenza dei test falliti, **non** di errori del compilatore C#.
+- I due fallimenti si interrompono entrambi nel medesimo `AssertSame` alla riga 77: `V15SqliteFoodSaveStore.ReadFile` restituisce `OtherBuildings` in `ORDER BY building_id`, mentre lo stato iniziale usa l'ordine del catalogo. Stessi `BuildingId`, `Count` e `AssignedWorkers`, ordine differente.
+- **Correzione circoscritta ai test:** `AssertSame` confronta in ordine canonico ordinal per ID `OtherBuildings`, `ProductiveFamilies`, `PurchaseCounters` e `UnlockedTechnologyIds`; i progressi individuali di ricerca e militari mantengono il confronto **posizionale**. Nessuna modifica a motore, schema SQL, filiere, salvataggi o GUI.
+- Aggiunto 1 test mirato `KeyedCampaignCollectionsCanBeReorderedWithoutChangingCheckpointMeaning`: **744 casi attesi** (743 RC57 + 1). Nessuna compilazione o esecuzione .NET 10 eseguita in fase di confezionamento; l'ultimo gate integralmente verde resta **RC56: 731/731**.
+- [Analisi e modifica](docs/design/F1_D05E1_RC58_FIX_ORDINE_CHECKPOINT.md) · [Piano di validazione](docs/validation/F1_D05E1_RC58_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md) · [ADR 0067](docs/adr/0067-riconciliazione-fisica-v15-e-stress-separato.md).
+
+---
+
+# RC57 / F1-D05e.1 — 5 novembre 2026 — Riconciliazione fisica e stress v15 (candidata)
+
+- **RC56 validata dall’utente: 731 test superati.** Nuovo `V15StockAuditor` puro per ricostruire i totali città, recinti, transito, deposito grezzi e Cibo pronto e controllare la conservazione al millesimo dal ledger reale del clock.
+- Aggiunti **12 casi xUnit** (10 Application contando 2 casi parametrizzati + 2 Infrastructure), **743 attesi**, non eseguiti qui senza .NET 10. Coprono trasferimenti, saturazione, vecchio `food-store` inerte, sessioni spezzate e salvataggi SQLite ripetuti.
+- Nuovo stress opzionale in `tools/SimRisorse.Simulation`: `--audit-v15 --seconds N` o `--hours N` (fino a 48 h), senza accesso al DB dell’utente. Il comando da 24h è predisposto, **non eseguito** nel confezionamento e non entra in `validate.cmd`.
+- Nessuna variazione di GUI v14/v15, ricette, costi, risorse, salvataggi o formato SQLite. Slot legacy `food-store` ancora nello stato ereditato; pulizia fisica rimandata a D05e.2.
+- Documenti: [Specifica](docs/design/F1_D05E1_RC57_RICONCILIAZIONE_STRESS.md), [Piano test](docs/validation/F1_D05E1_RC57_TEST_PLAN.md), [ADR 0067](docs/adr/0067-riconciliazione-fisica-v15-e-stress-separato.md), [Roadmap](docs/ROADMAP.md), [Handoff](docs/NEW_CHAT_HANDOFF.md).
+
+---
+
+# RC56 / F1-D05d.4b.2 — 5 novembre 2026 — Flussi reali e ETA nel pannello Risorse v15
+
+- **Gate precedente:** RC55 confermata dall'utente con **713 test passati**.
+- `V15UnifiedCampaignClock.Plan` registra produzione e consumo del primo secondo presso i veri planner (legacy, Stalla/Cacciatore/Macellaio, Orto/Frutteto, deposito, pasto atomico). `V15EconomyProjector` produce una proiezione pura del prossimo secondo, senza avanzare la partita o scrivere SQLite.
+- Il ricevimento di ingredienti dalla città/transito al deposito è un **trasferimento**, non produzione né consumo. Il vecchio `food-store` rimane escluso; riconciliazione al millesimo tra saldi e inventari.
+- `V15CampaignCatalogProjection` include il dettaglio della capacità per proprietario, visualizzato su hover nella GUI. `V15ResourceRow` ora espone Produzione/s, Consumo/s, Saldo/s con segno e ETA al saldo locale, mantenendo l'originale tabella a **sette colonne**.
+- **+18 test nuovi**: 9 Application e 9 Desktop (di cui 6 varianti ETA), totale **731 attesi**, .NET 10 non disponibile nell'ambiente di confezionamento. Verificare con `validate.cmd` su Windows.
+- Nessuna modifica alla GUI v14, ai prezzi, alle ricette, allo schema SQLite 5 o ai percorsi di salvataggio. Prossimo: F1-D05e consolidamento e stress; poi E4a benchmark, E4b progressione quasi esponenziale e Zecca 10 addetti/unità.
+- [Specifica](docs/design/F1_D05D4B2_RC56_FLUSSI_ETA.md) · [Test](docs/validation/F1_D05D4B2_RC56_TEST_PLAN.md) · [ADR 0066](docs/adr/0066-flussi-v15-misurati-dal-clock-e-eta-locale.md).
+
+# RC55 / F1-D05d.4b.1-fix — 5 novembre 2026 — Correzione compilazione Desktop v15
+
+- **Segnalazione reale Windows RC54:** `SimRisorse.Desktop` non compilava per **2 errori CS0103** in `V15PreviewViewModel.cs` (righe 382 e 399): `GameSaveException` non risolto. Nessun esito xUnit completo RC54 disponibile, poiché la build si è interrotta.
+- **Causa e fix:** mancava `using SimRisorse.Application.Persistence;`, namespace pubblico in cui è definita `GameSaveException`. Aggiunto l'import, già utilizzato da `V14PreviewViewModel` e dagli store SQLite.
+- Nessuna modifica a catch, persistenza, sessione, XAML, motore, test o salvataggi. Il test `CorruptV15CheckpointBlocksAutosaveInsteadOfBeingReplaced` rimane la regressione esistente sul percorso di errore.
+- **0 test aggiunti; 713 attesi.** Test e compilazione RC55 non eseguiti nell'ambiente di consegna senza SDK .NET 10. RC53 rimane l'ultimo checkpoint verde (**705/705**). Ripetere `./validate.cmd` su Windows.
+- [Piano RC55](docs/validation/F1_D05D4B1_RC55_FIX_BUILD_TEST_PLAN.md) · [Stato](docs/CURRENT_STATE.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md) · [ADR 0065, errata](docs/adr/0065-gui-v15-opt-in-e-salvataggio-isolato.md).
+
+# RC54 / F1-D05d.4b.1 — 5 novembre 2026 — GUI v15 opt-in (candidata)
+
+- **RC53 validata dall'utente: 705 test superati.** Nuova opzione `--v15` con slot separato `experiments/civil-growth-v15.sqlite3`. Modalità v14 classica resta default.
+- Nuove `V15PreviewViewModel` / `V15PreviewWindow`: Core v15 collegato ad Avalonia (clock, Edifici +1/+5, personale, avanzamento tier, Scuola/Matite/ricercatori, ricerca, esercito, salvataggio/caricamento, nuova colonia con conferma). Layout pixel art storico, 5 schede e **Risorse a 7 colonne**; costruzione non mostrata con prerequisiti bloccati.
+- Aggiunti 11 sprite 8×8 per siti e risorse intermedi. Proiezione Risorse senza doppio conteggio; **flussi lordi e ETA ancora «—», da realizzare in 4b.2**. Nessun cambio a v14 UI, schema SQLite o economy E4b.
+- +8 test Desktop (`V15DesktopIntegrationTests`), totale **713 attesi**; non è stato possibile eseguire .NET 10 qui. Controllare compilazione, test e QA manuale sotto Windows.
+- [Specifica](docs/design/F1_D05D4B1_RC54_GUI_V15.md) · [Test](docs/validation/F1_D05D4B1_RC54_TEST_PLAN.md) · [ADR 0065](docs/adr/0065-gui-v15-opt-in-e-salvataggio-isolato.md).
+
+# RC53 / F1-D05d.4a-fix — 5 novembre 2026 — Correzione degli 8 errori RC52 (candidata)
+
+- **Evidenza reale RC52:** Windows .NET 10 ha eseguito **703 test: 695 riusciti, 8 falliti, 0 ignorati**; suite Desktop riuscita. Il wrapper `validate.ps1` ha restituito exit code 1 per i test falliti, non sono riportati errori C# dal compilatore.
+- **5 fixture difettose** (4 Application, 1 Infrastructure) facevano risultare `fisher`, `farm` e `well` assenti perché modificavano `OtherBuildings` anziché `ProductiveFamilies`; corretto anche il controllo dell'assenza del vecchio `food-store` e il prerequisito del Deposito.
+- **1 fixture di personale non valida all'origine:** gli addetti Hunter erano già più delle persone disponibili. Il test ora costruisce uno stato valido che satura il budget e verifica il rifiuto di un ulteriore lavoratore.
+- **2 fallimenti condivisi di validazione**: il controllo dello stock v15 respingeva Pesce/Pane prodotti nella città e non ancora consegnati al Deposito. Ammessi i due inventari fisici (città e raw del Deposito); Cibo pronto resta **solo nel Deposito** e Bovini/Selvaggina/Carne/Frutta/Verdura restano nei rispettivi comparti.
+- Il vecchio test SQLite che vietava anche il Pesce in città ora controlla correttamente il **Cibo pronto**. **+2 test nuovi**: somma risorse fra contenitori e round-trip SQLite al millesimo. **705 attesi, non ancora validati su Windows**.
+- Nessun cambiamento alla GUI v14, ricette, coefficienti economici, schema SQLite generation 5 o sessione giocabile. [Rapporto](docs/design/F1_D05D4A_RC53_FIX_REGRESSIONI.md) · [Piano test](docs/validation/F1_D05D4A_RC53_REGRESSIONI_TEST_PLAN.md) · [ADR 0064](docs/adr/0064-ingredienti-in-transito-citta-deposito-e-fixture-produttive.md).
+
+# RC52 / F1-D05d.4a — 5 novembre 2026 — Catalogo e comandi cittadini v15 (candidata)
+
+- `V15FoodIndustryCampaignSession` ora espone comandi headless di costruzione civile, produttori Base/Grande/Avanzato, lavoratori, Scuola, Matite, ricercatori, ricerca e militari, senza mai avviare il vecchio clock. La popolazione è condivisa con i sei siti alimentari.
+- La **Scuola v15** richiede Casa piccola e **nuovo Deposito**; iscrizioni e rimborsi addebitano esclusivamente `Depot.ReadyFood`, con capienza fisica verificata. Matite e punti ricerca rimangono nella città; nessun doppio Cibo.
+- `V15CampaignCatalogProjection.CityCatalog` produce voci edificio con tier diretti e risorse aggregate fra città, animali, transito e Deposito; `food-store` è escluso da catalogo, costruzione e personale v15 e ritirabile con comando esplicito. Rimane lo slot storico nel checkpoint interno e nel tree legacy.
+- `V15CityStorage.Calculate` centralizza le capacità città e risolve gli stessi valori nel clock, nei rimborsi Scuola e nella proiezione. Il salvataggio sperimentale resta SQLite generation 5; **GUI v14 e salvataggio personale invariati**.
+- Aggiunti **20 nuovi test `[Fact]`** (18 Application + 2 Infrastructure), **non eseguiti**. RC47 620 confermati; RC48 +11, RC49 +17, RC50 +19, RC51 +16, RC52 +20: **703 indicativi**. L'SDK .NET 10 non è disponibile qui.
+- Documentazione: [specifica](docs/design/F1_D05D4A_RC52_COMANDI_CATALOGO_V15.md), [test](docs/validation/F1_D05D4A_RC52_TEST_PLAN.md), [ADR 0063](docs/adr/0063-comandi-v15-cibo-esclusivo-e-catalogo-di-presentazione.md), [stato](docs/CURRENT_STATE.md), [roadmap](docs/ROADMAP.md), [handoff](docs/NEW_CHAT_HANDOFF.md).
+
+# RC51 / F1-D05d.3b — 5 novembre 2026 — Clock unico alimentare v15 (candidata)
+
+- Nuovo `V15UnifiedCampaignClock.Plan`: produzione dei vecchi edifici (solo `food-store` escluso), nuove filiere e unico Deposito produttore di Cibo, pasti atomici Pane/Cibo, crescita, addestramento individuale e Scuola/ricerca nello **stesso secondo di gioco**. Il commit avviene solo dopo validazione di tutto il checkpoint.
+- `V15FoodIndustryCampaignSession` acquisisce `Pause`, `Resume`, `Advance`, limite 24h e accumulo dei millisecondi. `ProductionPlanner.Plan` aggiunge una esclusione **opzionale** dei produttori, senza modificare il clock v14 storico. `StepFood` resta seam diagnostico, non da invocare insieme a `Advance`.
+- **16 nuovi test `[Fact]`** (14 Application + 2 Infrastructure) su doppia produzione, razioni, Pane avanzato, crescita, Scuola, formazione individuale, tick frazionari, continuità dei salvataggi SQLite. RC47 620 confermati; RC48 +11, RC49 +17, RC50 +19, RC51 +16 **non ancora eseguiti**: **683 test indicativi**. SDK .NET 10 non disponibile in questo ambiente.
+- SQLite v15 `user_version=5` **invariato**. Nessun file Avalonia/GUI v14 modificato; `food-store` storico compare ancora nel checkpoint/catalogo ed è inattivo **solo** nel clock v15. La UI v15 non è ancora integrata. Nessuna modifica E4b/Zecca.
+- Documenti aggiornati: [specifica](docs/design/F1_D05D3B_RC51_CLOCK_UNIFICATO.md), [test](docs/validation/F1_D05D3B_RC51_TEST_PLAN.md), [ADR 0062](docs/adr/0062-clock-unico-v15-e-produttore-cibo-esclusivo.md), [stato](docs/CURRENT_STATE.md), [roadmap](docs/ROADMAP.md), [handoff](docs/NEW_CHAT_HANDOFF.md).
+
+# RC50 / F1-D05d.3a — 5 novembre 2026 — Catalogo edifici alimentari e personale (candidata)
+
+- **Nuovi componenti Core**, senza alterare codice precedente: `FoodIndustryConstructionCatalog` con Stalla, Cacciatore, Macellaio, Orto, Frutteto, Deposito direttamente costruibili, prerequisiti e costi progressivi al 15% candidati. 1 posto per edificio base, capacità derivate dai conteggi (Bovini/Selvaggina, carne/frutta/verdura in transito, materie prime e Cibo pronto). Un solo `food-depot` nel nuovo catalogo, non il legacy `food-store`.
+- `V15FoodIndustryCampaignSession`: `CheckBuild`, `Build`, assegnazione/rilascio lavoratori con budget condiviso per tutte le occupazioni, `Capacities`, `StepFood` esplicito con capienze dei veri edifici. Azioni atomiche, nessun acquisto o staffing parziale; `Snapshot` compatibile con SQLite generation 5 RC49.
+- **19 nuovi test `[Fact]`** (17 Application, 2 Infrastructure) su catalogo, acquisti, costi, staff, capacità, due tick e persistenza. RC47 620 confermati; RC48 +11, RC49 +17, RC50 +19 **non eseguiti**: 667 indicativi. SDK .NET 10 non disponibile; nessun test/build RC50 dichiarato passato.
+- **Nessuna modifica al gioco v14 o XAML/GUI**. Il `food-store` storico esiste ancora: serve F1-D05d.3b per unificare clock, crescita e produzione del Cibo prima dell'attivazione della nuova GUI. Nessuna modifica a Zecca o coefficiente E4b.
+- Documentazione: [Specifica RC50](docs/design/F1_D05D3A_RC50_COSTRUZIONI_FILIERA.md), [test plan](docs/validation/F1_D05D3A_RC50_TEST_PLAN.md), [ADR 0061](docs/adr/0061-edifici-alimentari-diretti-e-capacita-derivate.md), [stato](docs/CURRENT_STATE.md), [roadmap](docs/ROADMAP.md), [handoff](docs/NEW_CHAT_HANDOFF.md). Compatibilità vecchi database di sviluppo **non obbligatoria**.
+
+---
+
+## RC49 — F1-D05d.2: checkpoint integrale della filiera alimentare (candidata, 05/11/2026)
+
+- **Nuova direttiva dell'utente:** in sviluppo non si richiede compatibilità con vecchi database; i salvataggi sperimentali RC46–RC48 (`user_version=4`) non sono più supportati dal nuovo store alimentare. Nessuna migrazione obbligatoria. **La GUI e il suo database v14 rimangono intatti.** [ADR 0060](docs/adr/0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md).
+- Aggiunto `FoodIndustryCampaignState`: stock Bovini/Selvaggina e prodotti in transito separati, sei edifici alimentari con lavoratori (Stalla, Cacciatore, Macellaio, Orto, Frutteto, Deposito), posti derivati dai conteggi e budget di popolazione unico con industria, scuola e militari esistenti.
+- Evoluto `V15FoodCampaignCheckpoint` e `V15SqliteFoodSaveStore`: **schema SQLite generation 5**, tre nuove tabelle STRICT (`food_industry_site`, `food_animals_stock`, `food_transit_stock`) e 16 tabelle totali; validazione campagna completa, staging/round-trip e backup del precedente checkpoint valido.
+- Aggiunto `V15FoodCampaignTicks.Plan`: ponte puro di simulazione che riproduce un tick alimentare e aggiorna lo snapshot, **senza avanzare il clock storico**. Round-trip con transito di materiali non consegnabili verificato a livello di test scritto, ma non ancora eseguito.
+- **17 test `[Fact]` nuovi (12 Infrastructure + 5 Core).** Ultimo gate RC47 **620 confermati** dall'utente, RC48 631 e RC49 **648 attesi**, nessuna compilazione/xUnit .NET 10 eseguita qui. Non vengono attivati cataloghi, costruzione o GUI; questa è la preparazione alla D05d.3.
+- [Contratto](docs/design/F1_D05D2_RC49_CHECKPOINT_FILIERA_SQLITE5.md) · [Piano test](docs/validation/F1_D05D2_RC49_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/NEW_CHAT_HANDOFF.md).
+
+## RC48 — F1-D05d.1: coordinatore unico delle filiere alimentari (candidata, 05/11/2026)
+
+- **RC47 confermata dall'utente: 620 test passati.** Lo store v15 e la migrazione copy-on-write di RC46/RC47 risultano validati cumulativamente, restando isolati dal gameplay.
+- Aggiunto **`FoodIndustryTickPlanner` nel Core**, senza cambiare alcun file C# preesistente: un passo puro per Stalla, Cacciatore, Macellaio, Orto, Frutteto e Deposito, con ordine di consumo dell'Acqua, animali disponibili solo dal passo successivo, trasferimento capiente degli ingredienti e razioni Cibo/Pane atomiche.
+- Inventari separati `City`, `Animals`, `Transit`, `Depot` e preflight di personale su posti e popolazione realmente libera. Bovini/Selvaggina e scorte intermedie non finiscono nell'inventario cittadino storico e non vengono scartati per saturazione.
+- **11 nuovi test Core; RC48: 631 cumulativi attesi, non eseguiti in questo ambiente senza SDK .NET 10.** Nessun cambio a v13, v14, UI, SQLite, costi o tecnologie. Questa è la prima tranche di D05d, **non una versione giocabile della nuova economia**.
+- Prima dello switch servono una persistente estensione versionata degli stock intermedi e delle cinque strutture, una sessione integrata, un backup/rollback di attivazione e gli audit GUI. **F1-D05d.2–d.4** sono i prossimi passi; F1-D05e/E4a/E4b mantengono l'ordine deliberato.
+- [Specifica](docs/design/F1_D05D1_RC48_COORDINAMENTO_FILIERA.md) · [Piano test](docs/validation/F1_D05D1_RC48_TEST_PLAN.md) · [ADR 0059](docs/adr/0059-confini-produzione-alimentare-e-proprieta-stock.md) · [Roadmap](docs/ROADMAP.md).
+
+
+## RC47 — F1-D05c: migrazione v14→v15 copy-on-write (candidata, 05/11/2026)
+
+- Aggiunto `V14ToV15FoodMigrator` in Infrastructure, senza collegamento al gioco: preflight read-only, SHA-256 del file principale, doppia validazione logica della v14, separazione scorte al millesimo e diagnostica sovracapacità.
+- La nuova v15 viene prima salvata su un **percorso di staging nella stessa directory**, ricaricata e confrontata integralmente (risorse, lavoratori, edifici, scuola, militari, progressi, ricerca, tier e popolazione). Solo successivamente viene promossa con `File.Move` senza overwrite.
+- Destinazione già identica: richiesta idempotente senza scrittura. Destinazione incompatibile/evoluta: rifiuto senza perdita; v14 originale sempre conservata per rollback. Non è ancora un cambio di salvataggio attivo e non dispone di switch o backup aggiuntivo dell'originale.
+- **11 nuovi test Infrastructure**; RC46 609 attesi + 11 = **620 test RC47 attesi**, senza SDK .NET 10 per l'esecuzione locale. **Ultimo checkpoint Windows confermato RC45: 600/600**. GUI, gioco, ruleset e costi invariati.
+- [Contratto F1-D05c](docs/design/F1_D05C_RC47_MIGRAZIONE_COPY_ON_WRITE.md) · [Test RC47](docs/validation/F1_D05C_RC47_TEST_PLAN.md) · [ADR 0058](docs/adr/0058-migrazione-v14-v15-senza-sovrascrittura.md) · [Roadmap](docs/ROADMAP.md).
+
+## RC46 — F1-D05b: formato SQLite v15 alimentare separato (candidato)
+
+- Creato `V15FoodCampaignCheckpoint` con inventario cittadino senza alimenti e deposito con scorte grezze + Cibo pronto; validazione della proprietà esclusiva e conservazione delle scorte storiche anche oltre le nuove capienze.
+- Aggiunto `V15SqliteFoodSaveStore` completamente separato dai writer v13 e v14: schema SQLite v4, regole `civil-growth-15`, 13 tabelle STRICT, salvataggio temporaneo con validazione, backup consistente e protezione contro sovrascrittura di file di generazione diversa.
+- Aggiunti **9 test di regressione** su round-trip, precisione, compatibilità v14, corruzione, versioni future, backup, scorte sovracapienti.
+- GUI, motore economico, filiere attive, file v14 e percorsi live invariati; nessuna migrazione automatica. Nessun coefficiente E4b modificato.
+- **Validazione:** RC45 600/600 confermati; RC46 **609 test attesi, non eseguiti su Windows**. DDL controllato con SQLite; documentazione, handoff e ADR 0057 aggiornati.
+
+# RC45-DOC01 — 4 novembre 2026 · Riordino documentale e strategia economica (solo documenti)
+
+- **Gate verificato:** RC45 confermata dall'utente con **600 test superati**. Nessun nuovo test applicativo o modifica codice in RC45-DOC01.
+- **Decisione di game design:** futura progressione dei costi per epoche/famiglie di ordine quasi esponenziale; prima Zecca oggi troppo economica (210 Legno lavorato + 160 Pietra vs 30 + 10 del Tagliapietre). Intervallo di investimento guida equivalente a **100–1.000 Tagliapietre base**, non prezzo approvato.
+- **Soglie per lavoratori:** Zecca da almeno 10 addetti per modulo produttivo; due Zecche operative con 20. Il modello tier 1/3/10 posti va riprogettato per le famiglie interessate, non alterato senza migrazione.
+- **Nessuna nuova economia attivata:** prima F1-D05b/c/d/e (v15 separata, migrazione e filiere alimentari), poi benchmark E4a, decisione dei coefficienti E4b, E4c e navale.
+- Creati [specifica economica](docs/design/E4B_P00_COSTI_PROGRESSIVI_E_SQUADRE_MINIME.md), [matrice di test](docs/validation/E4B_P00_COSTI_SQUADRE_TEST_MATRIX.md), [ADR 0056](docs/adr/0056-progressione-tardiva-e-squadre-minime-proposta.md) e [registro pulizia](docs/history/DOCUMENTATION_CLEANUP_RC45_DOC01.md).
+- Riscritti i documenti operativi per eliminare gli aggiornamenti di versione concatenati; eliminati solo vecchi doppioni e audit senza riferimenti attivi, lasciando integra la cronologia degli ADR e del changelog.
+
+---
+
+# RC45 / F1-D05a-F1 — Fix test macellazione alternativa (2026-11-04)
+
+- **Evidenza RC44:** 600 test eseguiti, **599 passati e 1 fallito** (`UnifiedFoodSupplyTests.CattleAndGameAreNotFoodUntilButcheredAndDepotProcessed`): la vecchia fixture produceva legittimamente 6 Carne (2 Bovini × 3), mentre si attendeva 4.
+- **Corretto soltanto il test**: una ricetta Bovini ora consuma 2 capi per 3 Carne e la ricetta Selvaggina consuma 1 capo per 1 Carne. Il test usa la scorta del tick precedente e verifica esplicitamente l'esecuzione di entrambe le ricette e l'assenza di animali residui.
+- Nessun cambiamento a produzione reale, salvataggi, GUI, cataloghi o sistema di backup; **600 test attesi su RC45**, ancora da eseguire su Windows. Ultima suite integralmente confermata RC42: 577 test.
+- [Rapporto](docs/design/F1_D05A_RC45_FIX_SCENARIO_CARNE.md) · [Test Windows](docs/validation/F1_D05A_RC45_TEST_PLAN.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+# RC44 / F1-D05a — Piano reversibile di pre-migrazione (2026-11-04)
+
+- **RC42 validata: 577 test verdi. RC43 non ancora validata: 590 attesi. RC44: 10 test aggiunti, 600 attesi.** Nessun test Windows eseguito per RC44 in questo ambiente.
+- `V14FoodStockMigration` sposta logicamente `food` nel Cibo pronto e gli ingredienti nel deposito, con ricostruzione esatta dell'inventario precedente e diagnosi delle capacità insufficienti. Nessuna conversione o perdita di risorse.
+- Nuovo `V14SqliteSaveStore.PreviewFoodMigration`: legge un checkpoint v14 valido senza modificarlo e senza creare backup. Aggiunti 8 test Application e 2 Infrastructure (byte SQLite invariati e checkpoint mancante).
+- **V14 giocabile immutata**: nessun nuovo formato/slot, nuovo tick o filiera attiva. F1-D05b nuovo file SQLite versionato, D05c migrazione copy-on-write, D05d attivazione simultanea cataloghi/tick/UI. E4b sospesa.
+- [Rapporto](docs/design/F1_D05A_RC44_PREMIGRAZIONE_SCORTE.md) · [Piano Windows](docs/validation/F1_D05A_RC44_TEST_PLAN.md) · [ADR 0055](docs/adr/0055-preflight-migrazione-alimentare-immutabile.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
+# RC43 / F1-D04 — Confine unificato del Deposito alimentare (2026-11-04)
+
+- **RC42 validata dall'utente: 577 test superati**, Salva funzionante anche dopo i 100 backup storici.
+- Aggiunto `src/SimRisorse.Core/Food/UnifiedFoodSupply.cs`: policy completa dei 5 alimenti, passaggio dalla scorta grezza al deposito con capacità, lavorazione per personale e consumo atomico Cibo+Pane.
+- Il Pane protetto non diventa Cibo generico; niente scorte duplicate, perdita materiale o conversione senza lavoratori; nuove prove integrate anche con Orto/Frutteto e Macellaio.
+- **13 test Core aggiunti; RC43: 590 test attesi, non eseguiti** in questo ambiente. Report, ADR 0054, roadmap, stato e handoff aggiornati.
+- **Nessuna attivazione nel gameplay**: `V14CampaignSession`, clock, popolazione, cataloghi attivi, GUI e SQLite invariati; F1-D05 richiede migrazione sicura e collaudo end-to-end.
+- [Rapporto F1-D04](docs/design/F1_D04_RC43_DEPOSITO_UNIFICATO.md) · [Piano test](docs/validation/F1_D04_RC43_TEST_PLAN.md) · [ADR](docs/adr/0054-confine-unico-del-deposito-e-razioni-atomiche.md) · [Roadmap](docs/ROADMAP.md).
+
+---
+
 # RC42 / F1-D03 — Ortofrutta e correzione urgente backup v14 (2026-11-04)
 
 - **RC41 validata dall'utente: 563/563 test superati**. **RC42 candidata: 577 test attesi**, 14 nuovi, esecuzione Windows pendente.

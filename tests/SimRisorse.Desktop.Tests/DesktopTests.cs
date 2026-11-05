@@ -739,8 +739,9 @@ public sealed class DesktopTests
         var legacy = DesktopOptions.Parse(["--legacy-v13"]);
         var historical = DesktopOptions.Parse(["--scenario", "economy-foundation"]);
         Assert.Equal("civil-growth", current.Scenario.Id);
-        Assert.True(current.UseV14);
-        Assert.EndsWith("civil-growth-v14.sqlite3", current.SavePath);
+        Assert.True(current.UseV15);
+        Assert.False(current.UseV14);
+        Assert.EndsWith("civil-growth-v15.sqlite3", current.SavePath);
         Assert.EndsWith("civil-growth.sqlite3", legacy.SavePath);
         Assert.EndsWith("game.sqlite3", historical.SavePath);
         Assert.NotEqual(current.SavePath, historical.SavePath);

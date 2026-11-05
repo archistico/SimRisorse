@@ -1,3 +1,35 @@
+**ADR corrente RC71:** [0079 — Planner v15 senza slot `food-store`](0079-planner-v15-senza-slot-produttore-ritirato.md). RC71 candidata (822 test attesi), RC63 ultimo checkpoint validato (771). Nessuna modifica alle regole v14, alla GUI e a SQLite generation 6. [Roadmap](../ROADMAP.md).
+
+**ADR corrente RC70:** [0078 — Verifica semantica prima della promozione SQLite v15](0078-verifica-semantica-salvataggio-v15.md). RC70 candidata, **818 test attesi**; RC63 ultimo checkpoint validato con 771. [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md).
+
+**ADR corrente RC69:** [0077 — Radice civica v15 nativa, SQLite generation 6 invariata](0077-radice-civica-v15-nativa.md). RC69 candidata con **814 test attesi**; RC63 ultimo checkpoint validato con 771. [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md).
+
+## RC66 — [ADR 0074: validazione civica v15 nativa](0074-validatore-civico-v15-senza-proiezione-v14.md)
+
+**ADR corrente RC62:** [0070 — GUI v15 predefinita con filtro delle filiere alimentari](0070-modalita-v15-predefinita-filtro-filiere.md). Supera la sola scelta opt-in dell'[ADR 0065](0065-gui-v15-opt-in-e-salvataggio-isolato.md), conserva isolamento salvataggi. [ADR 0069](0069-generazione6-senza-famiglia-produttiva-legacy.md) resta il contratto dello schema SQLite 6. RC61 760/761 test su Windows; RC62 762 attesi, da verificare. [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md).
+
+---
+
+**RC59:** [ADR 0068 — Stress combinato prima della rottura strutturale v15](0068-stress-combinato-filiere-e-checkpoint-legacy.md).
+
+> **ADR corrente RC57: [0067 — Riconciliazione fisica v15 e stress opt-in](0067-riconciliazione-fisica-v15-e-stress-separato.md).** RC56 validata con 731 test, RC57 candidata con 743 attesi. [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md).
+
+---
+
+> **ADR corrente RC56: [0066 — Flussi reali v15, trasferimenti non contati e ETA locale](0066-flussi-v15-misurati-dal-clock-e-eta-locale.md).** RC55 validata con 713 test, RC56 candidata con 731 attesi. [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md).
+
+> **ADR corrente: [0065 — GUI v15 opt-in e salvataggi separati](0065-gui-v15-opt-in-e-salvataggio-isolato.md).** RC54 candidata, RC53 validata con 705 test. I precedenti ADR rimangono validi come storia delle scelte.
+
+> **Indice corrente RC53:** [ADR 0064 — Pesce e Pane possono transitare tra città e Deposito](0064-ingredienti-in-transito-citta-deposito-e-fixture-produttive.md); il Cibo pronto resta esclusivo del Deposito. [ADR 0063](0063-comandi-v15-cibo-esclusivo-e-catalogo-di-presentazione.md) resta valido per i comandi v15. RC52 695/703 test, RC53 705 attesi (non eseguiti).
+
+> **Indice corrente RC52:** [ADR 0063 — Comandi e Cibo esclusivo del Deposito v15](0063-comandi-v15-cibo-esclusivo-e-catalogo-di-presentazione.md) · [ADR 0062 — Clock unificato](0062-clock-unico-v15-e-produttore-cibo-esclusivo.md) · [ADR 0060 — DB sperimentali](0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md). [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md). I riferimenti precedenti sono storici.
+
+> **Indice corrente RC51:** [ADR 0062 — Orologio unico e produttore di Cibo esclusivo v15](0062-clock-unico-v15-e-produttore-cibo-esclusivo.md): implementato headless, test .NET pendenti; [ADR 0061 — Edifici alimentari diretti](0061-edifici-alimentari-diretti-e-capacita-derivate.md); [ADR 0060 — Nessuna compatibilità obbligatoria dei vecchi DB](0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md). [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md). Le versioni più vecchie riportate sotto sono archivio.
+
+> **Indice corrente RC50:** [ADR 0061 — Catalogo alimentare direttamente costruibile e capacità derivate](0061-edifici-alimentari-diretti-e-capacita-derivate.md), implementazione headless D05d.3a; [ADR 0060 — Libertà di cambiare gli schemi di sviluppo](0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md). [Stato](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md). Le note storiche sottostanti non prevalgono sullo stato RC50.
+
+> **Indice corrente RC48:** [ADR 0059 — Confini delle filiere e proprietà esclusiva degli stock](0059-confini-produzione-alimentare-e-proprieta-stock.md) — tick isolato, schema di transito e nuove strutture da completare; [ADR 0058 — Migrazione v14→v15 senza overwrite](0058-migrazione-v14-v15-senza-sovrascrittura.md) — servizio isolato, verifica completa e origine intatta; [ADR 0057 — SQLite v15 autonomo](0057-sqlite-v15-separato-per-deposito-alimentare.md).  **Storico RC45-DOC01:** [ADR 0056 — progressione quasi esponenziale e squadre minime](0056-progressione-tardiva-e-squadre-minime-proposta.md) — principio approvato, coefficienti e implementazione da definire. [Stato corrente](../CURRENT_STATE.md) · [Roadmap](../ROADMAP.md). Le annotazioni storiche riportate sotto non rappresentano il gate corrente.
+
 # ADR corrente — RC40 / F1-D01
 
 [ADR 0050 — Deposito alimentare unificato e filiere alternative](0050-filiera-alimentare-unificata-deposito.md). Direzione approvata; solo nucleo Core isolato e test in RC40, **non gameplay attivo**. RC38 541 test confermati; RC39 545 e RC40 552 attesi, non eseguiti.
@@ -93,3 +125,7 @@ Una decisione accettata non si riscrive per nascondere un cambio di direzione. S
 - [ADR 0038 — Roadmap in sei fasi e tooltip capacità reale](0038-roadmap-gate-gui-e-audit-matite.md) — **Accettato**, RC13 con test Windows pendenti.
 
 - [ADR 0039 — Protezione checkpoint e autosalvataggio v14](0039-protezione-checkpoint-e-autosalvataggio-v14.md) — **Accettato** come contratto sicurezza, RC17 da validare Windows.
+
+- [ADR 0057 — SQLite v15 alimentare separato](0057-sqlite-v15-separato-per-deposito-alimentare.md): schema, scorte non duplicate e protezione dei checkpoint v14; codice candidato RC46.
+
+- [ADR 0060 — Salvataggi di sviluppo e checkpoint completo delle filiere](0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md): **accettato**, RC49; sostituisce l’obbligo di migrare ciascun vecchio DB nelle ADR 0057–0059, conserva isolamento e integrità.

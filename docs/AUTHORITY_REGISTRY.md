@@ -1,52 +1,48 @@
-# Decisione corrente — 04/11/2026 (ADR 0042)
+> **Richiesta utente HF04:** crescita v15 fino a ×20, nuove icone Bovini/Pane/Pescatore/Tagliapietre, riepilogo Abitanti/Cibo/Legno lavorato/Pietra, pulsanti Carica/Salva senza suffisso. Questi cambiamenti sono autorizzati e aggiornano il riferimento grafico e il limite ×2 precedenti. **885/885 test verificati**; [dettagli ed evidenze](validation/RC76_HF04_ICONS_AND_GROWTH.md).
 
-La GUI v14 è approvata dall'utente come interfaccia ordinaria; avvio predefinito v14, v13 accessibile con `--legacy-v13`. Non spostare i database né migrare la v13 automaticamente. Le 44 prove P0 con screenshot non sono state raccolte e non vanno considerate superate. I parametri E4 rimangono candidati. [Dettaglio](adr/0042-promozione-v14-e-conservazione-slot.md).
+> **Storico RC76 / ADR 0084:** gli ammanchi dei benchmark e le saturazioni sono osservazioni, non diagnosi di stallo strutturale. 867 test erano attesi nella consegna originale. [Dettaglio](adr/0084-telemetria-vincoli-benchmark-v15-senza-diagnosi-automatica-stallo.md).
 
----
+> **RC75 / ADR 0083:** benchmark avanzati naturali con due politiche; il monitoraggio di costi materiali e punti ricerca non modifica i coefficienti economici. 857 test cumulativi attesi, non eseguiti. [Dettaglio](adr/0083-benchmark-industria-ricerca-v15-senza-grants.md).
 
-**Aggiornamento G1-D32 / RC17 (03/11/2026):** RC16 confermata verde dall’utente (**476 test passati**); RC17 candidata **481 attesi**. Decisione di sicurezza [ADR 0039](adr/0039-protezione-checkpoint-e-autosalvataggio-v14.md): durante «Nuova partita?» Salva/Carica disabilitati; dopo Avvia nuova nessun autosalvataggio fino al primo Salva v14 esplicito. Chiudere durante la conferma la annulla e salva la vecchia colonia. Nessun cambiamento ai coefficienti economici o ai database. **P0 grafico ancora aperto.**
+> **RC72 / ADR 0080:** gate finale F1 preparato ma non eseguito; 826 test cumulativi attesi. La GUI approvata RC63 resta canonica e deve essere verificata visivamente prima di chiudere F1. [Dettaglio](adr/0080-gate-f1-d05e-e-evidenza-riproducibile.md).
 
-# Registro decisioni attive — SimRisorse
+> **Aggiornamento tecnico RC71:** il planner v15 non richiede un `BuildingState` fittizio per `food-store` (vedere [ADR 0079](adr/0079-planner-v15-senza-slot-produttore-ritirato.md)); nessuna nuova decisione grafica o di bilanciamento. RC71 822 test attesi, RC63 ultimo gate verificato.
 
-**Aggiornamento G1-D29 / RC13 (03/11/2026):** RC12 confermata con test tutti passati dall’utente (468 attesi); roadmap concordata in **sei fasi**: gate P0 GUI, rifinitura Scuola/tecnologie, E4a audit quantitativo, E4b bilanciamento con approvazione, E4c migrazione/rollback, M5.4–M7 navale. [ADR 0038](adr/0038-roadmap-gate-gui-e-audit-matite.md). RC13 non introduce regole economiche.
+# Registro delle decisioni vigenti — 05/11/2026
 
-**AGGIORNAMENTO G1-D28 / RC12 (03/11/2026):** RC11 dichiarata verde dall'utente (**466 test attesi**, numero esatto non comunicato). RC12: ricerca a **due decimali**, pulsante «Acquista ricerca» disabilitato e grigio se saldo o prerequisiti insufficienti, verde con hover ocra solo quando acquistabile. Controllo prezzi/saldi sul valore **non arrotondato** in millipunti. **468 test attesi, non eseguiti** in questo ambiente privo di SDK .NET 10. GUI v13, core e SQLite invariati; audit visivo P0 ancora aperto. [Report RC12](design/G1_D28_RC12_ALBERO_TECNOLOGICO_PUNTI_E_ACQUISTO.md) · [Piano](validation/G1_D28_RC12_TEST_PLAN.md) · [ADR 0037](adr/0037-v14-ricerca-precisione-e-stati-acquisto.md).
+## Precedenza
 
+1. Richieste e approvazioni esplicite dell'utente più recenti.
+2. ADR accettati, con i successivi che aggiornano quelli precedenti sul medesimo punto.
+3. [Stato](CURRENT_STATE.md), [roadmap](ROADMAP.md) e [handoff](NEW_CHAT_HANDOFF.md) attuali.
+4. Codice e prove effettivamente eseguite; le versioni candidate non equivalgono a checkpoint confermati.
+5. Studi, valori dimostrativi, screenshot e note storiche.
 
-**AGGIORNAMENTO G1-D27 / RC11 (03/11/2026):** l’utente conferma **test RC10 passati (464 attesi)**, senza comunicare un conteggio dettagliato. RC11 riordina il dettaglio Edifici della sola v14 in due righe: **Costruisci | +1 | +5 | +10** e **Lavoratore | +1 | +5 | +10**; il pulsante **−1** rimane compatto accanto alla label Lavoratore per non perdere la funzione di rilascio. Aggiunti comandi atomici per assegnare 5/10 persone, con limiti di popolazione libera e posti di lavoro, stati disabled espliciti e hover già previsto. **466 test attesi** (+2 casi), non eseguiti qui per assenza dell’SDK .NET 10; audit GUI P0 ancora aperto. [Rapporto RC11](design/G1_D27_RC11_LAYOUT_COSTRUZIONE_LAVORATORI.md) · [Piano RC11](validation/G1_D27_RC11_TEST_PLAN.md) · [ADR 0036](adr/0036-v14-layout-costruzione-e-lotti-lavoratori.md).
+## Vincoli confermati
 
-
-**Aggiornamento operativo:** G1-D25 / 3 novembre 2026 (decisioni UI esplicite sull’aspetto degli edifici bloccati, sulle righe pulsanti e sulla Scuola: [ADR 0034](adr/0034-v14-stati-edifici-e-layout-azioni.md)). **Prevalenza:** esplicite richieste del giocatore e ADR accettati > codice e documentazione di rilascio correnti > analisi/proposte > rapporti storici. Il testo storico precedente è salvato in [`history/operational/AUTHORITY_REGISTRY_PRIMA_DEL_RIORDINO_G1_D19.md`](history/operational/AUTHORITY_REGISTRY_PRIMA_DEL_RIORDINO_G1_D19.md).
-
-**Nuove decisioni RC9:** rimuovere i pulsanti «Esci senza salvare»; mostrare il progresso della Scuola come l'Esercito; formazione richiede **almeno 2 Matite per studente**, ottenute da Legno e Carbone. Il lotto manuale di 4 Matite da 1 Legno lavorato + 1 Carbone e la capienza supplementare della Scuola sono **valori candidati**. [ADR 0035](adr/0035-scuola-formazione-matite-v14.md).
-
-## Requisiti confermati
-
-1. **GUI:** la grafica e le funzioni della **v13 non si ridisegnano né riducono** nella v14. Menu laterale **Edifici, Risorse, Esercito, Scuola, Albero tecnologico**. Le nuove pagine si aggiungono; la tabella Risorse originale a sette colonne, l'Esercito, la crescita, i dettagli e la filiera Pane rimangono completi. **Non introdurre ComboBox di livello** nei dettagli. Vedi [ADR 0032](adr/0032-gui-v14-identica-navigazione-classica-tier-come-edifici.md), [ADR 0033](adr/0033-preservazione-funzionale-gui-v13-v14.md).
-2. **Edifici a tre livelli:** Base (1 lavoratore), Grande (3), Avanzato (10), **ognuno direttamente costruibile come edificio distinto**; deve restare possibile potenziare edifici esistenti con un comando separato. Costo di costruzione crescente a ogni nuovo acquisto della famiglia; upgrade non deve generare acquisti fittizi. Le Case e il Magazzino conservano funzioni e categorie proprie.
-3. **Stati di costruzione:** prerequisiti mancanti ⇒ edificio **grigio in elenco ma selezionabile**, niente pulsante Costruisci, ma requisiti leggibili; sbloccato senza risorse sufficienti ⇒ pulsante disabilitato con indicazioni; pulsanti +1/+5/+10 coerenti e prezzo cumulativo. Hover non sposta elementi; disabilitato diverso da hover. Nella RC11 la prima riga è **Costruisci | +1 | +5 | +10**; la seconda è **Lavoratore (−1) | +1 | +5 | +10**.
-4. **Ricerca:** la Scuola si costruisce dalla scheda Edifici: nella scheda Scuola sono presenti solo azioni studenti/ricercatori, senza pulsante Costruisci. La Scuola forma ricercatori tra gli abitanti esistenti; **i punti ricerca si accumulano liberamente e vengono spesi solo per decisione del giocatore**. Tecnologie prive di beneficio reale non acquistabili.
-5. **Capacità e popolazione:** Municipio unico iniziale; magazzino con incremento **uniforme per ogni risorsa**, incluso Pane; edifici produttivi contribuiscono allo stoccaggio delle proprie uscite. Capacità leggibile nel dettaglio edificio e tooltip della tabella Risorse; residenti mai duplicati. La costruzione di una Casa accelera la crescita come previsto dallo scenario.
-6. **Militari v13:** una recluta per posto Caserma, 30 s individuali, 5 Spade, soldati che occupano popolazione e consumano razioni, ordini e annullamento. Non semplificare la scheda Esercito nella v14.
-7. **Salvataggi:** preservare la partita `civil-growth-13` (SQLite v2); la sperimentale v14 usa SQLite v3 e percorso separato; migrazione solo esplicita con backup e rollback. Salvare/ricaricare deve preservare la simulazione.
-8. **Metodo di lavoro:** consegna ZIP integrale a ogni incremento, roadmap/stato/test/ADR aggiornati, root del progetto pulita, preservare storico; non presentare un semplice passaggio xUnit come approvazione della UX.
-
-## Implementazioni candidate, NON decisioni economiche definitive
-
-| Tema | Parametro oggi nel prototipo | Stato |
+| Area | Regola | Riferimento |
 | --- | --- | --- |
-| Crescita costi per nuova costruzione | **15%** per famiglia, con arrotondamento | Candidato da bilanciare |
-| Moltiplicatore prezzi livelli | Base 1; Grande 2,6; Avanzato 6,5 | Candidato da approvare |
-| Capacità locali di output | +50 / +150 / +500 per produttore | Candidato della nuova economia |
-| Scuola | 120 Legno lavorato +80 Pietra, 120 s/formazione, 10 Cibo, 1 posto corso/2 posti ricercatori | Candidato da approvare |
-| Matite v14 | **2 per studente confermate**; lotto manuale da 4 con 1 Legno lavorato + 1 Carbone; Scuola +50 capienza | Coefficiente del lotto e capienza candidati |
-| Produzione di ricerca | 0,1 punto al secondo per ricercatore attivo | Candidato da approvare |
-| Costi sblocco tecnologie | 8 tecnologie produttive prototipo | Candidato da approvare |
-| Logistica / Navigazione | Ricerche differite, senza effetto acquistabile | Restano NON acquistabili |
-| Regole navali e conquista | Proposte M5.4–M5.7 | Non ancora approvate o implementate |
+| GUI | Interfaccia v14 è **riferimento canonico** della v15, non semplificarla | [ADR 0071](adr/0071-gui-v14-contratto-canonico-v15.md) |
+| Edifici | Bloccati in grigio consultabili, dettaglio con icone, Base/Grande/Avanzato come edifici autonomi, pulsanti e layout validati | [PIXEL_ART_UI](PIXEL_ART_UI.md) |
+| Risorse | Sette colonne, ordine alfabetico, numeri a destra, quantità arrotondate, tooltip capienza, saldo ed ETA | [ADR 0066](adr/0066-flussi-v15-misurati-dal-clock-e-eta-locale.md) |
+| Popolazione | Crescita visibile sotto il menu; nessun doppio conteggio di lavoratori, studenti o militari | [ADR 0071](adr/0071-gui-v14-contratto-canonico-v15.md) |
+| Alimentazione | Deposito esclusivo per Cibo pronto; cinque ingredienti, Pane avanzato, scorte con proprietari distinti | [ADR 0063](adr/0063-comandi-v15-cibo-esclusivo-e-catalogo-di-presentazione.md) |
+| Partite | DB personale v14 distinto e preservato; DB sperimentali v15 possono rompere compatibilità | [ADR 0060](adr/0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md), [ADR 0069](adr/0069-generazione6-senza-famiglia-produttiva-legacy.md) |
+| Ricerca | Scuola, formazione individuale, Matite, punti ricerca accumulabili e spesa volontaria | [ADR 0021](adr/0021-ricerca-saldo-libero-spesa-su-scelta.md) |
+| Sviluppo | A ogni incremento, documentazione/roadmap/handoff/test e ZIP integrale; mai dichiarare un test non eseguito come superato | [guida](DEVELOPMENT.md) |
 
-**Nota:** 1/3/10 posti e la distinzione delle righe edificio sono **requisiti confermati**; i costi, tempi e bonus sono esempi eseguibili ma richiedono un gate decisionale separato. La RC2 grafica **non è stata approvata**.
+## Direzione approvata, **numeri non ancora determinati**
 
-## Fonti operative
+- Progressione economica assai più impegnativa, approssimativamente esponenziale per era/complessità (non solo per copie acquistate). La prima Zecca va confrontata con l'investimento-base di **100–1.000 Tagliapietre**: criterio di confronto, **non prezzo già approvato**.
+- **Zecca: 10 lavoratori per unità produttiva**; due unità al pieno regime richiedono 20 addetti. Gli attuali tier con `1/3/10` posti non soddisfano il requisito: distinguere posti da moduli e squadre, verificare sul benchmark prima di fissare parametri. [Specifica E4b](design/E4B_P00_COSTI_PROGRESSIVI_E_SQUADRE_MINIME.md).
+- Costruzione navale, esplorazione distinta dalla conquista, conquista deterministica, nessuna perdita irreversibile iniziale: pianificate in M5.4–M5.7, non ancora implementate in v15.
 
-[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Handoff](HANDOFF.md) · [Dossier prezzi e ricerca](design/G1_ECONOMIA_RICERCA_CONTRATTO_QUANTITATIVO.md) · [Dossier tecnologia](design/G1_D4_ALBERO_TECNOLOGICO_E_GAMEPLAY.md).
+## Decisioni sospese
+
+Coefficienti dei prezzi; costi della prima Zecca per ogni risorsa; personale per tier; criteri temporali di progressione; ricette/effetti avanzati non specificati; risultato della rimozione del contatore storico `food-store`; strategia dettagliata per flotta/isole/vittoria. Sono da misurare o decidere negli appositi gate, **non dedurre** dagli ADR di proposta.
+
+**Stato di prova:** RC63 771/771 confermati; RC70 818 previsti, da validare. Modello nativo del checkpoint introdotto, senza modifica della GUI.
+
+- **ADR 0081**: benchmark naturale v15 separato dal benchmark v14 e dagli stress sintetici; esiti osservati, policy versione e nessun finanziamento artificiale ([testo](adr/0081-runner-naturale-v15-separato-dai-benchmark-v14.md)).
+
+- **ADR 0082:** report natural v15 interpretati solo in base a prove osservate. Timeout e blocked della policy non dimostrano softlock; costi RC73 parziali planks/stone. [Decisione](adr/0082-analisi-basata-su-evidenze-benchmark-v15.md).

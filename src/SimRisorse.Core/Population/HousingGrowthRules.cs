@@ -4,7 +4,8 @@ namespace SimRisorse.Core.Population;
 
 /// <summary>
 /// Accelerated births without fractional floating-point arithmetic: a normal second is 20 units,
-/// an additional small house adds 3 and a large house adds 6, up to 40 units per second.
+/// an additional small house adds 3 and a large house adds 6. Historical callers
+/// cap growth at 40 units per second; a newer campaign may supply a higher cap.
 /// </summary>
 public sealed record HousingGrowthRules
 {
@@ -23,11 +24,13 @@ public sealed record HousingGrowthRules
     public string SmallHouseId { get; }
     public string LargeHouseId { get; }
 
-    public int Rate(int smallHouseCount, int largeHouseCount)
+    public int Rate(int smallHouseCount, int largeHouseCount,
+        int maximumUnitsPerSecond = MaximumUnitsPerSecond)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(smallHouseCount);
         ArgumentOutOfRangeException.ThrowIfNegative(largeHouseCount);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumUnitsPerSecond, UnitsPerSecond);
         var units = UnitsPerSecond + 3L * Math.Max(0, smallHouseCount - 1) + 6L * largeHouseCount;
-        return (int)Math.Min(units, MaximumUnitsPerSecond);
+        return (int)Math.Min(units, maximumUnitsPerSecond);
     }
 }

@@ -494,7 +494,11 @@ try {
         'civil-buildings.png', 'civil-buildings-compact.png', 'civil-resources.png', 'civil-resources-compact.png',
         'civil-advanced-bread-compact.png', 'industry-buildings.png', 'industry-buildings-compact.png',
         'industry-resources.png', 'industry-resources-compact.png', 'gold-buildings.png', 'gold-buildings-compact.png',
-        'gold-resources.png', 'gold-resources-compact.png')
+        'gold-resources.png', 'gold-resources-compact.png',
+        'v15-buildings-1040.png', 'v15-buildings-filtered-1040.png',
+        'v15-buildings-1240.png', 'v15-buildings-filtered-1240.png',
+        'v15-school-1040.png', 'v15-school-1240.png',
+        'v15-military-1040.png', 'v15-military-1240.png')
     foreach ($screenshot in $screenshots) {
         $path = Join-Path $screenshotDirectory $screenshot
         if (-not (Test-Path -LiteralPath $path)) { throw "Missing render from this test run: $screenshot" }

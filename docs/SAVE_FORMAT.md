@@ -1,3 +1,34 @@
+> **RC71:** schema e policy di persistenza identici alla RC70 (SQLite generation 6). Lo slot fittizio `food-store` è stato eliminato soltanto dal planner in memoria. Nessun nuovo adattamento né migrazione SQLite. RC71 candidata, 822 test attesi.
+
+# Salvataggi — contratto operativo RC70 (05/11/2026)
+
+## Salvataggio corrente v15
+
+- Percorso predefinito: `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v15.sqlite3`.
+- **SQLite generation 6:** `PRAGMA user_version = 6`, `snapshot_version = 6`, **15 famiglie produttive** (45 righe tier Base/Grande/Avanzato); `food-store` escluso dalle famiglie persistite.
+- Scrive e legge popolazione, lavoratori, civici, tecnologie, Scuola, militari, crescita, tempi frazionari, città, scorte animali, intermedi e Deposito alimentare. Cibo pronto è proprietà esclusiva del Deposito; Pesce e Pane possono stare in città e nella zona raw come scorte fisiche distinte.
+- **RC69 non cambia lo schema:** SQLite generation 6 legge direttamente `V15CityCampaignSnapshot`, `V15ProductiveFamilySnapshot` e `V15PurchaseCounter`. Un eventuale `food-store` **vuoto** da importazione viene omesso prima della scrittura; se occupato, il salvataggio è rifiutato. `V14CampaignSnapshot` resta soltanto per importazione e diagnostica storica.
+- È consentito **interrompere la compatibilità dei DB sperimentali**: generation 5 v15 non viene convertita automaticamente. Un DB incompatibile va rifiutato senza corromperlo; a gioco chiuso, rinominare il solo DB sperimentale se si vuole iniziare una nuova partita.
+
+## Salvataggio personale v14: non toccare
+
+- Percorso distinto: `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`.
+- Apertura esplicita con `.\run-game.cmd --v14` (v15 è predefinita). **Nessuna conversione automatica o sovrascrittura** della partita personale v14.
+
+## Criteri del prossimo refactoring
+
+**RC70:** la rilettura del file SQLite temporaneo non è più un solo controllo di validità: prima del `File.Move` viene confrontato ogni campo persistito con il checkpoint canonico originario. Inventari e progressi conservano precisione al millesimo; le collezioni indicizzate sono confrontate per ID, la formazione individuale per posizione. In caso di difformità la scrittura viene rifiutata e il file precedente non viene sostituito. Le garanzie di consistenza SQLite e le copie di backup sono mantenute; questo controllo non sostituisce una prova hardware di crash-safety. `PRAGMA user_version` resta 6.
+
+Mappatura nativa introdotta in `V15SqliteFoodSaveStore` (RC69); nessuna perdita al millesimo; round-trip e ripresa frazionaria, salvataggio atomico, rifiuto di DB vecchi e corruzioni; nessuna scrittura sul percorso v14. **Cambiare `user_version` solo se cambia il contratto sul disco**, non per un refactoring puramente in memoria.
+
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [ADR 0069](adr/0069-generazione6-senza-famiglia-produttiva-legacy.md) · [ADR 0076](adr/0076-portafogli-contatori-v15-nativi.md).
+
+---
+
+## Specifica storica v14 / generazioni precedenti (riferimento, non stato della v15)
+
+Il testo seguente descrive il writer v14 e le generazioni storiche; **non prevale sul contratto v15 sopra**.
+
 # Uso ordinario v14 — RC31 (senza migrazione automatica)
 
 Dal passaggio RC31 l'avvio senza argomenti apre la GUI v14, usando il **medesimo** SQLite v3 già usato in RC9–RC30: `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`. Il nome `experiments` è conservato intenzionalmente per non far sembrare perdute le partite esistenti. La v13 conserva `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3` (SQLite v2) ed è avviabile tramite `--legacy-v13`. Non si convertono file e nessun database viene spostato. Un percorso riservato dell'altra modalità viene rifiutato. [ADR 0042](adr/0042-promozione-v14-e-conservazione-slot.md).
@@ -132,3 +163,12 @@ Round trip, precisione, ricaricamento in pausa, rifiuto di versioni future e dat
 Non sono ancora implementati più slot per scenario, selezione grafica degli scenari, gestione delle copie dalla UI, migrazioni di formato, conversioni non dichiarate in `CivilGrowthScenario.Changes` o validazione competitiva per una classifica pubblica. Un arresto forzato può perdere il progresso successivo all'ultimo checkpoint; non è stato simulato uno spegnimento elettrico.
 
 **Stato v57 (codice v55):** Ferro, Carbone, Oro, **Spade e Monete** sono risorse integrate; **Forgia, Zecca e Caserma/Esercito** sono già implementate. Le regole S1 non hanno cambiato il formato SQLite v2. **Navi, conquiste e Castello** non sono implementati e richiedono ulteriori contratti espliciti.
+
+
+## Candidato SQLite v15 alimentare (RC46 / F1-D05b)
+
+**Questo formato è separato e non è utilizzato dal launcher v14.** Lo store `V15SqliteFoodSaveStore` usa `user_version=4`, regole esterne `civil-growth-15`, e le tabelle `food_raw_stock` e `food_ready_stock` oltre agli stati esistenti. La tabella `resource_stock` contiene soltanto risorse non alimentari. L’involucro `CityCampaign` conserva i campi v14 per compatibilità interna, non per tornare a scrivere sul file v14.
+
+Tutte le quantità sono millesimi interi e non negativi. Il deposito conserva anche scorte storiche eccedenti la futura capienza; senza lavoratori o nuovo motore attivo nessuna lavorazione avviene automaticamente. Il writer valida in memoria, scrive un file temporaneo, riapre per verificarlo e prima di sovrascrivere un altro **v15 valido** ne salva un backup SQLite consistente. File di generazione diversa non vengono sovrascritti.
+
+F1-D05c / RC47 aggiunge un migratore **copy-on-write esplicito** con controllo della conservazione e idempotenza su destinazione identica. Il salvataggio v14 resta l'originale per rollback; lo switch nella campagna e il relativo backup aggiuntivo sono rimandati a F1-D05d/e. Nessun caricamento automatico. [Store](design/F1_D05B_RC46_PERSISTENZA_SQLITE_V15.md), [contratto di migrazione](design/F1_D05C_RC47_MIGRAZIONE_COPY_ON_WRITE.md) e [ADR 0058](adr/0058-migrazione-v14-v15-senza-sovrascrittura.md).

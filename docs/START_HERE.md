@@ -1,25 +1,28 @@
-# Inizia qui — SimRisorse RC31 / G1-D45
+# Avvio rapido — SimRisorse RC76-HF04
 
-**RC30:** 511 test .NET attesi dichiarati superati dall'utente. **RC31:** 515 test attesi, ancora da eseguire su Windows. La v14 è stata approvata per l'utilizzo quotidiano ed è ora **la modalità predefinita**. L'archivio delle 44 prove visive P0 rimane senza screenshot: non è una verifica dichiarata completata.
+**Codice:** RC76-HF04, **885/885 test superati su Windows**; gate automatico, smoke nativo esistente e audit v15 superati. [Evidenze HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md). Icone e intestazione aggiornate; crescita v15 fino a ×20. Render ispezionati alle due risoluzioni; confronto interattivo Windows ancora da confermare.
 
-## Avvio rapido (Windows / .NET 10)
+Dalla radice su Windows, con .NET SDK 10 installato:
 
 ```powershell
 .\validate.cmd
-.\run-game.cmd                  # v14 ordinaria
-.\run-game.cmd --legacy-v13     # v13 per compatibilità
+.\validate-f1.cmd
+.\run-game.cmd
+.\run-game.cmd --v14
 ```
 
-Per una vecchia scorciatoia `--experimental-v14` rimane supportato; `--v14` è il nuovo alias esplicito. L'avvio normale non cambia né sposta il salvataggio v14, che rimane in `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`. La v13 conserva uno slot distinto, `%LOCALAPPDATA%\SimRisorse\civil-growth.sqlite3`. Non copiare un DB v13 nel percorso v14; non esiste una migrazione automatica. Eseguire copie di sicurezza a gioco chiuso.
+`validate-f1.cmd` esegue a sua volta `validate.cmd`: non è necessario lanciare entrambi. Esegue anche due audit v15 da 120 secondi (base e combinato) e controlla il conteggio **esatto** degli 885 test. Richiede anche le otto catture v15 di Edifici, Scuola ed Esercito. I file di prova sono in `.local-cache/m4/f1-gates/<id>/`. Per uno stress combinato opzionale di 24h: `./validate-f1.cmd -Combined24Hours`. Non legge né modifica salvataggi personali.
 
-## Documenti in ordine di lettura
+La GUI v15 mostra gli edifici alimentari tramite **Edifici → Filiere alimentari**. Edifici bloccati grigi ma consultabili; produzione, consumi, capacità e costi con icone; pulsanti e sidebar come la v14; Risorse a sette colonne.
 
-1. [Stato corrente](CURRENT_STATE.md) e [roadmap](ROADMAP.md)
-2. [Nuovo handoff](NEW_CHAT_HANDOFF.md) e [handoff completo](HANDOFF.md)
-3. [ADR 0042: decisione sulla promozione](adr/0042-promozione-v14-e-conservazione-slot.md)
-4. [Rapporto G1-D45](design/G1_D45_RC31_PROMOZIONE_V14.md) e [piano di validazione](validation/G1_D45_RC31_TEST_PLAN.md)
-5. [Formato dei salvataggi](SAVE_FORMAT.md) e [registro delle decisioni](AUTHORITY_REGISTRY.md)
+**Salvataggi:** v15 in `%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v15.sqlite3` (SQLite generation 6), v14 salvata separatamente; non rimuovere il salvataggio personale v14. Le vecchie versioni sperimentali v15 possono essere incompatibili: rinominarle a gioco chiuso se impediscono una nuova partita, senza cancellarle.
 
-## Prossima milestone
+**Importante:** il comando gate verifica automaticamente il motore e i test UI, ma è ancora necessaria una verifica **visiva** delle schermate. Non dichiarare F1-D05e conclusa senza entrambe.
 
-**P1-D46: Scuola** — audit iscrizione, progressione individuale, annullamento e rimborsi. D47 Matite; D48 tecnologie; D49 integrazione; D50 gate. Poi E4a misurazione, E4b bilanciamento approvato, E4c migrazione controllata, M5.4–M7.
+[Stato](CURRENT_STATE.md) · [Roadmap](ROADMAP.md) · [Handoff](NEW_CHAT_HANDOFF.md) · [Piano RC72](validation/F1_D05E3_RC72_GATE_PLAN.md).
+
+## Benchmark E4a v15
+
+`dotnet run --project tools/SimRisorse.Simulation -c Release -- --benchmark-e4a-v15-natural --scenario V15-N01 --max-seconds 120` produce una diagnostica abbreviata. Il comando senza `--max-seconds` misura gli orizzonti completi quando il gate F1 sarà verde. [Dettagli](../benchmarks/e4a-v15/README.md).
+
+Diagnostica industriale V15-I01 / research-first da 120 secondi già eseguita, con rianalisi coerente; risultati completi ancora `not-run`. [Esiti e comandi](validation/RC76_WINDOWS_VALIDATION.md).

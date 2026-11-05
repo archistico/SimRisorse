@@ -13,3 +13,5 @@
 - **E4a-D01 / RC37**: E4A-06 e E4A-07 dispongono del primo runner controllato nella CLI `SimRisorse.Simulation --benchmark-e4a-school`. Scrive una serie temporale diversa dal template generale e non finge di avere hash build o file SQLite.
 
 Seguire [il rapporto](../../docs/design/E4A_D01_RC37_BENCHMARK_SCUOLE.md) e [il piano di validazione](../../docs/validation/E4A_D01_RC37_TEST_PLAN.md). Nessun report di risultati è incluso nel repository prima dell'esecuzione effettiva.
+
+**Avviso RC73:** questi runner storici sono v14. Per misure di una nuova colonia v15 utilizzare esclusivamente [il runner E4a v15](../e4a-v15/README.md).

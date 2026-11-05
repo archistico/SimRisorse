@@ -1,412 +1,219 @@
-# Roadmap RC42 / F1-D03 — 4 novembre 2026
+# Aggiornamento operativo — 05/11/2026
 
-**RC41 validata: 563 test**. **RC42 candidata: 577 test attesi** (12 Core + 2 Infrastructure). Il bug reale `All v14 backup slots are occupied` è corretto con un fallback sicuro oltre 100 backup (senza cancellazione automatica). La nuova filiera Ortofrutta è nel Core **ma non attiva** nel gioco.
+**Passi completati:** gate `validate-f1.cmd`, incluso `validate.cmd`, verde sul workspace RC76-HF04: **885/885 test**, nessuno saltato, compilazione senza errori o avvisi, smoke nativo esistente e audit alimentari baseline/combinato superati. Applicate le richieste dell'utente su icone, intestazione, pulsanti e crescita v15 fino a ×20. [Esiti HF04](validation/RC76_HF04_ICONS_AND_GROWTH.md). Restano documentate le correzioni grafiche [HF03](validation/RC76_HF03_VISUAL_REGRESSIONS.md) e la diagnostica industriale [HF02](validation/RC76_WINDOWS_VALIDATION.md).
 
-| Ordine | Milestone | Gate | Stato |
+**Passi rimanenti:** confronto interattivo Windows della GUI (hover/focus, tooltip, scorrimento, progressi attivi) per chiudere formalmente F1-D05e; quindi RC77/E4a.3, misure a orizzonte pieno e studio E4b. I render ispezionati sono Headless/Skia; lo smoke nativo esistente usa MainWindow storico. Le richieste HF04 autorizzano il tetto di crescita ×20 e aggiornano il riferimento grafico precedente; gli altri coefficienti economici restano subordinati alle misure e decisioni previste.
+
+I conteggi attesi e i gate indicati come non eseguiti nella pianificazione storica sotto descrivono le consegne precedenti; lo stato automatico corrente è **885/885 verificati**. Le richieste HF04 prevalgono sui riferimenti storici della GUI e del tetto di crescita.
+
+---
+
+## Storico RC76-HF02 — blocco compilazione prima di E4a.3
+
+**Situazione:** RC76-HF02 candidata; 869 test attesi. Il gate eseguito su RC76-HF01 ha segnalato 8 CS1061 per `CityCatalog` non esposto dalla sessione v15. Ripristinata la proprietà pubblica che proietta lo stato corrente verso la GUI canonica. Non sono stati modificati Desktop, bilanciamento o SQLite. [Piano di validazione](validation/RC76_HF02_CITY_CATALOG_TEST_PLAN.md).
+
+**Ordine di lavoro:** (1) compilazione e suite `validate.cmd`; (2) `validate-f1.cmd` con 869 test, audit e smoke; (3) verifica visiva GUI; (4) RC77/E4a.3, soltanto dopo la risoluzione delle regressioni della suite. RC63 rimane l'ultimo checkpoint confermato con 771 test. Gli esiti del gate precedentemente interrotto in compilazione non dimostrano il fallimento dei test o degli audit.
+
+---
+
+## RC76-HF01 — correzione necessaria prima di RC77
+
+**Stato corrente:** RC76-HF01 candidata; 869 test attesi. Il gate Windows precedente si è interrotto alla compilazione con due CS0117 dei benchmark E4a: mancava un'API pubblica per il conteggio dei lavoratori v15. Corrette le chiamate e aggiunte due regressioni mirate; [piano di verifica](validation/RC76_HF01_COMPILATION_TEST_PLAN.md).
+
+**Sequenza:** 1) `validate.cmd` e `validate-f1.cmd` sulla RC76-HF01; 2) risolvere eventuali nuovi errori senza retrocedere sulla GUI; 3) verificare visivamente la GUI; 4) solo dopo proseguire RC77 con misure quantitative dei colli di bottiglia. Le voci e i conteggi RC76 di seguito sono conservati come storico.
+
+---
+
+## Incremento RC76 — E4a.2c, vincoli misurabili (candidato)
+
+Aggiunta diagnostica per carenze materiali quotate, pressione sulle capacità cittadine (Legname lavorato, Pietra, Carbone, Ferro e Oro), forza lavoro e ricerca. Report `constraints.json/csv/md` con livelli di evidenza; un magazzino pieno o un timeout scripted non dimostrano uno stallo. 10 nuovi test, **867 cumulativi attesi**, non eseguiti in questo ambiente. [Specifica](design/E4A_V15_RC76_ANALISI_VINCOLI.md) · [Test](validation/E4A_V15_RC76_TEST_PLAN.md) · [ADR 0084](adr/0084-telemetria-vincoli-benchmark-v15-senza-diagnosi-automatica-stallo.md).
+
+---
+
+## Incremento RC75 — E4a.2b, benchmark avanzati (candidato)
+
+Tre scenari v15 con due strategie; la Scuola usa il contratto GUI approvato (2 Matite per studente): V15-I01 Scuola/tecnologia, V15-I02 Forgia/Spade e V15-I03 Zecca/Monete; due ordinamenti `research-first` e `bread-first`. Il runner parte senza grants e registra **tutti i materiali effettivamente pagati** e millipunti ricerca spesi; l'analizzatore non inventa tempi per scenari non completati e confronta le politiche solo dopo due completamenti a orizzonte pieno. [Specifica RC75](design/E4A_V15_RC75_INDUSTRIA_RICERCA.md) · [Piano test](validation/E4A_V15_RC75_TEST_PLAN.md) · [Manifest `not-run`](../benchmarks/e4a-v15/industrial-scenarios.csv) · [ADR 0083](adr/0083-benchmark-industria-ricerca-v15-senza-grants.md).
+
+**Storico RC75:** 857 test erano attesi nella release RC75 (ora 867 in RC76); nessuna misura economica completa è stata eseguita. I tempi di timeout non dimostrano uno stallo strutturale.
+
+---
+
+# SimRisorse — Roadmap operativa dopo RC76
+
+**Codice corrente:** RC76 / E4a.2c (candidata). **867 test attesi**: 857 RC75 + 10 nuovi casi RC76. Il gate F1 verifica la suite cumulativa 867, ma non è stato eseguito. Non sono stati eseguiti in questo ambiente. **Ultima release effettivamente validata:** RC63 (771/771 test, parità GUI approvata).
+
+## 1. Gate di uscita F1: RC72
+
+La RC72 non cambia il motore, la GUI, i prezzi o SQLite. Introduce quattro regressioni cumulative (due minuti di filiere miste, tick frazionari e pausa, tre riavvii SQLite) e il comando automatico `validate-f1.cmd`.
+
+**Il gate F1-D05e rimane formalmente APERTO finché non risultano verdi:**
+
+1. `./validate-f1.cmd`: esegue `validate.cmd` e richiede **867/867 test**, nessun fallito e nessuno skipped, validando i contatori TRX e il report del run appena creato. Controlla anche smoke nativo Windows e screenshot prodotti dai test.
+2. Audit sintetico `--audit-v15 --seconds 120` e audit combinato `--audit-v15 --seconds 120 --profile combined`, con 120 secondi effettivi, nessuno squilibrio, nessuna produzione del `food-store` e tutte le sette produzioni combinate positive.
+3. Riconciliazione fisica al millesimo, integrità SQLite generation 6 e tick frazionari attraverso i quattro nuovi test RC72 più le regressioni RC64–RC71.
+4. Parità GUI v14/v15 tramite test Desktop RC63 e **controllo visivo manuale**, compresi edifici grigi consultabili, elenchi con icone, pulsanti storici, crescita nella sidebar, Risorse a sette colonne, Scuola/Esercito. Un test automatizzato non sostituisce l'ispezione grafica.
+5. Nessun mutamento non autorizzato del salvataggio personale v14. La compatibilità con vecchi DB sperimentali v15 non è obbligatoria.
+
+Il comando scrive i risultati in `.local-cache/m4/f1-gates/<id>/f1-gate.json`, mantenendo log, percorsi TRX e JSON dei due audit. **Non dichiarare F1 chiusa solo perché è stato scritto lo script.** È disponibile l'opzione `-Combined24Hours` per lo stress combinato di 24 ore, oneroso e non incluso nel gate minimo.
+
+## 2. Sequenza degli incrementi
+
+| Fase | Obiettivo | Stato e criterio d'uscita |
+| --- | --- | --- |
+| RC63 | Parità GUI v14 validata nella v15 | **771/771 confermati**; riferimento visivo canonico |
+| RC64–RC68 | Stato/validazione/comandi civici nativi in progressione | Implementati, test cumulativi non confermati |
+| RC69 | Radice `V15CityCampaignSnapshot` nativa + SQLite | Implementata, non validata |
+| RC70 | Equivalenza del file SQLite temporaneo + capacità Matite v15 | Implementata, non validata |
+| RC71 | Planner senza `food-store` fittizio | Implementata, non validata |
+| **RC72** | Test end-to-end e gate F1-D05e riproducibile | Implementata, gate Windows non eseguito; 826 test al momento RC72 |
+| **E4a.1 / RC73** | Runner v15 con partenza naturale (N01–N03), JSON/CSV e risultati non inventati | **Implementata, compilazione/test pendenti**; misure complete solo dopo gate F1 verde |
+| E4a.2a / RC74 | Analisi evidence-based dei report naturali v15 | **Implementata, test pendenti**; nessuna misura completa ancora eseguita |
+| **E4a.2b / RC75** | Scenari avanzati v15, due politiche, ledger materiali e ricerca | **Implementata, test pendenti**; manifest in stato `not-run` |
+| E4a.2c / RC76 | Deficit misurabili e pressione capacità (non prova di stallo) | Implementata, test pendenti |
+| E4a.3 / RC77 | Produzione persa e politiche controllate di recupero | Prossima: richiede validazione dei report RC76 |
+| E4b.1 / RC78 | Studio quantitativo di tre curve quasi esponenziali | Parametri da approvare, non ancora implementati |
+| E4b.2 / RC79+ | Costi e squadre minime per edificio | Zecca con ≥10 lavoratori/unità; verificare softlock e batch |
+| M5.4–M7 | Navale, conquiste, Castello, vittoria | Dopo E4b consolidata |
+
+## 3. Contratti tecnici e grafici non negoziabili
+
+- La GUI v14 approvata è vincolante per v15: [ADR 0071](adr/0071-gui-v14-contratto-canonico-v15.md). Nessuna nuova schermata semplificata.
+- Il Cibo pronto è solo del Deposito; Pesce e Pane possono esistere sia nella città sia nei compartimenti raw, ma come stock **distinti**. Animali e altri intermedi hanno proprietari dedicati.
+- I trasferimenti non sono produzione o consumo. Pasti atomici e quota Pane per abitanti avanzati. Calcolo al millesimo.
+- La v15 usa 15 famiglie produttive correnti; `food-store` non deve rientrare in checkpoint o produzione. Lo storico di importazione può continuare a contenerne il contatore.
+- SQLite v15 generation 6 e salvataggio v14 separato. Incompatibilità dei DB di sviluppo consentite, mai cancellazione silenziosa di un salvataggio.
+- Non cambiare prezzi, ricette, capienze e formule senza misure E4a e successiva decisione.
+
+## 4. Rischi e criteri di blocco
+
+| Rischio | Controllo |
+| --- | --- |
+| Test cumulativi RC64–RC72 non eseguiti | Gate Windows a conteggio esatto + diagnostica TRX; correggere eventuali regressioni prima di E4a |
+| Audit combinato degrada o non termina | Report con errore e nessun falso successo; 24h resta opzionale |
+| Formato v15 in memoria e SQLite divergono | Verifica di equivalenza staged/committed, riavvii con tick frazionari e inventari fisici |
+| Scorte duplicate o `food-store` reintrodotto | Ledger al millesimo e controllo sul Cibo cittadino e produttori attivi |
+| Regressione grafica simile a RC62 | Test Desktop + ispezione manuale prima di promuovere la release |
+| Benchmark fittizi scambiati per partite naturali | Etichette `natural`/`controlled` e provenienza delle risorse nelle esportazioni |
+| Costi e squadre minime causano stalli | Audit capacità, personale, ricette, dipendenze e strategie di recupero |
+
+## 5. E4a.1 — Runner naturale v15 implementato nella RC73
+
+La RC73 introduce la CLI `--benchmark-e4a-v15-natural`, i tre scenari V15-N01/N02/N03 e i report JSON/CSV. Usa una **partita v15 nuova senza stock aggiunti**, comandi effettivi e clock unificato. Le durate abbreviate sono marcate diagnostiche; completamenti non osservati rimangono nulli. I manifest si trovano in [`benchmarks/e4a-v15/scenarios.csv`](../benchmarks/e4a-v15/scenarios.csv) e mantengono tutti `not-run` fino all'esecuzione. Non sono state apportate modifiche all'economia. [Specifiche RC73](design/E4A_V15_RC73_NATURAL_RUNNER.md).
+
+### RC74 — Analisi implementata, nessun tempo inventato
+
+`V15NaturalProgressionAnalysis` interpreta i JSON già prodotti da RC73, classificando `diagnostic-only`, `milestone-observed`, `script-policy-timeout`, `script-policy-blocked` e `production-not-observed-within-horizon`. Registra attese e spesa parziale planks/stone. Rifiuta report contraddittori: **il timeout di una strategia non dimostra l'impossibilità economica della partita**. CLI `--analyze-e4a-v15-natural`. [Specifica](design/E4A_V15_RC74_ANALISI_PROGRESSI.md) · [Test](validation/E4A_V15_RC74_TEST_PLAN.md). E4a.2b / RC75 ha introdotto un runner indipendente per Scuola, ricerca, Forgia e Zecca con due politiche; nessuna misura completa è ancora disponibile.
+
+### Estensioni e verifiche ancora previste in E4a.2c
+
+Il benchmark storico v14 va tenuto separato:
+
+Il CSV in [`benchmarks/e4a/scenarios.csv`](../benchmarks/e4a/scenarios.csv) elenca E4A-01…10, **tutti `not-run`** nel file incluso; i runner `--benchmark-e4a-natural` e `--benchmark-e4a-school` in `tools/SimRisorse.Simulation/Program.cs` sono ancora orientati alla **v14**. Gli audit `--audit-v15` misurano coerenza, **non** il tempo di raggiungimento naturale di un edificio.
+
+### Lavori
+
+1. Ampliare la politica RC73 per i percorsi intermedi e avanzati, mantenendo popolazione e scorte iniziali autentiche. Non far apparire edifici o materie dal nulla nei percorsi **natural**.
+2. Distinguere scenari **natural** (nessun finanziamento fittizio) da **controlled** (asset aggiunti e dichiarati). I confronti tra politiche richiedono la stessa condizione iniziale.
+3. Arricchire la telemetria RC73 con capacità, ricerca, rate effettivi e checkpoint; esportare JSON/CSV con versione, strategia, tempi e motivi di blocco senza inventare valori mancanti.
+4. Misurare `pass`, `blocked`, `timeout`, `not-run`, `not-applicable`, **senza sostituire i fallimenti con tempi inventati**.
+5. Mantenere risultati storici v14 separati dai dati v15; non chiamare v15 un report prodotto dal runner v14.
+
+### Scenari minimi v15
+
+| ID proposto | Categoria | Milestone/condizione di uscita | KPI chiave |
 | --- | --- | --- | --- |
-| 1 | **RC42 / salvataggi v14** | 100 slot saturi → backup extra coerente, checkpoint integro, niente vecchie copie eliminate | **Implementato; test Windows pendenti** |
-| 2 | **F1-D03 / Ortofrutta** | Orto e Frutteto indipendenti, Verdura e Frutta, capacità, opzione Acqua, passaggio nel deposito | **Core isolato + 12 test; gate pendente** |
-| 3 | **F1-D04 / Deposito alimentare attivo** | Routing Pesce, Pane, Carne, Frutta e Verdura, capacità lavorazione e personale; riserva Pane senza doppio conteggio | **Prossima** |
-| 4 | **F1-D05 / Attivazione e migrazione** | Risorse/edifici/tier/GUI, migrazione SQLite sicura, salvataggi v14 esistenti preservati | Pianificata |
-| 5 | **E4a → E4b → E4c** | Nuove misure di rendimento, approvazione del bilanciamento, stabilizzazione | Dopo F1 |
-| 6 | **M5.4–M7** | Navale, esplorazione e conquista | Successiva |
+| V15-N01 | natural | Primo Cibo pronto prodotto e primo Deposito operativo | Tempo, risorse, lavoratori, pasti mancati |
+| V15-N02 | natural | Primo Pane prodotto (RC73) | Prezzo filiera, popolazione e disponibilità scorte |
+| V15-N03 | natural | Prima Selvaggina prodotta dal Cacciatore (RC73) | Costi, addetti e stock animale |
+| V15-N04 | natural | Prima Scuola e primo ricercatore (futuro) | Costi effettivi, Matite, addetti e tempi |
+| V15-N05 | natural | Prima tecnologia comprata e primo tier Grande (futuro) | Saldo ricerca, costi, output e stalli |
+| V15-N06 | natural | Prima Forgia e prima Zecca (futuro) | Tempo reale, filiere necessarie, capacità |
+| V15-N07 | natural | Seconda Zecca e popolazione per 20 addetti (futuro) | Risorse accumulate, espansione e staffing |
+| V15-C01 | controlled | Dep. con 5 ingredienti alternativi simultanei | Priorità trasformazioni, sostituzioni, rese |
+| V15-C02 | controlled | Pieno magazzino e input concorrenti | Blocchi, throughput, trasferimenti fisici |
+| V15-C03 | controlled | Scuola/ricerca vs industria pesante | Concorrenza addetti, input e Carbone |
+| V15-C04 | controlled | Salvataggi, pausa, tick frammentati | Identità checkpoint, determinismo |
 
-**Nota backup:** nessuna retention automatica approvata. La crescita dello spazio disco è un rischio esplicito: proporre in futuro una retention configurabile e una funzione di esportazione sicura, senza cancellare copie storiche implicitamente. Non alterare la v13 legacy.
+I tempi massimi degli scenari v15 vanno definiti **prima** di raccogliere i risultati e versionati nel CSV corrispondente.
 
-[Specifica D03](design/F1_D03_RC42_ORTOFRUTTA_E_BACKUP_V14.md) · [Piano Windows](validation/F1_D03_RC42_TEST_PLAN.md) · [ADR 0052](adr/0052-backup-v14-oltre-cento-slot.md) · [ADR 0053](adr/0053-orto-frutteto-modello-isolato.md)
+## 6. E4a.2 — Interpretare le misure e fissare il problema economico
 
----
+### Report obbligatori
 
-# Roadmap aggiornata — RC41 / F1-D02 (2026-11-04)
+1. Sequenza dei prerequisiti di ogni edificio avanzato, con costo **diretto e indiretto** (fabbriche, persone, tecnologia, magazzini e tempo).
+2. Curve di progresso: risorse accumulate/spese, produzione e saldo per secondo, ore simulate, popolazione e posti lavorativi, capacità disponibile e ore di stallo.
+3. Casi di **softlock**: scorta massima insufficiente per un costo, dipendenza circolare, assenza di personale, fame, materiali che richiedono strutture inaccessibili.
+4. Analisi per strategie: `growth-first`, `research-first`, `storage-first`, `industry-first`; distinguere giocata efficiente da pessima senza inventare durate.
+5. Sensitività: variazione di costo/resa/occupazione; capacità di recupero dopo un investimento poco efficiente.
 
-**Baseline confermata:** RC40, **552 test superati** secondo riscontro dell'utente. **Candidata RC41:** 563 test attesi (11 nuovi Core.Tests), non compilati/testati in questo ambiente. La v14 rimane la GUI predefinita; v13 legacy separata. Il nuovo sistema alimentare continua a essere un **modello isolato**, non ancora attivo nel gioco.
+**Gate per E4b:** pubblicare numeri riproducibili e limiti, chiarire quali colli di bottiglia sono voluti e quali rendono la partita impossibile. I target 8 h efficienti / 32+ h lente restano **aspirazioni da verificare**, non risultati o vincoli già dimostrati.
 
-| Ordine | Milestone | Deliverable e gate | Stato |
-| --- | --- | --- | --- |
-| 1 | **F1-D01 — Deposito** | Scorte grezze / Cibo pronto, riserva Pane, capienza, lotti e personale | **RC40 validata (552 test)** |
-| 2 | **F1-D02 — Carne** | Stalla Grano+Acqua→Bovini, Cacciatore→Selvaggina, Macellaio con due ricette automatiche; planner isolato e 11 test | **RC41 implementata, 563 test pendenti** |
-| 3 | **F1-D03 — Ortofrutta** | Orto→Verdura e Frutteto→Frutta distinti; produzione e capienze, test Core | **Prossima** |
-| 4 | **F1-D04 — Deposito attivo** | Collegare tutte e cinque le famiglie alimentari alla conversione nel deposito, lavoratori e razioni; proteggere la riserva Pane e impedire doppio conteggio | **Pianificata** |
-| 5 | **F1-D05 — Attivazione sicura** | Catalogo/GUI/tier/tecnologie, nuova versione regole, migrazione SQLite di salvataggi v14, test end-to-end, rollback; nessuna sovrascrittura silenziosa | **Pianificata** |
-| 6 | **E4a → E4b → E4c** | Benchmark effettivi su tutte le filiere → proposta coefficenti da approvare → consolidamento | **Dopo F1** |
-| 7 | **M5.4–M7** | Navi, esplorazione, conquista, obiettivo finale | **Futuro** |
+## 7. E4b.1 — Disegnare le curve economiche (prima del codice)
 
-**Vincoli:** non attivare Carne, Selvaggina o Bovini nel catalogo giocabile fino al collegamento del deposito e alla strategia di migrazione; il Macellaio non deve richiedere la Stalla, perché deve restare utilizzabile dalla Caccia. I valori di prova (es. 1 Grano+1 Acqua→2 Bovini) sono fixture, **non bilanciamento approvato**. I benchmark E4a precedenti non sono nuove misure sul modello alimentare. [Report D02](design/F1_D02_RC41_FILIERA_CARNE.md) · [Piano RC41](validation/F1_D02_RC41_TEST_PLAN.md) · [ADR 0051](adr/0051-due-origini-carne-e-priorita-macellaio.md)
+### Aspetti già approvati
 
----
+- Progressione quasi esponenziale **per complessità e stadio della filiera**, non soltanto rincaro delle copie della stessa famiglia.
+- Prima Zecca confrontabile, come **investimento totale**, con 100–1.000 Tagliapietre base (range qualitativo); non ridurre il confronto a Legno/Pietra.
+- Minimo **10 addetti per unità produttiva Zecca**; due Zecche al massimo ritmo richiedono 20 addetti.
 
-# Roadmap aggiornata — RC40 / F1-D01 (2026-11-04)
+### Alternative da simulare, non ancora approvate
 
-**Decisione approvata:** introdurre filiere alternative Pesce, Pane, Carne (Stalla o Caccia → Macellaio), Frutta (Frutteto) e Verdura (Orto), con conversione esclusiva nel Deposito alimentare e riserva del Pane per abitazioni avanzate. **RC38: 541 test verdi confermati. RC39: 545 pendenti. RC40: 552 pendenti.** La GUI v14 resta predefinita, v13 è legacy separata. Nessun coefficiente E4b viene modificato in questa fase.
+- Curva A: moltiplicatori per era/famiglia con crescita moderata delle copie.
+- Curva B: costo a stadi basato sulla profondità tecnologica + consumo di materiali avanzati.
+- Curva C: combinazione di ingresso oneroso + costo infrastrutturale e occupazionale crescente.
 
-| Sequenza | Milestone | Attività e criterio di accettazione | Stato |
-| --- | --- | --- | --- |
-| 1 | **F1-D01 — Contratto alimentare** | Modello Core puro scorte grezze/Cibo pronto, capacità, ricette multiple, riserva Pane; ADR, test, invarianti senza cambiare gioco | **Implementata RC40, 7 test da eseguire** |
-| 2 | **F1-D02 — Carne** | Risorse `cattle`, `game`, `meat`; Stalla Grano+Acqua, Cacciatore Selvaggina, Macellaio con due ricette; ricette alternative deterministiche, nuove famiglie tier/tecnologie, test di transizione e carenze | Da sviluppare |
-| 3 | **F1-D03 — Ortofrutta** | Orto e Frutteto separati, risorse `vegetables` e `fruit`, capacità, produzioni e compatibilità progressione; nessuna combobox | Da sviluppare |
-| 4 | **F1-D04 — Deposito alimentare unificato** | Routing dei 5 ingredienti, lavorazione limitata dai dipendenti, Cibo pronto consumato dalla popolazione, Pane protetto per abitazioni avanzate, capacità e diagnostica nella GUI v14; tick atomico senza duplicazioni | Da sviluppare |
-| 5 | **F1-D05 — Persistenza e consolidamento** | Migrazione versionata SQLite e regole, backup degli slot, 30 Cibo iniziali nel Municipio, vecchie scorte preservate, test end-to-end, approvazione in Windows | Da sviluppare |
-| 6 | **E4a nuova economia** | Benchmark naturali e controllati confrontando caccia/pesca/allevamento/orto/frutteto/pane, resa netta per lavoratore/input, stalli e spazio di deposito | Dopo F1 |
-| 7 | **E4b** | Proporre e applicare coefficienti di resa, costi, consumo e riserva solo dopo risultati e approvazione esplicita | Sospesa |
-| 8 | **E4c** | Consolidamento e compatibilità salvataggi, stabilità e regressioni | Dopo E4b |
-| 9 | **M5.4–M7** | Navi, esplorazione, conquista e fine gioco | Successiva |
+Per ogni alternativa produrre prospetti del costo della prima/seconda Zecca e dei tier Base/Grande/Avanzato, investimento per lavoratore disponibile, tempo d'attesa e rischio softlock. Controllare precisione e overflow aritmetico, pagamento di lotti `+5/+10`, confronto costruzione diretta vs upgrade, storici d'acquisto non resettati da demolizione o upgrade.
 
-**Vincolo transitorio:** i runner RC37/RC39 e i 10 scenari E4a restano nel repository con stato `not-run` e regole precedenti. RC40 non li altera e non li esegue; dopo il nuovo catalogo vanno versionati per evitare confronti impropri. **F1-D01 non attiva alcuna nuova risorsa nella partita.**
+**Decisione richiesta:** approvare parametri numerici solo dopo il rapporto comparativo E4a/E4b. La formula candidata è nella [specifica E4b](design/E4B_P00_COSTI_PROGRESSIVI_E_SQUADRE_MINIME.md).
 
-[Modello tecnico F1-D01](design/F1_D01_RC40_MODELLO_ALIMENTARE.md) · [ADR 0050](adr/0050-filiera-alimentare-unificata-deposito.md) · [Test Windows](validation/F1_D01_RC40_TEST_PLAN.md)
+## 8. E4b.2 — Squadre minime, moduli e capacità di lavoro
 
----
+Con i tier attuali, i posti `1/3/10` **non** consentono 10 lavoratori su una Zecca Base; occorre disaccoppiare posti e moduli produttivi.
 
-# E4a-D02 / RC39 — Misura della progressione naturale (2026-11-04)
+### Contratto comportamentale da implementare
 
-**Gate precedente:** RC38 **541 test confermati**. **RC39** introduce 4 test e il runner E4A-01…05, **545 test attesi**, compilazione/xUnit e benchmark non eseguiti qui. La politica `natural-reference-v1` utilizza soltanto i comandi reali v14 e le scorte iniziali; registra eventi e campioni (60 s), risultati e blocchi senza attribuire tempi non misurati. Anche i 10 scenari del manifest restano `not-run`.
+- `CrewSize(mint) = 10` per unità, applicato alla sola famiglia (eventuali altre famiglie con soglia vanno motivate).
+- 0–9 lavoratori: **zero Monete, zero consumo Oro/Carbone** imputabile alla Zecca.
+- 10–19 lavoratori con due unità: **al massimo una unità attiva**; 20: due unità attive, subordinate a input e capacità.
+- Nessun worker può alimentare due moduli. Personale parzialmente assegnato rimane disponibile **solo per quella famiglia** fino alla rimozione esplicita.
+- Testare `0/9/10/19/20`, diversi tier, input vuoti, capacità piena, pausa, salvataggio e riavvio.
+- La semantica candidata 1/3/10 moduli Base/Grande/Avanzato (con 10/30/100 addetti al pieno regime per Zecca) **non è ancora approvata** per ogni tier/famiglia: serve verifica di popolazione e costi.
 
-| Fase | Stato | Criterio di uscita |
+### GUI senza redesign
+
+Nel dettaglio esistente mostrare con gli stessi componenti: moduli posseduti, operativi, lavoratori assegnati, mancanti, collo di bottiglia e produzione nominale/effettiva. La riga di costruzione e quella del personale rimangono dove già approvate, con le stesse icone e gli stati corretti.
+
+## 9. M5.4–M5.7 — Espansione successiva, non anticipata
+
+1. **M5.4:** Cantiere e flotta persistente, tipi nave, costo, requisiti di equipaggio, capacità, regole di annullamento e preflight; confermare prima le scelte navali ancora aperte.
+2. **M5.5:** esplorazione come attività temporizzata, separata dalla conquista; nessuna perdita irreversibile nelle prime versioni; salvataggio e ripresa deterministici.
+3. **M5.6:** conquista deterministica con requisiti, preflight e risultato riproducibile; almeno un'isola obbligatoria per la progressione finale.
+4. **M5.7:** Castello come obiettivo tardivo con prerequisiti economici/militari e di conquista, non mera spesa di Legno/Pietra.
+5. **M6:** definire vittoria e tempi/metriche di gioco completo; **M7:** qualità, UX, accessibilità, packaging e rilascio.
+
+Riferimenti storici: [proposta prima campagna](design/FIRST_CAMPAIGN_PROPOSAL.md), [decisioni prima di M5](design/PRE_M5_DECISION_GATE.md), [ADR 0017](adr/0017-naval-mission-boundaries-proposta.md). Non interpretare vecchie stime o stati v55 come implementazione RC68.
+
+## 10. Metodo per ogni incremento (obbligatorio)
+
+- **All'inizio:** riportare checkpoint validato, candidatura corrente, milestone, confini e rischio; usare i file della release precedente, non ricreare interfacce o regole già approvate.
+- **Nel codice:** un tema/contratto per RC. In caso di breaking change del DB sperimentale, documentare versioni non più leggibili e fare fallire chiaramente il caricamento, senza toccare v14.
+- **Test:** aggiungere test mirati, non cambiare asserzioni soltanto per ottenere verde; confrontare colonna e funzioni della GUI v14. Correggere i gate rossi prima di aggiungere una nuova funzione.
+- **Documentazione:** aggiornare `CURRENT_STATE.md`, questa roadmap, `NEW_CHAT_HANDOFF.md`, eventuale ADR e `CHANGELOG.md` con fatti del codice e **stato delle esecuzioni**.
+- **Consegna:** archivio ZIP **integrale** e manifest SHA-256; nessun file temporaneo, cache, vecchio manifest o salvataggio personale. Confrontare codici sorgente con la RC precedente e riportare ogni modifica.
+- **Uscita:** specificare test passati dall'utente vs test soltanto attesi; gli audit statici non sostituiscono .NET/xUnit o una verifica visiva reale.
+
+## 11. Registro dei rischi prioritari
+
+| Rischio | Gravità | Contromisura/gate |
 | --- | --- | --- |
-| **E4a-D02 / RC39** | Implementata, gate aperto | 545 test, avvio ripetibile E4A-01…05, valutazione degli esiti, nessun finanziamento artificiale |
-| **E4a-D03** | Prossima | E4A-08/09: misurare contesa Carbone/Matite e capacità, inattività e scorte |
-| **E4a-D04** | Pianificata | E4A-10: equivalenza salvataggio/ripresa, aggregazione e classificazione dei colli di bottiglia |
-| **E4b** | Sospesa | Proposte numeriche **basate su risultati eseguiti**, applicare solo dopo approvazione |
-| **E4c e M5.4–M7** | Future | Stabilità/compatibilità; successivamente navale, esplorazione, conquista e Castello |
-
-**Nota:** i nomi delle strategie nel manifest non rappresentano ancora algoritmi indipendenti: E4A-01…05 usano tutti una stessa politica di riferimento con obiettivi differenti. Un timeout non certifica l'impossibilità di giocare; può derivare dalla policy. Nessuna modifica ai parametri economici.
-
-[Rapporto](design/E4A_D02_RC39_BENCHMARK_NATURALI.md) · [Piano](validation/E4A_D02_RC39_TEST_PLAN.md) · [Protocollo](design/E4A_PROTOCOLLO_BENCHMARK.md).
-
----
-
-# Milestone E4a-D01-F1 / RC38 — Correzione test dopo gate parziale (2026-11-04)
-
-**RC37 su Windows: 540/541 test PASS**; il test d'integrazione SQLite confrontava impropriamente l'ordine degli edifici, non la loro identità. RC38 modifica solo le asserzioni della prova end-to-end, confrontando gli insiemi identificati per chiave. **Gate RC38 ancora aperto: 541/541 attesi.** Fino alla validazione non considerare conclusa P1-D50. Il benchmark E4a-D01 è implementato ma non misurato; gli scenari E4A-06/07 rimangono `not-run`.
-
-**Sequenza immediata:** 1) validazione RC38; 2) due benchmark controllati indipendenti con output CSV/JSON; 3) E4a-D02 progressione naturale; 4) D03 contesa Carbone e deposito; 5) D04 riproducibilità e analisi; 6) E4b bilanciamento soltanto dopo evidenze e approvazione.
-
-[Rapporto F1](design/E4A_D01_RC38_FIX_ORDERING_SQLITE.md) · [Piano Windows](validation/E4A_D01_RC38_TEST_PLAN.md).
-
----
-
-# Avanzamento E4a-D01 / RC37 — Misure prima del bilanciamento
-
-**RC37 implementata ma non validata su Windows.** Il runner E4a esegue E4A-06/07 come scenari controllati reali nella v14, con fixture esplicita, progressi e CSV/JSON. **541 test attesi**, ultima baseline confermata RC30 (511), nessun risultato di benchmark registrato e gate P1-D50 ancora pendente. Non modificare prezzi, coefficienti o ricette prima di E4b e dell'approvazione.
-
-| Milestone | Stato | Consegna/criterio |
-| --- | --- | --- |
-| **E4a-D01 / RC37** | Implementata, da testare | Runner 1 vs 2 Scuole, 3 test, output misurabili, 30 s/campione |
-| **E4a-D02** | Prossima | E4A-01…05: strategie naturali ripetibili, log dei blocchi e timeout senza fondi artificiali |
-| **E4a-D03** | Pianificata | E4A-08/09: competizione Carbone, deposito pieno e inattività reale |
-| **E4a-D04** | Pianificata | E4A-10: salvataggio/ripresa SQLite, aggregazione risultati e rapporto dei colli di bottiglia |
-| **E4b** | Dopo misure + approvazione | Proporre cambi di costi/consumi/produzione senza applicarli prima della decisione |
-| **E4c → M5.4–M7** | Future | Consolidamento, poi navale/esplorazione/conquista |
-
-**Gate:** `validate.cmd` cumulativo (541 test attesi), due run distinte del benchmark con esito e serie CSV/JSON, verifica delle fixture e hash build, nessuna regressione nei salvataggi. [Rapporto E4a-D01](design/E4A_D01_RC37_BENCHMARK_SCUOLE.md) · [Piano di validazione](validation/E4A_D01_RC37_TEST_PLAN.md) · [ADR 0048](adr/0048-benchmark-scuole-controllato.md).
-
----
-
-# Aggiornamento operativo — P1-D50 / RC36
-
-**P1-D50 implementata, ma gate non ancora superato.** Consolidati i contratti Scuola/Matite/Ricerca/tier; due test supplementari di persistenza SQLite v14, **538 test cumulativi attesi**. RC30 (511) rimane l'ultimo gate Windows confermato. RC31–RC36 non validate cumulativamente in questo ambiente. GUI v14 ordinaria, v13 legacy con file separati.
-
-| Fase | Stato | Uscita / dipendenza |
-| --- | --- | --- |
-| P1-D46…D49 | Implementate, test Windows pendenti | Formazione, Matite, tecnologie, end-to-end |
-| **P1-D50 / RC36** | **Implementata, da validare** | **538 test e controllo Scuola/SQLite; non dichiarare P1 chiusa prima del gate** |
-| **E4a** | **Protocollo e manifest pronti; nessuna misurazione effettuata** | Benchmark natural/controlled, tempi di progressione, colli di bottiglia |
-| E4b | Successiva a E4a e approvazione esplicita | Scegliere e modificare i coefficienti |
-| E4c | Dopo E4b | Stabilizzazione e migrazioni sicure |
-| M5.4–M7 | Future | Navale, conquista e obiettivo finale |
-
-[Rapporto D50](design/P1_D50_RC36_CONSOLIDAMENTO_E_GATE_E4A.md) · [Piano test](validation/P1_D50_RC36_TEST_PLAN.md) · [Protocollo E4a](design/E4A_PROTOCOLLO_BENCHMARK.md) · [ADR 0047](adr/0047-gate-p1-e-misure-e4a.md)
-
----
-
-# Aggiornamento operativo — P1-D49 / RC35
-
-**Implementati i test di integrazione, validazione Windows pendente.** Tre scenari sulla stessa campagna v14 attraversano Matite, studenti, qualifica, assegnazione, punti ricerca, acquisto volontario, livello Grande, salvataggi/ripresa; coprono anche pausa e fallimenti atomici. **536 test cumulativi attesi**. RC30 (511) rimane l'ultima suite confermata; RC31–RC35 non sono state eseguite qui. Nessun coefficiente o comportamento di gameplay modificato.
-
-| Milestone | Stato | Uscita prevista |
-| --- | --- | --- |
-| P1-D46 / RC32 | Implementata, test pendenti | Formazione individuale |
-| P1-D47 / RC33 | Implementata, test pendenti | Filiera Matite e atomicità |
-| P1-D48 / RC34 | Implementata, test pendenti | Tecnologia → effetto effettivo |
-| **P1-D49 / RC35** | **Test integrati aggiunti, non eseguiti** | **536 test e prova di ripresa SQLite** |
-| **P1-D50** | **Prossima** | **Gate cumulativo P1; rapporto invarianti e decisioni candidate per E4a** |
-| E4a → E4b → E4c | Successive | Misurare → approvare coefficienti → consolidare |
-| M5.4–M7 | Successive | Navi, esplorazione, conquista e completamento |
-
-[Rapporto D49](design/P1_D49_RC35_INTEGRAZIONE_PROGRESSIVA.md) · [Piano test RC35](validation/P1_D49_RC35_TEST_PLAN.md) · [ADR 0046](adr/0046-catena-integrata-scuola-ricerca-tier.md)
-
----
-
-# Aggiornamento operativo — P1-D48 / RC34
-
-**Implementata, validazione Windows pendente.** Catalogo tecnologico controllato contro i benefici reali di 16 famiglie e relativi tier; dettaglio Albero tecnologico con edifici Grande/Avanzato effettivamente sbloccati. Logistica/Navigazione ancora non acquistabili. **9 nuovi casi, 533 attesi cumulativi**; RC30 ultimo checkpoint confermato (511), RC31–RC34 candidate.
-
-**Sequenza:** P1-D49 integrazione Scuola/Matite/ricerca/tier/salvataggi → P1-D50 gate P1 → E4a analisi quantitativa → E4b bilanciamento con approvazione → E4c consolidamento → M5.4–M7. Nessun valore economico modificato. [Rapporto D48](design/P1_D48_RC34_ALBERO_TECNOLOGICO.md) · [Piano test RC34](validation/P1_D48_RC34_TEST_PLAN.md) · [ADR 0045](adr/0045-tecnologie-effetti-verificati.md).
-
----
-
-# Aggiornamento operativo — P1-D47 / RC33
-
-**P1-D47 implementata, validazione Windows pendente.** Unico controllo per produzione Matite, suggerimenti quantitativi +1/+5/+10, test per lotti atomici e rimborsi misti. Nessuna modifica ai coefficienti economici o ai salvataggi. Ultima baseline confermata: RC30, 511 test. RC31–RC33: **524 test cumulativi attesi**.
-
-| Milestone | Stato | Prossimo gate |
-| --- | --- | --- |
-| P1-D46 / RC32 | Implementata, non testata su Windows | Avanzamenti individuali Scuola |
-| **P1-D47 / RC33** | **Implementata, non testata** | **524 test, prova GUI/stock/rimborso** |
-| P1-D48 | Prossima | Catalogo tecnologie, prerequisiti ed effetti effettivi |
-| P1-D49 | Pianificata | Integrazione end-to-end e salvataggi |
-| P1-D50 | Pianificata | Gate P1 e dossier E4a |
-| E4a → E4b → E4c → M5.4–M7 | Successive | Misure → valori approvati → stabilizzazione → navale |
-
-**Decisione rimandata:** produzione automatica Matite o edificio dedicato. Conservare intanto la produzione manuale nella Scuola; non modificare la ricetta 1 Legno lavorato + 1 Carbone → 4 Matite, né i 2 pezzi minimi per studente. [Rapporto P1-D47](design/P1_D47_RC33_FILIERA_MATITE.md) · [Piano test](validation/P1_D47_RC33_TEST_PLAN.md) · [ADR 0044](adr/0044-unica-verifica-laboratorio-matite.md).
-
----
-
-# Aggiornamento operativo — P1-D46 / RC32
-
-**G1-D45:** la v14 e' stata approvata dall'utente come GUI ordinaria ed e' predefinita nella RC31; v13 rimane in modalita' legacy. La raccolta delle 44 prove P0 formali e' storica e non e' piu' un blocco concordato per P1. RC30: checkpoint Windows dichiarato verde (511 test previsti). RC31 (515) e RC32 (518) richiedono test Windows cumulativi.
-
-| Milestone | Stato | Oggetto | Gate |
-| --- | --- | --- | --- |
-| **P1-D46 / RC32** | Implementata, test Windows pendenti | Avanzamenti individuali Scuola; 3 test | 518/518, prova UI e compatibilita' salvataggi |
-| **P1-D47** | Prossima | Filiera Matite, input e stoccaggio, audit rimborsi | Scelte quantita' solo dopo verifica; test deterministici |
-| **P1-D48** | Pianificata | Catalogo ricerca, prerequisiti ed effetti reali | Nessun acquisto senza effetto verificato |
-| **P1-D49** | Pianificata | Flussi end-to-end e salvataggi | Restore e avanzamento coerenti |
-| **P1-D50** | Pianificata | Gate P1 / dossier E4a | Suite verde e scenari approvati |
-| **E4a → E4b → E4c** | Future | Analisi → bilanciamento approvato → consolidamento | Benchmark e backup |
-| **M5.4–M7** | Future | Navi, esplorazione, conquista, obiettivo | Gate modulari |
-
-[Rapporto D46](design/P1_D46_RC32_CICLO_FORMAZIONE_SCUOLA.md) · [Piano RC32](validation/P1_D46_RC32_TEST_PLAN.md)
-
----
-
-# SimRisorse — RC31 / G1-D45: v14 predefinita (candidata)
-
-**Aggiornamento 04/11/2026:** la **RC30** ha superato i test secondo la conferma dell'utente (**511 test previsti**). La GUI v14 è stata dichiarata soddisfacente e diventa l'interfaccia ordinaria; lo storico dossier di **44 prove visive non acquisite** resta disponibile ma non è più prerequisito per avviare P1. **RC31** aggiunge quattro test di routing (515 attesi) e deve ancora essere compilata/testata su Windows.
-
-Avvio: `.\run-game.cmd` → v14, sullo **stesso** slot SQLite v14 già usato (`%LOCALAPPDATA%\SimRisorse\experiments\civil-growth-v14.sqlite3`). `.\run-game.cmd --legacy-v13` → v13, DB storico separato. `--experimental-v14` funziona ancora come alias. `--scenario ...` e `--smoke-test` rimangono legacy per compatibilità. Nessuna migrazione automatica né modifica al bilanciamento.
-
-**Prossima milestone:** P1-D46 audit ciclo Scuola; D47 Matite; D48 tecnologie; D49 integrazione; D50 gate. Quindi E4a → E4b → E4c → M5.4–M7. [ADR 0042](adr/0042-promozione-v14-e-conservazione-slot.md) · [Rapporto D45](design/G1_D45_RC31_PROMOZIONE_V14.md) · [Piano RC31](validation/G1_D45_RC31_TEST_PLAN.md).
-
----
-
-## Storico della roadmap precedente (superato dalla decisione RC31)
-
-# Avanzamento G1-D44 — RC30, qualità delle evidenze prima delle correzioni
-
-La milestone D43 richiede ancora 44 prove visive reali (22 UI-ID × 2 viewport): **0/44 acquisite in questa sessione**. RC29 aveva due falsi positivi nello strumento di raccolta: PNG presenti ma corrotti e 44 `NA` considerabili completi. RC30 risolve entrambi e introduce `Verify`, oltre a un auto-test PowerShell locale. È un **incremento di qualità degli strumenti P0**, non la chiusura delle anomalie visive D44.
-
-**Stato gate:** baseline RC27 507 test confermati; RC28–RC30 511 test xUnit attesi da validare, auto-test PowerShell da eseguire a parte, P0 visivo aperto. [Rapporto D44](design/G1_D44_RC30_RAFFERZAMENTO_EVIDENZE_P0.md) · [Piano test](validation/G1_D44_RC30_TEST_PLAN.md). **Prossimo lavoro condizionato dalle evidenze:** validare RC30 su Windows, completare D43, trattare in D44 solo i FAIL confermati e poi D45; P1/E4 restano sospesi.
-
----
-
-# G1-D43 / RC29 — Preparazione delle evidenze visive P0
-
-**Stato operativo (04/11/2026).** RC27 è l'ultimo checkpoint applicativo confermato (**507 test**). RC28 è candidata con **511 test attesi**, non ancora verificati su Windows; RC29 **non aggiunge test .NET e non modifica l'applicazione**. Introduce soltanto il registratore locale per le evidenze visive, il report HTML e la documentazione del confronto. **Nessuna delle 44 prove UI-01…UI-22 × 2 dimensioni è stata eseguita in questa consegna; P0 rimane APERTO.**
-
-**D43:** usare [il confronto statico verificato](design/G1_D43_RC29_AUDIT_VISIVO.md), [la procedura per acquisire le prove](validation/G1_D43_RC29_PIANO_EVIDENZE.md) e `scripts/p0-ui-evidence.ps1`. `-Action Init` crea 44 righe in `.local-cache/p0-ui-evidence/results.csv` senza sovrascrivere risultati già presenti; `-Action Report` genera il confronto HTML affiancato e segnala le evidenze mancanti. Le immagini sono acquisite solo per scelta esplicita dell'operatore e **non entrano nello ZIP**. La cattura Clipboard è facoltativa.
-
-**Prossimi gate:** quando Windows è disponibile verificare RC28/RC29 con `./validate.cmd` e acquisire prove v13/v14 a 1040×740 e 1240×850. D44 solo difetti dimostrati, D45 chiusura P0 subordinata a 22 voci documentate, suite verde e approvazione visiva. Nessun E4 e nessuna modifica ai salvataggi.
-
----
-
-# SimRisorse — Roadmap operativa dettagliata dopo RC27
-
-**Roadmap operativa:** G1-D42 / 04-11-2026. **Baseline Windows confermata:** RC27 / G1-D41, 507 test. **Candidato di sviluppo:** RC28 / G1-D42, +4 esecuzioni headless, **511 test attesi**, ancora da eseguire su Windows. Sono stati modificati soltanto gli stili focus della finestra v14; nessuna regola economica cambiata. **P0 grafico: APERTO** finché non sono raccolte le prove manuali sulle 22 voci UI-01…UI-22.
-
-Questa è la **roadmap canonica da usare nei prossimi incrementi**. La precedente, con tutti i checkpoint D29–D41, è [archiviata senza perdita di informazioni](history/operational/ROADMAP_G1_D41_RC27_ARCHIVE.md). Per le verifiche P0 seguire la [matrice delle 22 voci](validation/G1_D39_P0_UI_MATRIX.md) e il [runbook G1-D42](validation/G1_D42_P0_RUNBOOK.md).
-
-## 1. Obiettivo, ordine e criteri generali
-
-Realizzare un gestionale di risorse 2D in C#/.NET 10 con GUI desktop pixel art classica, economia coerente, salvataggi protetti e progressione civile, tecnologica e successivamente militare/navale. Ordine **vincolante**:
-
-1. **G1 / P0: parità funzionale e visiva GUI v13→v14** (D42–D45 proposti).
-2. **P1: completamento qualitativo Scuola e Albero tecnologico** (D46–D50 proposti).
-3. **E4a: analisi economica con benchmark riproducibili** (nessun rebalance).
-4. **E4b: proposte, approvazione e attuazione del bilanciamento**.
-5. **E4c: consolidamento salvataggi, migrazione opt-in e stabilità v14**.
-6. **M5.4–M7: navi, esplorazione, conquista, territori, obiettivo finale e distribuzione**.
-
-Gli identificativi D42–D50 sono **identificativi incrementali di lavoro, non scadenze**. Una fase può richiedere più release; il numero di test futuro non è predeterminato. Ogni gate fallito blocca la promozione alla fase successiva; se non è possibile testare su Windows si può proseguire con analisi, documentazione e test aggiunti, ma non dichiarare il gate approvato.
-
-**Invarianti non negoziabili:** GUI v13 e relativi salvataggi intatti; sette colonne Risorse, ordinamento italiano, hover ocra senza spostamento, edifici bloccati grigi ma selezionabili; edifici Base/Grande/Avanzato distinti (nessuna ComboBox dei livelli); due righe Costruisci +1/+5/+10 e Lavoratore −1/+1/+5/+10; Scuola costruita da Edifici, senza tasto Costruisci nella scheda; almeno due Matite per studente; v14 predefinita con DB separato, v13 accessibile via --legacy-v13; Scuola, militari e lavoratori senza duplicazione di abitanti; nessuna perdita irreversibile introdotta senza approvazione.
-
-## 2. Sequenza delle milestone e gate
-
-| Milestone | Priorità | Risultato da produrre | Dipende da | Gate di uscita |
-| --- | --- | --- | --- | --- |
-| **G1-D42** | P0 | Focus list/menu v14 +4 test headless, rapporto e check-list; TAB completo ancora da verificare su Windows | RC27 verde | RC28 test Windows superati + controlli focus annotati, senza redesign |
-| **G1-D43** | P0 | Esecuzione guidata delle 22 prove visive a 1040×740 e 1240×850 | D42 | Evidenze e PASS/FAIL/NA motivata per ogni UI-ID |
-| **G1-D44** | P0 | Correzione ordinata delle sole anomalie P0 confermate, con regressioni | D43 | Nessun FAIL P0 non risolto; suite automatica verde |
-| **G1-D45** | P0 | Audit conclusivo e firma del gate P0 | D44 | 22/22 esiti documentati, screenshot, smoke e salvataggi protetti |
-| **P1-D46** | P1 | Revisione completa del ciclo di vita Scuola | D45 | Formazione/iscrizioni/rimborsi/assegnazioni coerenti |
-| **P1-D47** | P1 | Revisione filiera Matite e stoccaggio; decisione sulla produzione futura | D46 | Scelta approvata, niente modifiche implicite alla ricetta |
-| **P1-D48** | P1 | Catalogo tecnologie: requisiti, costi, effetti reali e dipendenze | D47 | Nessuna tecnologia acquistabile senza effetto definito |
-| **P1-D49** | P1 | Integrazione GUI, ricerca e salvataggi in scenari completi | D48 | Test deterministici, compatibilità con partite esistenti |
-| **P1-D50** | P1 | Chiusura fase civile/tecnologica e dossier per E4a | D49 | Suite verde, scenari e documentazione firmati |
-| **E4a-01…04** | P2 | Strumentazione, simulazioni, colli di bottiglia, relazione | D50 | Risultati replicabili, nessun coefficiente cambiato |
-| **E4b-01…04** | P3 | Proposta valori → decisione → implementazione → confronto | E4a | Valori approvati, benchmark pre/post e suite verde |
-| **E4c-01…04** | P4 | Backup, migrazione opt-in, rollback, rilascio v14 | E4b | Nessuna perdita dati, prova rollback, approvazione |
-| **M5.4 → M7** | P5 | Navale, esplorazione, conquista, finale, packaging | E4c | Gate specifici di ogni modulo e collaudo finale |
-
-## 3. Fase 1 — Chiusura P0 della GUI, G1-D42–D45
-
-### G1-D42 — Focus, tastiera, stabilità del layout
-
-**Avanzamento RC28:** aggiunti stili di focus circoscritti alle liste v14 (bordo a spessore costante) e quattro esecuzioni di test headless in due viewport. [Rapporto tecnico](design/G1_D42_RC28_FOCUS_TASTIERA.md) · [Piano validazione](validation/G1_D42_RC28_TEST_PLAN.md). **Gate non ancora superato** finché mancano test Windows e controllo TAB/Shift+TAB. La pianificazione dei task sotto resta valida.
-
-**Ambito:** UI-01, UI-07, UI-10, UI-12, UI-18 e UI-19. **Non aggiungere funzionalità**.
-
-- Verificare spostamento con TAB e Shift+TAB in menu, Risorse, Edifici, Esercito, Scuola e Albero tecnologico; la selezione da tastiera deve aggiornare il dettaglio corretto.
-- Verificare Enter/Spazio sui soli comandi abilitati; un edificio bloccato deve essere selezionabile ma non costruibile; focus e hover devono restare leggibili e non provocare movimenti.
-- Verificare che un cambio edificio riporti all'inizio i due scroll del dettaglio, ma un tick sullo stesso edificio non azzeri lo scorrimento e non sposti il focus (RC27).
-- Verificare visibilità del riquadro diagnostica massimo 104 px, pulsanti, scorrimento con testi lunghi e comportamento alle due viewport. Isolare eventuali difetti con test headless, senza sostituire l'osservazione Windows.
-- Produrre rapporto con passi di riproduzione, gravità, screenshot richiesto e test da aggiungere. In assenza di un difetto dimostrato non cambiare lo XAML.
-
-**Exit:** codice invariato o correzioni mirate; nessuna regressione introdotta; documento D42 con anomalie e piano prove D43.
-
-### G1-D43 — Audit visivo/interattivo completo
-
-**Ambito:** tutte le **22 voci** della [matrice P0](validation/G1_D39_P0_UI_MATRIX.md), nelle viewport **1040×740** e **1240×850**, a DPI costante e con salvataggi di prova.
-
-- **Navigazione + Risorse (UI-01…06):** menu/tab, sette colonne, celle numeriche allineate a destra, scrollbar, 17 risorse v14, ordinamento, selezione ocra, tooltip capacità, saldo e `si riempie tra`.
-- **Edifici (UI-07…13):** livelli separati, bloccati grigi ma selezionabili, prerequisiti, costo progressivo cumulativo, disabled/hover, lavoratori, upgrade, diagnostica e Pane.
-- **Popolazione + Esercito (UI-14…15, UI-22):** crescita accelerata e tempo residuo, limiti abitativi, razioni Cibo/Pane, avanzamento reclute, rimborsi, assenza di doppi impegni popolazione.
-- **Scuola + ricerca (UI-16…17):** 120 s attuali come **valore candidato**, 2 Matite minime, progresso, ricercatori, acquisti disabilitati senza risorse, saldo ricerca visualizzato a due decimali senza arrotondare la disponibilità sottostante.
-- **Comandi e sessione (UI-18…21):** focus/hover, selezioni dopo tick/Salva/Carica, Nuova partita/Annulla, checkpoint precedente non sovrascritto prima di un Salva manuale, DB isolati e ripresa.
-
-Per ogni UI-ID registrare **PASS / FAIL / NA motivata**, versione, viewport, dati usati, data, esito e riferimento screenshot o TRX. La v13 può essere **NA motivata** soltanto per funzionalità nuove v14 (Scuola, Albero, Matite/tiers). Non inventare esiti senza prova. Seguire il [runbook](validation/G1_D42_P0_RUNBOOK.md).
-
-**Exit:** elenco numerato e riproducibile di tutti i FAIL, oppure 22 PASS/NA motivati; non chiudere il gate in questa milestone se esistono FAIL.
-
-### G1-D44 — Correzioni P0 fondate su evidenze
-
-- Triagiare FAIL: **P0-bloccante** (perdita salvataggio, comando pagabile/cliccabile erroneamente, impossibilità di usare UI), **P1-funzionale** (dettagli errati, selezione/focus) e **P2-cosmetico** (spaziature, colore non critico). Gli esiti non approvati restano aperti.
-- Correggere per area, in lotti piccoli, senza ridisegnare la tabella Risorse o l'interfaccia classica v13.
-- Ogni difetto: un test di regressione idoneo, controllo delle due viewport se rilevante, diff tracciato, documentazione e ZIP integrale.
-- Ricontrollare i flussi Salva/Carica/Nuova partita su copie anonimizzate prima di chiudere UI-20/UI-21.
-
-**Exit:** nessun FAIL bloccante né funzionale non risolto; test automatici verdi; prove Windows ripetute sui casi corretti.
-
-### G1-D45 — Gate P0: certificazione grafica e funzionale
-
-- Eseguire `validate.cmd` sul candidato cumulativo; registrare numero di test effettivo e TRX.
-- Firmare **22 righe UI-01…UI-22** con PASS oppure NA motivata; zero FAIL aperti; disporre di prove a entrambe le dimensioni.
-- Verificare differenze v13/v14 autorizzate, niente regressioni in Risorse/Edifici/Esercito, focus e layout stabile, protezione salvataggi e prova di riapertura.
-- Aggiornare `CURRENT_STATE.md`, matrice, handoff e changelog, con dichiarazione chiara dell'approvazione visiva dell'utente.
-
-**Exit vincolante:** P0 dichiarato chiuso **solo dopo** conferma manuale. In caso contrario D45 resta aperta; P1/E4 non sono certificati.
-
-## 4. Fase 2 — P1 / Scuola e Albero tecnologico, D46–D50
-
-### P1-D46 — Scuola: flusso e invarianti
-
-- Audit iscrizione, capacità classi/posti, coda, progresso individuale, annullamento, rimborsi, qualificazione e assegnazione ricercatori con lotti +1/+5/+10.
-- Verificare prenotazione degli abitanti tra lavoro, formazione, Esercito; assenza di duplicazione, saldi non negativi, gestione di posti e persone insufficienti.
-- Controllare progressi durante pausa, salvataggio, reload, avanzamento di tempo e chiusura.
-
-**Exit:** test e scenari che riproducono l'intero ciclo senza risorse o residenti creati/distrutti accidentalmente.
-
-### P1-D47 — Matite, produzione e magazzino
-
-- Verificare filiera attuale: **1 Legno lavorato + 1 Carbone → 4 Matite** su comando della Scuola, con **10 Cibo + 2 Matite per studente** come regola corrente; **solo 2 Matite minime sono vincolo confermato**, gli altri numeri restano candidati.
-- Verificare capienze Municipio/Magazzino/Scuola, magazzino pieno, produzione atomica, rimborsi solo per matite realmente pagate e compatibilità delle iscrizioni pre-RC9.
-- Preparare un'analisi di alternative: produzione manuale nella Scuola, produzione automatizzata più avanti o edificio produttivo dedicato. **Nessuna nuova filiera/edificio senza scelta esplicita**.
-
-**Exit:** comportamento attuale affidabile e proposta comparativa di gameplay da approvare.
-
-### P1-D48 — Tecnologie con benefici misurabili
-
-- Inventariare tutte le tecnologie, prerequisiti (ricerca, edifici, progressione), costo, sblocco, effetti applicati a economia/UI e persistenza.
-- Vietare acquisti di tecnologie senza un effetto definito; **Logistica/Navigazione restano indisponibili** fino a implementazione reale dei relativi benefici.
-- Confermare accumulo e spesa libera dei punti ricerca, visualizzazione a 2 decimali e confronto basato sul valore non arrotondato.
-- Verificare che i livelli Base/Grande/Avanzato rimangano edifici distinti, acquistabili direttamente oppure tramite upgrade secondo regole approvate.
-
-**Exit:** tabella tecnologia→effetto→test di regressione, senza placeholder acquistabili.
-
-### P1-D49 — Integrazione e compatibilità
-
-- Scenari dal legno/carbone alla prima iscrizione, ricercatore attivo e tecnologia sbloccata; capacità e personale limitati.
-- Salvataggi v14 precedenti e post-Matite, ripresa, identità delle selezioni e ciclo Nuova partita.
-- UX compatta senza nuove ComboBox di tier e senza duplicare Costruisci nella scheda Scuola.
-
-**Exit:** campagne realistiche riproducibili, suite verde, nessuna perdita compatibilità.
-
-### P1-D50 — Gate scuola/tecnologie
-
-- Rapporto di funzionalità, tabelle di regole **confermate vs candidate**, test integrati e note di migrazione eventuale.
-- Approvazione del perimetro da misurare in E4a; niente bilanciamento anticipato.
-
-## 5. Fase 3 — E4a: misurare prima di decidere
-
-| Passo | Lavori | Output/gate |
-| --- | --- | --- |
-| **E4a-01 Baseline** | Definire seed, scenari, clock/step, input e schede di rilevazione ripetibili; registrare build e regole | Fixture e benchmark di riferimento senza cambiare parametri |
-| **E4a-02 Progressione** | Misurare tempi/risorse per abitante, prime case, primo Pane sostenibile, primo studente e ricercatore, prime tecnologie e tier avanzati | Curve di tempi e costi, colli di bottiglia misurati |
-| **E4a-03 Stress e stalli** | Bilanci multipli, acquisti +1/+5/+10, deficit materiali, magazzini saturi, assenza manodopera, razioni Cibo/Pane, training, combattenti, restart | Matrice di deadlock/limiti e riproduzione deterministica |
-| **E4a-04 Rapporto** | Confrontare scenari, individuare costi o produzioni dominanti, proporre obiettivi di progressione senza assegnare nuovi numeri | Rapporto numerico e backlog di ipotesi da approvare |
-
-**Misure minime:** tempo di progressione, popolazione/capienza, lavoratori liberi/occupati, produzione-consumo-saldo per risorsa, stoccaggio, deficit materiali, ricercatori/punti ricerca, coda militare, tempi di formazione, verifiche dopo Save/Load. Distinguere nettamente impossibilità strutturali da semplici attese; nessun obiettivo temporale viene inventato senza misurazioni.
-
-**Exit:** scenari riproducibili e risultati prima di intervenire sui coefficienti.
-
-## 6. Fase 4 — E4b: bilanciamento sottoposto ad approvazione
-
-| Passo | Lavori | Criterio |
-| --- | --- | --- |
-| **E4b-01 Proposta** | Tabella valore attuale → alternativa A/B → impatto previsto, spiegazione | Revisione utente prima del codice |
-| **E4b-02 Decisione** | Registrare scelte definitive in ADR, distinguere regole invarianti da numeri | Nessun coefficiente modificato senza decisione |
-| **E4b-03 Implementazione** | Applicare solo valori approvati, migrare se necessario, testare progressioni | Test unit/integration e confronto benchmark |
-| **E4b-04 Verifica** | Eseguire benchmark identici pre/post, controllare stalli e ritmo, eventuale secondo passaggio deliberato | Gate economico esplicito |
-
-**Valori attuali candidati, non approvati definitivamente:** crescita prezzo `+15%` per edificio, fattori tier `1 / 2,6 / 6,5`, capacità `+50 / +150 / +500`, 120 s di formazione, 10 Cibo/iscrizione, 4 Matite/lotto, 0,1 punti/s per ricercatore. **Vincoli confermati:** 1/3/10 lavoratori ai tre livelli e almeno 2 Matite per studente. Il rapporto E4a decide cosa rivedere.
-
-## 7. Fase 5 — E4c: sicurezza e attivazione v14
-
-| Passo | Lavori | Gate |
-| --- | --- | --- |
-| **E4c-01 Inventario** | Schemi SQLite v2/v3, fixture storiche, inventario dei dati e incompatibilità | Nessun percorso di perdita dati non identificato |
-| **E4c-02 Migrazione opt-in** | Copia v13→v14 con destinazione nuova, backup, convalida integrità, gestione conflitti | Originale intatto, nulla sovrascritto |
-| **E4c-03 Rollback** | Prove di chiusura, errore I/O, crash/interruzione, schema non compatibile e ritorno a v13 | Recupero dimostrato e registrato |
-| **E4c-04 Rilascio** | Valutare v14 come modalità normale solo dopo approvazione; QA, artefatti e istruzioni | Checkpoint finale, consentita disattivazione/rollback |
-
-L'uso di database personali è escluso dai pacchetti. Non alterare il formato v13 in-place.
-
-## 8. Fase 6 — Espansione, dopo v14 stabile
-
-| Modulo | Ambito | Gate preliminare e di uscita |
-| --- | --- | --- |
-| **M5.4 Navale** | Cantiere, navi, equipaggi, materiali, slot di produzione, tecnologie con effetti | Definire costi/limiti dopo E4; nessun effetto fantasma |
-| **M5.5 Esplorazione** | Esplorare fuori dalla colonia, individuare località e condizioni; distinguere **esplorazione** da **conquista** | Risultati deterministici nei casi approvati, senza conquista automatica |
-| **M5.6 Conquista** | Requisiti di esercito/flotta, difesa, tempi, criteri di successo | Regole deliberate; niente perdite irreversibili inattese |
-| **M5.7 Territori/Castello** | Nuove terre, benefici, logistica, Castello, condizioni di vittoria | Persistenza, progressione e vincita verificabili |
-| **M6 Stabilizzazione estesa** | Collaudo completo, bilanciamento dell'espansione, usabilità, performance | Suite e benchmark estesi, nessun P0 |
-| **M7 Distribuzione** | Build/installazione, documentazione utente, eventuale firma e aggiornamento | Release tracciabile con backup, rollback e licenza |
-
-L'ordine e la struttura dei moduli sono proposti; il gameplay specifico richiederà ADR e approvazione prima del codice.
-
-## 9. Registro decisioni e rischi da non perdere
-
-| Tema | Stato alla RC27 | Quando decidere |
-| --- | --- | --- |
-| GUI v13, palette pixel art, tabella Risorse 7 colonne | **Vincolo confermato** | Non riaprire senza richiesta |
-| Tre tier come edifici distinti, 1/3/10 lavoratori | **Vincolo confermato** | Non riaprire senza richiesta |
-| Scuola costruita da Edifici, minimo 2 Matite/studente | **Vincolo confermato** | Non riaprire senza richiesta |
-| Ricetta Matite e produzione manuale vs automatica | **Attuale, non bilanciata** | P1-D47 ed E4b |
-| Costi progressivi e fattori tier | **Candidati** | E4a misurazione, E4b scelta |
-| Tempo formazione e produzione punti ricerca | **Candidati** | E4a/E4b |
-| Tecnologie Logistica/Navigazione | **Non acquistabili senza benefici** | P1-D48 / M5.4 |
-| Migrazione v13→v14 | **Opt-in e non distruttiva** | E4c |
-| Regole navale, esplorazione e conquista | **Da progettare** | M5.4–M5.6 |
-
-**Rischi prioritari:** regressioni grafiche non coperte da xUnit; input o stoccaggi insufficienti che rendono impossibile una filiera; consumo/rimborso doppi nelle iscrizioni; discrepanza tra prezzi visualizzati e confronto economico; scritture inattese del salvataggio; tecnologie che sbloccano elementi senza effetto. Tutti richiedono test e prove riproducibili, non sole ispezioni statiche.
-
-## 10. Metodo di lavoro e consegne
-
-- **Ogni incremento di codice:** ZIP **integrale** (sorgenti, test, documentazione, changelog, roadmap, handoff, ADR quando necessario). Nessuna consegna di soli frammenti, niente DB personali, mantenere la cartella root ordinata.
-- **Incremento solo documentale:** conservare l'ultima RC applicativa validata, non inventare una release o nuovi test; consegnare ZIP con progetto completo e documenti aggiornati, marcato «documentazione».
-- **Test:** riportare sempre ultima suite confermata dall'utente, suite del candidato, verifiche statiche e prove visive non eseguite **separatamente**.
-- **Ogni difetto:** descrivere comportamento atteso/osservato, come riprodurre, rischio regressione, test aggiunto e risultato Windows quando disponibile.
-- **Ogni gate:** esplicitare evidenze di accettazione, decisioni ancora aperte e file da consultare nel passaggio di chat.
-
-[Stato corrente](CURRENT_STATE.md) · [Handoff](NEW_CHAT_HANDOFF.md) · [Matrice UI](validation/G1_D39_P0_UI_MATRIX.md) · [Runbook G1-D42](validation/G1_D42_P0_RUNBOOK.md) · [ADR 0040](adr/0040-pianificazione-post-rc27-e-gate-sequenziali.md).
+| 35 test aggiunti RC64–68 mai validati cumulativamente | Alta | G0 prima del refactoring |
+| Perdita di dettagli GUI già approvati | Alta | ADR 0071, test Desktop e confronto visivo obbligatorio |
+| Conversione DTO cambia ordine o storia acquisti | Alta | Equality per ID, prove di progressi ordinati e ripresa |
+| Doppia proprietà del Cibo o stock inventati dai trasferimenti | Alta | StockAuditor al millesimo, profili combinati |
+| DB v15 non leggibile dopo breaking change | Media | Errore esplicito, rinomina manuale DB sperimentale, mai v14 |
+| Prezzi altissimi ma capacità insufficiente | Alta | Benchmark raggiungibilità, crescita dei magazzini prima dei prezzi |
+| Squadra Zecca non coerente con tier `1/3/10` | Alta | Modello moduli/posti separati, test 0/9/10/19/20 |
+| Benchmark v14 scambiati per misure v15 | Alta | Runner v15 dedicato, report versionati e `not-run` finché non eseguiti |
+| Roadmap diventa una cronologia di RC e perde autorità | Media | Unica roadmap attiva, cronologia nel CHANGELOG/ADR |
+
+**Prossimo passo effettivo:** eseguire il gate cumulativo RC74 (843 test attesi) e la verifica visiva; poi misurare i benchmark naturali v15, analizzare blocchi, ampliare gli scenari E4a.2. Non iniziare E4b prima della misura E4a e non sacrificare la GUI per velocizzare l'architettura.

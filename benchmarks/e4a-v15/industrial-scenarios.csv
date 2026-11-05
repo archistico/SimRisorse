@@ -1,0 +1,7 @@
+scenario_id,policy_id,profile,goal,declared_horizon_seconds,status,completion_seconds,notes
+V15-I01,research-first,natural,unlock-estrazione-1,21600,not-run,,School built early; bread and coal needed before pencils and enrollment
+V15-I01,bread-first,natural,unlock-estrazione-1,21600,not-run,,Bread and coal first; school then pencils and technology
+V15-I02,research-first,natural,first-swords-after-research,43200,not-run,,Early school then bread coal pencils Estrazione I Industria I iron forge
+V15-I02,bread-first,natural,first-swords-after-research,43200,not-run,,Bread coal school pencils technologies then iron forge
+V15-I03,research-first,natural,first-coins-after-research,57600,not-run,,Early school then bread coal pencils Estrazione I Industria I gold mint
+V15-I03,bread-first,natural,first-coins-after-research,57600,not-run,,Bread coal school pencils technologies then gold mint

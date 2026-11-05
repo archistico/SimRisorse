@@ -15,7 +15,7 @@ internal static class ProductionPlanner
 {
     public static ProductionPlan Plan(GameCatalog catalog, ResourceBundle resources, ResourceBundle capacity,
         IReadOnlyDictionary<string, BuildingState> buildings, ResourceBundle? reservedConsumption = null,
-        bool includeDiagnostics = false)
+        bool includeDiagnostics = false, IReadOnlySet<string>? suppressedProducerIds = null)
     {
         var remaining = reservedConsumption is null ? resources : resources - reservedConsumption;
         var available = catalog.Resources.ToDictionary(item => item.Id, item => remaining[item.Id].Milliunits, StringComparer.Ordinal);
@@ -24,6 +24,23 @@ internal static class ProductionPlanner
         var reports = ImmutableArray.CreateBuilder<BuildingProduction>(catalog.Buildings.Length);
         foreach (var definition in catalog.Buildings)
         {
+            // An explicitly suppressed producer is not part of the active ruleset.
+            // Its state may therefore be absent (v15 retires food-store). Keep
+            // the diagnostic row for callers, but NEVER require a dummy building
+            // and NEVER evaluate its inputs or outputs. Unsuppressed producers
+            // still require a state entry, as in the original v14 contract.
+            if (suppressedProducerIds?.Contains(definition.Id) == true)
+            {
+                buildings.TryGetValue(definition.Id, out var suppressedState);
+                var blocked = ProductionBlockReason.NotProducer;
+                if (suppressedState is null || suppressedState.Count == 0)
+                    blocked |= ProductionBlockReason.NotConstructed;
+                if (suppressedState is null || suppressedState.AssignedWorkers == 0)
+                    blocked |= ProductionBlockReason.NoWorkers;
+                reports.Add(new(definition.Id, suppressedState?.AssignedWorkers ?? 0,
+                    0, blocked, ImmutableArray<string>.Empty, ImmutableArray<string>.Empty));
+                continue;
+            }
             var state = buildings[definition.Id];
             var reason = ProductionBlockReason.None;
             // The second-by-second simulation does not need presentation diagnostics.

@@ -1,4 +1,4 @@
-> **Aggiornamento 03/11/2026 · v58-RC2 (non validata):** questo documento contiene materiale del precedente checkpoint v57 e alcune parti sono storiche. Per lo stato attuale del ramo unificato leggere [docs/CURRENT_STATE.md](CURRENT_STATE.md), [docs/ROADMAP.md](ROADMAP.md) e [docs/validation/V58_RECONCILIATION.md](validation/V58_RECONCILIATION.md). Nuovo ruleset candidato: `civil-growth-13` (addestramento individuale); flotta non implementata.
+> **Nota operativa RC68:** il quadro architetturale storico seguente comprende sezioni precedenti alla v15. Il checkpoint civico v15 usa un modello nativo in memoria ma conserva ancora un campo radice `V14CampaignSnapshot` e un adattatore temporaneo nel clock. Per il confine effettivo leggere [stato attuale](CURRENT_STATE.md) e [roadmap](ROADMAP.md); la GUI canonica resta quella approvata nella RC63.
 
 # Architettura
 

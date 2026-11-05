@@ -26,11 +26,282 @@ if (args is ["--help"])
     Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-coal: three v9 coal strategies at 1800/3600 seconds, with replay and ledger checks.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-forge-mint-campaign: three real-start v9 routes to 240 swords/360 coins over 2400 seconds.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-military-capacity: controlled v13 comparison of 5/10/20 recruits and 1/2/4 barracks.");
+    Console.WriteLine("SimRisorse.Simulation --audit-v15 --seconds N | --hours N [--profile combined]: optional full-chain stress (max 48h), no personal saves.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-school [--output DIRECTORY]: controlled v14 E4A-06/07, one vs two schools.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-natural [--scenario E4A-01..05] [--output DIRECTORY]: unfunded v14 progression; JSON/CSV.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-v15-natural [--scenario V15-N01|V15-N02|V15-N03] [--max-seconds N] [--output DIRECTORY]: separate unfunded v15 progression; JSON + samples/events CSV. Shortened horizons are diagnostic.");
+    Console.WriteLine("SimRisorse.Simulation --analyze-e4a-v15-natural --input RESULTS_JSON [--output DIRECTORY]: evidence-based postprocessing of RC73 JSON. No simulation; CSV, Markdown, JSON.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-v15-industry [--scenario V15-I01|V15-I02|V15-I03] [--policy research-first|bread-first] [--max-seconds N] [--output DIRECTORY]: unfunded school/research/forge/mint strategies with full material receipts.");
+    Console.WriteLine("SimRisorse.Simulation --analyze-e4a-v15-industry --input RESULTS_JSON [--output DIRECTORY]: economic analysis and measured RC76 shortage/capacity evidence; never simulates or modifies saves.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+if (args.Length > 0 && args[0] == "--audit-v15")
+{
+    var combined = args is ["--audit-v15", _, _, "--profile", "combined"];
+    if (!(args.Length == 3 || combined) || args[1] is not ("--seconds" or "--hours") ||
+        !int.TryParse(args[2], NumberStyles.None, CultureInfo.InvariantCulture, out var duration) ||
+        duration < 1 || duration > (args[1] == "--hours" ? 48 : 172800)) return Usage();
+    try
+    {
+        var secondsToAudit = args[1] == "--hours" ? checked(duration * 3600) : duration;
+        var report = combined
+            ? JsonSerializer.Serialize(V15CombinedStressAudit.Run(secondsToAudit), json)
+            : JsonSerializer.Serialize(V15StressAudit.Run(secondsToAudit), json);
+        Console.WriteLine(report);
+        return 0;
+    }
+    catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or OverflowException)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+}
+
+if (args.Length > 0 && args[0] == "--benchmark-e4a-v15-industry")
+{
+    string? requestedScenario = null;
+    string? requestedPolicy = null;
+    string? outputDirectory = null;
+    int? maxSeconds = null;
+    var seen = new HashSet<string>(StringComparer.Ordinal);
+    if ((args.Length - 1) % 2 != 0) return Usage();
+    for (var i = 1; i < args.Length; i += 2)
+    {
+        if (!seen.Add(args[i])) return Usage();
+        if (args[i] == "--scenario") requestedScenario = args[i + 1];
+        else if (args[i] == "--policy") requestedPolicy = args[i + 1];
+        else if (args[i] == "--output") outputDirectory = args[i + 1];
+        else if (args[i] == "--max-seconds")
+        {
+            if (!int.TryParse(args[i + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var limit) ||
+                limit < 0) return Usage();
+            maxSeconds = limit;
+        }
+        else return Usage();
+    }
+    if (requestedScenario is "" || requestedPolicy is "" || outputDirectory is "" ||
+        requestedPolicy is not (null or V15IndustrialProgressionBenchmark.PolicyResearchFirst or
+            V15IndustrialProgressionBenchmark.PolicyBreadFirst)) return Usage();
+    try
+    {
+        IReadOnlyList<V15IndustrialProgressionRun> runs = requestedScenario is not null && requestedPolicy is not null
+            ? [V15IndustrialProgressionBenchmark.Run(requestedScenario, requestedPolicy, maxSeconds)]
+            : requestedScenario is null && requestedPolicy is null
+                ? V15IndustrialProgressionBenchmark.RunAll(maxSeconds)
+                : (requestedScenario is null
+                    ? new[] { "V15-I01", "V15-I02", "V15-I03" }.Select(id =>
+                        V15IndustrialProgressionBenchmark.Run(id, requestedPolicy!, maxSeconds)).ToArray()
+                    : new[] { V15IndustrialProgressionBenchmark.PolicyResearchFirst,
+                        V15IndustrialProgressionBenchmark.PolicyBreadFirst }.Select(policy =>
+                        V15IndustrialProgressionBenchmark.Run(requestedScenario, policy, maxSeconds)).ToArray());
+        var analysis = V15IndustrialProgressionAnalysis.Analyze(runs);
+        var constraints = V15IndustrialConstraintAnalysis.Analyze(runs);
+        var report = JsonSerializer.Serialize(runs, json);
+        if (outputDirectory is not null)
+        {
+            var outputs = new[] {
+                Path.Combine(outputDirectory, "e4a-v15-industry-results.json"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-events.csv"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-samples.csv"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-analysis.json"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-analysis.csv"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-analysis.md"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-constraints.json"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-constraints.csv"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-constraints.md") };
+            if (outputs.Any(File.Exists))
+            {
+                Console.Error.WriteLine("Industrial benchmark outputs already exist; choose a new directory.");
+                return 1;
+            }
+            Directory.CreateDirectory(outputDirectory);
+            File.WriteAllText(outputs[0], report);
+            File.WriteAllText(outputs[1], V15IndustrialProgressionBenchmark.EventsCsv(runs));
+            File.WriteAllText(outputs[2], V15IndustrialProgressionBenchmark.SamplesCsv(runs));
+            File.WriteAllText(outputs[3], JsonSerializer.Serialize(analysis, json));
+            File.WriteAllText(outputs[4], V15IndustrialProgressionAnalysis.ToCsv(analysis));
+            File.WriteAllText(outputs[5], V15IndustrialProgressionAnalysis.ToMarkdown(analysis));
+            File.WriteAllText(outputs[6], JsonSerializer.Serialize(constraints, json));
+            File.WriteAllText(outputs[7], V15IndustrialConstraintAnalysis.ToCsv(constraints));
+            File.WriteAllText(outputs[8], V15IndustrialConstraintAnalysis.ToMarkdown(constraints));
+        }
+        Console.WriteLine(report);
+        return 0;
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or
+        IOException or UnauthorizedAccessException or OverflowException)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+}
+
+if (args.Length > 0 && args[0] == "--analyze-e4a-v15-industry")
+{
+    string? input = null;
+    string? outputDirectory = null;
+    var seen = new HashSet<string>(StringComparer.Ordinal);
+    if ((args.Length - 1) % 2 != 0) return Usage();
+    for (var i = 1; i < args.Length; i += 2)
+    {
+        if (!seen.Add(args[i])) return Usage();
+        if (args[i] == "--input") input = args[i + 1];
+        else if (args[i] == "--output") outputDirectory = args[i + 1];
+        else return Usage();
+    }
+    if (string.IsNullOrWhiteSpace(input) || outputDirectory is "") return Usage();
+    try
+    {
+        var source = Directory.Exists(input)
+            ? Path.Combine(input, "e4a-v15-industry-results.json") : input;
+        var runs = JsonSerializer.Deserialize<V15IndustrialProgressionRun[]>(
+            File.ReadAllText(source, System.Text.Encoding.UTF8), json)
+            ?? throw new InvalidDataException("No industrial progression runs in input.");
+        var analysis = V15IndustrialProgressionAnalysis.Analyze(runs);
+        var constraints = V15IndustrialConstraintAnalysis.Analyze(runs);
+        var report = JsonSerializer.Serialize(analysis, json);
+        if (outputDirectory is not null)
+        {
+            var outputs = new[] {
+                Path.Combine(outputDirectory, "e4a-v15-industry-analysis.json"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-analysis.csv"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-analysis.md"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-constraints.json"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-constraints.csv"),
+                Path.Combine(outputDirectory, "e4a-v15-industry-constraints.md") };
+            if (outputs.Any(File.Exists))
+            {
+                Console.Error.WriteLine("Analysis outputs already exist; choose a new directory.");
+                return 1;
+            }
+            Directory.CreateDirectory(outputDirectory);
+            File.WriteAllText(outputs[0], report);
+            File.WriteAllText(outputs[1], V15IndustrialProgressionAnalysis.ToCsv(analysis));
+            File.WriteAllText(outputs[2], V15IndustrialProgressionAnalysis.ToMarkdown(analysis));
+            File.WriteAllText(outputs[3], JsonSerializer.Serialize(constraints, json));
+            File.WriteAllText(outputs[4], V15IndustrialConstraintAnalysis.ToCsv(constraints));
+            File.WriteAllText(outputs[5], V15IndustrialConstraintAnalysis.ToMarkdown(constraints));
+        }
+        Console.WriteLine(report);
+        return 0;
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or
+        JsonException or InvalidDataException or IOException or UnauthorizedAccessException or OverflowException)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+}
+
+if (args.Length > 0 && args[0] == "--analyze-e4a-v15-natural")
+{
+    string? input = null;
+    string? outputDirectory = null;
+    var seen = new HashSet<string>(StringComparer.Ordinal);
+    if ((args.Length - 1) % 2 != 0) return Usage();
+    for (var i = 1; i < args.Length; i += 2)
+    {
+        if (!seen.Add(args[i])) return Usage();
+        if (args[i] == "--input") input = args[i + 1];
+        else if (args[i] == "--output") outputDirectory = args[i + 1];
+        else return Usage();
+    }
+    if (string.IsNullOrWhiteSpace(input) ||
+        outputDirectory is not null && string.IsNullOrWhiteSpace(outputDirectory)) return Usage();
+    try
+    {
+        var source = Directory.Exists(input)
+            ? Path.Combine(input, "e4a-v15-natural-results.json") : input;
+        var runs = JsonSerializer.Deserialize<V15NaturalProgressionRun[]>(
+            File.ReadAllText(source, System.Text.Encoding.UTF8), json)
+            ?? throw new InvalidDataException("Natural benchmark input has no scenario runs.");
+        var analysis = V15NaturalProgressionAnalysis.Analyze(runs);
+        var report = JsonSerializer.Serialize(analysis, json);
+        if (outputDirectory is not null)
+        {
+            var jsonPath = Path.Combine(outputDirectory, "e4a-v15-analysis.json");
+            var csvPath = Path.Combine(outputDirectory, "e4a-v15-analysis.csv");
+            var markdownPath = Path.Combine(outputDirectory, "e4a-v15-analysis.md");
+            // Do not create/replace any output if even one named file already exists.
+            if (File.Exists(jsonPath) || File.Exists(csvPath) || File.Exists(markdownPath))
+            {
+                Console.Error.WriteLine("Analysis files already exist; choose a new output directory.");
+                return 1;
+            }
+            Directory.CreateDirectory(outputDirectory);
+            File.WriteAllText(jsonPath, report);
+            File.WriteAllText(csvPath, V15NaturalProgressionAnalysis.ToCsv(analysis));
+            File.WriteAllText(markdownPath, V15NaturalProgressionAnalysis.ToMarkdown(analysis));
+        }
+        Console.WriteLine(report);
+        return 0; // An observed timeout is a valid measurement, not a process failure.
+    }
+    catch (Exception exception) when (exception is JsonException or InvalidDataException or
+        InvalidOperationException or ArgumentException or IOException or UnauthorizedAccessException or
+        OverflowException)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+}
+
+if (args.Length > 0 && args[0] == "--benchmark-e4a-v15-natural")
+{
+    string? requestedScenario = null;
+    string? outputDirectory = null;
+    int? maxSeconds = null;
+    var seen = new HashSet<string>(StringComparer.Ordinal);
+    if ((args.Length - 1) % 2 != 0) return Usage();
+    for (var i = 1; i < args.Length; i += 2)
+    {
+        if (!seen.Add(args[i])) return Usage();
+        if (args[i] == "--scenario") requestedScenario = args[i + 1];
+        else if (args[i] == "--output") outputDirectory = args[i + 1];
+        else if (args[i] == "--max-seconds")
+        {
+            if (!int.TryParse(args[i + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var limit) ||
+                limit < 0) return Usage();
+            maxSeconds = limit;
+        }
+        else return Usage();
+    }
+    if (requestedScenario is "" || string.IsNullOrWhiteSpace(outputDirectory) && outputDirectory is not null)
+        return Usage();
+    try
+    {
+        IReadOnlyList<V15NaturalProgressionRun> runs = requestedScenario is null
+            ? V15NaturalProgressionBenchmark.RunAll(maxSeconds)
+            : [V15NaturalProgressionBenchmark.Run(requestedScenario, maxSeconds)];
+        var report = JsonSerializer.Serialize(runs, json);
+        if (outputDirectory is not null)
+        {
+            Directory.CreateDirectory(outputDirectory);
+            var jsonPath = Path.Combine(outputDirectory, "e4a-v15-natural-results.json");
+            var samplesPath = Path.Combine(outputDirectory, "e4a-v15-natural-samples.csv");
+            var eventsPath = Path.Combine(outputDirectory, "e4a-v15-natural-events.csv");
+            if (File.Exists(jsonPath) || File.Exists(samplesPath) || File.Exists(eventsPath))
+            {
+                Console.Error.WriteLine("Benchmark files already exist; choose a new output directory.");
+                return 1;
+            }
+            File.WriteAllText(jsonPath, report);
+            File.WriteAllText(samplesPath, V15NaturalProgressionBenchmark.SamplesCsv(runs));
+            File.WriteAllText(eventsPath, V15NaturalProgressionBenchmark.EventsCsv(runs));
+        }
+        Console.WriteLine(report);
+        // A measured timeout or game-design softlock is not a CLI malfunction.
+        // The outcome and stop reason remain explicit in the emitted data.
+        return 0;
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or
+        IOException or UnauthorizedAccessException or OverflowException)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return 1;
+    }
+}
+
 if (args.Length > 0 && args[0] == "--benchmark-e4a-natural")
 {
     string? requestedScenario = null;

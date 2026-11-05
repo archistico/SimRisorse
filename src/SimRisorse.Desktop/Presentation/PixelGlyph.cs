@@ -20,7 +20,12 @@ public sealed class PixelGlyph : Control
         ['#'] = new ImmutableSolidColorBrush(Color.Parse("#263349")), // outline
         ['W'] = new ImmutableSolidColorBrush(Color.Parse("#F2D49B")), // highlight
         ['G'] = new ImmutableSolidColorBrush(Color.Parse("#6AA85C")), // vegetation
-        ['Y'] = new ImmutableSolidColorBrush(Color.Parse("#E6AC52")), // wheat, roof, bread
+        ['Y'] = new ImmutableSolidColorBrush(Color.Parse("#E6AC52")), // wheat, roof
+        ['O'] = new ImmutableSolidColorBrush(Color.Parse("#BE8852")), // bread crust
+        ['I'] = new ImmutableSolidColorBrush(Color.Parse("#FFFDF4")), // cow's white coat
+        ['P'] = new ImmutableSolidColorBrush(Color.Parse("#D99D8C")), // cow's muzzle
+        ['L'] = new ImmutableSolidColorBrush(Color.Parse("#BDC5CA")), // upper stone face
+        ['D'] = new ImmutableSolidColorBrush(Color.Parse("#626F7C")), // shaded stone face
         ['T'] = new ImmutableSolidColorBrush(Color.Parse("#9A6947")), // wood, brick
         ['B'] = new ImmutableSolidColorBrush(Color.Parse("#66BED0")), // water, metal shine
         ['R'] = new ImmutableSolidColorBrush(Color.Parse("#D66A57")), // fish and details
@@ -47,13 +52,13 @@ public sealed class PixelGlyph : Control
         ["grain"] = ["...Y....", "..YYY...", "...Y.Y..", "..YYY...", "...Y.Y..", "..YYY...", "...T....", "...T...."],
         ["water"] = ["...BB...", "...BB...", "..BBBB..", ".BBBBBB.", ".BBBWBB.", ".BBBBBB.", "..####..", "........"],
         ["flour"] = ["........", "..####..", "..#WW#..", ".#WWWW#.", ".#WWWW#.", ".#WWWW#.", "..####..", "........"],
-        ["bread"] = ["........", "..YYYY..", ".#YYYY#.", "#YYWYYYY", "#YYYYYYY", ".#TTTT#.", "..####..", "........"],
+        ["bread"] = ["........", "..OOOO..", ".#OOOO#.", "#OOWOOOO", "#OOOOOOO", ".#TTTT#.", "..####..", "........"],
         ["tree-feller"] = ["...GG...", "..GGGG..", ".GGGGGG.", "..GGGG..", "...TT...", "...TT...", ".######.", "........"],
         ["sawmill"] = ["........", "..#####.", ".#YYYY#.", "###YY###", ".#TTTT#.", ".#T##T#.", ".######.", "........"],
-        ["stonecutter"] = ["........", "...BB...", "..#BB#..", "...##...", ".#CCCC#.", ".#CCCC#.", "..####..", "........"],
+        ["stonecutter"] = ["...##...", "..#LL#..", ".#LLLL#.", "#LLL#DD#", "#CCC#DD#", "#CCC#DD#", ".#CC#D#.", "..###..."],
         ["small-house"] = ["...YY...", "..YYYY..", ".YYYYYY.", "########", ".#TTTT#.", ".#T##T#.", ".#T##T#.", ".######."],
         ["large-house"] = ["..YYYY..", ".YYYYYY.", "########", "#TWWTWW#", "#T##T###", "#TWWTWW#", "#TT##TT#", "########"],
-        ["fisher"] = ["...B....", "...B....", "...B....", "..#B#...", ".#RRR##.", "#RRWRRR#", ".######.", "........"],
+        ["fisher"] = ["........", "...B....", "..####.#", ".#BBB###", "#BWBBBB#", ".#BBB###", "..####.#", "........"],
         ["food-store"] = ["..YYYY..", ".YYYYYY.", "########", "#GG##GG#", "#GYYYYG#", "#GYYYYG#", "########", "........"],
         ["farm"] = ["...YY...", "..YYYY..", ".######.", ".#TTTT#.", ".#T##T#.", ".#TTTT#.", "GGGGGGGG", "........"],
         ["well"] = [".######.", "..#CC#..", "..#BB#..", "..#BB#..", ".#BBBB#.", ".#BBBB#.", "..####..", "........"],
@@ -70,7 +75,19 @@ public sealed class PixelGlyph : Control
         ["pencils"] = ["..YY....", "..YY.TT.", "..##.TT.", "..TT.##.", "..TT.TT.", "..TT.TT.", "..TT.TT.", "..##.##."],
         ["school"] = ["..YYYY..", ".######.", "##WWWW##", "#C#WW#C#", "#C####C#", "#C#BB#C#", "#C#TT#C#", "########"],
         ["research"] = ["..####..", ".#BBBB#.", "#BBWWBB#", "#BBWWBB#", ".#BBBB#.", "..####..", "...##...", "...##..."],
-        ["barracks"] = ["..####..", ".#WWWW#.", "########", "#CBBBBC#", "#C#WW#C#", "#C#WW#C#", "########", "........"]
+        ["barracks"] = ["..####..", ".#WWWW#.", "########", "#CBBBBC#", "#C#WW#C#", "#C#WW#C#", "########", "........"],
+        // RC54 food industries and intermediate inventories keep the same 8x8 pixel grammar.
+        ["stable"] = ["..YYYY..", ".######.", "########", "#TTWWTT#", "#TT##TT#", "#TTTTTT#", "########", "........"],
+        ["hunter"] = ["...#....", "..#T#...", ".#TTT#..", "..#T#...", "...#....", "..#G#...", ".GGGGG..", "........"],
+        ["butcher"] = ["..####..", ".#YYYY#.", "########", "#RRRRRR#", "#RWWWWR#", "#RRRRRR#", "########", "........"],
+        ["garden"] = ["........", ".GG..GG.", "GGGGGGGG", "..G..G..", ".#G##G#.", ".#TTTT#.", "..####..", "........"],
+        ["orchard"] = ["..GGGG..", ".GGYYGG.", "GGGYYGGG", ".GGGGGG.", "...TT...", "...TT...", "..####..", "........"],
+        ["food-depot"] = ["..YYYY..", ".######.", "########", "#GY##YG#", "#GYWWYG#", "#GY##YG#", "########", "........"],
+        ["cattle"] = [".W....W.", "#I####I#", ".#IIII#.", ".I#II#I.", ".#IPPI#.", ".#P##P#.", "..#PP#..", "...##..."],
+        ["game"] = [".#....#.", ".#C..C#.", "..#CC#..", ".#CCCC#.", ".#CWWC#.", "..#CC#..", "..#..#..", "........"],
+        ["meat"] = ["........", "..####..", ".#RRRR#.", "#RRWWRR#", "#RRRRRR#", ".#RRRR#.", "..####..", "........"],
+        ["vegetables"] = ["...GG...", "..GGGG..", "...GG...", ".#GGGG#.", "#GGWWGG#", "#GGGGGG#", ".######.", "........"],
+        ["fruit"] = ["...GG...", "..GGGG..", "...TT...", ".#RRRR#.", "#RRWWRR#", "#RRRRRR#", ".######.", "........"]
     };
 
     static PixelGlyph() => AffectsRender<PixelGlyph>(KeyProperty);

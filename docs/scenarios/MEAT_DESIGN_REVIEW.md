@@ -1,3 +1,5 @@
+> **DOCUMENTO STORICO — analisi 27/10/2026, superata dalla riforma F1.** Non usare le raccomandazioni finali di questa pagina per bloccare l'implementazione di Carne/Deposito: la nuova architettura è stata approvata e modellata nel Core con RC40–RC45. Si veda [roadmap](../ROADMAP.md) e [stato](../CURRENT_STATE.md).
+
 # M4/M5 — Valutazione della filiera della carne
 
 Data: 2026-10-27. **Stato: analisi, nessuna nuova regola approvata o implementata.** Non modificare `civil-growth-4`, i salvataggi o il catalogo sulla base di questo documento senza una decisione esplicita.

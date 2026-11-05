@@ -4,6 +4,7 @@ using SimRisorse.Application.Persistence;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Content;
 using SimRisorse.Core.Economy;
+using SimRisorse.Core.Food;
 using SimRisorse.Core.Military;
 using SimRisorse.Core.Research;
 using SimRisorse.Core.Sessions;
@@ -102,6 +103,14 @@ public sealed class V14SqliteSaveStore
             }
         }
     }
+
+    /// <summary>
+    /// Read-only preview of the future food-inventory migration. Load() first
+    /// validates every existing v14 checkpoint record. This method never
+    /// creates a replacement SQLite file, backup or modified inventory.
+    /// </summary>
+    public V14FoodStockMigrationPlan PreviewFoodMigration(FoodConversionPolicy policy) =>
+        V14FoodStockMigration.Prepare(Load(), policy);
 
     public V14CampaignSnapshot Load()
     {

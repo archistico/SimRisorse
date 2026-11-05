@@ -1,10 +1,4 @@
-**Nota stato G1-D19 (03/11/2026):** questa guida contiene cronologie tecniche precedenti e comandi ancora utili, ma i conteggi test storici non descrivono il rilascio corrente. Ultimo gate Windows comunicato: **v60-E3b4-RC1 427/427**; RC3 GUI correttiva attende **439 test** e audit visivo. Per priorità e stato attuale leggere [CURRENT_STATE](CURRENT_STATE.md), [HANDOFF](HANDOFF.md) e [ROADMAP](ROADMAP.md).
-
----
-
-> **v59-RC1:** oltre a `\.\validate.cmd`, è disponibile `dotnet run --project tools/SimRisorse.Simulation -c Release --no-restore -- --benchmark-military-capacity`. I risultati automatici sono in `.local-cache/m4/military-capacity-benchmark.json` e `.local-cache/m4/military-balance-8-hours.json`. [Protocollo M5.3c](validation/M5_3C_V59_MILITARY_BALANCE.md).
-
-> **RC5 — simulazioni storiche e correnti.** Le strategie `industry` e `gold` senza `--rules` usano `civil-growth-13`; per confrontare i vecchi risultati M5.1/M5.2 si usa esplicitamente `--rules historical-v9` (solo `bootstrap`, `industry`, `gold`). `--rules legacy` continua a selezionare `civil-growth-4`. Il validatore esegue entrambe le famiglie di controlli e non le confonde. Vedere [rapporto](validation/V58_RC5_VALIDATOR_VERSION_DRIFT.md).
+> **Stato aggiornato:** codice RC68 candidato, 806 test attesi; RC63 ultimo checkpoint validato (771 test). Per lo stato e i criteri correnti consultare [CURRENT_STATE.md](CURRENT_STATE.md), [ROADMAP.md](ROADMAP.md) e [NEW_CHAT_HANDOFF.md](NEW_CHAT_HANDOFF.md). Le convenzioni sotto sono tecniche; eventuali numeri di test citati nel materiale storico non sono il gate attuale.
 
 # Convenzioni di sviluppo
 
