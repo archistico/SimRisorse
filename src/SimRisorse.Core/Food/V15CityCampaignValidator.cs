@@ -26,12 +26,14 @@ public static class V15CityCampaignValidator
     /// <summary>Native v15 validation. No legacy producer projection or v14
     /// checkpoint validation is performed.</summary>
     public static void ValidateNative(GameScenario baseline, V15CityCampaignSnapshot city,
-        SchoolResearchRules school, TechnologyCatalog technologies)
+        SchoolResearchRules school, TechnologyCatalog technologies,
+        V15CrewMode crewMode = V15CrewMode.Legacy)
     {
         ArgumentNullException.ThrowIfNull(baseline);
         ArgumentNullException.ThrowIfNull(city);
         ArgumentNullException.ThrowIfNull(school);
         ArgumentNullException.ThrowIfNull(technologies);
+        _ = V15CrewRules.SavedRulesVersion(crewMode);
         if (baseline.Id != "civil-growth" || baseline.Catalog.RulesVersion != "civil-growth-13" ||
             baseline.MilitaryRules is null || baseline.PopulationRules is null ||
             !baseline.Catalog.ResourcesById.ContainsKey(school.FoodResourceId) ||
@@ -62,7 +64,8 @@ public static class V15CityCampaignValidator
         foreach (var family in city.ProductiveFamilies)
         {
             if (family is null || !families.TryAdd(family.FamilyId,
-                TieredBuildingPortfolio.Create(family.FamilyId, family.Base, family.Large, family.Advanced)))
+                TieredBuildingPortfolio.Create(family.FamilyId, family.Base, family.Large, family.Advanced,
+                    V15CrewRules.CrewSize(crewMode, family.FamilyId))))
                 throw new ArgumentException("Duplicate or invalid v15 productive family.", nameof(city));
             if (family.FamilyId == V15LegacyProducerAdapter.RetiredFamilyId)
                 retired = families[family.FamilyId];

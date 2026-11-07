@@ -33,4 +33,4 @@ Ripetere la [matrice di parità a 22 punti](G1_D19_MATRICE_PARITA_GUI.md), sopra
 - [ ] Matrice P0 verificata su Windows con screenshot quando pertinenti.
 - [ ] Nessuna regressione nel gioco normale v13; salvataggi isolati.
 
-[Rapporto D22](../design/G1_D22_E3B4_RC6_DIAGNOSTICA_PRODUZIONE.md) · [Handoff](../HANDOFF.md).
+[Rapporto D22](../design/G1_D22_E3B4_RC6_DIAGNOSTICA_PRODUZIONE.md) · [Handoff](../NEW_CHAT_HANDOFF.md).

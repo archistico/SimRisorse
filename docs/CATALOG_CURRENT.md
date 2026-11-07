@@ -32,3 +32,8 @@ Prezzi e coefficenti del prototipo sono ancora quelli della v14 / RC68. Come rif
 ## Non ancora nel gioco
 
 Flotta/Cantiere navale, viaggi di esplorazione, conquista e Castello non sono parte della campagna ordinaria v15. La relativa roadmap viene **dopo** E4a/E4b. [Roadmap](ROADMAP.md) · [E4b](design/E4B_P00_COSTI_PROGRESSIVI_E_SQUADRE_MINIME.md).
+
+
+## RC90 — Deposito alimentare in v15
+
+Il deposito unico `food-depot` mantiene il proprio stock di ingredienti e Cibo pronto. L'albero della ricerca mostra gli edifici **effettivamente sbloccabili**: Alimentazione I abilita `food-depot-large` (3 postazioni, 3× capienza Base); Alimentazione II abilita `food-depot-advanced` (10 postazioni, 10× capienza Base). I tre livelli sono edifici acquistabili autonomamente, hanno personale separato e concorrono alla stessa capacità reale, senza creare una seconda ricetta o recuperare il `food-store` v14. I costi dei livelli superiori seguono il moltiplicatore Grande 2,6× e Avanzato 6,5×, oltre al fattore progressivo 1,15× della famiglia alimentare; numeri da sottoporre a bilanciamento.

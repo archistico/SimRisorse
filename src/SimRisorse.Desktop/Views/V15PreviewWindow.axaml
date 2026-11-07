@@ -121,9 +121,18 @@
           <Grid x:Name="V15BuildingWorkspace" ColumnDefinitions="*,410" ColumnSpacing="12">
             <Border Background="#FFFDF4" BorderBrush="#303B50" BorderThickness="1" CornerRadius="0" Padding="8,10">
               <Grid RowDefinitions="Auto,*" RowSpacing="6">
-                <Grid ColumnDefinitions="*,62,82" RowDefinitions="Auto,Auto" RowSpacing="6" Margin="13,0,16,0">
-                  <Button x:Name="V15FoodIndustryFilter" Grid.ColumnSpan="3" HorizontalAlignment="Right"
-                          Content="{Binding FoodIndustryFilterLabel}" Command="{Binding ToggleFoodIndustryFilterCommand}" Padding="5,3" FontSize="10" />
+                <Grid ColumnDefinitions="*,62,82" RowDefinitions="Auto,Auto" RowSpacing="7" Margin="13,0,16,0">
+                  <Grid Grid.ColumnSpan="3" ColumnDefinitions="Auto,*" ColumnSpacing="7">
+                    <TextBlock x:Name="V15FilterLabel" Text="Filtra" Classes="label" FontWeight="SemiBold" VerticalAlignment="Top" Margin="0,5,0,0" />
+                    <ItemsControl x:Name="V15BuildingFilterStrip" Grid.Column="1" ItemsSource="{Binding BuildingFilters}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:V15BuildingFilterOption">
+                        <Button Content="{Binding Label}" Command="{Binding SelectCommand}" Padding="4,2" FontSize="10"
+                                Margin="0,0,4,4" MinHeight="24" Background="{Binding Background}" Foreground="{Binding Foreground}"
+                                BorderBrush="{Binding Border}" BorderThickness="1" ToolTip.Tip="{Binding Label}" />
+                      </DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </Grid>
                   <TextBlock Grid.Row="1" Text="STRUTTURA" Classes="label" /><TextBlock Grid.Row="1" Grid.Column="1" Text="EDIFICI" Classes="label" />
                   <TextBlock Grid.Row="1" Grid.Column="2" Text="PERSONALE" Classes="label" />
                 </Grid>
@@ -151,7 +160,6 @@
                   <TextBlock Text="{Binding SelectedBuilding.Name}" FontSize="21" FontWeight="SemiBold" />
                   <TextBlock Text="{Binding SelectedBuilding.Description}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" LineHeight="17" />
                   <TextBlock Text="COSTO DEL PROSSIMO EDIFICIO" Classes="label" FontSize="11" Margin="0,4,0,0" IsVisible="{Binding SelectedBuilding.HasCost}" />
-                  <TextBlock x:Name="V15BuildingCost" Text="{Binding SelectedBuilding.Price}" Classes="label" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding SelectedBuilding.HasCost}" />
                   <ItemsControl x:Name="V15BuildingCostLines" ItemsSource="{Binding SelectedBuilding.CostLines}"
                                 ItemTemplate="{StaticResource V15ResourceDetailTemplate}" IsVisible="{Binding SelectedBuilding.HasCost}" />
                   <!-- Prices for batches are cumulative, never 5×/10× the price of the next building. -->
@@ -255,7 +263,7 @@
                 <ListBox x:Name="V15Resources" Classes="gutter-list" Grid.Row="1" ItemsSource="{Binding Resources}" SelectedItem="{Binding SelectedResource, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate><DataTemplate x:DataType="vm:V15ResourceRow">
                       <Grid ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" ToolTip.Tip="{Binding CapacityBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
+                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" ToolTip.Tip="{Binding CapacityBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" ToolTip.Tip="{Binding ProductionBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" ToolTip.Tip="{Binding ConsumptionBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
                       </Grid>
                     </DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
@@ -446,10 +454,17 @@
                 <ListBox x:Name="V15Technologies" Grid.Row="1" Classes="gutter-list" ItemsSource="{Binding Technologies}"
                     SelectedItem="{Binding SelectedTechnology, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0">
                   <ListBox.ItemTemplate><DataTemplate x:DataType="vm:V15TechnologyRow">
-                    <StackPanel Spacing="3" Margin="5,7">
-                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                      <TextBlock Text="{Binding Label}" FontSize="11" Foreground="#66766E" />
-                    </StackPanel>
+<Grid ColumnDefinitions="32,*" ColumnSpacing="7" Margin="3,6">
+                      <Border Background="#E8E4D6" BorderBrush="#697787" BorderThickness="1"
+                              Width="30" Height="32" CornerRadius="0" VerticalAlignment="Top">
+                        <pixel:PixelGlyph Key="{Binding GlyphKey}" Width="22" Height="22"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Label}" FontSize="11" Foreground="#66766E" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Grid>
                   </DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
               </Grid>
@@ -460,6 +475,19 @@
                   <TextBlock Text="ALBERO TECNOLOGICO" FontSize="16" FontWeight="SemiBold" />
                   <TextBlock Text="{Binding ResearchBalance}" FontSize="21" FontWeight="SemiBold" />
                   <TextBlock Text="{Binding SelectedTechnologySummary}" TextWrapping="Wrap" FontSize="12" />
+                  <StackPanel Spacing="4" IsVisible="{Binding HasSelectedTechnologyUnlocks}">
+                    <TextBlock Text="SBLOCCA EDIFICI" Classes="label" FontSize="11" Margin="0,4,0,0" />
+                    <ItemsControl x:Name="V15TechnologyUnlocks" ItemsSource="{Binding SelectedTechnologyUnlocks}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TechnologyUnlockedBuildingRow">
+                          <StackPanel Orientation="Horizontal" Spacing="7" Margin="0,2">
+                            <pixel:PixelGlyph Key="{Binding GlyphKey}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
                 </StackPanel></ScrollViewer>
                 <Button Grid.Row="1" Classes="primary research" Content="Acquista ricerca"
                     Command="{Binding BuyTechnologyCommand}" IsEnabled="{Binding CanBuySelectedTechnology}" />

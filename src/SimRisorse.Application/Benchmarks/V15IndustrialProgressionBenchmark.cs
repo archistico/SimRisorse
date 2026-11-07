@@ -18,6 +18,9 @@ public static class V15IndustrialProgressionBenchmark
 {
     public const string PolicyResearchFirst = "research-first";
     public const string PolicyBreadFirst = "bread-first";
+    // RC85: a deliberate, unfunded housing investment before advanced mining.
+    public const string PolicyHousingBuffer = "housing-buffer";
+    public const int HousingBufferExtraSmallHouses = 2;
     public const int DecisionIntervalSeconds = 60;
 
     private sealed record Definition(string Id, string Goal, string OutputResource, int Horizon);
@@ -32,13 +35,13 @@ public static class V15IndustrialProgressionBenchmark
     [
         "build-fisher", "staff-fisher", "build-depot", "staff-depot", "build-small-house"
     ];
-    // The actual desktop requires two pencils per student. Pencils consume
-    // planks and COAL, whose mine requires a large house (and thus bread).
-    // A research-first strategy can build the school early, but cannot train
-    // researchers until the bread/coal chain has been completed.
+    // The fresh Municipio grants two pencils and 100 coal. The first student
+    // can begin without crafting, while later students may craft more pencils
+    // in the school workshop before the coal mine is unlocked (if they have
+    // planks and a built school). Coal mining remains gated by Estrazione I.
     private static readonly string[] Education =
     [
-        "craft-pencils", "enroll-student", "assign-researcher", "buy-tech-estrazione-1"
+        "enroll-student", "assign-researcher", "buy-tech-estrazione-1"
     ];
     private static readonly string[] Coal = ["build-coal-mine", "staff-coal-mine"];
     private static readonly string[] Bread =
@@ -55,26 +58,48 @@ public static class V15IndustrialProgressionBenchmark
         "build-gold-mine", "staff-gold-mine", "build-gold-smelter", "staff-gold-smelter", "build-mint", "staff-mint"
     ];
 
-    /// <summary>A strategy is an explicit order of the SAME required actions.</summary>
-    public static IReadOnlyList<string> Steps(string scenarioId, string policyId)
+    /// <summary>A strategy is an explicit, reproducible sequence of paid actions.
+    /// For the research-only I01 goal, bread-first deliberately adds a food
+    /// investment; later industrial scenarios retain their full common path.</summary>
+    public static IReadOnlyList<string> Steps(string scenarioId, string policyId,
+        V15CrewMode crewMode = V15CrewMode.Legacy)
     {
         var definition = DefinitionFor(scenarioId);
-        if (policyId is not (PolicyResearchFirst or PolicyBreadFirst))
-            throw new ArgumentException("Unknown advanced v15 benchmark policy.", nameof(policyId));
+        ValidateCrewScenario(definition.Id, crewMode);
+        if (policyId is not (PolicyResearchFirst or PolicyBreadFirst or PolicyHousingBuffer) ||
+            (policyId == PolicyHousingBuffer && definition.Id != "V15-I03"))
+            throw new ArgumentException("Unknown or unsupported advanced v15 benchmark policy.", nameof(policyId));
         string[] industry = definition.Id switch
         {
             "V15-I02" => Iron,
+            "V15-I03" when crewMode == V15CrewMode.MintTen => [.. Gold[..^1], "staff-mint-team"],
             "V15-I03" => Gold,
             _ => []
         };
-        // All policies execute the same prerequisite actions. "research-first"
-        // invests in the School earlier; coal and pencils necessarily precede
-        // actual training under the approved desktop school rules.
+        // The original strategies have the SAME mandatory actions. The RC85
+        // housing-buffer policy intentionally spends real materials on TWO
+        // additional small houses before opening the advanced gold chain.
+        // It cannot grant workers or force population growth.
         string[] education = definition.Id == "V15-I01"
             ? Education : [.. Education, "buy-tech-industria-1"];
-        return policyId == PolicyResearchFirst
-            ? [.. Foundation, "build-school", .. Bread, .. Coal, .. education, .. industry]
-            : [.. Foundation, .. Bread, .. Coal, "build-school", .. education, .. industry];
+        // V15-I01 measures the FIRST research unlock, not coal extraction or
+        // the late industrial supply chain. Requiring post-unlock buildings
+        // here would conceal a correctly purchased Estrazione I milestone.
+        // bread-first still pays for its deliberate food-chain investment.
+        if (definition.Id == "V15-I01")
+        {
+            if (policyId == PolicyResearchFirst)
+                return [.. Foundation, "build-school", .. education];
+            return [.. Foundation, .. Bread, "build-school", .. education];
+        }
+        return policyId switch
+        {
+            PolicyResearchFirst => [.. Foundation, "build-school", .. education, .. Bread, .. Coal, .. industry],
+            PolicyBreadFirst => [.. Foundation, .. Bread, "build-school", .. education, .. Coal, .. industry],
+            PolicyHousingBuffer => [.. Foundation, .. Bread, "build-school", .. education, .. Coal,
+                "build-small-house", "build-small-house", .. industry],
+            _ => throw new InvalidOperationException("An unvalidated policy reached the benchmark runner.")
+        };
     }
 
     public static IReadOnlyList<V15IndustrialProgressionRun> RunAll(int? maxSeconds = null)
@@ -86,17 +111,25 @@ public static class V15IndustrialProgressionBenchmark
         return result;
     }
 
+    /// <summary>RC82/E4b.2d: a natural, unfunded E4B-M01 attempt with
+    /// all ten workers assigned atomically at the mint. It does not imply that
+    /// the strategy is reachable or optimal until a full run succeeds.</summary>
+    public static V15IndustrialProgressionRun RunMintTen(string policyId,
+        int? maxSeconds = null) => Run("V15-I03", policyId, maxSeconds, V15CrewMode.MintTen);
+
     public static V15IndustrialProgressionRun Run(string scenarioId, string policyId,
-        int? maxSeconds = null)
+        int? maxSeconds = null, V15CrewMode crewMode = V15CrewMode.Legacy)
     {
         var definition = DefinitionFor(scenarioId);
-        var steps = Steps(scenarioId, policyId);
+        var steps = Steps(scenarioId, policyId, crewMode);
         if (maxSeconds is < 0)
             throw new ArgumentOutOfRangeException(nameof(maxSeconds));
         var horizon = Math.Min(definition.Horizon, maxSeconds ?? definition.Horizon);
         var diagnostic = horizon < definition.Horizon;
         var setup = V15BenchmarkFixture.Create();
-        var checkpoint = setup.Start;
+        // The two E4b modes share the exact same real starting inventory and
+        // player actions. Only the explicitly recorded workforce rules differ.
+        var checkpoint = setup.Start with { CrewMode = crewMode };
         var initial = V15StockAuditor.PhysicalTotals(checkpoint).Amounts.ToDictionary(
             p => p.Key, p => p.Value.Milliunits, StringComparer.Ordinal);
         var actions = new List<V15IndustrialProgressionEvent>();
@@ -112,6 +145,8 @@ public static class V15IndustrialProgressionBenchmark
         {
             var session = new V15FoodIndustryCampaignSession(checkpoint, setup.Baseline,
                 setup.School, setup.Technologies, setup.Depot);
+            if (session.CrewMode != crewMode)
+                throw new InvalidOperationException("Natural benchmark lost its saved workforce rules.");
             while (next < steps.Count)
             {
                 var action = steps[next];
@@ -140,6 +175,14 @@ public static class V15IndustrialProgressionBenchmark
                 // Charge actual successful construction/enrolment receipts, not
                 // estimated catalogue costs. Research points are a separate unit.
                 var after = session.Snapshot();
+                if (action == "staff-mint-team")
+                {
+                    var mint = after.CityCampaign.ProductiveFamilies.Single(f => f.FamilyId == V15CrewRules.MintId);
+                    if (after.CrewMode != V15CrewMode.MintTen ||
+                        mint.Base.AssignedWorkers < V15CrewRules.MintCrewSize ||
+                        V15CrewRules.StaffedModules(mint, V15CrewRules.MintCrewSize) < 1)
+                        throw new InvalidOperationException("Mint natural benchmark reported an incomplete crew as assigned.");
+                }
                 var researchSpent = action.StartsWith("buy-tech-", StringComparison.Ordinal)
                     ? checked(before.CityCampaign.ResearchBalanceMilliPoints -
                         after.CityCampaign.ResearchBalanceMilliPoints) : 0;
@@ -181,6 +224,8 @@ public static class V15IndustrialProgressionBenchmark
             if (batch == 1 && !V15StockAuditor.ReconcileSecond(checkpoint, plan).Balanced)
                 throw new InvalidOperationException("Advanced benchmark resource reconciliation failed.");
             checkpoint = plan.Next;
+            if (checkpoint.CrewMode != crewMode)
+                throw new InvalidOperationException("Natural benchmark clock changed its saved workforce rules.");
             elapsed += batch;
             if (next == steps.Count && definition.OutputResource.Length != 0 &&
                 checkpoint.CityCampaign.UnlockedTechnologyIds.Contains("industria-1") &&
@@ -189,8 +234,11 @@ public static class V15IndustrialProgressionBenchmark
                 outcome = "pass";
                 completion = elapsed;
                 reason = $"Real {definition.OutputResource} output observed with industria-1 unlocked";
+                // Capture the actual output of the productive clock tick. A
+                // milestone without this receipt cannot establish production.
                 actions.Add(new(elapsed, definition.Goal, "milestone", reason,
-                    new Dictionary<string, long>(StringComparer.Ordinal), 0));
+                    new Dictionary<string, long>(StringComparer.Ordinal), 0,
+                    ProducedMilliunits: plan.FirstSecondProduction[definition.OutputResource].Milliunits));
                 samples.Add(Sample(checkpoint, setup.Baseline, elapsed, "completed"));
                 break;
             }
@@ -203,10 +251,19 @@ public static class V15IndustrialProgressionBenchmark
             samples.Add(Sample(checkpoint, setup.Baseline, elapsed,
                 next < steps.Count ? steps[next] : "await-production"));
 
-        return new(definition.Id, policyId, V15FoodCampaignCheckpoints.RulesVersion,
+        return new(crewMode == V15CrewMode.MintTen ? "E4B-M01" : definition.Id,
+            policyId, V15CrewRules.SavedRulesVersion(crewMode),
             setup.Baseline.Catalog.RulesVersion, "fresh-game/no-grants", definition.Goal,
             definition.Horizon, horizon, diagnostic, outcome, completion, reason,
             checkpoint.CityCampaign.ScenarioId, initial, actions, samples);
+    }
+
+    private static void ValidateCrewScenario(string scenarioId, V15CrewMode mode)
+    {
+        if (mode is not (V15CrewMode.Legacy or V15CrewMode.MintTen))
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        if (mode == V15CrewMode.MintTen && scenarioId != "V15-I03")
+            throw new ArgumentException("MintTen natural experiment applies only to V15-I03.", nameof(scenarioId));
     }
 
     private static Definition DefinitionFor(string scenarioId) =>
@@ -345,24 +402,26 @@ public static class V15IndustrialProgressionBenchmark
             "staff-gold-smelter" => Staff(session.AssignCityProducerWorkers("gold-smelter", ProductionTier.Base, 1)),
             "build-mint" => Tier(session.BuildCityProducer("mint", ProductionTier.Base, 1)),
             "staff-mint" => Staff(session.AssignCityProducerWorkers("mint", ProductionTier.Base, 1)),
+            "staff-mint-team" => Staff(session.AssignCityProducerWorkers("mint", ProductionTier.Base,
+                V15CrewRules.MintCrewSize)),
             _ => throw new ArgumentException($"Unknown benchmark action: {action}.", nameof(action))
         };
     }
 
     public static string EventsCsv(IEnumerable<V15IndustrialProgressionRun> runs)
     {
-        var csv = new StringBuilder("scenario_id,policy_id,elapsed_seconds,action,result,reason,resource_id,spent_milli,research_spent_millipoints\n");
+        var csv = new StringBuilder("scenario_id,policy_id,elapsed_seconds,action,result,reason,resource_id,spent_milli,research_spent_millipoints,produced_milliunits\n");
         foreach (var run in runs)
             foreach (var e in run.Events)
             {
                 if (e.ResourceCostsMilliunits.Count == 0)
                     csv.AppendLine(string.Join(",", Escape(run.ScenarioId), Escape(run.PolicyId),
                         N(e.ElapsedSeconds), Escape(e.Action), Escape(e.Result), Escape(e.Reason),
-                        "", "0", N(e.ResearchSpentMilliPoints)));
+                        "", "0", N(e.ResearchSpentMilliPoints), N(e.ProducedMilliunits)));
                 else foreach (var entry in e.ResourceCostsMilliunits.OrderBy(p => p.Key, StringComparer.Ordinal))
                     csv.AppendLine(string.Join(",", Escape(run.ScenarioId), Escape(run.PolicyId),
                         N(e.ElapsedSeconds), Escape(e.Action), Escape(e.Result), Escape(e.Reason),
-                        Escape(entry.Key), N(entry.Value), N(e.ResearchSpentMilliPoints)));
+                        Escape(entry.Key), N(entry.Value), N(e.ResearchSpentMilliPoints), N(e.ProducedMilliunits)));
             }
         return csv.ToString();
     }
@@ -388,7 +447,8 @@ public static class V15IndustrialProgressionBenchmark
 public sealed record V15IndustrialProgressionEvent(int ElapsedSeconds, string Action,
     string Result, string Reason, IReadOnlyDictionary<string, long> ResourceCostsMilliunits,
     long ResearchSpentMilliPoints,
-    IReadOnlyDictionary<string, long>? MissingResourceMilliunits = null);
+    IReadOnlyDictionary<string, long>? MissingResourceMilliunits = null,
+    long ProducedMilliunits = 0);
 
 public sealed record V15IndustrialProgressionSample(int ElapsedSeconds, string NextAction,
     int Population, long FreeWorkers, int Schools, int QualifiedResearchers,

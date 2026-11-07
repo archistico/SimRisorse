@@ -80,7 +80,7 @@ public sealed class F1D05d2FoodIndustryPersistenceTests
         var restored = env.Store().Load();
         Assert.Equal(6L, env.Scalar("PRAGMA user_version"));
         Assert.Equal(6L, env.Scalar("SELECT snapshot_version FROM game_save"));
-        Assert.Equal(6L, env.Scalar("SELECT COUNT(*) FROM food_industry_site"));
+        Assert.Equal(8L, env.Scalar("SELECT COUNT(*) FROM food_industry_site"));
         Assert.Equal(checkpoint.Industry, restored.Industry);
         Assert.Equal(checkpoint.CityCampaign.Resources, restored.CityCampaign.Resources);
         Assert.Equal(checkpoint.Depot, restored.Depot);

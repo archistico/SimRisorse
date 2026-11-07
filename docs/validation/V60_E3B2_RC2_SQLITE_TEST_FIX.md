@@ -29,7 +29,7 @@ Sono stati spostati **25 file** dalla radice nelle cartelle:
 - [`docs/history/integrity/`](../history/integrity/README.md) — manifest `G1_*_SOURCE_INTEGRITY.json`.
 - [`docs/history/releases/`](../history/releases/README.md) — rapporti `V58_*`, `V59_*`, `V60_*`.
 
-L'originale `00_START_HERE.md` è in `docs/history/START_HERE_BEFORE_RC2.md`, mentre la guida attuale è [`docs/START_HERE.md`](../START_HERE.md). Le vecchie versioni del README e dell'indice documentale sono state archiviate. Sono stati rivisti i collegamenti Markdown dei documenti spostati.
+L'originale `00_START_HERE.md` è in `docs/history/START_HERE_BEFORE_RC2.md`, mentre la guida attuale è [`docs/START_HERE.md`](../README.md). Le vecchie versioni del README e dell'indice documentale sono state archiviate. Sono stati rivisti i collegamenti Markdown dei documenti spostati.
 
 La radice mantiene soltanto `README.md`, `CHANGELOG.md`, `LICENSE.txt`, progetto, configurazioni e script di avvio/manutenzione. I sorgenti precedenti, compreso `V14SqliteSaveStore.cs`, **non cambiano**.
 

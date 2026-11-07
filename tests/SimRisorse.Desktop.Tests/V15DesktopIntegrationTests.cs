@@ -6,6 +6,9 @@ using SimRisorse.Desktop.Presentation;
 using SimRisorse.Desktop.Views;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Food;
+using SimRisorse.Core.Economy;
+using SimRisorse.Application.Benchmarks;
+using SimRisorse.Infrastructure.Persistence;
 using Xunit;
 
 namespace SimRisorse.Desktop.Tests;
@@ -68,6 +71,8 @@ public sealed class V15DesktopIntegrationTests
             Assert.Contains(vm.Resources, row => row.Id == "cattle");
             Assert.Contains(vm.Resources, row => row.Id == "vegetables");
             Assert.Contains(vm.Resources, row => row.Id == "pencils");
+            Assert.Equal("2", vm.Resources.Single(row => row.Id == "pencils").QuantityRounded);
+            Assert.Equal("100", vm.Resources.Single(row => row.Id == "coal").QuantityRounded);
             vm.SelectedBuilding = vm.Buildings.Single(row => row.Id == "food-depot");
             Assert.False(vm.CanBuildSelected); // Pescatore is missing.
             Assert.False(vm.BuildCommand.CanExecute(null));
@@ -77,27 +82,48 @@ public sealed class V15DesktopIntegrationTests
         finally { if (Directory.Exists(Path.GetDirectoryName(path))) Directory.Delete(Path.GetDirectoryName(path)!, true); }
     }
 
+    [AvaloniaFact]
+    public void ConstructionCostUsesIconLinesOnlyAndDoesNotRepeatTextQuote()
+    {
+        var vm = V15PreviewViewModel.CreateForPreview(NewPath());
+        var window = new V15PreviewWindow(vm, startTimer: false);
+        try
+        {
+            window.Show();
+            vm.SelectedBuilding = vm.Buildings.Single(b => b.Id == "sawmill");
+            Dispatcher.UIThread.RunJobs();
+            Assert.Null(window.FindControl<TextBlock>("V15BuildingCost"));
+            var lines = window.FindControl<ItemsControl>("V15BuildingCostLines");
+            Assert.NotNull(lines);
+            Assert.True(lines!.IsEffectivelyVisible);
+            Assert.NotEmpty(vm.SelectedBuilding!.CostLines);
+        }
+        finally { window.CloseWithoutSaving(); }
+    }
+
     [Fact]
-    public void FoodIndustryFilterShowsAllSixSitesAndCanRestoreFullCatalog()
+    public void FoodSectorIncludesAllIndustrySitesAndTheHistoricFoodChain()
     {
         var path = NewPath();
         try
         {
             var vm = V15PreviewViewModel.CreateForPreview(path);
             vm.Initialize();
-            Assert.False(vm.FoodIndustryFilterActive);
+            Assert.Equal(V15BuildingSector.All, vm.ActiveBuildingSector);
             Assert.Equal(vm.Buildings.Count, vm.VisibleBuildings.Count);
-            vm.ToggleFoodIndustryFilterCommand.Execute(null);
-            Assert.True(vm.FoodIndustryFilterActive);
-            Assert.Equal("Tutti gli edifici", vm.FoodIndustryFilterLabel);
-            Assert.Equal(6, vm.VisibleBuildings.Count);
+            vm.BuildingFilters.Single(option => option.Sector == V15BuildingSector.Food).SelectCommand.Execute(null);
+            Assert.Equal(V15BuildingSector.Food, vm.ActiveBuildingSector);
+            Assert.Equal(23, vm.VisibleBuildings.Count); // six sites + two depot tiers + five food-producing families × three tiers
             foreach (var site in FoodIndustrySites.Ids)
                 Assert.Single(vm.VisibleBuildings, row => row.Id == site);
-            Assert.Equal(V15BuildingKind.FoodIndustry, vm.SelectedBuilding!.Kind);
+            Assert.Contains(vm.VisibleBuildings, row => row.Id == "food-depot-large");
+            Assert.Contains(vm.VisibleBuildings, row => row.Id == "food-depot-advanced");
+            Assert.Contains(vm.VisibleBuildings, row => row.Id == "bakery-advanced");
+            Assert.All(vm.VisibleBuildings, row => Assert.Equal(V15BuildingSector.Food, V15BuildingSectors.For(row)));
             vm.Refresh();
-            Assert.Equal(6, vm.VisibleBuildings.Count);
-            vm.ToggleFoodIndustryFilterCommand.Execute(null);
-            Assert.False(vm.FoodIndustryFilterActive);
+            Assert.Equal(23, vm.VisibleBuildings.Count);
+            vm.BuildingFilters.Single(option => option.Sector == V15BuildingSector.All).SelectCommand.Execute(null);
+            Assert.Equal(V15BuildingSector.All, vm.ActiveBuildingSector);
             Assert.Equal(vm.Buildings.Count, vm.VisibleBuildings.Count);
         }
         finally { if (Directory.Exists(Path.GetDirectoryName(path))) Directory.Delete(Path.GetDirectoryName(path)!, true); }
@@ -120,10 +146,48 @@ public sealed class V15DesktopIntegrationTests
             Assert.True(File.Exists(path));
             Assert.True(vm.Load());
             Assert.True(vm.IsPaused);
+            Assert.Equal("2", vm.Resources.Single(row => row.Id == "pencils").QuantityRounded);
+            Assert.Equal("100", vm.Resources.Single(row => row.Id == "coal").QuantityRounded);
             Assert.Equal(8, vm.Population);
             Assert.Equal(original, File.ReadAllBytes(v14));
         }
         finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public void ExistingCheckpointWithNoPencilsIsNotRefilledOnLoad()
+    {
+        var path = NewPath();
+        try
+        {
+            var setup = V15BenchmarkFixture.Create();
+            var withoutPencils = setup.Start with
+            {
+                CityCampaign = setup.Start.CityCampaign with
+                {
+                    Resources = setup.Start.CityCampaign.Resources -
+                        ResourceBundle.Create(("pencils", 2m), ("coal", 100m))
+                }
+            };
+            var store = new V15SqliteFoodSaveStore(path, setup.Baseline,
+                setup.School, setup.Technologies, setup.Depot);
+            store.Save(withoutPencils);
+            var vm = V15PreviewViewModel.CreateForPreview(path);
+            vm.Initialize(); // Auto-load from an existing file, not FreshSession.
+            Assert.Equal("0", vm.Resources.Single(row => row.Id == "pencils").QuantityRounded);
+            Assert.Equal("0", vm.Resources.Single(row => row.Id == "coal").QuantityRounded);
+            Assert.True(vm.Load());
+            Assert.Equal("0", vm.Resources.Single(row => row.Id == "pencils").QuantityRounded);
+            Assert.Equal("0", vm.Resources.Single(row => row.Id == "coal").QuantityRounded);
+            vm.NewGameCommand.Execute(null);
+            vm.ConfirmNewGameCommand.Execute(null);
+            Assert.Equal("2", vm.Resources.Single(row => row.Id == "pencils").QuantityRounded);
+            Assert.Equal("100", vm.Resources.Single(row => row.Id == "coal").QuantityRounded);
+            // An unsaved new game must not overwrite the old checkpoint.
+            Assert.Equal(ResourceAmount.Zero, store.Load().CityCampaign.Resources["pencils"]);
+            Assert.Equal(ResourceAmount.Zero, store.Load().CityCampaign.Resources["coal"]);
+        }
+        finally { if (Directory.Exists(Path.GetDirectoryName(path))) Directory.Delete(Path.GetDirectoryName(path)!, true); }
     }
 
     [Fact]

@@ -5,7 +5,7 @@ using SimRisorse.Core.Content;
 namespace SimRisorse.Core.Economy;
 
 [Flags]
-public enum ProductionBlockReason { None = 0, NotConstructed = 1, NoWorkers = 2, MissingInputs = 4, StorageFull = 8, NotProducer = 16 }
+public enum ProductionBlockReason { None = 0, NotConstructed = 1, NoWorkers = 2, MissingInputs = 4, StorageFull = 8, NotProducer = 16, InsufficientCrew = 32 }
 
 public sealed record BuildingProduction(string BuildingId, int AssignedWorkers, int RunnableWorkers, ProductionBlockReason BlockReason,
     ImmutableArray<string> MissingInputIds, ImmutableArray<string> FullOutputIds);
@@ -15,7 +15,9 @@ internal static class ProductionPlanner
 {
     public static ProductionPlan Plan(GameCatalog catalog, ResourceBundle resources, ResourceBundle capacity,
         IReadOnlyDictionary<string, BuildingState> buildings, ResourceBundle? reservedConsumption = null,
-        bool includeDiagnostics = false, IReadOnlySet<string>? suppressedProducerIds = null)
+        bool includeDiagnostics = false, IReadOnlySet<string>? suppressedProducerIds = null,
+        IReadOnlyDictionary<string, int>? crewSizes = null,
+        IReadOnlyDictionary<string, int>? staffedModules = null)
     {
         var remaining = reservedConsumption is null ? resources : resources - reservedConsumption;
         var available = catalog.Resources.ToDictionary(item => item.Id, item => remaining[item.Id].Milliunits, StringComparer.Ordinal);
@@ -46,7 +48,25 @@ internal static class ProductionPlanner
             // The second-by-second simulation does not need presentation diagnostics.
             var missingInputs = includeDiagnostics ? ImmutableArray.CreateBuilder<string>() : null;
             var fullOutputs = includeDiagnostics ? ImmutableArray.CreateBuilder<string>() : null;
-            long runnable = state.AssignedWorkers;
+            // Only the explicitly selected RC81 mint-ten campaign passes a
+            // nontrivial crew contract. Legacy sessions use crew-size 1 and
+            // retain their previous per-worker semantics exactly.
+            var crewSize = crewSizes is not null && crewSizes.TryGetValue(definition.Id, out var size) ? size : 1;
+            if (crewSize <= 0) throw new ArgumentOutOfRangeException(nameof(crewSizes));
+            long staffingLimit = crewSize == 1 ? state.AssignedWorkers :
+                Math.Min(state.Count, state.AssignedWorkers / crewSize);
+            // A tier roster must never pool 9 Base and 9 Large workers into
+            // a fictitious tenth-person team. The caller supplies its exact
+            // per-tier full-team count; the headcount still remains physical.
+            if (staffedModules is not null && staffedModules.TryGetValue(definition.Id, out var tierModules))
+            {
+                if (crewSize == 1 || tierModules < 0 || tierModules > staffingLimit)
+                    throw new ArgumentOutOfRangeException(nameof(staffedModules));
+                staffingLimit = tierModules;
+            }
+            long runnable = staffingLimit;
+            if (crewSize > 1 && runnable < state.Count)
+                reason |= ProductionBlockReason.InsufficientCrew;
             if (state.Count == 0) reason |= ProductionBlockReason.NotConstructed;
             if (state.AssignedWorkers == 0) reason |= ProductionBlockReason.NoWorkers;
             if (definition.Recipe is not { } recipe)
@@ -58,7 +78,7 @@ internal static class ProductionPlanner
             foreach (var (id, amount) in recipe.Input.Amounts)
             {
                 var supported = available[id] / amount.Milliunits;
-                if (supported < state.AssignedWorkers)
+                if (supported < staffingLimit)
                 {
                     reason |= ProductionBlockReason.MissingInputs;
                     missingInputs?.Add(id);
@@ -68,7 +88,7 @@ internal static class ProductionPlanner
             foreach (var (id, amount) in recipe.Output.Amounts)
             {
                 var supported = space[id] / amount.Milliunits;
-                if (supported < state.AssignedWorkers)
+                if (supported < staffingLimit)
                 {
                     reason |= ProductionBlockReason.StorageFull;
                     fullOutputs?.Add(id);

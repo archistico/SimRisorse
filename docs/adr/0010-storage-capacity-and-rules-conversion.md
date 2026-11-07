@@ -3,7 +3,7 @@
 - Stato: Accettato
 - Data: 2026-10-27
 - Ambito: secondo incremento M4, con parametri di scenario provvisori
-- Origine: passo successivo dell'[handoff](../HANDOFF.md) dopo l'[ADR 0009](0009-civil-growth-and-save-generations.md)
+- Origine: passo successivo dell'[handoff](../NEW_CHAT_HANDOFF.md) dopo l'[ADR 0009](0009-civil-growth-and-save-generations.md)
 
 ## Contesto
 

@@ -14,6 +14,8 @@ public static class V14SchoolSupplies
     public const string ResourceId = "pencils";
     public const int PencilsPerBatch = 4;
     public const int SchoolPencilStorage = 50;
+    // Starter set provided once by the Municipio when creating a new v15 campaign.
+    public const int MunicipalStarterPencils = 2;
     public static ResourceBundle Inputs(int batches) => ResourceBundle.Create(
         ("planks", batches), ("coal", batches));
     public static ResourceBundle Output(int batches) => ResourceBundle.Create(

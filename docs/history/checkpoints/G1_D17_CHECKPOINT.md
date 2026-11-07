@@ -6,4 +6,4 @@
 - Nuovi test Desktop: +3; totale atteso 430, ancora da validare su Windows.
 - Prossimo: audit visivo e usabilità, verifica capienza 54 voci, eventuali regressioni nel layout, poi E4 anti-blocco/bilanciamento prima di attivazione definitiva.
 
-[Ripresa corrente](../../START_HERE.md) · [Rapporto tecnico](../../design/G1_D17_E3B4_RC2_RIALLESTIMENTO_GUI_CLASSICA.md).
+[Ripresa corrente](../../README.md) · [Rapporto tecnico](../../design/G1_D17_E3B4_RC2_RIALLESTIMENTO_GUI_CLASSICA.md).

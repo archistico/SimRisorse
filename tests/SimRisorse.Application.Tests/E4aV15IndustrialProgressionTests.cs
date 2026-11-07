@@ -49,8 +49,10 @@ public sealed class E4aV15IndustrialProgressionTests
         Assert.Contains("build-mint", research);
         Assert.Contains("buy-tech-estrazione-1", research);
         Assert.Contains("buy-tech-industria-1", research);
-        Assert.Contains("craft-pencils", research);
-        Assert.True(research.ToList().IndexOf("staff-coal-mine") < research.ToList().IndexOf("craft-pencils"));
+        Assert.DoesNotContain("craft-pencils", research); // The Municipio funds the first student only.
+        Assert.DoesNotContain("craft-pencils", bread);
+        Assert.True(research.ToList().IndexOf("buy-tech-estrazione-1") < research.ToList().IndexOf("build-coal-mine"));
+        Assert.True(bread.ToList().IndexOf("buy-tech-estrazione-1") < bread.ToList().IndexOf("build-coal-mine"));
         Assert.Contains("build-gold-smelter", research);
         Assert.Contains("build-iron-smelter",
             V15IndustrialProgressionBenchmark.Steps("V15-I02", "bread-first"));

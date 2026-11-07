@@ -37,4 +37,4 @@ Ripetere i [casi RC6](G1_D22_RC6_TEST_PLAN.md) per Pane, input, output saturo, d
 - [ ] Salvataggi dei due profili isolati e chiusura sicura v14.
 - [ ] E4 sospeso fino ad approvazione esplicita dei gate.
 
-[Rapporto tecnico D23](../design/G1_D23_E3B4_RC7_AVALONIA_TEST_ENABLED.md) · [Handoff](../HANDOFF.md).
+[Rapporto tecnico D23](../design/G1_D23_E3B4_RC7_AVALONIA_TEST_ENABLED.md) · [Handoff](../NEW_CHAT_HANDOFF.md).

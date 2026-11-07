@@ -38,4 +38,4 @@
 
 Le due finestre usano ancora XAML e ViewModel separati: un cambio di stile/funzionalità fatto solo su una può riaprire divergenze. **La RC8 non certifica ancora la parità**. La diagnosi approfondita Pane con `BreadSupplyProjector` è stata collegata nella RC4, corretti in RC5 preventivi/upgrade e aggiunta in RC6 la diagnostica produttiva della GUI v14, ma i comportamenti reali e il layout devono ancora essere confrontati su Windows. Gli altri gate non sono dichiarati passati.
 
-[Roadmap](../ROADMAP.md) · [Handoff](../HANDOFF.md) · [Piano originale RC3](V60_E3B4_RC3_PARITY_TEST_PLAN.md) · [contratto pixel art](../PIXEL_ART_UI.md).
+[Roadmap](../ROADMAP.md) · [Handoff](../NEW_CHAT_HANDOFF.md) · [Piano originale RC3](V60_E3B4_RC3_PARITY_TEST_PLAN.md) · [contratto pixel art](../PIXEL_ART_UI.md).

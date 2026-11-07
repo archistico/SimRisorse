@@ -13,6 +13,9 @@ namespace SimRisorse.Core.Food;
 public sealed record V15FoodCampaignCheckpoint(V15CityCampaignSnapshot CityCampaign,
     FoodDepotStock Depot, FoodIndustryCampaignState Industry)
 {
+    /// <summary>Persisted in the SQLite rules_version header; immutable with the checkpoint.</summary>
+    public V15CrewMode CrewMode { get; init; } = V15CrewMode.Legacy;
+
     // Read-only compatibility alias for existing v15 read models. It is the
     // SAME object, never another mutable/serialized civic state.
     public V15CityCampaignSnapshot NativeCityCampaign => CityCampaign;
@@ -26,6 +29,8 @@ public static class V15FoodCampaignCheckpoints
 {
     public const int FileVersion = 6;
     public const string RulesVersion = "civil-growth-15";
+    // One-time Municipio reserve for a new v15 campaign. Never grant on load/migration.
+    public const int MunicipalStarterCoal = 100;
 
     /// <summary>Pure in-memory preparation; does not open or write SQLite.</summary>
     public static V15FoodCampaignCheckpoint FromMigrationPlan(V14FoodStockMigrationPlan plan,
@@ -37,6 +42,37 @@ public static class V15FoodCampaignCheckpoints
         return new(V15CityCampaignSnapshot.FromInherited(V15LegacyProducerAdapter.WithoutEmptySlot(
                 plan.SourceCheckpoint with { Resources = plan.CityAfterTransfer })),
             plan.DepotAfterTransfer);
+    }
+
+    /// <summary>
+    /// Create a truly new v15 campaign with the Municipio's one-time starter
+    /// reserve: 2 pencils and 100 coal, in addition to the unchanged baseline.
+    /// Do not call this on a loaded checkpoint or an existing v14 migration: the
+    /// starter stock must never be credited twice. The rest of the starting
+    /// inventory comes from the unmodified civil-growth baseline.
+    /// </summary>
+    public static V15FoodCampaignCheckpoint NewCampaign(GameScenario baseline,
+        SchoolResearchRules school, TechnologyCatalog technologies, FoodConversionPolicy policy)
+    {
+        ArgumentNullException.ThrowIfNull(baseline);
+        ArgumentNullException.ThrowIfNull(school);
+        ArgumentNullException.ThrowIfNull(technologies);
+        ArgumentNullException.ThrowIfNull(policy);
+        var inherited = V14CampaignSnapshots.MigrateFromV13(baseline,
+            GameSession.Create(baseline).Snapshot(), school, technologies);
+        var prepared = FromMigrationPlan(V14FoodStockMigration.Prepare(inherited, policy), policy);
+        var starter = ResourceBundle.Create(
+            (V14SchoolSupplies.ResourceId, (decimal)V14SchoolSupplies.MunicipalStarterPencils),
+            ("coal", (decimal)MunicipalStarterCoal));
+        var campaign = prepared with
+        {
+            CityCampaign = prepared.CityCampaign with
+            {
+                Resources = prepared.CityCampaign.Resources + starter
+            }
+        };
+        Validate(campaign, baseline, school, technologies, policy);
+        return campaign;
     }
 
     /// <summary>Validate the native v15 city and the complete food checkpoint.
@@ -73,13 +109,20 @@ public static class V15FoodCampaignCheckpoints
         if (checkpoint.CityCampaign.Resources[policy.ReadyFoodResourceId] != ResourceAmount.Zero ||
             checkpoint.Depot.RawFood.Amounts.Keys.Any(id => id == policy.ReadyFoodResourceId || !edibleIds.Contains(id)))
             throw new ArgumentException("Ready food must be owned by the depot and its raw stock must use valid ingredient IDs.", nameof(checkpoint));
+        _ = V15CrewRules.SavedRulesVersion(checkpoint.CrewMode);
         // Validate the live 15-family city against v15 capacity/workforce rules.
         // Never manufacture a v14 food-store slot for ordinary validation.
-        V15CityCampaignValidator.ValidateNative(baseline, checkpoint.CityCampaign, school, technologies);
+        V15CityCampaignValidator.ValidateNative(baseline, checkpoint.CityCampaign, school, technologies,
+            checkpoint.CrewMode);
         // Food-industry staff share the same population budget as every v15
         // productive family, civilian building, school and enlisted military person.
         var city = checkpoint.CityCampaign;
         checkpoint.Industry.Validate(city.Population, BusyOutsideFood(city));
+        if (checkpoint.Industry.Buildings.Counts.DepotLarge > 0 &&
+            !city.UnlockedTechnologyIds.Contains("alimentazione-1") ||
+            checkpoint.Industry.Buildings.Counts.DepotAdvanced > 0 &&
+            !city.UnlockedTechnologyIds.Contains("alimentazione-2"))
+            throw new ArgumentException("Food-depot tiers require their research unlocks.", nameof(checkpoint));
         if (city.Resources.Amounts.Keys.Any(id => id is "cattle" or "game" or "meat" or "fruit" or "vegetables"))
             throw new ArgumentException("Food intermediates cannot be stored in the v15 city.", nameof(checkpoint));
     }

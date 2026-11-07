@@ -473,10 +473,11 @@ public sealed class MainViewModel : ObservableObject
     private void Refresh()
     {
         _view = _read.Handle();
+        var flowContributors = ResourceFlowBreakdown.FromGameView(_view);
         foreach (var resource in Resources)
         {
             var stock = _view.Resources.Single(item => item.Id == resource.Id);
-            resource.Update(stock, CapacityBreakdown(stock));
+            resource.Update(stock, CapacityBreakdown(stock), flowContributors);
         }
         foreach (var building in Buildings) building.Update(_view.Buildings.Single(item => item.Id == building.Id), _view);
         Notify(string.Empty);

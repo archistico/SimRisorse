@@ -14,13 +14,14 @@ public sealed record FoodIndustryStocks(
 /// <summary>Slots are supplied from actual owned building counts/tiers by the caller;
 /// no workstation is implicitly created by allocating a worker.</summary>
 public sealed record FoodIndustryCrew(long Stable, long Hunter, long Butcher,
-    long Garden, long Orchard, long Depot)
+    long Garden, long Orchard, long Depot, long DepotLarge = 0, long DepotAdvanced = 0)
 {
-    public long Total => checked(checked(checked(checked(checked(Stable + Hunter) + Butcher) + Garden) + Orchard) + Depot);
+    public long Total => checked(Stable + Hunter + Butcher + Garden + Orchard + Depot + DepotLarge + DepotAdvanced);
 
     public void Validate()
     {
-        if (Stable < 0 || Hunter < 0 || Butcher < 0 || Garden < 0 || Orchard < 0 || Depot < 0)
+        if (Stable < 0 || Hunter < 0 || Butcher < 0 || Garden < 0 || Orchard < 0 || Depot < 0 ||
+            DepotLarge < 0 || DepotAdvanced < 0)
             throw new ArgumentOutOfRangeException(nameof(FoodIndustryCrew), "Workforce cannot be negative.");
         _ = Total;
     }
@@ -41,6 +42,8 @@ public sealed record FoodIndustryPersonnel(FoodIndustryCrew Assigned, FoodIndust
             Assigned.Stable > Workplaces.Stable || Assigned.Hunter > Workplaces.Hunter ||
             Assigned.Butcher > Workplaces.Butcher || Assigned.Garden > Workplaces.Garden ||
             Assigned.Orchard > Workplaces.Orchard || Assigned.Depot > Workplaces.Depot ||
+            Assigned.DepotLarge > Workplaces.DepotLarge ||
+            Assigned.DepotAdvanced > Workplaces.DepotAdvanced ||
             Assigned.Total > Population - BusyOutsideFood)
             throw new ArgumentException("Food staffing exceeds occupied sites or free population.", nameof(Assigned));
     }

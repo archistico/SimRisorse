@@ -22,7 +22,7 @@ public sealed partial class V15FoodIndustryCampaignSession
     {
         var snapshot = _current.CityCampaign.ProductiveFamilies.Single(f => f.FamilyId == familyId);
         return TieredBuildingPortfolio.Create(snapshot.FamilyId, snapshot.Base,
-            snapshot.Large, snapshot.Advanced);
+            snapshot.Large, snapshot.Advanced, V15CrewRules.CrewSize(_current.CrewMode, familyId));
     }
 
     private ImmutableArray<V15ProductiveFamilySnapshot> NativeReplace(TieredBuildingPortfolio replacement) =>
@@ -181,12 +181,8 @@ public sealed partial class V15FoodIndustryCampaignSession
             var occupancy = portfolio.At(tier);
             if (release && workers > occupancy.AssignedWorkers)
                 return V14TierActionFailure.InsufficientAssignedWorkers;
-            var vacancies = (long)occupancy.Buildings * (tier switch
-            {
-                ProductionTier.Base => 1,
-                ProductionTier.Large => 3,
-                _ => 10
-            }) - occupancy.AssignedWorkers;
+            var vacancies = (long)occupancy.Buildings *
+                CrewTeamPortfolio.ModulesPerBuilding(tier) * portfolio.CrewSize - occupancy.AssignedWorkers;
             if (!release && workers > vacancies)
                 return V14TierActionFailure.InsufficientWorkplaces;
             if (!release && workers > AvailableWorkers)

@@ -35,11 +35,44 @@ if (args is ["--help"])
     Console.WriteLine("SimRisorse.Simulation --analyze-e4a-v15-industry --input RESULTS_JSON [--output DIRECTORY]: economic analysis and measured RC76 shortage/capacity evidence; never simulates or modifies saves.");
     Console.WriteLine("SimRisorse.Simulation --benchmark-e4a-v15-recovery [--scenario V15-R01|V15-R02|V15-R03] [--max-seconds 0..120] [--output DIRECTORY]: controlled, declared-grant production-loss and recovery experiments; not natural progression.");
     Console.WriteLine("SimRisorse.Simulation --study-e4b-curves [--baseline INDUSTRY_JSON_OR_DIRECTORY] [--output DIRECTORY]: three analytical proposals; no live rules changed.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-financing [--output DIRECTORY]: compare atomic, sequential, and escrow capacity requirements; no live rules changed.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-crews [--output DIRECTORY]: study the 10-worker mint team using live recipe in a controlled projection, not gameplay.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-mint-scale [--output DIRECTORY]: 1 vs 2 mints, tier/crew/filiera/prezzi/capienza; studio isolato. No game changes.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-price-readiness [--input RC88_RESULTS_JSON] [--output NEW_DIRECTORY]: preflight curve A/B/C, capacità, magazzini, rate e ricevute industriali; non attiva i prezzi.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-curve-a-funding [--output NEW_DIRECTORY]: opt-in memory sandbox, 6 mint funding demonstrations with hypothetical replenishments; no gameplay or save changes.");
+    Console.WriteLine("SimRisorse.Simulation --study-e4b-v15-shadow: RC94 composite v15/escrow preview, debit/restore/cancel, no player-save changes.");
+    Console.WriteLine("SimRisorse.Simulation --analyze-e4b-mint-ten --input RESULTS_JSON [--output NEW_DIRECTORY]: audit osservazioni MintTen e confronto separato con proposte A/B/C; nessun clock avanzato.");
+    Console.WriteLine("SimRisorse.Simulation --review-e4b-housing-buffer --input RESULTS_JSON [--output NEW_DIRECTORY]: confronto offline e pagamenti effettivi housing-buffer vs bread-first, non modifica salvataggi.");
+    Console.WriteLine("SimRisorse.Simulation --audit-v15-industry-chain [--max-seconds 0..57600 | --input RESULTS_JSON] [--output NEW_DIRECTORY]: audit ricevute ricerca, filiera, produzione Spade/Monete; 0 secondi predefinito = diagnostica.");
+    Console.WriteLine("SimRisorse.Simulation --audit-v15-research-bootstrap [--max-seconds 0..21600] [--output NEW_DIRECTORY]: verifica la prima ricerca su campagne reali, senza grants; output in JSON/CSV/Markdown. 0 secondi = solo diagnostica.");
+    Console.WriteLine("SimRisorse.Simulation --benchmark-e4b-mint-ten [--policy research-first|bread-first|housing-buffer | --include-housing-buffer] [--max-seconds N] [--compare-legacy] [--output DIRECTORY]: natural v15 mint path with ten workers, without grants. Short runs are diagnostic only.");
     return 0;
 }
 var json = new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+if (args.Length > 0 && args[0] == "--audit-v15-industry-chain")
+    return V15IndustrialChainCommand.Run(args);
+if (args.Length > 0 && args[0] == "--audit-v15-research-bootstrap")
+    return V15ResearchBootstrapCommand.Run(args);
 if (args.Length > 0 && args[0] == "--study-e4b-curves")
     return E4bCurveStudyCommand.Run(args);
+if (args.Length > 0 && args[0] == "--study-e4b-financing")
+    return E4bFinancingStudyCommand.Run(args);
+if (args.Length > 0 && args[0] == "--study-e4b-crews")
+    return E4bCrewStudyCommand.Run(args);
+if (args.Length > 0 && args[0] == "--study-e4b-mint-scale")
+    return E4bMintScaleRiskCommand.Run(args);
+if (args.Length > 0 && args[0] == "--study-e4b-price-readiness")
+    return E4bPriceReadinessCommand.Run(args);
+if (args.Length > 0 && args[0] == "--study-e4b-curve-a-funding")
+    return E4bCurveAFundingCommand.Run(args);
+if (args.Length > 0 && args[0] == "--study-e4b-v15-shadow")
+    return E4bV15ShadowCommand.Run(args);
+if (args.Length > 0 && args[0] == "--analyze-e4b-mint-ten")
+    return E4bMintNaturalFeasibilityCommand.Run(args);
+if (args.Length > 0 && args[0] == "--review-e4b-housing-buffer")
+    return E4bMintHousingBufferCommand.Run(args);
+if (args.Length > 0 && args[0] == "--benchmark-e4b-mint-ten")
+    return E4bMintNaturalCommand.Run(args);
 if (args.Length > 0 && args[0] == "--benchmark-e4a-v15-recovery")
     return V15IndustrialRecoveryCommand.Run(args);
 if (args.Length > 0 && args[0] == "--audit-v15")

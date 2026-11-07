@@ -44,7 +44,7 @@ public sealed class SaveStoreTests
         var backup = Path.Combine(database.DirectoryName, "game.civil-growth-11.backup.sqlite3");
         Equal(original, new SqliteGameSaveStore(backup).Load());
         Assert.Equal("civil-growth-13", database.Store.Load().RulesVersion);
-        Assert.Single(database.Store.Load().Buildings.Where(item => item.BuildingId == "town-hall"));
+        Assert.Single(database.Store.Load().Buildings, item => item.BuildingId == "town-hall");
         var reloaded = await new LoadGameHandler(new GameRuntime(CivilGrowthScenario.Create()), database.Store).HandleAsync();
         Assert.True(reloaded.Succeeded);
         Assert.Null(reloaded.UpgradedFromRules);
@@ -151,7 +151,7 @@ public sealed class SaveStoreTests
         var converted = database.Store.Load();
         Assert.Equal("civil-growth-13", converted.RulesVersion);
         Assert.Equal(fork.Military, converted.Military);
-        Assert.Single(converted.Buildings.Where(x => x.BuildingId == "town-hall"));
+        Assert.Single(converted.Buildings, x => x.BuildingId == "town-hall");
     }
 
     [Fact]

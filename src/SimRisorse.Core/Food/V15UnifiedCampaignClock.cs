@@ -20,7 +20,8 @@ public sealed record V15CampaignAdvancePlan(V15FoodCampaignCheckpoint Next,
     long SecondsAdvanced, long MealsServed, long MealsMissed,
     ResourceAmount ReadyFoodProduced,
     ResourceBundle FirstSecondProduction, ResourceBundle FirstSecondConsumption,
-    IReadOnlyList<BuildingProduction>? FirstSecondBuildings = null);
+    IReadOnlyList<BuildingProduction>? FirstSecondBuildings = null,
+    IReadOnlyList<ResourceFlowContributor>? FirstSecondContributors = null);
 
 public static class V15UnifiedCampaignClock
 {
@@ -67,11 +68,22 @@ public static class V15UnifiedCampaignClock
 
         var city = start.CityCampaign;
         var buildings = city.OtherBuildings.ToDictionary(b => b.BuildingId, StringComparer.Ordinal);
+        var crewSizes = new Dictionary<string, int>(StringComparer.Ordinal);
+        var staffedModules = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var family in city.ProductiveFamilies)
         {
-            buildings.Add(family.FamilyId, new BuildingState(family.FamilyId,
-                checked(family.Base.Buildings + family.Large.Buildings + family.Advanced.Buildings),
+            var crewSize = V15CrewRules.CrewSize(start.CrewMode, family.FamilyId);
+            var count = crewSize == 1
+                ? checked(family.Base.Buildings + family.Large.Buildings + family.Advanced.Buildings)
+                : checked(checked(family.Base.Buildings + checked(3 * family.Large.Buildings)) +
+                    checked(10 * family.Advanced.Buildings));
+            buildings.Add(family.FamilyId, new BuildingState(family.FamilyId, count,
                 checked(family.Base.AssignedWorkers + family.Large.AssignedWorkers + family.Advanced.AssignedWorkers)));
+            if (crewSize > 1)
+            {
+                crewSizes.Add(family.FamilyId, crewSize);
+                staffedModules.Add(family.FamilyId, V15CrewRules.StaffedModules(family, crewSize));
+            }
         }
         // No artificial food-store slot: ProductionPlanner skips explicitly
         // suppressed producers before looking up building state. A genuinely
@@ -82,8 +94,7 @@ public static class V15UnifiedCampaignClock
         var growthRate = V15CampaignGrowthProjection.GrowthRate(populationRules.HousingGrowth, buildings);
         var capacity = V15CityStorage.Calculate(baseline, city);
         var foodCapacities = foodCatalog.CapacitiesFor(start.Industry.Buildings);
-        var personnel = new FoodIndustryPersonnel(start.Industry.Buildings.Assigned,
-            start.Industry.Buildings.Workplaces, city.Population,
+        var personnel = start.Industry.Buildings.PlannerPersonnel(city.Population,
             V15FoodCampaignCheckpoints.BusyOutsideFood(city));
 
         var resources = city.Resources;
@@ -107,6 +118,23 @@ public static class V15UnifiedCampaignClock
         var firstProduced = ResourceBundle.Empty;
         var firstConsumed = ResourceBundle.Empty;
         IReadOnlyList<BuildingProduction>? firstBuildings = null;
+        // Gather the per-source ledger at the SAME recipe/meal boundaries as the
+        // gross totals. This is diagnostic data, never an independent forecast.
+        var sourceFlows = new Dictionary<string, ResourceFlowContributor>(StringComparer.Ordinal);
+        static string SiteCount(long count) => $"{count} {(count == 1 ? "edificio" : "edifici")}";
+        static string ActiveModules(long count) => $"{count} {(count == 1 ? "unità attiva" : "unità attive")}";
+        void RecordSource(string key, string label, ResourceBundle production, ResourceBundle consumption)
+        {
+            if (production.Amounts.IsEmpty && consumption.Amounts.IsEmpty) return;
+            if (sourceFlows.TryGetValue(key, out var previous))
+                sourceFlows[key] = previous with
+                {
+                    Production = previous.Production + production,
+                    Consumption = previous.Consumption + consumption
+                };
+            else sourceFlows.Add(key, new ResourceFlowContributor(label, production, consumption));
+        }
+
 
         for (long i = 0; i < wholeSeconds; i++)
         {
@@ -116,7 +144,8 @@ public static class V15UnifiedCampaignClock
             var pencilStock = resources[V14SchoolSupplies.ResourceId];
             var industry = ProductionPlanner.Plan(baseline.Catalog, resources, capacity, buildings,
                 includeDiagnostics: includeProductionDiagnostics && i == 0,
-                suppressedProducerIds: DisabledLegacyProducers);
+                suppressedProducerIds: DisabledLegacyProducers, crewSizes: crewSizes,
+                staffedModules: staffedModules);
             resources = industry.Resources;
             if (i == 0)
             {
@@ -126,8 +155,17 @@ public static class V15UnifiedCampaignClock
                     if (report.RunnableWorkers == 0 ||
                         baseline.Catalog.BuildingsById[report.BuildingId].Recipe is not { } recipe)
                         continue;
-                    firstProduced += recipe.Output.Scale(report.RunnableWorkers);
-                    firstConsumed += recipe.Input.Scale(report.RunnableWorkers);
+                    var production = recipe.Output.Scale(report.RunnableWorkers);
+                    var consumption = recipe.Input.Scale(report.RunnableWorkers);
+                    firstProduced += production;
+                    firstConsumed += consumption;
+                    var family = city.ProductiveFamilies.FirstOrDefault(item => item.FamilyId == report.BuildingId);
+                    var owned = family is null ? buildings[report.BuildingId].Count :
+                        checked(family.Base.Buildings + family.Large.Buildings + family.Advanced.Buildings);
+                    var name = baseline.Catalog.BuildingsById[report.BuildingId].Name;
+                    RecordSource("city:" + report.BuildingId,
+                        $"{name} ({SiteCount(owned)}, {ActiveModules(report.RunnableWorkers)})",
+                        production, consumption);
                 }
             }
             if (pencilStock != ResourceAmount.Zero)
@@ -162,11 +200,40 @@ public static class V15UnifiedCampaignClock
                     KeyValuePair.Create(depotPolicy.ReadyFoodResourceId,
                         tick.Depot.Processing.ProducedFood)]);
                 firstConsumed += tick.Depot.Processing.ConsumedIngredients;
-                firstConsumed += ResourceBundle.FromAmounts([
+                var mealConsumption = ResourceBundle.FromAmounts([
                     KeyValuePair.Create(depotPolicy.ReadyFoodResourceId,
                         tick.Depot.Meal.ConsumedReadyFood),
                     KeyValuePair.Create(depotPolicy.BreadResourceId,
                         tick.Depot.Meal.ConsumedBread)]);
+                firstConsumed += mealConsumption;
+                foreach (var run in tick.Meat.Runs)
+                {
+                    var siteId = run.Stage switch
+                    {
+                        MeatChainStage.Stable => "stable",
+                        MeatChainStage.Hunting => "hunter",
+                        _ => "butcher"
+                    };
+                    var site = foodCatalog.Sites.First(item => item.Id == siteId);
+                    var count = FoodIndustrySites.Get(start.Industry.Buildings.Counts, siteId);
+                    RecordSource("food:" + siteId, $"{site.Name} ({SiteCount(count)})", run.Outputs, run.Inputs);
+                }
+                foreach (var run in tick.Horticulture.Runs)
+                {
+                    var siteId = run.CropResourceId == cropsPolicy.VegetablesResourceId ? "garden" : "orchard";
+                    var site = foodCatalog.Sites.First(item => item.Id == siteId);
+                    var count = FoodIndustrySites.Get(start.Industry.Buildings.Counts, siteId);
+                    RecordSource("food:" + siteId, $"{site.Name} ({SiteCount(count)})", run.Outputs, run.Inputs);
+                }
+                var depotSite = foodCatalog.Sites.First(item => item.Id == "food-depot");
+                var depotCount = start.Industry.Buildings.Counts.Depot +
+                    start.Industry.Buildings.Counts.DepotLarge +
+                    start.Industry.Buildings.Counts.DepotAdvanced;
+                RecordSource("food:food-depot", $"{depotSite.Name} ({SiteCount(depotCount)})",
+                    ResourceBundle.FromAmounts([
+                        KeyValuePair.Create(depotPolicy.ReadyFoodResourceId, tick.Depot.Processing.ProducedFood)]),
+                    tick.Depot.Processing.ConsumedIngredients);
+                RecordSource("people:meal", $"Abitanti ({population})", ResourceBundle.Empty, mealConsumption);
             }
             if (tick.Depot.Meal.Served) mealsServed++;
             else mealsMissed++;
@@ -224,7 +291,7 @@ public static class V15UnifiedCampaignClock
         };
         V15FoodCampaignCheckpoints.Validate(next, baseline, schoolRules, technologies, depotPolicy);
         return new(next, wholeSeconds, mealsServed, mealsMissed, producedReadyFood,
-            firstProduced, firstConsumed, firstBuildings);
+            firstProduced, firstConsumed, firstBuildings, sourceFlows.Values.ToArray());
     }
 
 }

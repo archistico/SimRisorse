@@ -205,6 +205,7 @@ public sealed partial class V14PreviewViewModel : ObservableObject
     {
         get => _selectedTechnology;
         set { _selectedTechnology = value; Notify(); Notify(nameof(SelectedTechnologySummary));
+            Notify(nameof(SelectedTechnologyUnlocks)); Notify(nameof(HasSelectedTechnologyUnlocks));
             Notify(nameof(CanBuySelectedTechnology)); BuyTechnologyCommand.Refresh(); }
     }
     public V14ProducerRow? SelectedProducer
@@ -237,20 +238,23 @@ public sealed partial class V14PreviewViewModel : ObservableObject
     public string SelectedTechnologySummary => SelectedTechnology is null ? "Seleziona una tecnologia." :
         $"{SelectedTechnology.Name}: {SelectedTechnology.Status} · {SelectedTechnology.Cost} punti.\n" +
         $"Prerequisiti ricerca: {TechnologyNames(SelectedTechnology.Prerequisites)}. Edifici: {BuildingNames(SelectedTechnology.RequiredBuildings)}.\n" +
-        DescribeTechnologyBenefit(SelectedTechnology.Id);
+        (SelectedTechnologyUnlocks.Count > 0 ? string.Empty :
+            "Effetto non implementato: questa ricerca non è acquistabile.");
 
-    private string DescribeTechnologyBenefit(string technologyId)
+    public IReadOnlyList<TechnologyUnlockedBuildingRow> SelectedTechnologyUnlocks
     {
-        var benefit = TechnologyTierEffects.ForTechnology(technologyId, _families.Values);
-        if (!benefit.HasEffect)
-            return "Effetto non implementato: questa ricerca non è acquistabile.";
-        var lines = new List<string>();
-        if (!benefit.LargeFamilies.IsEmpty)
-            lines.Add("Sblocca edifici Grande: " + BuildingNames(benefit.LargeFamilies));
-        if (!benefit.AdvancedFamilies.IsEmpty)
-            lines.Add("Sblocca edifici Avanzato: " + BuildingNames(benefit.AdvancedFamilies));
-        return string.Join(". ", lines) + ".";
+        get
+        {
+            if (SelectedTechnology is null ||
+                !_technologies.TryGet(SelectedTechnology.Id, out var tech) ||
+                tech is null || !tech.Available) return [];
+            var benefit = TechnologyTierEffects.ForTechnology(SelectedTechnology.Id, _families.Values);
+            return TechnologyPresentation.BuildingUnlocks(benefit.LargeFamilies, benefit.AdvancedFamilies,
+                id => _baseline.Catalog.BuildingsById.TryGetValue(id, out var building) ? building.Name : id);
+        }
     }
+    public bool HasSelectedTechnologyUnlocks => SelectedTechnologyUnlocks.Count > 0;
+
     public string SelectedProducerSummary => SelectedProducer is null ? "Seleziona una struttura produttiva." :
         $"{SelectedProducer.Name}: {SelectedProducer.Description}\n" +
         $"Prerequisiti edifici: {BuildingNames(_families[SelectedProducer.Id].Source.Prerequisites)}.\n" +
@@ -522,6 +526,7 @@ public sealed class V14TechnologyRow(string id, string name, string cost,
     private string _status = string.Empty;
     public string Id { get; } = id;
     public string Name { get; } = name;
+    public string GlyphKey => TechnologyPresentation.GlyphForTechnology(Id);
     public string Cost { get; } = cost;
     // Updated by the same prerequisites, ownership and exact milli-point checks as Status.
     public bool CanPurchase { get; internal set; }
@@ -532,7 +537,7 @@ public sealed class V14TechnologyRow(string id, string name, string cost,
         get => _status;
         set { if (_status == value) return; _status = value; Notify(); Notify(nameof(Label)); }
     }
-    public string Label => $"{Name} · {Cost} punti · {Status}";
+    public string Label => $"{Cost} punti · {Status}";
 }
 public sealed class V14ProducerRow(string id, string name) : ObservableObject
 {

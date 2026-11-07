@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using SimRisorse.Application.ReadModels;
+using SimRisorse.Core.Economy;
 
 namespace SimRisorse.Desktop.Presentation;
 
@@ -9,6 +10,7 @@ public sealed class ResourceRow(ResourceView view) : ObservableObject
 {
     private ResourceView _view = view;
     private string _capacityBreakdown = string.Empty;
+    private IReadOnlyList<ResourceFlowContributor>? _flowContributors;
     private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
     // I colori sono condivisi tra le righe, ma i test headless ricreano il
     // Dispatcher per ogni caso: SolidColorBrush e' legato al thread di creazione.
@@ -26,6 +28,10 @@ public sealed class ResourceRow(ResourceView view) : ObservableObject
     public IBrush NetForeground => _view.NetPerSecond < 0 ? DeficitBrush : SurplusBrush;
     public string Production => _view.ProductionPerSecond.ToString("0.###", Italian) + " /s";
     public string Consumption => _view.ConsumptionPerSecond.ToString("0.###", Italian) + " /s";
+    public string ProductionBreakdown => ResourceFlowBreakdown.Format(Name, Id,
+        _view.ProductionPerSecond, true, _flowContributors);
+    public string ConsumptionBreakdown => ResourceFlowBreakdown.Format(Name, Id,
+        _view.ConsumptionPerSecond, false, _flowContributors);
     public string TimeToFull
     {
         get
@@ -43,9 +49,11 @@ public sealed class ResourceRow(ResourceView view) : ObservableObject
         }
     }
     public double FillPercent => _view.Capacity == 0 ? 0 : (double)(_view.Quantity / _view.Capacity * 100);
-    public void Update(ResourceView updated, string? capacityBreakdown = null)
+    public void Update(ResourceView updated, string? capacityBreakdown = null,
+        IReadOnlyList<ResourceFlowContributor>? flowContributors = null)
     {
         _view = updated;
+        _flowContributors = flowContributors;
         if (capacityBreakdown is not null) _capacityBreakdown = capacityBreakdown;
         Notify(string.Empty);
     }

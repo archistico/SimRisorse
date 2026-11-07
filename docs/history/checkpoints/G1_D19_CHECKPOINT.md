@@ -15,4 +15,4 @@
 2. Confronto v13/v14 sullo stesso desktop: tabella Risorse, Esercito, Edifici bloccati e dettaglio, Pane, Scuola e ricerca, salvataggi e chiusura; vedi [matrice](../../validation/G1_D19_MATRICE_PARITA_GUI.md).
 3. In caso di regressioni produrre RC4 mirata, **prima** di qualsiasi sviluppo economico E4.
 
-[Stato corrente](../../CURRENT_STATE.md) · [Roadmap](../../ROADMAP.md) · [Handoff](../../HANDOFF.md).
+[Stato corrente](../../CURRENT_STATE.md) · [Roadmap](../../ROADMAP.md) · [Handoff](../../NEW_CHAT_HANDOFF.md).

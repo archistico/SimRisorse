@@ -37,6 +37,7 @@ public sealed partial class V14PreviewViewModel
         _economyPreview = preview;
         var capacity = CalculateStorageCapacity(snapshot);
         var rates = preview.Resources.ToDictionary(item => item.Id, StringComparer.Ordinal);
+        var flowContributors = ResourceFlowBreakdown.FromV14(_baseline, snapshot, preview);
         if (Resources.Count == 0)
         {
             foreach (var resource in _baseline.Catalog.Resources
@@ -56,7 +57,8 @@ public sealed partial class V14PreviewViewModel
             var rate = rates[row.Id];
             var resource = new ResourceView(row.Id, row.Name, snapshot.Resources[row.Id].Units,
                 capacity[row.Id].Units, rate.ProductionPerSecond, rate.ConsumptionPerSecond);
-            row.Update(resource, CapacityBreakdown(snapshot, row.Id, capacity[row.Id].Units));
+            row.Update(resource, CapacityBreakdown(snapshot, row.Id, capacity[row.Id].Units),
+                flowContributors);
             resourceViews.Add(resource);
         }
         _breadSupply = V14BreadSupplyProjector.Project(_baseline, snapshot, preview, resourceViews);

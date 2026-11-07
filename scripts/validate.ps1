@@ -495,13 +495,19 @@ try {
         'civil-advanced-bread-compact.png', 'industry-buildings.png', 'industry-buildings-compact.png',
         'industry-resources.png', 'industry-resources-compact.png', 'gold-buildings.png', 'gold-buildings-compact.png',
         'gold-resources.png', 'gold-resources-compact.png',
-        'v15-buildings-1040.png', 'v15-buildings-filtered-1040.png',
-        'v15-buildings-1240.png', 'v15-buildings-filtered-1240.png',
+        # RC91.3: V15VisualRegressionTests renders three sectors at both viewport widths.
+        # Do not use the old boolean filter names: these frames are named all/food/industry.
+        'v15-buildings-all-1040.png', 'v15-buildings-food-1040.png', 'v15-buildings-industry-1040.png',
+        'v15-buildings-all-1240.png', 'v15-buildings-food-1240.png', 'v15-buildings-industry-1240.png',
         'v15-school-1040.png', 'v15-school-1240.png',
         'v15-military-1040.png', 'v15-military-1240.png')
     foreach ($screenshot in $screenshots) {
         $path = Join-Path $screenshotDirectory $screenshot
-        if (-not (Test-Path -LiteralPath $path)) { throw "Missing render from this test run: $screenshot" }
+        if (-not (Test-Path -LiteralPath $path)) {
+            $rendered = @(Get-ChildItem -LiteralPath $screenshotDirectory -Filter '*.png' -File |
+                Select-Object -ExpandProperty Name) -join ', '
+            throw "Missing render from this test run: $screenshot. PNG present: $rendered"
+        }
     }
     $report = [ordered]@{
         sdk = (& dotnet --version); total = $total; passed = $passed; failed = $failed

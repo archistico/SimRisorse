@@ -132,7 +132,8 @@ public sealed class V15SqliteFoodSaveStore
     {
         var a = expected.CityCampaign;
         var b = actual.CityCampaign;
-        return a.ScenarioId == b.ScenarioId && a.ElapsedTicks == b.ElapsedTicks &&
+        return expected.CrewMode == actual.CrewMode &&
+            a.ScenarioId == b.ScenarioId && a.ElapsedTicks == b.ElapsedTicks &&
             a.Population == b.Population && a.Resources.Equals(b.Resources) &&
             a.SchoolCount == b.SchoolCount &&
             a.GrowthProgressSeconds == b.GrowthProgressSeconds &&
@@ -295,7 +296,8 @@ public sealed class V15SqliteFoodSaveStore
             ) STRICT;
             """)) schema.ExecuteNonQuery();
         Insert(connection, tx, "INSERT INTO game_save VALUES(1,$p0,$p1,$p2,$p3,$p4)",
-            FileVersion, s.ScenarioId, V15FoodCampaignCheckpoints.RulesVersion, s.ElapsedTicks, s.Population);
+            FileVersion, s.ScenarioId, V15CrewRules.SavedRulesVersion(checkpoint.CrewMode),
+            s.ElapsedTicks, s.Population);
         Insert(connection, tx, "INSERT INTO population_state VALUES(1,$p0,$p1)",
             s.GrowthProgressSeconds, s.GrowthRemainderTwentieths);
         Insert(connection, tx, "INSERT INTO military_state VALUES(1,$p0,$p1,$p2,$p3)",
@@ -327,7 +329,7 @@ public sealed class V15SqliteFoodSaveStore
         foreach (var (id, amount) in checkpoint.Depot.RawFood.Amounts)
             Insert(connection, tx, "INSERT INTO food_raw_stock VALUES(1,$p0,$p1)", id, amount.Milliunits);
         Insert(connection, tx, "INSERT INTO food_ready_stock VALUES(1,$p0)", checkpoint.Depot.ReadyFood.Milliunits);
-        foreach (var site in FoodIndustrySites.Ids)
+        foreach (var site in FoodIndustrySites.PersistedIds)
             Insert(connection, tx, "INSERT INTO food_industry_site VALUES(1,$p0,$p1,$p2)", site,
                 FoodIndustrySites.Get(checkpoint.Industry.Buildings.Counts, site),
                 FoodIndustrySites.Get(checkpoint.Industry.Buildings.Assigned, site));
@@ -369,8 +371,10 @@ public sealed class V15SqliteFoodSaveStore
         var population = checked((int)h.GetInt64(4));
         if (h.Read()) throw Invalid("Duplicated v15 header.");
         h.Close();
-        if (version != FileVersion || scenario != _baseline.Id || rules != V15FoodCampaignCheckpoints.RulesVersion)
+        if (version != FileVersion || scenario != _baseline.Id ||
+            rules is not (V15FoodCampaignCheckpoints.RulesVersion or V15CrewRules.MintTenRulesVersion))
             throw new GameSaveException(GameSaveError.UnsupportedFormat, "The v15 food snapshot has unknown rules.");
+        var crewMode = V15CrewRules.FromSavedRulesVersion(rules);
         var growth = ReadOne(connection, tx, "SELECT growth_seconds,twentieths FROM population_state WHERE slot=1", 2);
         var military = ReadOne(connection, tx, "SELECT waiting,training,soldiers,progress_seconds FROM military_state WHERE slot=1", 4);
         // Unlike the backward-compatible v14 loader, v15 mandates this field.
@@ -443,6 +447,12 @@ public sealed class V15SqliteFoodSaveStore
             "SELECT site_id,count,workers FROM food_industry_site WHERE slot=1 ORDER BY site_id", 3);
         var counts = new Dictionary<string, long>(StringComparer.Ordinal);
         var workers = new Dictionary<string, long>(StringComparer.Ordinal);
+        // Generation 6 originally persisted six base food sites. Newer saves may
+        // contain two additional depot-tier rows; missing tiers mean zero owned.
+        if ((sites.Count != FoodIndustrySites.Ids.Length &&
+                sites.Count != FoodIndustrySites.PersistedIds.Length) ||
+            sites.Any(row => !FoodIndustrySites.PersistedIds.Contains((string)row[0])))
+            throw Invalid("The v15 food-site table has incomplete or unexpected identities.");
         foreach (var row in sites)
         {
             if (!counts.TryAdd((string)row[0], (long)row[1]) ||
@@ -453,7 +463,7 @@ public sealed class V15SqliteFoodSaveStore
             FoodIndustrySites.FromDictionary(counts), FoodIndustrySites.FromDictionary(workers));
         var result = new V15FoodCampaignCheckpoint(campaign,
             new FoodDepotStock(raw, ResourceAmount.FromMilliunits(ready[0])),
-            new FoodIndustryCampaignState(animals, transit, buildings));
+            new FoodIndustryCampaignState(animals, transit, buildings)) { CrewMode = crewMode };
         V15FoodCampaignCheckpoints.Validate(result, _baseline, _school, _technologies, _policy);
         tx.Commit();
         return result;

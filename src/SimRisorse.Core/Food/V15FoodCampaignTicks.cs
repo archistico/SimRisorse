@@ -21,8 +21,8 @@ public static class V15FoodCampaignTicks
     {
         V15FoodCampaignCheckpoints.Validate(current, baseline, school, technologies, depotPolicy);
         var buildings = current.Industry.Buildings;
-        var personnel = new FoodIndustryPersonnel(buildings.Assigned, buildings.Workplaces,
-            current.CityCampaign.Population, V15FoodCampaignCheckpoints.BusyOutsideFood(current.CityCampaign));
+        var personnel = buildings.PlannerPersonnel(current.CityCampaign.Population,
+            V15FoodCampaignCheckpoints.BusyOutsideFood(current.CityCampaign));
         var tick = FoodIndustryTickPlanner.PlanTick(meatPolicy, horticulturePolicy, depotPolicy,
             current.Industry.ToStocks(current.CityCampaign.Resources, current.Depot),
             capacities, personnel, meals);

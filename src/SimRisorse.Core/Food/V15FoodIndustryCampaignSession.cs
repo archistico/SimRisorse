@@ -8,7 +8,7 @@ namespace SimRisorse.Core.Food;
 
 public enum FoodIndustryActionFailure
 {
-    None, UnknownBuilding, InvalidQuantity, MissingPrerequisite,
+    None, UnknownBuilding, InvalidQuantity, MissingPrerequisite, MissingResearch,
     InsufficientResources, InsufficientWorkplaces, InsufficientPopulation,
     InsufficientAssignedWorkers, NumericLimit
 }
@@ -87,6 +87,16 @@ public sealed partial class V15FoodIndustryCampaignSession
     }
 
     public V15FoodCampaignCheckpoint Snapshot() => _current;
+    public V15CrewMode CrewMode => _current.CrewMode;
+
+    /// <summary>Explicit, irreversible-in-session opt-in to the live ten-person
+    /// mint rule. It is saved in the checkpoint header, never guessed on load.
+    /// Existing campaigns and the approved desktop keep legacy rules by default.</summary>
+    public void EnableMintCrews()
+    {
+        if (_current.CrewMode == V15CrewMode.MintTen) return;
+        Commit(_current with { CrewMode = V15CrewMode.MintTen });
+    }
     public FoodIndustryConstructionCatalog Catalog => _catalog;
     /// <summary>Current v15 catalog and resource projection for the approved Desktop UI.
     /// Computed from the committed checkpoint so constructions, staffing and stocks
@@ -131,23 +141,27 @@ public sealed partial class V15FoodIndustryCampaignSession
         static FoodIndustryBuildResult Fail(FoodIndustryActionFailure reason, ResourceBundle? cost = null) =>
             new(reason, cost ?? ResourceBundle.Empty);
         if (quantity <= 0) return (Fail(FoodIndustryActionFailure.InvalidQuantity), null);
-        if (!_catalog.TryGet(siteId, out var site) || site is null)
+        var isDepotTier = siteId is "food-depot-large" or "food-depot-advanced";
+        if (!_catalog.TryGet(isDepotTier ? "food-depot" : siteId, out var site) || site is null)
             return (Fail(FoodIndustryActionFailure.UnknownBuilding), null);
+        if (isDepotTier && !_current.CityCampaign.UnlockedTechnologyIds.Contains(
+                siteId == "food-depot-large" ? "alimentazione-1" : "alimentazione-2"))
+            return (Fail(FoodIndustryActionFailure.MissingResearch), null);
         if (site.Prerequisites.Any(required => !HasPrerequisite(required)))
             return (Fail(FoodIndustryActionFailure.MissingPrerequisite), null);
         try
         {
             var counts = _current.Industry.Buildings.Counts;
-            var nextCount = checked(FoodIndustrySites.Get(counts, site.Id) + quantity);
+            var nextCount = checked(FoodIndustrySites.Get(counts, siteId!) + quantity);
             // The single counter is also the acquired-history counter, since demolition
             // is not available in this version. Keep it in the range of pricing APIs.
             if (nextCount > int.MaxValue)
                 return (Fail(FoodIndustryActionFailure.NumericLimit), null);
-            var price = _catalog.Quote(_current.Industry.Buildings, site.Id, quantity);
+            var price = _catalog.Quote(_current.Industry.Buildings, siteId!, quantity);
             if (!_current.CityCampaign.Resources.Covers(price))
                 return (Fail(FoodIndustryActionFailure.InsufficientResources, price), null);
-            var byId = FoodIndustrySites.Ids.ToDictionary(id => id,
-                id => id == site.Id ? nextCount : FoodIndustrySites.Get(counts, id),
+            var byId = FoodIndustrySites.PersistedIds.ToDictionary(id => id,
+                id => id == siteId ? nextCount : FoodIndustrySites.Get(counts, id),
                 StringComparer.Ordinal);
             var buildings = _current.Industry.Buildings with
             {
@@ -185,21 +199,22 @@ public sealed partial class V15FoodIndustryCampaignSession
     private FoodIndustryActionFailure ChangeWorkers(string? siteId, int quantity, bool release)
     {
         if (quantity <= 0) return FoodIndustryActionFailure.InvalidQuantity;
-        if (!_catalog.TryGet(siteId, out var site) || site is null)
+        if (!_catalog.TryGet(FoodIndustrySites.DepotTierIds.Contains(siteId ?? "")
+                ? "food-depot" : siteId, out var site) || site is null)
             return FoodIndustryActionFailure.UnknownBuilding;
         try
         {
             var buildings = _current.Industry.Buildings;
-            var previous = FoodIndustrySites.Get(buildings.Assigned, site.Id);
+            var previous = FoodIndustrySites.Get(buildings.Assigned, siteId!);
             if (release && quantity > previous)
                 return FoodIndustryActionFailure.InsufficientAssignedWorkers;
-            if (!release && (long)quantity > FoodIndustrySites.Get(buildings.Workplaces, site.Id) - previous)
+            if (!release && (long)quantity > FoodIndustrySites.Get(buildings.Workplaces, siteId!) - previous)
                 return FoodIndustryActionFailure.InsufficientWorkplaces;
             if (!release && quantity > AvailableWorkers)
                 return FoodIndustryActionFailure.InsufficientPopulation;
             var newWorkers = release ? previous - quantity : checked(previous + quantity);
-            var byId = FoodIndustrySites.Ids.ToDictionary(id => id,
-                id => id == site.Id ? newWorkers : FoodIndustrySites.Get(buildings.Assigned, id),
+            var byId = FoodIndustrySites.PersistedIds.ToDictionary(id => id,
+                id => id == siteId ? newWorkers : FoodIndustrySites.Get(buildings.Assigned, id),
                 StringComparer.Ordinal);
             Commit(_current with { Industry = _current.Industry with
                 { Buildings = buildings with { Assigned = FoodIndustrySites.FromDictionary(byId) } } });

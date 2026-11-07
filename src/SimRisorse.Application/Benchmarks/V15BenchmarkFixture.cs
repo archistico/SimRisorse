@@ -28,10 +28,8 @@ public sealed record V15BenchmarkFixture(GameScenario Baseline, SchoolResearchRu
             [new("cattle", U(1m), U(2m), 0), new("game", U(1m), U(1m), 1)]);
         var crops = new HorticulturePolicy("water", "vegetables", "fruit",
             new("vegetables", U(2m), U(1m), 0), new("fruit", U(3m), U(1m), 1));
-        var inherited = V14CampaignSnapshots.MigrateFromV13(baseline,
-            GameSession.Create(baseline).Snapshot(), school, technologies);
-        var start = V15FoodCampaignCheckpoints.FromMigrationPlan(
-            V14FoodStockMigration.Prepare(inherited, depot), depot);
+        var start = V15FoodCampaignCheckpoints.NewCampaign(
+            baseline, school, technologies, depot);
         return new(baseline, school, technologies, depot, meat, crops, start);
     }
 }

@@ -1,3 +1,263 @@
+# RC94.2 — 07/11/2026 · Hotfix test Zecca dopo Municipio con 100 Carbone (CANDIDATA)
+
+- **Evidenza Windows RC94.1:** 1233 test eseguiti, **1228 passati e 5 falliti**, tutti nella teoria parametrizzata `Rc81LiveMintCrewTests.LiveClockConsumesInputsOnlyForCompletedMintTeams` (personale 0/9/10/19/20). Il test si aspettava 6/5/4 Carbone anziché 106/105/104, perché il Municipio fornisce ora 100 Carbone iniziali.
+- **Correzione minima:** il test confronta il **consumo del tick** (`iniziale - finale`) per Oro e Carbone con il numero dei moduli produttivi, invece di pretendere un saldo assoluto. La convalida delle squadre e la produzione Monete restano inalterate.
+- **Nessun cambiamento funzionale:** motore Core/Application/Infrastructure, GUI, SQLite, inventari iniziali, prezzi e finanziamento sandbox RC94 invariati. Unico sorgente C# modificato: **test RC81**.
+- **Totale invariato: 1233 test attesi**. Nessuna compilazione .NET 10 eseguita nell'ambiente di preparazione; nuova prova Windows e gate F1 richiesti. [Piano hotfix](docs/validation/RC94_2_MINT_CREW_STARTER_COAL_HOTFIX.md).
+
+---
+
+# RC94.1 — 07/11/2026 · Municipio: riserva iniziale di 100 Carbone (CANDIDATA)
+
+- **Richiesta esplicita:** ogni nuova partita v15 riceve dal Municipio **100 Carbone oltre alle 2 Matite**. Il Carbone entra nell'inventario ordinario e usa la capacità reale del Municipio (1.000 per risorsa); rimangono le risorse base preesistenti (120 Legno lavorato, 80 Pietra e 30 Cibo). Non cambia la dotazione delle campagne storiche.
+- La dotazione viene applicata unicamente in `V15FoodCampaignCheckpoints.NewCampaign`, **mai** durante `Load`, `FromMigrationPlan` o un avanzamento del clock. Le scorte già consumate nei salvataggi non si rigenerano.
+- Aggiornati test su bootstrap, migrazione, inventario della GUI, caricamento e audit RC87; **1 nuovo test** verifica che il laboratorio della Scuola consumi 1 Carbone e 1 Legno lavorato producendo 4 Matite **prima** di Estrazione I.
+- RC94 shadow Curve A invariato; salvataggi v15 generation 6, prezzi attivi, layout pixel art, filtri, produzione e personale invariati. **1233 test attesi**, baseline Windows confermata RC93.1 (1220); compilazione/gate RC94 e RC94.1 da eseguire. [ADR 0105](docs/adr/0105-riserva-carbone-municipio-avvio-v15.md), [piano RC94.1](docs/validation/RC94_1_MUNICIPIO_CARBONE_TEST_PLAN.md).
+
+---
+
+# RC94 — 07/11/2026 · Checkpoint composito v15 + escrow Curve A (CANDIDATA)
+
+- Baseline **RC93.1: 1220 test superati**, confermati dall'utente. RC94 **+12 test Application**, gate **1232 attesi**, ancora da compilare/verificare qui.
+- Introdotto `E4bV15FundingShadow`: copia di checkpoint v15 e deposito Curve A nella **stessa proiezione**, con scarico materiale unico, verifiche di validità città, prezzi congelati, contatori storici, capacità reale, revisioni, storno e ripristino coerente.
+- Il composito rifiuta inventari divergenti, capacità/contatori falsi, consegne ipotetiche o spese già completate nel vecchio sandbox. Il controllo delle ricerche e dei prerequisiti per la Zecca è preparatorio; **non** autorizza una costruzione reale.
+- Aggiunta CLI `--study-e4b-v15-shadow` e controllo nel gate F1, ADR 0104, piano RC94 e aggiornamento degli unici documenti operativi.
+- **Invariati:** GUI pixel art, Core, Infrastructure, clock, prezzi e formato SQLite v15. Il contratto è sperimentale **in memoria**; il finanziamento non è ancora attivo nella partita.
+
+---
+
+# RC93.1 — 07/11/2026 · Hotfix CS0246 ProductionTier (CANDIDATA)
+
+- Corretto l'errore di compilazione `CS0246` in `src/SimRisorse.Infrastructure/Experimental/E4bCurveAFundingSqliteStore.cs`: aggiunto `using SimRisorse.Core.Construction;`, che espone l'enum `ProductionTier` usato per deserializzare il checkpoint.
+- Nessun cambiamento a transazioni, importi, idempotenza, prezzi, GUI, Core, salvataggi della partita o struttura SQL; la RC93 resta uno studio isolato.
+- Conteggio invariato: **1220 test attesi**. La compilazione Windows e i test RC93.1 non sono ancora stati eseguiti; ultima baseline confermata RC90.3 (**1167/1167**). Run richiesto: ` .\validate-f1.cmd `.
+
+---
+
+# RC93 — 07/11/2026 · Checkpoint e persistenza SQLite isolata per Curva A (CANDIDATA)
+
+- Aggiunto `E4bFundingCheckpoint` con esportazione/ripristino validato (quote congelate, stock, capacità, consegne ipotetiche, versamenti, costi completati, contatore, tier). Aggiunto `ProgressiveConstructionEscrow.Restore` con verifica di capienza della quota pagata rispetto al preventivo.
+- Aggiunto `E4bCurveAFundingSqliteStore` in Infrastructure/Experimental: database **distinto dai salvataggi**, application_id proprio, versione formato 1 isolata, operazioni interamente transazionali con checkpoint+ricevuta, chiavi idempotenti, comparazione payload e controllo di revisione. Rollback delle richieste respinte; riavvio, rimborso e completamento sicuri nel sandbox.
+- Aggiunti **17 test xUnit** (5 Application e 12 Infrastructure), gate F1 **1220 attesi**. Confermati dall'utente solo i **1167** della RC90.3; RC91.3, RC92 e RC93 rimangono da verificare con .NET 10/Windows.
+- **Invarianti:** solo laboratorio, rifornimenti ipotetici; non cambiano prezzi di partita, GUI pixel art, SQLite della campagna v15 (`user_version=6`), simulazione, lavoratori, salvataggi né impostazione Legacy/MintTen. ADR 0103 e piano RC93 aggiornati.
+
+---
+
+# RC92 — 06/11/2026 · Sandbox finanziamento progressivo Curve A (CANDIDATA)
+
+- Aggiunto `E4bCurveAFundingSandbox` in Application: preventivo Curve A congelato per tier, versamenti atomici in memoria, contatore comune delle Zecche aggiornato **solo al completamento** e rimborso annullamento vincolato alla capienza fisica. Nessuna concessione al motore v15.
+- Rifornimenti etichettati **ipotetici**: conservazione materiali fra stock/escrow/spesa, nessuna produzione naturale presunta e nessun cambiamento di prezzi live, salvataggi, GUI o lavoratori.
+- Demo CLI `--study-e4b-curve-a-funding` (6 acquisti per 3 tier, JSON/CSV/Markdown) e 15 nuovi casi xUnit Application. Il gate F1 verifica ambito e riconciliazione; **1203 test attesi**.
+- ADR 0102, piano test RC92 e documentazione operativa unica aggiornati. Baseline completamente confermata **RC90.3: 1167 test**; RC91.3 (1188) e RC92 (1203) ancora da validare in Windows. **SDK .NET 10 non disponibile** nell'ambiente di preparazione.
+
+---
+
+# RC91.3 — 06/11/2026 · Hotfix nomi screenshot della scheda Edifici (CANDIDATA)
+
+- **Risultato Windows RC91.2:** compilazione, test e pubblicazione del Desktop hanno raggiunto il controllo dei render; `validate.ps1` ha fermato il gate perché cercava `v15-buildings-1040.png`, mentre il nuovo test dei filtri per settore genera `v15-buildings-all-1040.png` (oltre a `food` e `industry`). La diagnostica ricevuta non conferma ancora l'esito integrale della suite né il gate F1.
+- **Correzione:** `scripts/validate.ps1` richiede ora **sei** screenshot della scheda Edifici, con settori `all`, `food` e `industry` sia a **1040×740** sia a **1240×850**. Restano obbligatori anche i render Scuola, Militari e tutti i render storici; nessun controllo grafico è stato disabilitato. In caso di file mancante, il messaggio elenca i PNG effettivamente prodotti.
+- **Perimetro:** un solo script di validazione, etichetta del gate, documentazione e manifest. **Nessuna modifica ai sorgenti o test C#**, nessuna modifica alla GUI, al gameplay, ai salvataggi o ai prezzi. **1188 test attesi**, conteggio invariato; ultima baseline completamente confermata dall'utente **RC90.3 (1167/1167)**.
+
+---
+
+# RC91.2 — 06/11/2026 · Hotfix test evidenziazione settore attivo (CANDIDATA)
+
+- **Evidenza Windows RC91.1:** `SimRisorse.Desktop.Tests` ha eseguito 247 test: **246 passati, 1 fallito**. `ExactlyOneButtonHasActivePresentationAfterEveryChange` usava `Single(other => other.Sector != option.Sector)`: con nove categorie trova otto pulsanti non attivi e genera `InvalidOperationException`.
+- **Correzione:** per ogni categoria scelta si verifica un unico `IsSelected == true`; tutti gli altri pulsanti devono avere `IsSelected == false` e colori di sfondo, primo piano e bordo distinti dall'attivo. Il test ora usa `Assert.All` sui pulsanti non selezionati, senza scegliere arbitrariamente un singolo elemento.
+- **Perimetro:** modifica soltanto `Rc91BuildingSectorFilterTests.cs`, nome milestone gate e documenti operativi. **1188 test cumulativi attesi**, conteggio invariato; nessuna modifica a Desktop applicativo, Core, Application, Infrastructure, GUI, gameplay, prezzi o SQLite. Compilazione e suite RC91.2 da verificare su Windows; ultima baseline integralmente confermata **RC90.3 (1167 test)**.
+
+---
+
+# RC91.1 — 06/11/2026 · Hotfix xUnit2029 (CANDIDATA)
+
+- Evidenza Windows RC91: compilazione interrotta dall'analizzatore **xUnit2029** in `Rc91BuildingSectorFilterTests.cs:63`. L'asserzione `Assert.Empty(collection.Where(predicate))` è stata sostituita con `Assert.DoesNotContain(collection, predicate)`, preservando il significato del test.
+- Modifica limitata a **un'asserzione nel progetto Desktop.Tests**, gate identificato come RC91.1 e documenti operativi. **1188 test attesi** (nessun test aggiunto o eliminato). Compilazione e suite complete non eseguite in questo ambiente; ultima baseline Windows confermata: **RC90.3, 1167 test superati**.
+- Restano invariati Core, Application, Infrastructure, Desktop applicativo, GUI, salvataggi, costi e regole produttive.
+
+---
+
+# RC91 — 06/11/2026 · Barra «Filtra» per settori nella scheda Edifici (CANDIDATA)
+
+- **RC90.3 validata dall'utente:** tutti i **1167 test superati**; layout e icone dell'Albero tecnologico funzionano correttamente.
+- Rimosso il pulsante con toggle «Filiere alimentari» nella scheda Edifici v15 e sostituito con etichetta fissa «Filtra» + pulsanti compatti Tutti, Alimentazione, Estrazione, Industria, Lavorazioni, Logistica, Abitazioni, Civici e Militari. La disposizione usa WrapPanel per non sovrapporsi alle intestazioni su finestre strette.
+- Classificazione esplicita per famiglia/identificativo stabile: tutti i tier e gli edifici alimentari superiori appartengono al proprio settore, compresi quelli bloccati (consultabili, attenuati). Conservo la selezione finché è visibile; quando si cambia settore seleziono la prima voce utile. «Tutti» non perde edifici o cambia ordine di catalogo.
+- **21 nuovi casi xUnit** per classificazione, dettaglio selezionato, refresh, gruppi, sblocchi; adattati il precedente test del vecchio pulsante e i test visuali a 1040×740 / 1240×850. Gate F1 **1188 test attesi**, da eseguire su Windows .NET 10.
+- Modifiche confinante a Desktop, Desktop.Tests, gate, ADR 0101 e documentazione operativa unica. Nessuna modifica a Core, Application, Infrastructure, prezzi, tecnologie, clock, risorse o SQLite. La curva A e i pagamenti frazionati restano fuori dal gameplay fino a prova di sostenibilità.
+
+---
+
+# RC90.3 — 06/11/2026 · Icone nell'Albero tecnologico (CANDIDATA)
+
+- Aggiunte **icone pixel art** nei due elenchi Tecnologie, v14 e v15, riutilizzando i pittogrammi approvati. Navigazione ha un nuovo sprite originale 8×8 (`ship`); i rami senza icona specifica usano `research`.
+- La sezione **SBLOCCA EDIFICI** è una lista visuale di righe con **icona edificio + nome + livello Grande/Avanzato**, derivata dagli sblocchi reali del catalogo. In v15 Alimentazione I/II include Deposito alimentare Grande/Avanzato; non riappare il vecchio `food-store`. Conservati i prerequisiti, gli stati dei rami non disponibili, i bottoni e gli schemi della GUI.
+- Rimosso il testo ridondante con gli stessi nomi dalla descrizione tecnologia; il riepilogo v14 mantiene il testo dei prerequisiti e non ripete il nome nel sottotitolo dell'elenco.
+- Aggiunti **10 casi xUnit** (icone, sblocchi reali, tier, refresh selezione e binding Avalonia v14/v15); adattati i test testuali RC90 già presenti. Gate F1: **1167 casi attesi**. RC90.2 non è stata ancora verificata dall'utente; baseline certa RC89.1: **1135 passati**. Compilazione .NET 10 e xUnit RC90.3 da eseguire su Windows.
+- Solo Desktop, Desktop.Tests, gate, README/docs e manifest; invariati Core, Application, Infrastructure, economie, capacità, prezzi e SQLite. [ADR 0100](docs/adr/0100-icone-albero-tecnologico-e-sblocchi-edifici.md).
+
+---
+
+# RC90.2 — 06/11/2026 · Hotfix fixture test Depositi alimentari (CANDIDATA)
+
+- **Evidenza Windows RC90.1:** compilazione riuscita; quattro suite: Core 248/248, Application 549/557 (8 fallimenti), Infrastructure 136/136, Desktop 216/216; **1149 passati su 1157**.
+- **Causa unica:** `Rc90FoodDepotTiersTests.Setup()` iniettava 10.000 unità sia di `planks` sia di `stone` nel magazzino v15, superando l'effettiva capacità dello stock cittadino; `V15CityCampaignValidator.ValidateNative` rifiutava correttamente lo stato prima che partissero gli otto test.
+- **Correzione:** risorse aggiunte ridotte a 800 `planks` e 450 `stone`: inventario totale 920/530, nei limiti del Municipio (1.000 per risorsa), ma sufficiente ai costi della coppia Deposito Grande/Avanzato. Aggiunta verifica esplicita di capienza nel setup.
+- **Perimetro:** cambia solo un fixture di test Application, oltre a documentazione e manifest. Nessuna modifica al validatore, alla capacità cittadina, alle regole di acquisto/produzione, alla GUI o a SQLite. Il gate rimane a **1157 test**, ancora da rieseguire su Windows; ultima baseline totalmente confermata RC89.1 (1135 test).
+
+---
+
+# RC90.1 — 06/11/2026 · Hotfix compilazione popolazione `long` (CANDIDATA)
+
+- **Evidenza Windows RC90:** compilazione bloccata in `FoodIndustryCampaignState.cs:66` (`CS1503`: passaggio di `long` a `int` in `FoodIndustryBuildings.Validate`). La suite xUnit RC90 non è partita, quindi non è stata validata.
+- **Correzione:** `FoodIndustryBuildings.Validate(long population, long busyOutsideFood)` mantiene il medesimo contratto di `PlannerPersonnel(long, long)` e `FoodIndustryPersonnel` senza conversioni esplicite potenzialmente pericolose. Gli altri overload restano invariati.
+- **Copertura:** esteso un test Core già presente per verificare l’invocazione e la validazione con popolazione maggiore di `int.MaxValue`. Nessun test nuovo; il gate resta **1157 test attesi**.
+- **Perimetro:** un metodo Core, un test Core già esistente e documentazione/manifest; invariati gameplay, formule, salvataggi, UI, tecnologia e deposito. Compilazione e test .NET 10 **da verificare su Windows**. Baseline confermata dall’utente: **RC89.1, 1135 test superati**.
+
+---
+
+# RC90 — Descrizioni delle tecnologie e Depositi alimentari Grande/Avanzato (06/11/2026)
+
+**Candidata da validare.** RC89.1 confermata dall’utente con **1135 test passati**; RC90 aggiunge **22 nuovi test** e porta il gate a **1157 attesi**. Non è disponibile l’SDK .NET 10 per eseguire compilazione o xUnit qui.
+
+- In Albero tecnologico v15, ogni tecnologia elenca edifici effettivamente sbloccati (Grande/Avanzato) e prerequisiti. Tecnologie differite non pubblicizzano ricompense inesistenti. La schermata v14 aveva già la descrizione.
+- Alimentazione I/II abilita acquisto diretto di `food-depot-large`/`food-depot-advanced`, con 3/10 posti, costi scalati 2,6×/6,5×, capienza 3×/10×, prezzi progressivi per famiglia, lavoratori non condivisi tra tier e clock alimentare unico. Rimangono distinti dai produttori v14 `food-store` ritirati.
+- Salvataggi v15 invariati come formato SQLite6, leggibili con sei o otto righe di `food_industry_site`; i due nuovi tier vengono scritti nelle righe già previste dal modello tabellare. Supporto di round-trip e carichi storici senza refill.
+- GUI pixel art, icone, tabella Risorse e tooltip RC89.1 conservati. Nessuna attivazione curve economiche A/B/C o MintTen di default.
+- ADR 0099 e test plan RC90; gate F1 aggiornato a **1157**.
+
+---
+
+# RC89.1 — Tooltip di Produzione/Consumo per fonte (06/11/2026)
+
+**Stato:** candidata alla validazione Windows. **Baseline confermata:** RC88.1 con 1105 test passati; RC89 con 1123 test previsti non ancora verificati. **RC89.1:** +12 nuovi casi xUnit, **1135 cumulativi attesi**, compilazione .NET 10 non disponibile qui.
+
+- **Risorse:** su hover delle singole celle `Produzione /s` e `Consumo /s` la GUI v15/v14/storica mostra origine/destinazione, numero edifici/unità attive, quantità /s e totale. Nessuna modifica alla larghezza/allineamento delle sette colonne e alle funzionalità già approvate.
+- `V15UnifiedCampaignClock.Plan` raccoglie fonti dai medesimi planner che emettono i flussi lordi: produzioni/consumi delle ricette storiche, Stalla/Cacciatore/Macellaio, Orto/Frutteto, Deposito alimentare e pasti atomici. Spostamenti di scorte al deposito esclusi. Il `V15EconomyProjector` espone `Contributors` in modo read-only senza modificare checkpoint e SQLite.
+- `ResourceFlowBreakdown` proietta le stesse metriche per v14 e MainWindow; mostrate solo le fonti con flusso positivo nel prossimo secondo. Per origini insufficientemente descritte appare una differenza esplicita, non un totale simulato.
+- 9 nuovi test Desktop e 3 nuovi test Application sui totali, fonti, refresh, inattività, tre viste e integrità della tabella; gate F1 aggiornato a 1135. [ADR 0098](docs/adr/0098-tooltip-flussi-risorse-per-fonte.md) e [piano RC89.1](docs/validation/RC89_1_RESOURCE_FLOW_TOOLTIPS_TEST_PLAN.md).
+- **Invariati:** costi, bilanciamento, squadre, salvataggi, slot SQLite, posizione degli elementi UI, tabella Risorse a sette colonne e ricette. Lo studio A/B/C della RC89 rimane candidato e non attivato.
+
+---
+
+# RC89 / E4b.3a — Prontezza attivazione prezzi e capienza (06/11/2026)
+
+**Stato:** candidata, **1123 test attesi** (18 nuovi), SDK .NET 10 non disponibile qui. **Conferma utente:** RC88.1 **1105 test tutti passati**; chiusa la regressione da dizionario sparso in RC88.
+
+- Nuovo studio `E4bPriceReadinessStudy`: per ogni curva A/B/C e tier Base/Grande/Avanzato riconcilia prezzo prima e seconda Zecca, lotto x2, equivalenti Tagliapietre, squadre MintTen, copertura della capacità iniziale risorsa per risorsa, percorso Magazzini ed escrow minimo teorico; ogni ipotesi rimane esplicitamente **non approvata e non attiva**.
+- Nuova CLI `--study-e4b-price-readiness` con input RC88 facoltativo verificato dallo stesso audit delle ricevute, provenienza SHA-256, JSON/CSV/Markdown, rifiuto sovrascrittura; nessun risultato di completamento attribuito ai run diagnostici.
+- 18 test nuovi, gate F1 cumulativo a **1123**, ADR 0097 e piano test; aggiornati unici file operativi di documentazione. Nessuna modifica a Core, gameplay, UI, SQLite, prezzi o save.
+- Prossimo passo: test Windows, decisione esplicita su coefficienti e finanziamento sostenibile, poi implementazione opt-in con verifica naturale completa.
+
+---
+
+# RC88.1 — 06/11/2026 · Hotfix audit stock sparso (CANDIDATA)
+
+- **Evidenza Windows RC88:** compilazione completata; test xUnit **1103 eseguiti, 1087 superati, 16 falliti**, tutti in `Rc88IndustrialChainAuditTests` per `KeyNotFoundException: swords`. Moduli Core **248/248**, Infrastructure **133/133**, Desktop **196/196** superati; in Application **510/526** superati. Il gate F1 non è stato superato.
+- **Causa:** `ResourceBundle.Amounts` è un dizionario *sparso*: una risorsa con quantità zero può non comparire. L'audit indicizzava direttamente `initial["swords"]`, `initial["coins"]` e `initial[output]`. Sono stati sostituiti i tre accessi con l'indicizzatore di `ResourceBundle` che restituisce zero in assenza della chiave, mantenendo intatti gli esatti confronti di provenienza delle risorse non nulle.
+- **Regression test:** aggiunta teoria parametrizzata su Spade e Monete iniziali assenti dal dizionario (2 casi); il gate F1 ora attende **1105** test. Nessuna modifica a gameplay, motore Core, Desktop, Infrastructure, SQLite, GUI, costi o progressione.
+- **Verifica locale:** controllo statico dei tre accessi, controlli d'integrità e manifest dell'archivio completo. **Non eseguiti qui** i test .NET 10; RC88.1 è da validare su Windows con `./validate-f1.cmd`.
+
+---
+
+# RC88 — 06/11/2026 · E4b.2j, audit output industriale (CANDIDATA)
+
+- **Ultima baseline confermata dall'utente:** RC86.1, **1067 test superati**. RC87 +18 test non ancora eseguiti; RC88 +18 test, totale **1103 previsti**, compilazione .NET 10 e suite da eseguire su Windows.
+- `V15IndustrialProgressionBenchmark` registra nei milestone Spade/Monete i millesimi di produzione reale del primo secondo del clock (`ProducedMilliunits`). È un campo di evidenza del report, non nuova produzione nel gioco.
+- Nuovo `V15IndustrialChainAudit`: ricevute ordinate e pagate, scenari Forgia/Zecca, regime Legacy/MintTen, tecnologie acquistate, team, primo output e stock fisico. Rifiuta completamenti non sostenuti da dati coerenti; timeout e diagnostiche non implicano softlock.
+- Nuova CLI `--audit-v15-industry-chain` per sette percorsi default senza grant, diagnostica 0 secondi oppure simulazione con orizzonte esplicito, analisi offline `--input`, export JSON/CSV/Markdown senza sovrascrittura; test e gate estesi.
+- [ADR 0096](docs/adr/0096-audit-filiera-industriale-ricevute-clock-v15.md), [piano test](docs/validation/RC88_INDUSTRIAL_CHAIN_TEST_PLAN.md) e documentazione operativa unica aggiornati. **Invariati** Core, Desktop, Infrastructure, prezzi, SQLite, GUI canonica, regime di default.
+
+---
+
+# RC87 — 06/11/2026 · E4b.2i, audit bootstrap ricerca (CANDIDATA)
+
+- **Baseline RC86.1 confermata dall’utente:** tutti i 1067 test passati su Windows. La RC87 aggiunge **18 test xUnit Application**, portando il totale a **1085 attesi**, non verificati qui (SDK .NET 10 assente).
+- Corretto `V15-I01`: la prima milestone `Estrazione I` non resta ostaggio di costruzioni di pane e carbone successive all'acquisto. `research-first` termina dopo l'acquisto; `bread-first` paga prima l'investimento nel pane. `V15-I02`/`V15-I03` invariati.
+- Implementato `V15ResearchBootstrapAudit` con ricevute reali, controllo di avvio con 2 Matite, costo studente 2 Matite, costo ricerca 150 punti, verifica di sequenza e campione finale; rifiuta prove false e confronto tempi non dimostrato.
+- Nuovo comando `--audit-v15-research-bootstrap` con output JSON/CSV/Markdown e gate F1 diagnostico a 0 secondi. Aggiunti ADR 0095 e piano test, aggiornati README, ROADMAP, CURRENT_STATE, AUTHORITY_REGISTRY e NEW_CHAT_HANDOFF senza duplicati.
+- Nessun intervento su Core, Desktop, Infrastructure, salvataggi, prezzi attivi o regime `MintTen`. Controlli statici e archivio non equivalgono alla validazione .NET.
+
+---
+
+# RC86.1 — 06/11/2026 · Correzione compilazione xUnit2031 (CANDIDATA)
+
+- Risolto il blocco di compilazione riportato dall'utente in `tests/SimRisorse.Application.Tests/Rc85MintHousingBufferTests.cs:44`: `Assert.Single(sequence.Where(...))` sostituito da `Assert.Single(sequence, predicate)`; stessa semantica di esattamente una corrispondenza.
+- Corrette preventivamente due asserzioni con lo stesso antipattern in `tests/SimRisorse.Infrastructure.Tests/SaveStoreTests.cs` (checkpoint Municipio).
+- **Nessuna modifica a Core, Application runtime, Desktop, Infrastructure runtime, gameplay, interfaccia, dati, salvataggi o dipendenze**; soltanto tre asserzioni di test e documenti di stato. Numero dei test invariato: **1067 cumulativi attesi**.
+- **Verifica effettuata**: ricerca statica degli schemi `Assert.Single(...Where(...))`, controllo delle sostituzioni e integrità ZIP/manifest SHA-256. **Da eseguire su Windows**: `./validate-f1.cmd` con SDK .NET 10. La compilazione RC86 ha fallito sul codice precedente; la RC86.1 non è stata compilata qui (SDK assente).
+
+---
+
+# RC86 — 06/11/2026 · E4b.2h (CANDIDATA)
+
+- Corretto il ciclo Scuola/Matite/Carbone: nuova campagna **v15** dotata di **2 Matite iniziali del Municipio**, accreditate una sola volta da `V15FoodCampaignCheckpoints.NewCampaign`. Desktop e benchmark naturali/industriali condividono questa factory. Import da v14 e caricamento di checkpoint esistenti **senza refill**; SQLite generation 6 invariato.
+- Corretto l'ordine della ricerca nei runner industriali: primo studente con Matite iniziali, `Estrazione I` prima della Miniera di carbone; laboratorio Matite rimane necessario dopo il primo studente. Le misure naturali delle versioni precedenti sono storiche e non confrontabili a inventario identico.
+- Rimosso nelle viste V14/V15 il costo testo ridondante; conservati titolo, dettagli a icone e preventivi 5/10; aggiunti 9 test mirati GUI e Core/Application (1067 cumulativi attesi).
+- Documentazione consolidata: documenti operativi **unici** (`CURRENT_STATE`, `ROADMAP`, `AUTHORITY_REGISTRY`, `NEW_CHAT_HANDOFF`), README/indice riscritti, eliminati 11 file operativi duplicati e vecchie istantanee operative in `docs/history/operational`. Conservati ADR, piani/rapporti di test, decisioni tecniche, changelog e storia dei checkpoint.
+- [ADR 0094](docs/adr/0094-starter-matite-e-documentazione-unica.md), [piano test RC86](docs/validation/RC86_BOOTSTRAP_UI_DOCS_TEST_PLAN.md). **Baseline test confermata dall'utente: RC82/1002; RC83–RC86 ancora non compilate/testate in questa consegna.**
+
+---
+
+# RC85 — 06/11/2026 · E4b.2g, strategia abitativa naturale per la Zecca (CANDIDATA)
+
+- Esteso il benchmark `V15IndustrialProgressionBenchmark` con la terza politica **opt-in** `housing-buffer` solo per la Zecca. Mantiene tutti i passi di `bread-first` e tenta **due Case piccole aggiuntive** prima della filiera Oro, con costi e crescita demografica effettivi, senza grants né modifica al gameplay.
+- CLI `--benchmark-e4b-mint-ten` con `--policy housing-buffer` o `--include-housing-buffer` (default storico a due strategie invariato). Con `--compare-legacy` genera fino a sei run omogenei.
+- Nuovo `E4bMintHousingBufferStudy` con comando `--review-e4b-housing-buffer` di sola lettura: coppie `bread-first`/`housing-buffer` per regime, spese reali, case realmente pagate, hash SHA-256 di input e delta tempi **soltanto con doppio completamento naturale**. Export JSON/CSV/Markdown senza sovrascrittura.
+- Corretto il criterio `CompleteNaturalPolicyPairObserved` di RC84: richiede espressamente `research-first` **e** `bread-first`, non due politiche arbitrarie.
+- Aggiunti **20 casi xUnit**, totale cumulativo **1058 attesi** (RC82 1002 confermati; RC83 +18, RC84 +18, RC85 +20 ancora da eseguire). Gate F1 esteso con sei diagnostiche a 0 secondi + revisione offline non conclusiva. ADR 0093, specifica, piano test, README, roadmap e handoff aggiornati.
+- Nessun file Core, Desktop o Infrastructure modificato; GUI canonica, SQLite, salvataggi, prezzi e modalità MintTen di default invariati. **Compilazione .NET e xUnit NON eseguiti qui** per indisponibilità SDK; controlli statici e integrità archivio distinti.
+
+---
+
+# RC84 — 06/11/2026 · E4b.2f, audit evidenze naturali MintTen vs proposte (candidata)
+
+- Introdotto `E4bMintNaturalFeasibilityAudit` in Application/Benchmarks: distingue i dati reali del benchmark naturale (prezzi legacy, nessun grant) dalle nove ipotesi economiche di RC83 A/B/C, **non attivate**. Controlla scenario, contratto `rules_version` MintTen/Legacy, identico inventario iniziale/orizzonte e corretta catena costruzione → squadra → evento di prima produzione.
+- Nuova CLI di sola lettura `--analyze-e4b-mint-ten --input RESULTS_JSON [--output DIRECTORY]`: importa risultati registrati, controlla ledger e milestone tramite analizzatori esistenti, esporta JSON/CSV/Markdown e SHA-256 dell'input, senza sovrascrittura o avanzamento clock. Le attese, i deficit misurati e i campioni di capacità satura **non** sono classificati come softlock.
+- **18 nuovi casi xUnit**, **1038 cumulativi attesi** (RC83 +18, RC84 +18 sulla RC82 confermata a 1002). Gate `validate-f1.cmd` esteso: verifica su diagnostica RC82 a 0 secondi 4 run non conclusivi e 9 ipotesi dichiarate come non applicate.
+- Creati ADR 0092, specifica e piano test; aggiornati README, roadmap e handoff. Nessuna modifica a Core, Desktop, Infrastructure, prezzi attivi, salvataggi o crescita ×20. **SDK .NET 10 non disponibile**: controlli statici/archivio, ma non build/test/benchmark naturale completo. [Piano](docs/validation/E4B_RC84_TEST_PLAN.md).
+
+# RC83 — 06/11/2026 · E4b.2e, rischio di scalabilità della seconda Zecca (CANDIDATA)
+
+- **RC82 validata dall'utente:** 1002/1002 test passati. Questa dichiarazione aggiorna il checkpoint operativo precedente RC78; i test RC83 restano da eseguire.
+- Aggiunto lo studio **solo analitico** `E4bMintScaleRiskStudy`: **9 righe** A/B/C × Base/Grande/Avanzato, confronto una/due Zecche, squadra piena 10/30/100 → 20/60/200, budget di popolazione, filiera aggiuntiva, prezzo della seconda copia, lotto atomico e limite del percorso Magazzini. Rate teoriche calcolate dalla capacità iniziale, non finanziamento realizzato.
+- Confronto del prezzo diretto delle due Zecche con il lavoro materiale di un Tagliapietre, distinguendo le fasce sotto 100, 100–1000 e sopra 1000. Non è una metrica temporale né la somma dei prerequisiti, e non attiva la curva A.
+- CLI `--study-e4b-mint-scale` con JSON/CSV/Markdown protetti da sovrascrittura; **18 nuovi casi xUnit Application**, gate portato a **1020 test attesi** e controllo output separato. Aggiornati ADR 0091, specifica, roadmap, handoff, test plan.
+- **Non modificati** Core, Desktop, Infrastructure, database SQLite, GUI approvata, prezzi live, crescita ×20, Deposito Cibo e default `Legacy`. SDK .NET 10 assente qui: nessuna build né prova RC83 eseguita.
+
+---
+
+# RC82 — 06/11/2026 · E4b.2d, benchmark naturale MintTen (CANDIDATA)
+
+- Esteso **solo** `V15IndustrialProgressionBenchmark` con modalità esplicita `MintTen` per `V15-I03`, esposta come `E4B-M01`: identico inventario della nuova campagna RC77, nessun grant; una chiamata autentica `AssignCityProducerWorkers("mint", Base, 10)` invece di un singolo addetto.
+- Entrambe le policy `research-first` e `bread-first` conservano i propri prerequisiti, la ricerca con Matite e il clock v15. Il benchmark registra eventi reali, attese, stock, popolazione, spese e milestone **solo se osservate**; legacy I01–I03 e test RC77 non modificati.
+- CLI `--benchmark-e4b-mint-ten` con `--compare-legacy`, `--policy`, `--max-seconds` e output JSON/CSV/Markdown su directory nuova, protetta da sovrascrittura. Manifest E4b `not-run` e gate F1 esteso al controllo diagnostico da zero secondi senza dichiarare alcuna progressione naturale raggiunta.
+- **17 nuovi casi xUnit Application**, totale **1002 attesi** (926 RC78 verificati, 76 successivi da compilare/testare). Aggiornati ADR 0090, specifica, validazione, roadmap, handoff e README.
+- **Non modificati** Core, Desktop, GUI/XAML, Infrastructure, schema o contenuto SQLite, costi, default della Zecca, escrow e crescita ×20. Nessuna prova .NET 10 eseguita in questo ambiente.
+
+---
+
+# RC81 — 06/11/2026 · E4b.2c, attivazione opt-in squadre minime v15 (candidata)
+
+- Corretto il difetto di pooling inter-tier della RC80: due gruppi da 9 lavoratori su Base/Grande della Zecca non costituiscono una squadra. Il `ProductionPlanner` usa ora il limite esplicito di moduli completi derivato dai singoli tier.
+- Attivato il contratto nel runtime v15 **solo mediante scelta esplicita** `EnableMintCrews()`: Zecca 10 addetti per modulo Base/Grande/Avanzato (1/3/10 moduli), senza modificare le altre famiglie, i costi, la crescita o il default della GUI.
+- Comandi `Assign/Release/Upgrade`, validatore nativo, clock per secondo, diagnostica e riepilogo GUI integrati; il personale resta in unità fisiche. La stessa sessione conserva il regime nel checkpoint.
+- SQLite generation 6 invariata nelle tabelle e nel `user_version`, ma l'header `rules_version` distingue in modo esplicito `civil-growth-15` da `civil-growth-15-mint-crew10`. Salvataggio/caricamento rifiutano valori ignoti.
+- **20 test nuovi**, 985 cumulativi **attesi**. RC79, RC80 e RC81 NON compilate/testate in questo ambiente; ultimo riscontro reale dell'utente: RC78 **926/926**. GUI v14 canonica mantenuta, 7 colonne risorse e pulsanti storici non modificati. [ADR 0089](docs/adr/0089-attivazione-opt-in-squadre-zecca-v15-versionata.md) · [Piano test](docs/validation/E4B_RC81_RUNTIME_TEST_PLAN.md).
+
+# RC80 — 06/11/2026 · E4b.2b, squadre minime con planner autentico (candidata)
+
+- Nuovo `CrewTeamPortfolio` in Core: moduli tier 1/3/10, capienza personale `moduli × CrewSize`, assegnazione/rilascio/costruzione immutabili, controllo per-tipo di squadre incomplete e deficit prossimo modulo.
+- `ProductionPlanner` accetta un parametro **facoltativo** di dimensione squadra; per il gioco reale (nessun parametro) il comportamento resta identico, mentre la proiezione RC80 usa lo stesso algoritmo di priorità, input e magazzino per singola esecuzione del modulo. Aggiunto `ProductionBlockReason.InsufficientCrew`.
+- `CrewProductionProjection` controlla capienza per tier, intero roster, assenza di doppia assegnazione e budget demografico comprensivo delle attività esterne. Studio con la ricetta autentica della Zecca su dieci fixture dichiarate, export JSON/CSV/Markdown con `--study-e4b-crews`.
+- **22 test aggiunti** (18 Core, 4 Application), gate cumulativo aggiornato a **965 test attesi** e nuovo comando da verificare. Nessun test eseguito in questo ambiente: **926/926 RC78** rimane l'ultimo riscontro dell'utente. RC79 non ancora validata.
+- Non modificati prezzi, squadre nella partita, GUI, crescita, tick del clock in v15, SQLite o salvataggi. [ADR 0088](docs/adr/0088-proiezione-squadre-minime-v15-isolata.md) · [Specifica](docs/design/E4B_RC80_CREW_MINIMUM_PROJECTION.md) · [Piano test](docs/validation/E4B_RC80_CREW_TEST_PLAN.md).
+
+# RC79 — 06/11/2026 · E4b.2a, opzioni di finanziamento delle costruzioni (candidata)
+
+- Nuovo prototipo isolato `ProgressiveConstructionEscrow` (Core): depositi materiali senza perdita/doppio conteggio, rimborso subordinato alla capienza, rate esatte al millesimo senza materializzare lunghe liste. **Non integrato** nel gioco e nei salvataggi.
+- Nuovo confronto di 27 casi (3 curve × 3 tier × lotti 1/5/10): acquisto atomico, copie sequenziali e minimo teorico di rate su capacità dichiarata. CLI `--study-e4b-financing` con output JSON/CSV/Markdown indipendente dai report RC78.
+- Aggiornato il gate F1 per verificare anche la nuova CLI e contare 17 nuovi casi xUnit: **943 test attesi**, **non compilati né eseguiti in questo ambiente**. Baseline RC78: **926 test superati dall'utente**, come registrato nell'archivio.
+- Nessuna variazione di prezzi, produzione, lavoratori, crescita, GUI o SQLite; scelta di curva A/B/C, moduli e rateizzazione ancora sospesa. [ADR 0087](docs/adr/0087-studio-finanziamento-progressivo-senza-attivazione.md), [specifica](docs/design/E4B_RC79_FINANCING_FEASIBILITY.md), [piano test](docs/validation/E4B_RC79_FINANCING_TEST_PLAN.md).
+
 # RC78 — 06/11/2026 · confronto analitico di tre curve economiche
 
 - Studio isolato con 81 preventivi, prima/seconda copia e lotti 5/10 per tutti i tier, 18 investimenti di filiera, ricerca e personale alimentato/alloggiato. Nessuna modifica al gioco corrente.
@@ -731,7 +991,7 @@
 - **5 nuovi casi automatici** (3 test + hover in 2 viewport), aggiornato 1 test della Scuola: **456 test attesi, non eseguiti qui**. RC7 non è stata confermata verde; ultimo run comunicato: **RC6 450/451** per l'asserzione Avalonia errata, corretta in RC7.
 - Modificati esclusivamente presentazione/XAML v14 e test Desktop, più documentazione. **V13, stili globali, Core, Application, SQLite e salvataggi invariati.** [Rapporto D24](docs/design/G1_D24_E3B4_RC8_STATI_EDIFICI_E_COMANDI.md) · [Piano D24](docs/validation/G1_D24_RC8_TEST_PLAN.md) · [ADR 0034](docs/adr/0034-v14-stati-edifici-e-layout-azioni.md).
 
-Il changelog registra **cosa è stato introdotto**, non approva automaticamente gameplay, grafica o valori numerici. Date riferite al **3 novembre 2026**. Il file storico precedente, conservato integralmente in [`docs/history/operational/CHANGELOG_PRIMA_DEL_RIORDINO_G1_D19.md`](docs/history/operational/CHANGELOG_PRIMA_DEL_RIORDINO_G1_D19.md), contiene i dettagli e i checkpoint delle versioni anteriori; non è la fonte dello stato corrente.
+Il changelog registra **cosa è stato introdotto**, non approva automaticamente gameplay, grafica o valori numerici. Date riferite al **3 novembre 2026**. Il file storico precedente, conservato integralmente in [`docs/history/releases/CHANGELOG_STORICO_G1_D19.md`](docs/history/releases/CHANGELOG_STORICO_G1_D19.md), contiene i dettagli e i checkpoint delle versioni anteriori; non è la fonte dello stato corrente.
 
 Legenda: **Validata** = test Windows confermati dall'utente; **Candidata** = codice prodotto ma verifica pendente; **Respinta visivamente** = test automatici insufficienti per accettare la GUI; **Documentazione** = nessuna modifica funzionale.
 
@@ -843,7 +1103,7 @@ Legenda: **Validata** = test Windows confermati dall'utente; **Candidata** = cod
 ## v59-RC1 e precedenti — Campagna storica (VALIDATA)
 
 - Ruleset `civil-growth-13`, Municipio, produzione e consumi, Magazzino/Pane condivisi, abitazioni, filiera Pane, Ferro/Oro/Forgia/Zecca, Caserma e addestramento individuale.
-- Ultima campagna normale conservata nel ramo sperimentale v60. Cronologia e risultati dettagliati nello [storico integrale](docs/history/operational/CHANGELOG_PRIMA_DEL_RIORDINO_G1_D19.md).
+- Ultima campagna normale conservata nel ramo sperimentale v60. Cronologia e risultati dettagliati nello [storico integrale](docs/history/releases/CHANGELOG_STORICO_G1_D19.md).
 
 ## Stato successivo
 

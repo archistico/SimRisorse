@@ -12,7 +12,8 @@ namespace SimRisorse.Core.Food;
 public enum V15BuildingKind { Civic, Producer, FoodIndustry, School }
 
 public sealed record V15BuildingEntry(string Id, string Name, V15BuildingKind Kind,
-    string SourceId, ProductionTier? Tier, long Owned, long AssignedWorkers);
+    string SourceId, ProductionTier? Tier, long Owned, long AssignedWorkers,
+    int CrewSize = 1, long CompleteModules = 0);
 
 /// <summary>Single resource row across the city, animal pens, transit and the depot.
 /// Totals never count an inventory twice. Capacities are sums of the independent bins.</summary>
@@ -61,8 +62,10 @@ public static class V15CampaignCatalogProjection
                         ProductionTier.Large => definition.Name + " grande",
                         _ => definition.Name + " avanzato"
                     };
+                    var crewSize = V15CrewRules.CrewSize(checkpoint.CrewMode, definition.Id);
                     rows.Add(new(definition.Id + suffix, label, V15BuildingKind.Producer,
-                        definition.Id, tier, occupancy.Buildings, occupancy.AssignedWorkers));
+                        definition.Id, tier, occupancy.Buildings, occupancy.AssignedWorkers,
+                        crewSize, occupancy.AssignedWorkers / crewSize));
                 }
             }
             else
@@ -80,6 +83,12 @@ public static class V15CampaignCatalogProjection
                 FoodIndustrySites.Get(checkpoint.Industry.Buildings.Counts, site.Id),
                 FoodIndustrySites.Get(checkpoint.Industry.Buildings.Assigned, site.Id)));
         }
+        rows.Add(new("food-depot-large", "Deposito alimentare grande", V15BuildingKind.FoodIndustry,
+            "food-depot-large", ProductionTier.Large, checkpoint.Industry.Buildings.Counts.DepotLarge,
+            checkpoint.Industry.Buildings.Assigned.DepotLarge));
+        rows.Add(new("food-depot-advanced", "Deposito alimentare avanzato", V15BuildingKind.FoodIndustry,
+            "food-depot-advanced", ProductionTier.Advanced, checkpoint.Industry.Buildings.Counts.DepotAdvanced,
+            checkpoint.Industry.Buildings.Assigned.DepotAdvanced));
 
         var cityCap = V15CityStorage.Calculate(baseline, city);
         var foodCap = foodCatalog.CapacitiesFor(checkpoint.Industry.Buildings);

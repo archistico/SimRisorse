@@ -7,18 +7,21 @@ public readonly record struct TierOccupancy(int Buildings, int AssignedWorkers);
 
 /// <summary>
 /// Immutable, aggregated workforce state for a single productive family.
-/// This is an isolated E2 model; v13 BuildingState remains unchanged.
+/// RC81 extends the historical 1/3/10 workplace model with an optional crew
+/// multiplier for the native v15 campaign; default=1 preserves older rules.
 /// </summary>
 public sealed class TieredBuildingPortfolio
 {
     private TieredBuildingPortfolio(string familyId, TierOccupancy basic,
-        TierOccupancy large, TierOccupancy advanced)
+        TierOccupancy large, TierOccupancy advanced, int crewSize)
     {
         ContentIdentifier.Validate(familyId, nameof(familyId));
-        Validate(basic, 1);
-        Validate(large, 3);
-        Validate(advanced, 10);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(crewSize);
+        Validate(basic, checked(1L * crewSize));
+        Validate(large, checked(3L * crewSize));
+        Validate(advanced, checked(10L * crewSize));
         FamilyId = familyId;
+        CrewSize = crewSize;
         Base = basic;
         Large = large;
         Advanced = advanced;
@@ -28,19 +31,21 @@ public sealed class TieredBuildingPortfolio
     }
 
     public string FamilyId { get; }
+    public int CrewSize { get; }
     public TierOccupancy Base { get; }
     public TierOccupancy Large { get; }
     public TierOccupancy Advanced { get; }
     public int TotalBuildings => checked(checked(Base.Buildings + Large.Buildings) + Advanced.Buildings);
-    public int TotalWorkplaces => checked(checked(Base.Buildings + checked(3 * Large.Buildings)) + checked(10 * Advanced.Buildings));
+    public int TotalWorkplaces => checked(checked(checked(Base.Buildings + checked(3 * Large.Buildings)) + checked(10 * Advanced.Buildings)) * CrewSize);
     public int AssignedWorkers => checked(checked(Base.AssignedWorkers + Large.AssignedWorkers) + Advanced.AssignedWorkers);
     /// <summary>Local storage units relative to one base producer (+50 per output in v13).</summary>
-    public int StorageEquivalents => TotalWorkplaces;
+    public int StorageEquivalents => TotalWorkplaces / CrewSize;
 
     public static TieredBuildingPortfolio Empty(string familyId) => Create(familyId, default, default, default);
 
     public static TieredBuildingPortfolio Create(string familyId, TierOccupancy basic,
-        TierOccupancy large, TierOccupancy advanced) => new(familyId, basic, large, advanced);
+        TierOccupancy large, TierOccupancy advanced, int crewSize = 1) =>
+        new(familyId, basic, large, advanced, crewSize);
 
     public static TieredBuildingPortfolio FromLegacy(BuildingDefinition definition, int buildingCount, int assignedWorkers)
     {
@@ -115,21 +120,15 @@ public sealed class TieredBuildingPortfolio
 
     private TieredBuildingPortfolio Replace(ProductionTier tier, TierOccupancy next) => tier switch
     {
-        ProductionTier.Base => Create(FamilyId, next, Large, Advanced),
-        ProductionTier.Large => Create(FamilyId, Base, next, Advanced),
-        ProductionTier.Advanced => Create(FamilyId, Base, Large, next),
+        ProductionTier.Base => Create(FamilyId, next, Large, Advanced, CrewSize),
+        ProductionTier.Large => Create(FamilyId, Base, next, Advanced, CrewSize),
+        ProductionTier.Advanced => Create(FamilyId, Base, Large, next, CrewSize),
         _ => throw new ArgumentOutOfRangeException(nameof(tier))
     };
 
-    private static int Workplaces(ProductionTier tier) => tier switch
-    {
-        ProductionTier.Base => 1,
-        ProductionTier.Large => 3,
-        ProductionTier.Advanced => 10,
-        _ => throw new ArgumentOutOfRangeException(nameof(tier))
-    };
+    private int Workplaces(ProductionTier tier) => checked(CrewSize * CrewTeamPortfolio.ModulesPerBuilding(tier));
 
-    private static void Validate(TierOccupancy occupancy, int workplaces)
+    private static void Validate(TierOccupancy occupancy, long workplaces)
     {
         if (occupancy.Buildings < 0 || occupancy.AssignedWorkers < 0 ||
             (long)occupancy.AssignedWorkers > (long)occupancy.Buildings * workplaces)

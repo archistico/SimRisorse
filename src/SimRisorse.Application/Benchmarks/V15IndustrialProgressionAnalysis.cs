@@ -93,7 +93,10 @@ public static class V15IndustrialProgressionAnalysis
     {
         if (run is null || string.IsNullOrWhiteSpace(run.ScenarioId) ||
             run.PolicyId is not (V15IndustrialProgressionBenchmark.PolicyResearchFirst or
-                V15IndustrialProgressionBenchmark.PolicyBreadFirst) ||
+                V15IndustrialProgressionBenchmark.PolicyBreadFirst or
+                V15IndustrialProgressionBenchmark.PolicyHousingBuffer) ||
+            (run.PolicyId == V15IndustrialProgressionBenchmark.PolicyHousingBuffer &&
+                run.ScenarioId is not ("E4B-M01" or "V15-I03")) ||
             run.Fixture != "fresh-game/no-grants" || string.IsNullOrWhiteSpace(run.Goal) ||
             run.Events is null || run.Samples is null || run.Samples.Count == 0 ||
             run.InitialPhysicalStockMilliunits is null ||

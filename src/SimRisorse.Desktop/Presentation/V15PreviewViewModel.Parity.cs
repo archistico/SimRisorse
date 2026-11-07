@@ -82,7 +82,9 @@ public sealed partial class V15PreviewViewModel
                 "butcher" => "Trasforma Bovini o Selvaggina in Carne. Le due ricette sono alternative, non simultanee.",
                 "garden" => "Coltiva Verdura utilizzando Acqua.",
                 "orchard" => "Coltiva Frutta utilizzando Acqua.",
-                "food-depot" => "Riceve Pesce, Carne, Verdura, Frutta e Pane. Converte gli ingredienti in Cibo pronto e serve le razioni.",
+                "food-depot" or "food-depot-large" or "food-depot-advanced" =>
+                    "Riceve Pesce, Carne, Verdura, Frutta e Pane. Converte gli ingredienti in Cibo pronto e serve le razioni." +
+                    (row.Tier is null ? "" : $" {row.Workplaces / Math.Max(1, row.Count)} posti per edificio; amplia la capienza del deposito."),
                 _ => string.Empty
             };
         if (row.Kind == V15BuildingKind.School)
@@ -109,7 +111,7 @@ public sealed partial class V15PreviewViewModel
                 $" /s (da {ResourceName(r.AnimalResourceId)})")).ToArray(),
             "garden" => [Line(_crops.Garden.CropResourceId, _crops.Garden.CropPerBatch.Units, " /s")],
             "orchard" => [Line(_crops.Orchard.CropResourceId, _crops.Orchard.CropPerBatch.Units, " /s")],
-            "food-depot" => _depot.Recipes.Select(r => Line(_depot.ReadyFoodResourceId, r.FoodPerBatch.Units,
+            "food-depot" or "food-depot-large" or "food-depot-advanced" => _depot.Recipes.Select(r => Line(_depot.ReadyFoodResourceId, r.FoodPerBatch.Units,
                 $" /s (da {ResourceName(r.SourceResourceId)})")).ToArray(),
             _ => []
         };
@@ -129,7 +131,7 @@ public sealed partial class V15PreviewViewModel
                 [Line(_crops.WaterResourceId, _crops.Garden.WaterPerBatch.Units, " /s")],
             "orchard" => _crops.Orchard.WaterPerBatch == ResourceAmount.Zero ? [] :
                 [Line(_crops.WaterResourceId, _crops.Orchard.WaterPerBatch.Units, " /s")],
-            "food-depot" => _depot.Recipes.Select(r => Line(r.SourceResourceId, r.InputPerBatch.Units, " /s (alternativa)")).ToArray(),
+            "food-depot" or "food-depot-large" or "food-depot-advanced" => _depot.Recipes.Select(r => Line(r.SourceResourceId, r.InputPerBatch.Units, " /s (alternativa)")).ToArray(),
             _ => []
         };
     }
@@ -138,7 +140,15 @@ public sealed partial class V15PreviewViewModel
     {
         if (row.Kind == V15BuildingKind.FoodIndustry)
         {
-            var cap = _foodCatalog.Sites.Single(site => site.Id == row.SourceId).StoragePerBuilding;
+            var cap = _foodCatalog.Sites.Single(site => site.Id ==
+                (FoodIndustrySites.DepotTierIds.Contains(row.SourceId) ? "food-depot" : row.SourceId)).StoragePerBuilding;
+            if (row.Tier is ProductionTier.Large or ProductionTier.Advanced)
+            {
+                var factor = row.Tier == ProductionTier.Large ? 3 : 10;
+                cap = cap with { Animals = cap.Animals.Scale(factor),
+                    Transit = cap.Transit.Scale(factor), DepotRaw = cap.DepotRaw.Scale(factor),
+                    DepotReady = cap.DepotReady * factor };
+            }
             IEnumerable<ResourceDetailLine> ready = cap.DepotReady == ResourceAmount.Zero
                 ? Array.Empty<ResourceDetailLine>()
                 : new[] { Line(_depot.ReadyFoodResourceId, cap.DepotReady.Units) };
@@ -166,12 +176,21 @@ public sealed partial class V15PreviewViewModel
     {
         if (row.Kind == V15BuildingKind.FoodIndustry)
         {
-            var site = _foodCatalog.Sites.Single(s => s.Id == row.SourceId);
+            var site = _foodCatalog.Sites.Single(s => s.Id ==
+                (FoodIndustrySites.DepotTierIds.Contains(row.SourceId) ? "food-depot" : row.SourceId));
             var missing = site.Prerequisites.Where(id => !HasConstructed(id))
                 .Select(id => _foodCatalog.TryGet(id, out var other) && other is not null
                     ? other.Name : _baseline.Catalog.BuildingsById.TryGetValue(id, out var building)
                         ? building.Name : id).ToArray();
-            return missing.Length == 0 ? string.Empty : "Per costruire servono prima: " + string.Join(", ", missing);
+            var requirements = new List<string>();
+            if (missing.Length > 0)
+                requirements.Add("Per costruire servono prima: " + string.Join(", ", missing));
+            if ((row.Tier is ProductionTier.Large or ProductionTier.Advanced) &&
+                !_session.Snapshot().CityCampaign.UnlockedTechnologyIds.Contains(
+                    row.Tier == ProductionTier.Large ? "alimentazione-1" : "alimentazione-2"))
+                requirements.Add("Serve ricerca: " +
+                    (row.Tier == ProductionTier.Large ? "Alimentazione I" : "Alimentazione II"));
+            return string.Join(" · ", requirements);
         }
         if (row.Kind == V15BuildingKind.School && !HasConstructed("food-depot"))
             return "Per costruire serve prima: Deposito alimentare";

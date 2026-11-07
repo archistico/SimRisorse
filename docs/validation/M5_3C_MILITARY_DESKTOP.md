@@ -73,4 +73,4 @@ Controllare oltre ai test automatici:
 | M5.5–M5.7 missione, isola, Castello | Future | Dopo M5.4 e relativi gate |
 | M6–M7 vittoria, bilanciamento, qualità | Future | Campagna completata |
 
-La versione di ripresa e i link di riferimento sono in [Handoff](../HANDOFF.md) e [Roadmap](../ROADMAP.md).
+La versione di ripresa e i link di riferimento sono in [Handoff](../NEW_CHAT_HANDOFF.md) e [Roadmap](../ROADMAP.md).

@@ -11,7 +11,8 @@ namespace SimRisorse.Core.Food;
 /// Rates describe the current snapshot, NOT guaranteed long-term throughput.
 /// </summary>
 public sealed record V15EconomyPreview(ResourceBundle Production, ResourceBundle Consumption,
-    V15FoodCampaignCheckpoint NextSecond)
+    V15FoodCampaignCheckpoint NextSecond,
+    IReadOnlyList<ResourceFlowContributor>? Contributors = null)
 {
     public decimal NetPerSecond(string resourceId) =>
         Production[resourceId].Units - Consumption[resourceId].Units;
@@ -26,6 +27,7 @@ public static class V15EconomyProjector
     {
         var plan = V15UnifiedCampaignClock.Plan(checkpoint, baseline, school,
             technologies, foodCatalog, meat, crops, depot, TimeSpan.FromSeconds(1));
-        return new(plan.FirstSecondProduction, plan.FirstSecondConsumption, plan.Next);
+        return new(plan.FirstSecondProduction, plan.FirstSecondConsumption, plan.Next,
+            plan.FirstSecondContributors);
     }
 }

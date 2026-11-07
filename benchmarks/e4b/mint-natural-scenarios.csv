@@ -1,0 +1,5 @@
+scenario_id,policy_id,crew_mode,rules_version,fixture,goal,declared_horizon_seconds,status,completion_seconds
+E4B-M01,research-first,MintTen,civil-growth-15-mint-crew10,fresh-game/no-grants,first-coins-after-research,57600,not-run,
+E4B-M01,bread-first,MintTen,civil-growth-15-mint-crew10,fresh-game/no-grants,first-coins-after-research,57600,not-run,
+V15-I03,research-first,Legacy,civil-growth-15,fresh-game/no-grants,first-coins-after-research,57600,historical-RC77-legacy,4623
+V15-I03,bread-first,Legacy,civil-growth-15,fresh-game/no-grants,first-coins-after-research,57600,historical-RC77-legacy,4563

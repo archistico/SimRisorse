@@ -18,6 +18,14 @@ public sealed class FoodIndustryCampaignStateTests
         sites.Validate(population: 30, busyOutsideFood: 10);
         Assert.Equal(6, FoodIndustrySites.Ids.Length);
         Assert.Equal(5L, FoodIndustrySites.Get(sites.Counts, "orchard"));
+
+        // RC90.1 regression: callers already use long for the population.
+        // Keep validation and planner compatible with populations above Int32.MaxValue.
+        long extendedPopulation = (long)int.MaxValue + 1;
+        sites.Validate(extendedPopulation, busyOutsideFood: 10);
+        var personnel = sites.PlannerPersonnel(extendedPopulation, busyOutsideFood: 10);
+        Assert.Equal(extendedPopulation, personnel.Population);
+        Assert.Equal(sites.Assigned.Total, personnel.Assigned.Total);
     }
 
     [Fact]

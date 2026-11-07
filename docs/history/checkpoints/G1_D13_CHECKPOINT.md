@@ -6,4 +6,4 @@
 - Test .NET RC3 **ancora da eseguire su Windows**; 396 casi attesi. Non passare a E3b/3d senza gate verde.
 - Prezzi, costi Scuola e tempi tecnologici rimangono sperimentali; ricerca accumulabile liberamente e spendibile su richiesta è confermata.
 
-[Rapporto](../../validation/V60_E3B3_RC3_FIX_CLOCK_FIXTURE.md) · [Guida](../../START_HERE.md) · [Roadmap](../../ROADMAP.md).
+[Rapporto](../../validation/V60_E3B3_RC3_FIX_CLOCK_FIXTURE.md) · [Guida](../../README.md) · [Roadmap](../../ROADMAP.md).

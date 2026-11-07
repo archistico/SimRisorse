@@ -63,7 +63,7 @@ public sealed class F1D05d4aCityCommandsTests
     public void CatalogContainsSixFoodSitesAndDirectProducerTiersButNoRetiredDepot()
     {
         var view = Start().CityCatalog;
-        Assert.Equal(6, view.Buildings.Count(b => b.Kind == V15BuildingKind.FoodIndustry));
+        Assert.Equal(8, view.Buildings.Count(b => b.Kind == V15BuildingKind.FoodIndustry));
         Assert.DoesNotContain(view.Buildings, b => b.Id.Contains("food-store", StringComparison.Ordinal));
         Assert.Contains(view.Buildings, b => b.Id == "food-depot" && b.Kind == V15BuildingKind.FoodIndustry);
         Assert.Contains(view.Buildings, b => b.Id == "fisher-large" && b.Tier == ProductionTier.Large);

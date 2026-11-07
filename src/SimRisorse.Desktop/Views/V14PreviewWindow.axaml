@@ -154,7 +154,6 @@
                   <TextBlock Text="{Binding SelectedBuilding.Name}" FontSize="21" FontWeight="SemiBold" />
                   <TextBlock Text="{Binding SelectedBuilding.Description}" TextWrapping="Wrap" FontSize="12" Foreground="#53685C" LineHeight="17" />
                   <TextBlock Text="COSTO DEL PROSSIMO EDIFICIO" Classes="label" FontSize="11" Margin="0,4,0,0" IsVisible="{Binding SelectedBuilding.HasCost}" />
-                  <TextBlock x:Name="V14BuildingCost" Text="{Binding SelectedBuilding.Price}" Classes="label" FontSize="11" IsVisible="{Binding SelectedBuilding.HasCost}" />
                   <ItemsControl x:Name="V14BuildingCostLines" ItemsSource="{Binding SelectedBuilding.CostLines}"
                                 ItemTemplate="{StaticResource V14ResourceDetailTemplate}" IsVisible="{Binding SelectedBuilding.HasCost}" />
                   <!-- Prices for batches are cumulative, never 5×/10× the price of the next building. -->
@@ -258,7 +257,7 @@
                 <ListBox x:Name="V14Resources" Classes="gutter-list" Grid.Row="1" ItemsSource="{Binding Resources}" SelectedItem="{Binding SelectedResource, Mode=TwoWay}" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate><DataTemplate x:DataType="vm:ResourceRow">
                       <Grid ColumnDefinitions="*,80,80,108,96,85,108" Margin="0,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" ToolTip.Tip="{Binding CapacityBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
+                        <StackPanel Orientation="Horizontal" Spacing="8"><pixel:PixelGlyph Key="{Binding Id}" Width="20" Height="20" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding QuantityRounded}" ToolTip.Tip="{Binding Quantity}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="2" Text="{Binding Capacity}" ToolTip.Tip="{Binding CapacityBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="3" Text="{Binding Production}" ToolTip.Tip="{Binding ProductionBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="4" Text="{Binding Consumption}" ToolTip.Tip="{Binding ConsumptionBreakdown}" HorizontalAlignment="Right" TextAlignment="Right" /><TextBlock Grid.Column="5" Text="{Binding NetRate}" HorizontalAlignment="Right" TextAlignment="Right" FontWeight="SemiBold" Foreground="{Binding NetForeground}" /><TextBlock Grid.Column="6" Text="{Binding TimeToFull}" HorizontalAlignment="Right" TextAlignment="Right" />
                       </Grid>
                     </DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
@@ -448,9 +447,17 @@
                 <TextBlock Text="TECNOLOGIA" Classes="label" Margin="12,0" />
                 <ListBox x:Name="V14Technologies" Grid.Row="1" Classes="gutter-list" ItemsSource="{Binding Technologies}" SelectedItem="{Binding SelectedTechnology, Mode=TwoWay}"
                          Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                  <ListBox.ItemTemplate><DataTemplate x:DataType="vm:V14TechnologyRow"><StackPanel Spacing="3" Margin="5,7">
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" /><TextBlock Text="{Binding Label}" FontSize="11" Foreground="#66766E" TextWrapping="Wrap" />
-                  </StackPanel></DataTemplate></ListBox.ItemTemplate>
+                  <ListBox.ItemTemplate><DataTemplate x:DataType="vm:V14TechnologyRow"><Grid ColumnDefinitions="32,*" ColumnSpacing="7" Margin="3,6">
+                      <Border Background="#E8E4D6" BorderBrush="#697787" BorderThickness="1"
+                              Width="30" Height="32" CornerRadius="0" VerticalAlignment="Top">
+                        <pixel:PixelGlyph Key="{Binding GlyphKey}" Width="22" Height="22"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+                      <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Label}" FontSize="11" Foreground="#66766E" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Grid></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
               </Grid>
             </Border>
@@ -460,6 +467,19 @@
                   <TextBlock Text="ALBERO TECNOLOGICO" FontSize="16" FontWeight="SemiBold" />
                   <TextBlock x:Name="V14ResearchBalance" Text="{Binding ResearchBalance}" FontSize="21" FontWeight="SemiBold" />
                   <TextBlock x:Name="V14SelectedTechnology" Text="{Binding SelectedTechnologySummary}" FontSize="12" TextWrapping="Wrap" />
+                  <StackPanel Spacing="4" IsVisible="{Binding HasSelectedTechnologyUnlocks}">
+                    <TextBlock Text="SBLOCCA EDIFICI" Classes="label" FontSize="11" Margin="0,4,0,0" />
+                    <ItemsControl x:Name="V14TechnologyUnlocks" ItemsSource="{Binding SelectedTechnologyUnlocks}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TechnologyUnlockedBuildingRow">
+                          <StackPanel Orientation="Horizontal" Spacing="7" Margin="0,2">
+                            <pixel:PixelGlyph Key="{Binding GlyphKey}" Width="18" Height="18" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
                   <TextBlock Text="Logistica e Navigazione sono visibili ma non acquistabili finché non hanno un effetto concreto." FontSize="11" Foreground="#53685C" TextWrapping="Wrap" />
                 </StackPanel></ScrollViewer>
                 <Button x:Name="V14BuyTechnology" Grid.Row="1" Classes="primary research" Content="Acquista ricerca"

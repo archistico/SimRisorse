@@ -94,17 +94,30 @@ public sealed class FoodIndustryConstructionCatalog
             raw += storage.DepotRaw.Scale(count);
             ready += storage.DepotReady * count;
         }
+        var depot = _byId["food-depot"].StoragePerBuilding;
+        var extraModules = checked(buildings.Counts.DepotLarge * 3 + buildings.Counts.DepotAdvanced * 10);
+        raw += depot.DepotRaw.Scale(extraModules);
+        ready += depot.DepotReady * extraModules;
         return new(animals, transit, raw, ready);
     }
 
     public ResourceBundle Quote(FoodIndustryBuildings buildings, string siteId, int quantity)
     {
         ArgumentNullException.ThrowIfNull(buildings);
-        if (!_byId.TryGetValue(siteId, out var definition))
+        var depotTier = FoodIndustrySites.DepotTierIds.Contains(siteId);
+        if (!_byId.TryGetValue(depotTier ? "food-depot" : siteId, out var definition))
             throw new ArgumentException("Unknown food building.", nameof(siteId));
-        var acquired = checked((int)FoodIndustrySites.Get(buildings.Counts, siteId));
+        var acquired = checked((int)(siteId == "food-depot" || depotTier
+            ? buildings.Counts.Depot + buildings.Counts.DepotLarge + buildings.Counts.DepotAdvanced
+            : FoodIndustrySites.Get(buildings.Counts, siteId)));
+        var multiplier = siteId switch
+        {
+            "food-depot-large" => 2.6m,
+            "food-depot-advanced" => 6.5m,
+            _ => 1m
+        };
         return ProgressiveConstructionPricing.QuoteNewBuildings(definition.BaseCost,
-            1m, CostGrowthFactor, acquired, quantity);
+            multiplier, CostGrowthFactor, acquired, quantity);
     }
 
     private static FoodIndustryCapacities Storage(ResourceBundle? animals = null,

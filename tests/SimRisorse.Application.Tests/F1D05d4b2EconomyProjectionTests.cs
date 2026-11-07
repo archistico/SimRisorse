@@ -60,6 +60,60 @@ public sealed class F1D05d4b2EconomyProjectionTests
             Technologies, Sites, Meat, Crops, Depot);
 
     [Fact]
+    public void FisherDepotAndMealContributorsExactlyReconcileGrossFlows()
+    {
+        var view = Preview(Seed(fisher: true, depotCount: 1, depotWorkers: 1));
+        var sources = Assert.IsAssignableFrom<IReadOnlyList<ResourceFlowContributor>>(view.Contributors);
+        foreach (var id in new[] { "fish", "food", "bread", "water", "grain", "meat", "fruit" })
+        {
+            Assert.Equal(view.Production[id].Units, sources.Sum(x => x.Production[id].Units));
+            Assert.Equal(view.Consumption[id].Units, sources.Sum(x => x.Consumption[id].Units));
+        }
+        Assert.Contains(sources, x => x.Source.Contains("Pescatore", StringComparison.Ordinal));
+        Assert.Contains(sources, x => x.Source.StartsWith("Abitanti (", StringComparison.Ordinal) &&
+            x.Consumption["food"] == U(.080m));
+        Assert.Contains(sources, x => x.Source.Contains("Deposito", StringComparison.OrdinalIgnoreCase) &&
+            x.Production["food"] == U(1m));
+    }
+
+    [Fact]
+    public void EveryNewFoodIndustrySourceUsesTheMeasuredStageRuns()
+    {
+        var start = Seed(depotCount: 1);
+        start = start with
+        {
+            CityCampaign = start.CityCampaign with
+            {
+                Resources = ResourceBundle.Create(("grain", 3m), ("water", 3m))
+            },
+            Industry = start.Industry with
+            {
+                Buildings = new FoodIndustryBuildings(
+                    new FoodIndustryCrew(1, 1, 0, 1, 0, 1),
+                    new FoodIndustryCrew(1, 1, 0, 1, 0, 1))
+            }
+        };
+        var view = Preview(start);
+        var sources = Assert.IsAssignableFrom<IReadOnlyList<ResourceFlowContributor>>(view.Contributors);
+        foreach (var id in new[] { "cattle", "game", "vegetables", "water", "grain", "food" })
+        {
+            Assert.Equal(view.Production[id].Units, sources.Sum(x => x.Production[id].Units));
+            Assert.Equal(view.Consumption[id].Units, sources.Sum(x => x.Consumption[id].Units));
+        }
+        Assert.Contains(sources, x => x.Production["cattle"] == U(1m));
+        Assert.Contains(sources, x => x.Production["vegetables"] == U(2m));
+    }
+
+    [Fact]
+    public void UnstaffedFoodSitesDoNotAppearAsActiveFlowSources()
+    {
+        var view = Preview(Seed(fisher: true, depotCount: 1));
+        var sources = Assert.IsAssignableFrom<IReadOnlyList<ResourceFlowContributor>>(view.Contributors);
+        Assert.DoesNotContain(sources, x => x.Source.Contains("Deposito", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(ResourceAmount.Zero, view.Production["food"]);
+    }
+
+    [Fact]
     public void OneFisherOneDepotReportsBothActualGrossStagesAndOneMeal()
     {
         var start = Seed(fisher: true, oldFoodStore: true, depotCount: 1, depotWorkers: 1);

@@ -72,10 +72,8 @@ public static class V15NaturalProgressionBenchmark
 
         var baseline = CivilGrowthScenario.Create();
         var rules = Rules();
-        var inherited = V14CampaignSnapshots.MigrateFromV13(baseline,
-            GameSession.Create(baseline).Snapshot(), rules.School, rules.Technologies);
-        var initial = V15FoodCampaignCheckpoints.FromMigrationPlan(
-            V14FoodStockMigration.Prepare(inherited, rules.Depot), rules.Depot);
+        var initial = V15FoodCampaignCheckpoints.NewCampaign(
+            baseline, rules.School, rules.Technologies, rules.Depot);
         var physicalAtStart = V15StockAuditor.PhysicalTotals(initial);
         var initialAmounts = physicalAtStart.Amounts.ToDictionary(item => item.Key,
             item => item.Value.Milliunits, StringComparer.Ordinal);

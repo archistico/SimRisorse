@@ -1,3 +1,13 @@
+> **RC86 — dotazione nuove partite:** 2 Matite vengono accreditate soltanto dalla factory `V15FoodCampaignCheckpoints.NewCampaign`; Save/Load e `FromMigrationPlan` non alterano gli stock. SQLite generation 6 invariata. Le partite esistenti non ricevono la dotazione retroattivamente.
+
+# Aggiornamento RC81 — v15: regime squadre nel rules_version (06/11/2026)
+
+Nel nuovo checkpoint di runtime la proprietà `V15FoodCampaignCheckpoint.CrewMode` è **Legacy** per impostazione predefinita oppure **MintTen** dopo opt-in esplicito. SQLite generation 6 non cambia schema né `PRAGMA user_version=6`: il campo già esistente `game_save.rules_version` contiene `civil-growth-15` nel primo caso e `civil-growth-15-mint-crew10` nel secondo. Il caricamento legge e valida l'identità prima di ricostruire lavoratori/produzione; versioni sconosciute vengono rifiutate. I dati di progetto v14 e le loro directory non sono modificati. `SameCheckpoint` confronta anche la modalità prima di sostituire un file. Nessuna migrazione automatica, nessun riarmo di lavoratori o conversione inventario al cambio di regole.
+
+[ADR 0089](adr/0089-attivazione-opt-in-squadre-zecca-v15-versionata.md) · [Piano test](validation/E4B_RC81_RUNTIME_TEST_PLAN.md). RC81 candidata, nessun test SQLite eseguito in questo ambiente.
+
+---
+
 > **RC71:** schema e policy di persistenza identici alla RC70 (SQLite generation 6). Lo slot fittizio `food-store` è stato eliminato soltanto dal planner in memoria. Nessun nuovo adattamento né migrazione SQLite. RC71 candidata, 822 test attesi.
 
 # Salvataggi — contratto operativo RC70 (05/11/2026)
@@ -172,3 +182,13 @@ Non sono ancora implementati più slot per scenario, selezione grafica degli sce
 Tutte le quantità sono millesimi interi e non negativi. Il deposito conserva anche scorte storiche eccedenti la futura capienza; senza lavoratori o nuovo motore attivo nessuna lavorazione avviene automaticamente. Il writer valida in memoria, scrive un file temporaneo, riapre per verificarlo e prima di sovrascrivere un altro **v15 valido** ne salva un backup SQLite consistente. File di generazione diversa non vengono sovrascritti.
 
 F1-D05c / RC47 aggiunge un migratore **copy-on-write esplicito** con controllo della conservazione e idempotenza su destinazione identica. Il salvataggio v14 resta l'originale per rollback; lo switch nella campagna e il relativo backup aggiuntivo sono rimandati a F1-D05d/e. Nessun caricamento automatico. [Store](design/F1_D05B_RC46_PERSISTENZA_SQLITE_V15.md), [contratto di migrazione](design/F1_D05C_RC47_MIGRAZIONE_COPY_ON_WRITE.md) e [ADR 0058](adr/0058-migrazione-v14-v15-senza-sovrascrittura.md).
+
+
+## RC90 — Depositi alimentari per tier, formato SQLite v15 invariato
+
+Il salvataggio v15 mantiene `PRAGMA user_version=6` e la tabella `food_industry_site` senza nuove colonne. Al fianco delle sei righe canoniche, le nuove partite con RC90 scrivono `food-depot-large` e `food-depot-advanced` (conteggio edifici e lavoratori assegnati). La lettura accetta **esattamente sei** righe dei checkpoint precedenti oppure **otto** righe complete; con sei righe, entrambi i livelli aggiuntivi valgono zero. Un gruppo parziale di sette righe è invalido. La ricerca acquistata viene conservata nella tabella esistente `progression_technologies`: un deposito di livello superiore non può risultare costruito senza il relativo sblocco. V14 non cambia.
+
+
+## Nota RC93 — database sperimentale separato
+
+Il file SQLite `E4bCurveAFundingSqliteStore` non è un salvataggio di partita: usa `application_id=0x53465239` e `user_version=1` **solo nel suo database isolato**. La campagna v15 continua a usare il proprio schema **generation 6** senza modifiche. Non puntare lo store di finanziamento verso un salvataggio reale; il costruttore rifiuta formati estranei. I rifornimenti del sandbox sono ipotetici. [ADR 0103](adr/0103-persistenza-sandbox-finanziamento-atomica-idempotente.md).

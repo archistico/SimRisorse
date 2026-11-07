@@ -19,30 +19,34 @@ public sealed class V15VisualRegressionTests
     [AvaloniaTheory]
     [InlineData(1040, 740)]
     [InlineData(1240, 850)]
-    public void FoodFilterAndColumnHeadingsRemainReadableInBothFilterStates(int width, int height)
+    public void SectorFilterAndColumnHeadingsRemainReadableAtMinimumAndNormalSizes(int width, int height)
     {
         var vm = Fresh();
         var window = new V15PreviewWindow(vm, startTimer: false) { Width = width, Height = height };
         try
         {
             window.Show();
-            foreach (var filtered in new[] { false, true })
+            foreach (var sector in new[] { V15BuildingSector.All, V15BuildingSector.Food, V15BuildingSector.Industry })
             {
-                if (filtered) vm.ToggleFoodIndustryFilterCommand.Execute(null);
+                vm.BuildingFilters.Single(option => option.Sector == sector).SelectCommand.Execute(null);
                 Dispatcher.UIThread.RunJobs();
                 var headings = new[] { "STRUTTURA", "EDIFICI", "PERSONALE" }
                     .Select(label => window.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == label)).ToArray();
-                var filter = window.FindControl<Button>("V15FoodIndustryFilter")!;
+                var filter = window.FindControl<ItemsControl>("V15BuildingFilterStrip")!;
+                var label = window.FindControl<TextBlock>("V15FilterLabel")!;
+                Assert.Equal("Filtra", label.Text);
+                Assert.Equal(vm.BuildingFilters.Count, filter.GetVisualDescendants().OfType<Button>().Count());
                 var rectangles = headings.Select(text =>
                 {
                     Assert.True(text.Bounds.Width >= text.TextLayout.Width - 0.5,
                         $"Heading {text.Text} has insufficient space: {text.Bounds.Width} < {text.TextLayout.Width}.");
                     return new Rect(text.TranslatePoint(default, window)!.Value, text.Bounds.Size);
-                }).Append(new Rect(filter.TranslatePoint(default, window)!.Value, filter.Bounds.Size)).ToArray();
+                }).Append(new Rect(filter.TranslatePoint(default, window)!.Value, filter.Bounds.Size))
+                  .Append(new Rect(label.TranslatePoint(default, window)!.Value, label.Bounds.Size)).ToArray();
                 for (int i = 0; i < rectangles.Length; i++)
                     for (int j = i + 1; j < rectangles.Length; j++)
                         Assert.False(rectangles[i].Intersects(rectangles[j]), $"Header controls {i} and {j} overlap.");
-                Capture(window, $"v15-buildings{(filtered ? "-filtered" : "")}-{width}.png");
+                Capture(window, $"v15-buildings-{sector.ToString().ToLowerInvariant()}-{width}.png");
             }
         }
         finally { window.CloseWithoutSaving(); }

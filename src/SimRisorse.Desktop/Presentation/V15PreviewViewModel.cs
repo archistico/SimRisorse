@@ -33,7 +33,7 @@ public sealed partial class V15PreviewViewModel : ObservableObject
     private readonly FoodIndustryConstructionCatalog _foodCatalog = FoodIndustryConstructionCatalog.Candidate;
     private V15FoodIndustryCampaignSession _session;
     private V15BuildingRow? _selectedBuilding;
-    private bool _foodIndustryFilterActive;
+    private V15BuildingSector _activeBuildingSector = V15BuildingSector.All;
     private V15ResourceRow? _selectedResource;
     private V15TechnologyRow? _selectedTechnology;
     private bool _initialized;
@@ -60,14 +60,19 @@ public sealed partial class V15PreviewViewModel : ObservableObject
         VisibleBuildings = new();
         Resources = new();
         Technologies = new();
-        ToggleFoodIndustryFilterCommand = new(() =>
-        {
-            _foodIndustryFilterActive = !_foodIndustryFilterActive;
-            RefreshVisibleBuildings();
-            SelectedBuilding = VisibleBuildings.FirstOrDefault();
-            Notify(nameof(FoodIndustryFilterActive));
-            Notify(nameof(FoodIndustryFilterLabel));
-        });
+        BuildingFilters =
+        [
+            new(V15BuildingSector.All, "Tutti", SetBuildingSector),
+            new(V15BuildingSector.Food, "Alimentazione", SetBuildingSector),
+            new(V15BuildingSector.Extraction, "Estrazione", SetBuildingSector),
+            new(V15BuildingSector.Industry, "Industria", SetBuildingSector),
+            new(V15BuildingSector.Processing, "Lavorazioni", SetBuildingSector),
+            new(V15BuildingSector.Logistics, "Logistica", SetBuildingSector),
+            new(V15BuildingSector.Housing, "Abitazioni", SetBuildingSector),
+            new(V15BuildingSector.Civic, "Civici", SetBuildingSector),
+            new(V15BuildingSector.Military, "Militari", SetBuildingSector)
+        ];
+        foreach (var option in BuildingFilters) option.UpdateSelection(option.Sector == _activeBuildingSector);
         TogglePauseCommand = new(() => { if (_session.IsPaused) _session.Resume(); else _session.Pause(); Refresh(); },
             () => !_newGameConfirmation);
         BuildCommand = new(() => Act(() => BuildSelected(1), "Edificio costruito."),
@@ -147,10 +152,8 @@ public sealed partial class V15PreviewViewModel : ObservableObject
 
     private V15FoodIndustryCampaignSession FreshSession()
     {
-        var city = V14CampaignSnapshots.MigrateFromV13(_baseline,
-            GameSession.Create(_baseline).Snapshot(), _school, _technologies);
-        var checkpoint = V15FoodCampaignCheckpoints.FromMigrationPlan(
-            V14FoodStockMigration.Prepare(city, _depot), _depot);
+        var checkpoint = V15FoodCampaignCheckpoints.NewCampaign(
+            _baseline, _school, _technologies, _depot);
         return new(checkpoint, _baseline, _school, _technologies, _depot, _foodCatalog);
     }
 
@@ -193,9 +196,8 @@ public sealed partial class V15PreviewViewModel : ObservableObject
     public ObservableCollection<V15BuildingRow> Buildings { get; }
     // Keep the full catalog in Buildings; filter only the list shown by the v15 UI.
     public ObservableCollection<V15BuildingRow> VisibleBuildings { get; }
-    public bool FoodIndustryFilterActive => _foodIndustryFilterActive;
-    public string FoodIndustryFilterLabel => _foodIndustryFilterActive
-        ? "Tutti gli edifici" : "Filiere alimentari (6)";
+    public IReadOnlyList<V15BuildingFilterOption> BuildingFilters { get; }
+    public V15BuildingSector ActiveBuildingSector => _activeBuildingSector;
     public ObservableCollection<V15ResourceRow> Resources { get; }
     public ObservableCollection<V15TechnologyRow> Technologies { get; }
     public IEnumerable<V15ResourceRow> ResourceHighlights =>
@@ -217,7 +219,7 @@ public sealed partial class V15PreviewViewModel : ObservableObject
     {
         get => _selectedTechnology;
         set { if (ReferenceEquals(_selectedTechnology, value)) return; _selectedTechnology = value;
-            Notify(); RefreshSelections(); }
+            Notify(); Notify(nameof(SelectedTechnologyUnlocks)); Notify(nameof(HasSelectedTechnologyUnlocks)); RefreshSelections(); }
     }
     public string SelectedResourceStorageDetails => SelectedResource?.CapacityBreakdown ??
         "Capienza aggregata di tutti i depositi fisici; nessuna scorta viene conteggiata due volte.";
@@ -251,13 +253,45 @@ public sealed partial class V15PreviewViewModel : ObservableObject
         "butcher" => "Carne · usa Bovini o Selvaggina",
         "garden" => "Verdura · usa Acqua",
         "orchard" => "Frutta · usa Acqua",
-        "food-depot" => "Cibo pronto · usa Pesce, Carne, Verdura, Frutta e Pane",
+        "food-depot" or "food-depot-large" or "food-depot-advanced" =>
+            "Cibo pronto · usa Pesce, Carne, Verdura, Frutta e Pane",
         _ => "Produzione e consumo secondo la ricetta della famiglia, se presente."
     };
     public string SelectedTechnologySummary => SelectedTechnology is null ? "Seleziona una ricerca." :
-        $"{SelectedTechnology.Name}\n{SelectedTechnology.Status}\nCosto: {SelectedTechnology.Cost}";
+        $"{SelectedTechnology.Name}\n{SelectedTechnology.Status}\nCosto: {SelectedTechnology.Cost}\n" +
+        DescribeTechnologyUnlocks(SelectedTechnology.Id);
     public bool CanBuildSelected => CanChange && SelectedBuilding is { Unlocked: true, IsFixed: false };
     public bool CanAffordSelected => CanBuildSelected && SelectedBuilding?.Affordable == true;
+    public IReadOnlyList<TechnologyUnlockedBuildingRow> SelectedTechnologyUnlocks
+    {
+        get
+        {
+            if (SelectedTechnology is null ||
+                !_technologies.TryGet(SelectedTechnology.Id, out var technology) ||
+                technology is null || !technology.Available) return [];
+            var native = TieredProductionCatalog.FromCatalog(_baseline.Catalog,
+                V14TierConstructionRules.Candidate.LargeMultiplier,
+                V14TierConstructionRules.Candidate.AdvancedMultiplier)
+                .Where(f => f.FamilyId != V15LegacyProducerAdapter.RetiredFamilyId);
+            var benefit = TechnologyTierEffects.ForTechnology(SelectedTechnology.Id, native);
+            return TechnologyPresentation.BuildingUnlocks(benefit.LargeFamilies, benefit.AdvancedFamilies,
+                id => id == "food-depot" ? "Deposito alimentare" :
+                    _baseline.Catalog.BuildingsById.TryGetValue(id, out var building) ? building.Name : id,
+                extraLarge: SelectedTechnology.Id == "alimentazione-1" ? "food-depot" : null,
+                extraAdvanced: SelectedTechnology.Id == "alimentazione-2" ? "food-depot" : null);
+        }
+    }
+    public bool HasSelectedTechnologyUnlocks => SelectedTechnologyUnlocks.Count > 0;
+
+    private string DescribeTechnologyUnlocks(string id)
+    {
+        if (!_technologies.TryGet(id, out var technology) || technology is null || !technology.Available)
+            return "Nessun edificio: tecnologia non ancora implementata.";
+        return technology.Prerequisites.Length == 0 ? string.Empty :
+            "Richiede ricerca: " + string.Join(", ", technology.Prerequisites.Select(required =>
+                _technologies.TryGet(required, out var earlier) ? earlier!.Name : required)) + ".";
+    }
+
     public bool CanAffordFive => CanBuildSelected && Quote(SelectedBuilding!, 5).Affordable;
     public bool CanAffordTen => CanBuildSelected && Quote(SelectedBuilding!, 10).Affordable;
     public string BuildFiveCost => SelectedBuilding is null ? string.Empty : "5 edifici: " + FormatCost(Quote(SelectedBuilding, 5).Cost);
@@ -298,7 +332,6 @@ public sealed partial class V15PreviewViewModel : ObservableObject
     public bool CanReleaseWorker => CanChange && SelectedBuilding is { Kind: V15BuildingKind.Producer or V15BuildingKind.FoodIndustry, Workers: > 0 };
     public bool CanBuySelectedTechnology => CanChange && SelectedTechnology?.CanBuy == true;
 
-    public UiCommand ToggleFoodIndustryFilterCommand { get; }
     public UiCommand TogglePauseCommand { get; }
     public UiCommand BuildCommand { get; }
     public UiCommand BuildFiveCommand { get; }
@@ -538,14 +571,41 @@ public sealed partial class V15PreviewViewModel : ObservableObject
         _ => failure
     };
 
+    private void SetBuildingSector(V15BuildingSector sector)
+    {
+        if (_activeBuildingSector == sector) return;
+        var previous = _selectedBuilding;
+        _activeBuildingSector = sector;
+        foreach (var option in BuildingFilters) option.UpdateSelection(option.Sector == sector);
+        RefreshVisibleBuildings();
+        // Keep the same detail even if Avalonia temporarily clears ListBox selection
+        // while the visible rows are reconciled.
+        if (previous is not null && VisibleBuildings.Contains(previous))
+            SelectedBuilding = previous;
+        else if (_selectedBuilding is null || !VisibleBuildings.Contains(_selectedBuilding))
+            SelectedBuilding = VisibleBuildings.FirstOrDefault();
+        Notify(nameof(ActiveBuildingSector));
+    }
+
     private void RefreshVisibleBuildings()
     {
-        var selected = Buildings.Where(row => !_foodIndustryFilterActive ||
-            row.Kind == V15BuildingKind.FoodIndustry).ToArray();
+        var selected = Buildings.Where(row => _activeBuildingSector == V15BuildingSector.All ||
+            V15BuildingSectors.For(row) == _activeBuildingSector).ToArray();
         if (VisibleBuildings.Count == selected.Length &&
             VisibleBuildings.SequenceEqual(selected)) return;
-        VisibleBuildings.Clear();
-        foreach (var row in selected) VisibleBuildings.Add(row);
+        // Reconcile instead of clearing the entire ListBox: retained rows stay
+        // selected and keep their detail scroll/visual identity.
+        for (var i = VisibleBuildings.Count - 1; i >= 0; i--)
+            if (!selected.Contains(VisibleBuildings[i])) VisibleBuildings.RemoveAt(i);
+        for (var i = 0; i < selected.Length; i++)
+        {
+            if (i < VisibleBuildings.Count && ReferenceEquals(VisibleBuildings[i], selected[i])) continue;
+            var previousIndex = VisibleBuildings.IndexOf(selected[i]);
+            if (previousIndex >= 0) VisibleBuildings.Move(previousIndex, i);
+            else VisibleBuildings.Insert(i, selected[i]);
+        }
+        if (_selectedBuilding is not null && !VisibleBuildings.Contains(_selectedBuilding))
+            SelectedBuilding = VisibleBuildings.FirstOrDefault();
     }
 
     public void Refresh()
@@ -584,7 +644,7 @@ public sealed partial class V15PreviewViewModel : ObservableObject
                 Resources.Add(row);
             }
             row.Update(resource, economy.Production[resource.Id].Units,
-                economy.Consumption[resource.Id].Units);
+                economy.Consumption[resource.Id].Units, economy.Contributors);
         }
         if (_selectedResource is null && Resources.Count > 0) SelectedResource = Resources[0];
         var technologiesById = Technologies.ToDictionary(t => t.Id, StringComparer.Ordinal);
@@ -637,14 +697,17 @@ public sealed class V15BuildingRow(V15BuildingEntry initial) : ObservableObject
     private IReadOnlyList<ResourceDetailLine> _capacityLines = [];
     public string Id => _entry.Id;
     public string SourceId => _entry.SourceId;
-    public string GlyphKey => _entry.SourceId;
+    public string GlyphKey => FoodIndustrySites.DepotTierIds.Contains(_entry.SourceId)
+        ? "food-depot" : _entry.SourceId;
     public string Name => _entry.Name;
     public V15BuildingKind Kind => _entry.Kind;
     public ProductionTier? Tier => _entry.Tier;
     public long Count => _entry.Owned;
     public long Workers => _entry.AssignedWorkers;
-    public long Workplaces => _entry.Kind == V15BuildingKind.FoodIndustry ? Count :
-        Count * (_entry.Tier switch { ProductionTier.Large => 3, ProductionTier.Advanced => 10, _ => 1 });
+    public long Workplaces => _entry.Kind == V15BuildingKind.FoodIndustry ?
+        Count * (_entry.Tier switch { ProductionTier.Large => 3, ProductionTier.Advanced => 10, _ => 1 }) :
+        Count * (_entry.Tier switch { ProductionTier.Large => 3, ProductionTier.Advanced => 10, _ => 1 }) *
+        (_entry.Kind == V15BuildingKind.Producer ? _entry.CrewSize : 1);
     public string Workforce => $"{Workers} / {Workplaces} addetti";
     public string Staff => Kind is V15BuildingKind.Producer or V15BuildingKind.FoodIndustry ? $"{Workers} / {Workplaces}" : "—";
     public bool IsFixed => _fixed;
@@ -663,7 +726,9 @@ public sealed class V15BuildingRow(V15BuildingEntry initial) : ObservableObject
     public IReadOnlyList<ResourceDetailLine> CapacityLines => _capacityLines;
     public bool HasInputs => _inputLines.Count > 0;
     public bool HasCapacity => _capacityLines.Count > 0;
-    public string Summary => $"{Count} costruiti · {Workforce}";
+    public string Summary => _entry.CrewSize > 1
+        ? $"{Count} costruiti · {Workforce} · {_entry.CompleteModules}/{Workplaces / _entry.CrewSize} moduli con squadra completa"
+        : $"{Count} costruiti · {Workforce}";
     public bool Unlocked => _unlocked;
     public bool Affordable => _affordable;
     public string Cost => _cost;
@@ -692,6 +757,7 @@ public sealed class V15ResourceRow(V15ResourceEntry initial) : ObservableObject
     private V15ResourceEntry _entry = initial;
     private decimal _productionPerSecond;
     private decimal _consumptionPerSecond;
+    private IReadOnlyList<ResourceFlowContributor>? _flowContributors;
     private static readonly CultureInfo ItalianRows = CultureInfo.GetCultureInfo("it-IT");
     private static readonly IImmutableBrush SurplusBrush = new ImmutableSolidColorBrush(Color.Parse("#176858"));
     private static readonly IImmutableBrush DeficitBrush = new ImmutableSolidColorBrush(Color.Parse("#A44732"));
@@ -706,6 +772,10 @@ public sealed class V15ResourceRow(V15ResourceEntry initial) : ObservableObject
     public decimal NetPerSecond => _productionPerSecond - _consumptionPerSecond;
     public string Production => _productionPerSecond.ToString("0.###", ItalianRows) + " /s";
     public string Consumption => _consumptionPerSecond.ToString("0.###", ItalianRows) + " /s";
+    public string ProductionBreakdown => ResourceFlowBreakdown.Format(Name, Id,
+        _productionPerSecond, true, _flowContributors);
+    public string ConsumptionBreakdown => ResourceFlowBreakdown.Format(Name, Id,
+        _consumptionPerSecond, false, _flowContributors);
     public string NetRate => NetPerSecond.ToString("+0.###;-0.###;±0", ItalianRows) + " /s";
     public IBrush NetForeground => NetPerSecond < 0m ? DeficitBrush : SurplusBrush;
     public string TimeToFull
@@ -730,11 +800,13 @@ public sealed class V15ResourceRow(V15ResourceEntry initial) : ObservableObject
         (_entry.CapacitySources.IsDefaultOrEmpty ? "nessun compartimento disponibile" :
             string.Join(" + ", _entry.CapacitySources.Select(segment =>
                 $"{segment.Source} {segment.Amount.Units.ToString("#,0.###", ItalianRows)}")));
-    public void Update(V15ResourceEntry entry, decimal productionPerSecond, decimal consumptionPerSecond)
+    public void Update(V15ResourceEntry entry, decimal productionPerSecond, decimal consumptionPerSecond,
+        IReadOnlyList<ResourceFlowContributor>? flowContributors = null)
     {
         _entry = entry;
         _productionPerSecond = productionPerSecond;
         _consumptionPerSecond = consumptionPerSecond;
+        _flowContributors = flowContributors;
         Notify(string.Empty);
     }
 }
@@ -745,6 +817,7 @@ public sealed class V15TechnologyRow(TechnologyDefinition technology) : Observab
     private string _status = string.Empty;
     public string Id => technology.Id;
     public string Name => technology.Name;
+    public string GlyphKey => TechnologyPresentation.GlyphForTechnology(Id);
     public string Cost => technology.Cost.Units.ToString("N2", CultureInfo.GetCultureInfo("it-IT")) + " punti";
     public bool CanBuy => _canBuy;
     public string Status => _status;

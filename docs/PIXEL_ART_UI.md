@@ -1,3 +1,7 @@
+> **RC90.3 — Albero tecnologico:** nella lista delle tecnologie usare la stessa grammatica 8×8 già approvata per le strutture; ogni ramo ha la sua icona coerente. Nel dettaglio, **SBLOCCA EDIFICI** è una lista a righe con icona edificio, nome e tier, non un paragrafo di nomi ripetuti. V14 e V15 allineate. Per Navigazione è aggiunto uno sprite nave 8×8; le tecnologie differite rimangono visibili ma non acquistabili. Nessun cambiamento alle altre colonne, pulsanti e capacità.
+
+> **RC86 — dettaglio costo:** sotto “COSTO DEL PROSSIMO EDIFICIO” visualizzare **solo l’elenco di risorse con icone** (una volta). Non aggiungere la riga testuale ripetuta; conservare layout e preventivi 5/10 separati.
+
 **Nota G1-D19:** questo documento definisce il **contratto storico della GUI v13**, riferimento da preservare integralmente nella sperimentale v14. Le cifre di validazione nelle sezioni storiche non indicano il gate corrente. Per le regressioni v14 e i controlli da completare vedere [matrice di parità](validation/G1_D19_MATRICE_PARITA_GUI.md) e [stato](CURRENT_STATE.md).
 
 ---
@@ -89,3 +93,7 @@ Le stime nominali della filiera Pane non dimostrano la disponibilità di edifici
 Il gate **storico** con report dettagliato comprende **206 test**, di cui **48 Desktop**, con render, click sul menu, aggiornamento delle card, ordini multipli, diagnosi fisse e controlli geometrici. Le successive cifre v33/v35 (208/209 casi) sono anch'esse storiche. **Il gate attivo della v55/v57 richiede 287 test xUnit**, non eseguiti qui per assenza di .NET SDK. I test di hover precedentemente confermati controllano colori, contrasto e disabilitazione. [Evidenze precedenti](validation/DESKTOP_UI.md), [audit v55 e checklist Windows](validation/V55_STATIC_AUDIT.md).
 
 Restano da ampliare le prove su DPI fisici, fallback dei font, Linux/macOS, tastiera e accessibilità. Animazioni e nuovi asset si valutano dopo la leggibilità; eventuali bitmap future richiederanno interpolazione adatta al pixel art. Regole economiche e compatibilità dei salvataggi rimangono indipendenti dalle rifiniture visive.
+
+## Tooltip dei flussi — RC89.1
+
+Nella scheda **Risorse**, sulle celle **Produzione /s** e **Consumo /s**, mostrare il dettaglio delle fonti produttive o di consumo effettivamente attive nel prossimo secondo, con numeri di edifici/unità, quantità /s e totale. I flussi devono derivare dalla proiezione del clock e non da ricette nominali. Per il consumo sono incluse le razioni degli abitanti e le trasformazioni alimentari, senza confondere la consegna al deposito con il consumo. **Non** modificare larghezza, ordine, allineamento e scroll delle sette colonne.

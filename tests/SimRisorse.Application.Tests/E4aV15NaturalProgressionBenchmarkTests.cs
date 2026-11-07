@@ -39,10 +39,8 @@ public sealed class E4aV15NaturalProgressionBenchmarkTests
             new("fruit", ResourceAmount.FromUnits(1m), ResourceAmount.FromUnits(1m), 3),
             new("bread", ResourceAmount.FromUnits(1m), ResourceAmount.FromUnits(1m), 4)
         ]);
-        var inherited = V14CampaignSnapshots.MigrateFromV13(baseline,
-            GameSession.Create(baseline).Snapshot(), school, TechnologyCatalog.ProposedTierTree);
-        var fresh = V15FoodCampaignCheckpoints.FromMigrationPlan(
-            V14FoodStockMigration.Prepare(inherited, depot), depot);
+        var fresh = V15FoodCampaignCheckpoints.NewCampaign(
+            baseline, school, TechnologyCatalog.ProposedTierTree, depot);
         var original = V15StockAuditor.PhysicalTotals(fresh);
         var run = V15NaturalProgressionBenchmark.Run("V15-N01", maxSeconds: 0);
         Assert.Equal(fresh.CityCampaign.Population, run.InitialPopulation);

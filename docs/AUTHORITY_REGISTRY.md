@@ -1,54 +1,47 @@
-> **RC78 / ADR 0086:** studio isolato concluso, tre curve confrontate, **926/926 test verdi** e replay di cinque output identici. La raccomandazione A è una proposta: coefficienti e moduli tier non sono approvati né applicati. [Confronto](validation/E4B_RC78_CURVE_COMPARISON.md), [decisione tecnica](adr/0086-confronto-curve-economiche-isolato.md), [verifiche](validation/E4B_RC78_TEST_PLAN.md). Servono scelta dei parametri e implementazione versionata prima delle nuove misure naturali.
+# Registro unico delle decisioni — RC94.2
 
-> **RC77-M01:** misure naturali complete eseguite: 9/9 obiettivi osservati, senza grants, con 21/21 confronti di file identici. [Rapporto e limiti](validation/E4A_V15_RC77_M01_NATURAL_MEASUREMENTS.md). Questi dati forniscono la baseline E4b ma non approvano nuovi coefficienti né dimostrano una durata di campagna completa.
+**Baseline RC93.1:** 1220 test confermati superati dall'utente. **RC94.1:** 1233 eseguiti, 1228 passati, 5 falliti per un test RC81 ancorato a 0 Carbone iniziale. **RC94.2:** test corretto, 1233 attesi; gate Windows da rieseguire. **Dotazione Municipio v15 approvata:** 100 Carbone e 2 Matite alla creazione della nuova partita, nel normale inventario, senza refill ai caricamenti. [ADR 0105](adr/0105-riserva-carbone-municipio-avvio-v15.md).
 
-> **RC77 / ADR 0085:** produzione non realizzata misurata dal clock e recupero controllato con grants dichiarati, senza modificare regole o GUI. **899/899 test verificati** e sei run completi misurati; [decisione](adr/0085-misure-produzione-non-realizzata-e-recupero-controllato.md), [evidenze](validation/E4A_V15_RC77_TEST_PLAN.md). Il confronto interattivo F1 rimane distinto.
+**ADR 0104 (solo sperimentale):** è autorizzato il checkpoint composito **shadow v15 + escrow Curve A** in memoria per dimostrare conservazione dei versamenti rispetto alla vera capacità/contatori della città. Non autorizza salvataggi modificati, prezzi Curve A in partita, completamento reale della Zecca, nuove interazioni GUI o riempimenti artificiali. `Readiness` è soltanto diagnostica. [ADR 0104](adr/0104-checkpoint-composito-v15-escrow-curva-a-sandbox.md).
 
-> **Richiesta utente HF04:** crescita v15 fino a ×20, nuove icone Bovini/Pane/Pescatore/Tagliapietre, riepilogo Abitanti/Cibo/Legno lavorato/Pietra, pulsanti Carica/Salva senza suffisso. Questi cambiamenti sono autorizzati e aggiornano il riferimento grafico e il limite ×2 precedenti. **885/885 test verificati nella HF04**; [dettagli ed evidenze](validation/RC76_HF04_ICONS_AND_GROWTH.md).
+**RC93.1 convalidata:** SQLite separato per il vecchio sandbox, transazioni idempotenti e replay; non va mai interpretato come database v15 giocabile. [ADR 0103](adr/0103-persistenza-sandbox-finanziamento-atomica-idempotente.md).
 
-> **Storico RC76 / ADR 0084:** gli ammanchi dei benchmark e le saturazioni sono osservazioni, non diagnosi di stallo strutturale. 867 test erano attesi nella consegna originale. [Dettaglio](adr/0084-telemetria-vincoli-benchmark-v15-senza-diagnosi-automatica-stallo.md).
+---
 
-> **RC75 / ADR 0083:** benchmark avanzati naturali con due politiche; il monitoraggio di costi materiali e punti ricerca non modifica i coefficienti economici. 857 test cumulativi attesi, non eseguiti. [Dettaglio](adr/0083-benchmark-industria-ricerca-v15-senza-grants.md).
+## Ordine di autorevolezza
 
-> **RC72 / ADR 0080:** gate finale F1 preparato ma non eseguito; 826 test cumulativi attesi. La GUI approvata RC63 resta canonica e deve essere verificata visivamente prima di chiudere F1. [Dettaglio](adr/0080-gate-f1-d05e-e-evidenza-riproducibile.md).
+1. Istruzioni più recenti e approvazioni esplicite dell'utente.
+2. ADR accettati più recenti (un ADR nuovo può superare quello precedente sullo stesso punto).
+3. Questi quattro documenti correnti: [CURRENT_STATE](CURRENT_STATE.md), [ROADMAP](ROADMAP.md), **AUTHORITY_REGISTRY**, [NEW_CHAT_HANDOFF](NEW_CHAT_HANDOFF.md).
+4. Stato dei sorgenti e verifiche effettivamente eseguite (non attribuire esecuzione a una semplice asserzione di codice).
+5. Analisi, stime, note e release storiche, validi solo nel proprio contesto.
 
-> **Aggiornamento tecnico RC71:** il planner v15 non richiede un `BuildingState` fittizio per `food-store` (vedere [ADR 0079](adr/0079-planner-v15-senza-slot-produttore-ritirato.md)); nessuna nuova decisione grafica o di bilanciamento. RC71 822 test attesi, RC63 ultimo gate verificato.
+## Contratti approvati / da preservare
 
-# Registro delle decisioni vigenti — 05/11/2026
-
-## Precedenza
-
-1. Richieste e approvazioni esplicite dell'utente più recenti.
-2. ADR accettati, con i successivi che aggiornano quelli precedenti sul medesimo punto.
-3. [Stato](CURRENT_STATE.md), [roadmap](ROADMAP.md) e [handoff](NEW_CHAT_HANDOFF.md) attuali.
-4. Codice e prove effettivamente eseguite; le versioni candidate non equivalgono a checkpoint confermati.
-5. Studi, valori dimostrativi, screenshot e note storiche.
-
-## Vincoli confermati
-
-| Area | Regola | Riferimento |
+| Tema | Regola confermata | Evidenza |
 | --- | --- | --- |
-| GUI | Interfaccia v14 è **riferimento canonico** della v15, non semplificarla | [ADR 0071](adr/0071-gui-v14-contratto-canonico-v15.md) |
-| Edifici | Bloccati in grigio consultabili, dettaglio con icone, Base/Grande/Avanzato come edifici autonomi, pulsanti e layout validati | [PIXEL_ART_UI](PIXEL_ART_UI.md) |
-| Risorse | Sette colonne, ordine alfabetico, numeri a destra, quantità arrotondate, tooltip capienza, saldo ed ETA | [ADR 0066](adr/0066-flussi-v15-misurati-dal-clock-e-eta-locale.md) |
-| Popolazione | Crescita visibile sotto il menu; nessun doppio conteggio di lavoratori, studenti o militari | [ADR 0071](adr/0071-gui-v14-contratto-canonico-v15.md) |
-| Alimentazione | Deposito esclusivo per Cibo pronto; cinque ingredienti, Pane avanzato, scorte con proprietari distinti | [ADR 0063](adr/0063-comandi-v15-cibo-esclusivo-e-catalogo-di-presentazione.md) |
-| Partite | DB personale v14 distinto e preservato; DB sperimentali v15 possono rompere compatibilità | [ADR 0060](adr/0060-salvataggi-di-sviluppo-e-checkpoint-filiera.md), [ADR 0069](adr/0069-generazione6-senza-famiglia-produttiva-legacy.md) |
-| Ricerca | Scuola, formazione individuale, Matite, punti ricerca accumulabili e spesa volontaria | [ADR 0021](adr/0021-ricerca-saldo-libero-spesa-su-scelta.md) |
-| Sviluppo | A ogni incremento, documentazione/roadmap/handoff/test e ZIP integrale; mai dichiarare un test non eseguito come superato | [guida](DEVELOPMENT.md) |
+| GUI | La v14 validata è il **modello canonico** della v15, senza sostituirla o semplificarla | [ADR 0071](adr/0071-gui-v14-contratto-canonico-v15.md), [PIXEL_ART_UI](PIXEL_ART_UI.md) |
+| Edifici | Bloccati in grigio ma selezionabili; livelli Base/Grande/Avanzato come voci autonome, mai ComboBox; pulsanti storici; dettaglio con icone costo, capacità, input, output | [PIXEL_ART_UI](PIXEL_ART_UI.md) |
+| Costo nel dettaglio | Un solo elenco con icone sotto “COSTO DEL PROSSIMO EDIFICIO”; **non ripetere** la stessa quantità come testo | RC86, [ADR 0094](adr/0094-starter-matite-e-documentazione-unica.md) |
+| Risorse | Sette colonne, ordine alfabetico, saldo e ETA, numeri allineati, quantità intere, capacità e tooltip; **sorvolo su Produzione/Consumo con fonti reali e totali /s** | [ADR 0066](adr/0066-flussi-v15-misurati-dal-clock-e-eta-locale.md), [ADR 0098](adr/0098-tooltip-flussi-risorse-per-fonte.md) |
+| Municipio | Capacità minima e risorse iniziali; **nelle nuove v15 anche 100 Carbone e 2 Matite una tantum**, per avviare Scuola e laboratorio Matite; nessun refill al caricamento | [ADR 0105](adr/0105-riserva-carbone-municipio-avvio-v15.md) |
+| Ricerca | Scuola, formazione studenti con **2 Matite per iscrizione**, ricercatori assegnati e punti ricerca accumulabili, spesi a scelta; evitare prerequisiti circolari | [ADR 0035](adr/0035-scuola-formazione-matite-v14.md), [ADR 0021](adr/0021-ricerca-saldo-libero-spesa-su-scelta.md) |
+| Misure prima ricerca | `V15-I01` termina su `Estrazione I`: non richiedere miniera/carbone dopo lo sblocco; solo ricevute reali possono provare la milestone; i timeout diagnostici non sono prove di blocco strutturale | [ADR 0095](adr/0095-ricerca-iniziale-milestone-e-ricevute-v15.md) |
+| Prove industriali | Forgia/Zecca: uno `pass` del benchmark richiede ricevute dei comandi, ricerche pagate e output positivo osservato dal clock; un timeout non prova un softlock | [ADR 0096](adr/0096-audit-filiera-industriale-ricevute-clock-v15.md) |
+| Alimentazione | Cibo pronto solo dal Deposito. **Alimentazione I** sblocca Deposito alimentare **Grande** (3 posti e 3× capacità); **Alimentazione II** sblocca Deposito **Avanzato** (10 posti e 10× capacità). Tier autonomi v15, costi progressivi normali, personale e stoccaggio riconciliati | [ADR 0099](adr/0099-tecnologie-e-depositi-alimentari-per-tier.md) |
+| Popolazione | Ogni nuova casa accelera gli arrivi, moltiplicatore fino a ×20; lavoratori, studenti e militari non duplicati | [ADR 0013](adr/0013-accelerated-housing-and-fractional-growth.md) e HF04 in `CHANGELOG.md` |
+| Zecca | **10 lavoratori per modulo** come obiettivo approvato; implementazione `MintTen` nella v15 ancora opt-in e distinta dal default | [ADR 0089](adr/0089-attivazione-opt-in-squadre-zecca-v15-versionata.md) |
+| Economia | Progressione quasi esponenziale molto impegnativa; Zecca equivalente a investimento di circa 100–1000 Tagliapietre come criterio qualitativo, non prezzo applicato | [ADR 0056](adr/0056-progressione-tardiva-e-squadre-minime-proposta.md) |
+| Preflight RC89 | Verificare prima/seconda Zecca, capacità iniziale, percorso Magazzini e rate teoriche **prima** di cambiare il prezzo attivo; primo Base come riferimento 100–1000; ogni tempo importato RC88 misura solo i prezzi correnti | [ADR 0097](adr/0097-verifica-pre-attivazione-costi-zecca-e-capienza.md) |
+| Finanziamento Curve A RC93 | Persistenza idempotente **solo nel sandbox separato**: transazione unica stock/escrow/ricevuta, replay e revisione; non attiva nel gameplay | [ADR 0103](adr/0103-persistenza-sandbox-finanziamento-atomica-idempotente.md) |
+| Salvataggi | Slot v14 personali distinti, checkpoint v15 in SQLite generation 6; possibile rottura controllata dei **vecchi salvataggi sperimentali**, con avviso; non sovrascrivere in modo inatteso | [SAVE_FORMAT](SAVE_FORMAT.md) |
+| Spedizioni | Esplorazione distinta dalla conquista; conquista deterministica, perdite iniziali non irreversibili | [ADR 0017](adr/0017-naval-mission-boundaries-proposta.md) |
+| Progetto | ZIP completo + test, ADR e documentazione aggiornati a ogni incremento, con stato dei test sincero | [DEVELOPMENT](DEVELOPMENT.md) |
 
-## Direzione approvata, **numeri non ancora determinati**
+## Decisioni NON approvate o ancora da misurare
 
-- Progressione economica assai più impegnativa, approssimativamente esponenziale per era/complessità (non solo per copie acquistate). La prima Zecca va confrontata con l'investimento-base di **100–1.000 Tagliapietre**: criterio di confronto, **non prezzo già approvato**.
-- **Zecca: 10 lavoratori per unità produttiva**; due unità al pieno regime richiedono 20 addetti. Gli attuali tier con `1/3/10` posti non soddisfano il requisito: distinguere posti da moduli e squadre, verificare sul benchmark prima di fissare parametri. [Specifica E4b](design/E4B_P00_COSTI_PROGRESSIVI_E_SQUADRE_MINIME.md).
-- Costruzione navale, esplorazione distinta dalla conquista, conquista deterministica, nessuna perdita irreversibile iniziale: pianificate in M5.4–M5.7, non ancora implementate in v15.
+Curve di costo A/B/C e coefficienti esatti; moduli multipli/quantità di personale degli altri edifici avanzati; pagamenti frazionati nel gameplay; costi dei magazzini e limiti di capienza per la progressione avanzata; attivazione predefinita `MintTen`; durata della campagna completa. Le analisi RC78–RC89 non equivalgono ad approvazione numerica; il preflight RC89 è un criterio di revisione della capienza, non un assenso alle curve.
 
-## Decisioni sospese
+## Regola documentale
 
-Coefficienti dei prezzi; costi della prima Zecca per ogni risorsa; personale per tier; criteri temporali di progressione; ricette/effetti avanzati non specificati; risultato della rimozione del contatore storico `food-store`; strategia dettagliata per flotta/isole/vittoria. Sono da misurare o decidere negli appositi gate, **non dedurre** dagli ADR di proposta.
-
-**Stato di prova:** RC63 771/771 confermati; RC70 818 previsti, da validare. Modello nativo del checkpoint introdotto, senza modifica della GUI.
-
-- **ADR 0081**: benchmark naturale v15 separato dal benchmark v14 e dagli stress sintetici; esiti osservati, policy versione e nessun finanziamento artificiale ([testo](adr/0081-runner-naturale-v15-separato-dai-benchmark-v14.md)).
-
-- **ADR 0082:** report natural v15 interpretati solo in base a prove osservate. Timeout e blocked della policy non dimostrano softlock; costi RC73 parziali planks/stone. [Decisione](adr/0082-analisi-basata-su-evidenze-benchmark-v15.md).
+Esistono **solo** questo registro, `CURRENT_STATE.md`, `ROADMAP.md` e `NEW_CHAT_HANDOFF.md` come documenti operativi dei rispettivi tipi. I vecchi `*_ARCHIVE.md` e i doppi handoff sono stati rimossi. Usare ADR e `CHANGELOG.md` per ricostruire le decisioni storiche, senza ripubblicare file chiamati “corrente”.

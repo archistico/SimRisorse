@@ -102,17 +102,17 @@ public sealed class V14PreviewTests
     }
 
     [Theory]
-    [InlineData("lavorazioni-1", "Sblocca edifici Grande:", "Segheria")]
-    [InlineData("lavorazioni-2", "Sblocca edifici Avanzato:", "Segheria")]
-    [InlineData("alimentazione-1", "Sblocca edifici Grande:", "Forno")]
+    [InlineData("lavorazioni-1", "Grande", "Segheria")]
+    [InlineData("lavorazioni-2", "Avanzato", "Segheria")]
+    [InlineData("alimentazione-1", "Grande", "Forno")]
     public void TechnologyDetailsShowTheRealBuildingTierBenefit(string technologyId,
         string expectedEffect, string expectedBuilding)
     {
         using var sandbox = new TestDirectory();
         var vm = V14PreviewViewModel.CreateForPreview(sandbox.V14);
         vm.SelectedTechnology = vm.Technologies.Single(item => item.Id == technologyId);
-        Assert.Contains(expectedEffect, vm.SelectedTechnologySummary);
-        Assert.Contains(expectedBuilding, vm.SelectedTechnologySummary);
+        Assert.Contains(vm.SelectedTechnologyUnlocks, row => row.Tier == expectedEffect &&
+            row.BuildingName.Contains(expectedBuilding, StringComparison.Ordinal) && PixelGlyph.Supports(row.GlyphKey));
         Assert.Contains("Prerequisiti ricerca:", vm.SelectedTechnologySummary);
     }
 
@@ -407,8 +407,9 @@ public sealed class V14PreviewTests
             Assert.Equal("Segheria grande", vm.SelectedBuilding!.Name);
             Assert.False(window.FindControl<Button>("V14BuildSelected")!.IsEffectivelyVisible);
             Assert.Contains("Ricerca richiesta", large.Requirements, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("120", window.FindControl<TextBlock>("V14BuildingCost")!.Text);
+            Assert.Contains("120", large.Price); // Quote is still in the view model.
             Assert.NotNull(window.FindControl<ItemsControl>("V14BuildingCostLines"));
+            Assert.Null(window.FindControl<TextBlock>("V14BuildingCost")); // No repeated text-only cost.
             var basic = vm.Buildings.Single(item => item.FamilyId == "sawmill" && item.Tier == ProductionTier.Base);
             vm.SelectedBuilding = basic;
             Dispatcher.UIThread.RunJobs();

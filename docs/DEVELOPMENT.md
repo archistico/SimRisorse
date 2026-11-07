@@ -1,4 +1,7 @@
-> **Stato aggiornato:** codice RC68 candidato, 806 test attesi; RC63 ultimo checkpoint validato (771 test). Per lo stato e i criteri correnti consultare [CURRENT_STATE.md](CURRENT_STATE.md), [ROADMAP.md](ROADMAP.md) e [NEW_CHAT_HANDOFF.md](NEW_CHAT_HANDOFF.md). Le convenzioni sotto sono tecniche; eventuali numeri di test citati nel materiale storico non sono il gate attuale.
+> **Documento tecnico stabile.** Per la release, il gate e il lavoro corrente consultare [CURRENT_STATE.md](CURRENT_STATE.md), [ROADMAP.md](ROADMAP.md) e [NEW_CHAT_HANDOFF.md](NEW_CHAT_HANDOFF.md).
+
+> **Stato aggiornato (RC87, 06/11/2026):** per la release validata, i test cumulativi e la roadmap leggere [CURRENT_STATE.md](CURRENT_STATE.md) e [ROADMAP.md](ROADMAP.md). Le cifre dei vecchi benchmark qui sotto descrivono solo le rispettive versioni storiche e **non** il gate attuale. Per la nuova ricerca usare `./validate-f1.cmd` (1085 test previsti) e la CLI `--audit-v15-research-bootstrap`; vedere [piano RC87](validation/RC87_RESEARCH_BOOTSTRAP_TEST_PLAN.md).
+
 
 # Convenzioni di sviluppo
 
@@ -6,7 +9,7 @@ Queste convenzioni guidano la nuova implementazione. La bozza in `legacy/` conse
 
 ## Prima di lavorare
 
-1. Leggere [handoff](HANDOFF.md), [roadmap](ROADMAP.md) e ADR pertinenti.
+1. Leggere [handoff](NEW_CHAT_HANDOFF.md), [roadmap](ROADMAP.md) e ADR pertinenti.
 2. Controllare lo stato Git e preservare le modifiche già presenti.
 3. Distinguere requisiti confermati, scelte tecniche accettate e proposte ancora aperte.
 4. Se una regola di gioco manca, definirla prima dell'algoritmo che la applica. Le scelte tecniche locali reversibili non richiedono un ADR per ogni classe.

@@ -75,6 +75,7 @@ public sealed class PixelGlyph : Control
         ["pencils"] = ["..YY....", "..YY.TT.", "..##.TT.", "..TT.##.", "..TT.TT.", "..TT.TT.", "..TT.TT.", "..##.##."],
         ["school"] = ["..YYYY..", ".######.", "##WWWW##", "#C#WW#C#", "#C####C#", "#C#BB#C#", "#C#TT#C#", "########"],
         ["research"] = ["..####..", ".#BBBB#.", "#BBWWBB#", "#BBWWBB#", ".#BBBB#.", "..####..", "...##...", "...##..."],
+        ["ship"] = ["...##...", "...#W...", "...#WW..", "...#WWW.", "..#####.", ".#TTTTT#", "..#BBBB#", "...####."],
         ["barracks"] = ["..####..", ".#WWWW#.", "########", "#CBBBBC#", "#C#WW#C#", "#C#WW#C#", "########", "........"],
         // RC54 food industries and intermediate inventories keep the same 8x8 pixel grammar.
         ["stable"] = ["..YYYY..", ".######.", "########", "#TTWWTT#", "#TT##TT#", "#TTTTTT#", "########", "........"],
