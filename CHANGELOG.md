@@ -1,3 +1,121 @@
+# RC105 hotfix 2 — 08/11/2026 · Fixture Zecca / capacità fisica (CANDIDATA)
+
+- **Evidenza Windows ricevuta dopo il primo hotfix:** compilazione riuscita; Core **248/248**, Application **602/603**, Infrastructure **262/262**, Desktop **247/247**: **1359 passati su 1360**, 1 fallito. `validate.cmd`/F1 interrotti dal test `Rc98AtomicMintCompletionTests.RemovedPrerequisitePreventsCompletionWithoutRefundingOrCrediting` (`System.ArgumentException` in `E4bV15FundingShadow.Restore`). Questi numeri descrivono l'esecuzione precedente, non il nuovo hotfix.
+- **Causa:** il test azzerava la Fonderia d'oro nel checkpoint cittadino ma conservava nell'escrow la capacità fisica precedente, che include la quota di deposito locale della Fonderia. `Restore` respinge correttamente tale disallineamento.
+- **Correzione solo test:** ricalcolo `Funding.Capacity` tramite `V15CityStorage.Calculate` dopo la rimozione della Fonderia; la verifica negativa di checkpoint con capienza falsificata rimane esplicita; controlli aggiunti sull'invarianza di stock, escrow e pagamenti committed. Il percorso `MissingPrerequisite` resta verificato **senza rilassare** la validazione del salvataggio.
+- Nessuna modifica a codice applicativo, prezzo, curva, GUI, protocollo o formato salvataggi. **Non eseguiti qui test .NET 10 né gate F1**: rieseguire ` .\validate.cmd ` su Windows, attendendo **1360/1360** e gate completo prima di considerare RC105 convalidata.
+
+---
+
+# RC105 hotfix — 08/11/2026 · Correzione compilazione test (CANDIDATA)
+
+- Risolto `CS0119` in `Rc105UnifiedSavePrototypeTests`: `System.Convert.ToInt64` evita il conflitto con il metodo helper `Convert` della stessa classe.
+- Risolto `xUnit2013` in `Rc99NativeSaveBridgeTests`: `Assert.Single` sostituisce il controllo di lunghezza effettuato con `Assert.Equal`.
+- Il `validate.cmd` eseguito su Windows l'08/11/2026 si era **fermato in compilazione con 2 errori**, prima di poter eseguire i test e il gate F1. Questa consegna corregge i sorgenti coinvolti; **compilazione, 1360 test attesi e gate F1 sono da rieseguire e non sono dichiarati superati**.
+- Nessuna modifica a gameplay, GUI, prezzi, salvataggi o modello sperimentale. La versione rimane RC105 candidata; RC106 resta la prossima milestone funzionale.
+
+---
+
+# RC105 — 07/11/2026 · Prototipo SQLite generation 7 unificato (CANDIDATA)
+
+- Base RC104 candidata; ultima baseline Windows confermata RC95 (**1245 test**). RC105 aggiunge **15 test Infrastructure**: **1360 test cumulativi attesi**, compilazione e gate Windows non ancora eseguiti.
+- `E4bV15UnifiedSavePrototype`: esporta in un **nuovo file sperimentale SQLite** le tabelle reali della città v15 e, accanto a esse, identità persistente, stato del finanziamento, materiali versati e tutte le ricevute; non include un altro database come BLOB.
+- Ingresso esclusivamente da composito registrato e autorevole secondo il preflight RC104; verifica revisioni e ramo prima e dopo la conversione, con snapshot SQLite consistente, staging privato e nessuna sovrascrittura.
+- `Inspect`: controlla integrità, schema, identità, ricevute contigue e riconciliazione fisica di città e deposito tramite il loader generation 6 su una copia temporanea. Il file risultante è **esplicitamente NON autorevole** e non è aperto dal gioco: nessuna API per build, clock, salvataggio o promozione è esposta dalla RC105.
+- Invariati GUI, prezzi, Municipio, save giocabile generation 6, unico `validate.cmd`. Niente `.local-cache` o `MANIFEST_*_SHA256.txt` nella distribuzione. [ADR 0116](docs/adr/0116-prototipo-sqlite-generation7-citta-e-cantieri.md), [piano test RC105](docs/validation/RC105_UNIFIED_SAVE_PROTOTYPE.md).
+
+# RC104 — 07/11/2026 · Preflight per salvataggio giocabile unico (CANDIDATA)
+
+- Base RC103 candidata; **RC95 rimane l'ultima versione confermata** (1245 test). RC104 aggiunge **15 test Infrastructure**, portando a **1345 test cumulativi attesi**; compilazione .NET 10 e gate Windows non eseguiti in questa consegna.
+- `E4bV15UnifiedSavePreflight`: controlla SQLite, identità della campagna, ricevute e ramo autorevole senza effettuare migrazioni o trasferimenti. Impedisce di classificare un cantiere aperto come esportabile nel formato generation 6, che non potrebbe conservarlo.
+- ADR 0115 e piano RC104: il formato nativo futuro resta da progettare, così come la transazione unica e l'autorità nel salvataggio giocabile. Il composito rimane un laboratorio separato.
+- Pianificati punteggio e classifica locale **dopo la stabilizzazione del gameplay**; l'API della classifica online è riservata alla fase finale. Nessuna implementazione anticipata.
+- Invariati GUI, salvataggi normali, prezzi e Municipio; unico `validate.cmd`, nessuna `.local-cache` o manifest SHA-256 negli ZIP.
+
+# RC103 — 07/11/2026 · Identità persistente della campagna sperimentale (CANDIDATA)
+
+- Partenza RC102 candidata; **RC95 è l'ultima versione confermata** (1245 test). RC103 aggiunge **12 test Infrastructure**, per **1330 attesi**. Nessuna compilazione/test .NET 10 eseguiti in questa consegna.
+- Ogni nuovo contenitore composito memorizza un `campaign_id` univoco, indipendente dal percorso. Il registro lega la propria autorità all'identità del file e la verifica prima di `Current`, pagamento e clock. Una sostituzione del ramo attivo con una campagna differente viene respinta.
+- Backup e ripristino conservano l'identità; la promozione accetta esclusivamente copie dello stesso ramo con contenuti e ricevute equivalenti. Tre nuovi trigger proteggono l'ID sui compositi registrati, conservando gli otto trigger RC102.
+- Migrazione dei database sperimentali RC101–RC102 registrati e assegnazione controllata di ID ai compositi legacy non registrati. Un backup anteriore all'identificazione non può essere promosso automaticamente.
+- **Invariati** salvataggio giocabile v15 generation 6, GUI, costi ordinari, MintTen opt-in e Municipio con 100 Carbone e 2 Matite. Unico `validate.cmd`; nessun manifest SHA-256 o `.local-cache` nello ZIP. [ADR 0114](docs/adr/0114-identita-stabile-campagna-composita-e-autorita.md), [piano RC103](docs/validation/RC103_CAMPAIGN_IDENTITY.md).
+
+---
+
+# RC102 — 07/11/2026 · Vincolo di scrittura sui compositi registrati (CANDIDATA)
+
+- Baseline Windows confermata RC95: **1245 test superati**. RC96–RC101 restano da verificare; RC102 aggiunge **12 test Infrastructure**, per **1318 test attesi**. Compilazione .NET 10 e gate F1 non eseguiti in questa consegna.
+- Registrazione dell'autorità con tabella di binding e otto trigger SQLite persistenti; accessi diretti di scrittura e SQL ordinario rifiutati sui file registrati. Il registro mantiene il lock e autorizza la connessione della sola operazione controllata; i compositi legacy non registrati rimangono compatibili.
+- Backup, ripristino e promozione mantengono il vincolo; rifiuto registri copiati in altri percorsi e candidati divergenti; apertura di registri RC101 preesistenti applica il vincolo al ramo autorevole. Test RC101 di alterazione intenzionale delle ricevute adattato al nuovo scenario.
+- ADR 0113, piano test RC102, stato e roadmap operativi unici; `validate.cmd` solo comando pubblico, ZIP senza manifest SHA-256 e senza `.local-cache`. Nessuna modifica a prezzi, GUI, gameplay ordinario o SQLite giocabile.
+
+---
+
+# RC101 — 07/11/2026 · Autorità cooperativa dei salvataggi compositi (CANDIDATA)
+
+- Baseline Windows confermata RC95: **1245 test superati**. RC96–RC100 non ancora confermate; RC101 aggiunge **12 test Infrastructure**, per **1306 test cumulativi attesi**. Nessuna compilazione .NET 10 eseguita in questa preparazione.
+- Nuovo `E4bV15FundingAuthorityRegistry` nello spazio sperimentale: un solo percorso composito autorevole, epoca e token persistenti. Pagamenti e tick passano attraverso un lock SQLite condiviso fra scrittori cooperanti.
+- Cambio d'autorità esplicito soltanto verso una copia con stato della città, deposito e ricevute identici; il vecchio token è invalidato. Rifiuto di backup obsoleti o ricevute alterate. Originali non sovrascritti.
+- Limiti: **non** protegge chiamate dirette allo store, registri copiati o file giocabili; non abilita Curve A nel gameplay. Non cambiano GUI, prezzi, schema native v15 o dotazione iniziale.
+- ADR 0112, piano RC101, documenti operativi unici, gate aggiornato a 1306; `validate.cmd` unico comando pubblico, nessun manifest SHA-256 o cache distribuita.
+
+---
+
+# RC100 — Backup coerente e ripristino del contenitore finanziamenti (07/11/2026; CANDIDATA)
+
+- Introdotto `E4bV15FundingCompositeRecovery` in Infrastructure.Experimental. Usa l’API SQLite di online backup per copiare un unico snapshot coerente del database composito, **anche con versamenti pendenti**, in un nuovo file; staging validato (`integrity_check`, ripristino città/escrow/ricevute) e pubblicazione senza overwrite. Ripristino soltanto in una nuova destinazione, senza alterare il backup o il database di origine.
+- Rafforzato `E4bV15FundingCompositeSqliteStore.Load()`: le ricevute devono corrispondere a tutte le revisioni 1..N, senza lacune, duplicazioni di revisione o campi vuoti. Errori strutturali impediscono sia l’utilizzo sia il backup del database alterato. Nessuna modifica al formato SQLite composito.
+- **12 nuovi test Infrastructure, totale 1294 attesi**, ancora da compilare e verificare su Windows. Ultima baseline confermata: RC95 con 1245 test; RC96–RC100 candidate. Unico comando `validate.cmd`, nessun manifest né `.local-cache` nello ZIP.
+- Il cantiere resta **sperimentale**: niente GUI, cambio salvataggio del giocatore, prezzi Curve A attivi o prova di progressione naturale. [ADR 0111](docs/adr/0111-backup-consistente-ripristino-composito-e-ricevute.md), [piano test](docs/validation/RC100_COMPOSITE_BACKUP_RECOVERY.md).
+
+---
+
+# RC99 — Ponte non distruttivo fra salvataggi v15 e laboratorio finanziamenti (07/11/2026; CANDIDATA)
+
+- Nuova API `E4bV15FundingSaveBridge` per **importare in sola lettura** un salvataggio v15 generation 6 verso un nuovo contenitore composito, oppure **esportare** un checkpoint senza finanziamento pendente verso un nuovo salvataggio giocabile. Gli originali non vengono modificati o sovrascritti.
+- Import/export usano uno staging privato nella directory di destinazione, validazione e pubblicazione senza overwrite. L'export di un cantiere incompleto è vietato: non perdere silenziosamente le rate. Il database composito conserva sempre le ricevute; il file v15 esportato contiene soltanto la città e gli edifici già completati.
+- 12 nuovi test Infrastructure; **1282 cumulativi attesi**, non eseguiti qui. Baseline Windows confermata: RC95 (1245); RC96–RC99 candidate. Prezzi/GUI/salvataggio normale e `validate.cmd` invariati; nessun manifest nelle release. [ADR 0110](docs/adr/0110-ponte-sicuro-salvataggi-v15-e-finanziamenti.md).
+
+---
+
+# RC98 — Completamento atomico della Zecca finanziata (07/11/2026; CANDIDATA)
+
+- **Baseline confermata RC95:** 1245 test verdi. RC96–RC97 non ancora convalidati su Windows. **RC98 aggiunge 13 test** (7 Application, 6 Infrastructure), per **1270 attesi**, non eseguiti qui.
+- `E4bV15FundingShadow.TryCompleteMint` costruisce una Zecca **solo nello shadow sperimentale** dopo un deposito interamente pagato, con ricerca/prerequisiti ricontrollati. Nessun secondo addebito: tier, contatore storico e capacità aggiornati in una sola proiezione validata.
+- L'escrow registra ricevute di completamento con tier e costo Curve A, riconciliandole con `Committed` e il patrimonio reale; seconda Zecca con costo crescente. `E4bV15FundingCompositeSqliteStore.Apply(Complete)` salva immagine campagna, escrow, nuova revisione e ricevuta idempotente nello stesso commit.
+- Nuova CLI `--study-e4b-v15-mint-commit` con città **sinteticamente pre-provvista** (non una prova naturale), integrata nel gate F1. Corretto il test RC95 che in precedenza rifiutava a priori l'azione `Complete` anziché rifiutarne l'esecuzione senza pagamento.
+- GUI, giocabilità, prezzi correnti, SQLite generation 6, `validate.cmd` unico, README e screenshot **non modificati**. Niente `validate-f1.cmd` o manifest SHA256. [ADR 0109](docs/adr/0109-completamento-atomico-zecca-finanziata-in-sandbox.md), [piano](docs/validation/RC98_ATOMIC_MINT_COMPLETION_TEST_PLAN.md).
+
+---
+
+# RC97 — Clock reale e finanziamento nello stesso checkpoint (07/11/2026; CANDIDATA)
+
+- **Baseline confermata RC95:** 1245 test passati. RC96 ha modificato il gate, che resta da riconfermare. RC97 aggiunge **12 test** (6 Application e 6 Infrastructure); **1257 test attesi**, compilazione e gate non eseguiti qui.
+- `E4bV15FundingShadow.TryAdvanceClock`: un secondo del clock nativo v15, con controllo fisico `V15StockAuditor` e mantenimento dei versamenti escrow; ledger di variazioni nette della sola città.
+- `E4bV15FundingCompositeSqliteStore.AdvanceClock`: commit atomico di immagine SQLite v15, registri del finanziamento e ricevuta; protezione da retry, revisioni obsolete e riuso di ID.
+- Compatibilità in lettura dei vecchi checkpoint **sperimentali** RC95 privi dei registri del clock. Salvataggi del gioco generation 6 invariati; nessuna costruzione concessa o curva A abilitata.
+- CLI e gate: `--study-e4b-v15-funding-clock`, mantenuto come unico comando pubblico `.\validate.cmd`; nessun `validate-f1.cmd` e nessun manifest SHA-256 di release. ADR 0108, piano di verifica, roadmap e handoff aggiornati.
+
+---
+
+# RC96 — Comando unico, README con screenshot e cache di validazione limitata (07/11/2026)
+
+- RC95 **validata dall'utente con 1245 test superati**. RC96 non cambia gameplay, salvataggi, Desktop o test xUnit; resta da verificare su Windows il nuovo gate.
+- Eliminato `validate-f1.cmd`. Unico comando pubblico `validate.cmd` → gate F1 → `scripts/validate.ps1` in processo separato, senza ricorsione. Conservati i controlli di screenshot e native smoke e il numero atteso di test.
+- Rifiuto di report `validation.json` obsoleti; pulizia automatica delle vecchie cartelle GUID in `m4/runs` e `m4/f1-gates`, ultimo log anche in caso di errore, NuGet e salvataggi intatti; pulizia manuale `clean.cmd -CacheOnly`.
+- README sintetico con schermata vera conservata e ritagli esplicitamente identificati. Aggiornati stato, roadmap, indice, handoff, guida sviluppo, ADR 0107 e piano RC96.
+- Non si distribuiscono più file `MANIFEST_XXX_SHA256.txt`. La verifica ZIP usa CRC e controlli locali; nessun checksum per release allegato.
+
+---
+
+# RC95 — 07/11/2026 · SQLite composito v15 + finanziamento Curve A (CANDIDATA)
+
+- **Baseline confermata dall’utente:** RC94.2, 1233 test verdi. RC95 aggiunge **12 test Infrastructure**, totale **1245 attesi**: la compilazione .NET e il gate Windows non sono stati eseguiti in questo ambiente.
+- Introdotto `E4bV15FundingCompositeSqliteStore`, contenitore sperimentale autonomo: un'immagine nativa e validata della campagna v15 e il checkpoint escrow vengono salvati con revisione e ricevuta di richiesta in **una transazione SQLite**.
+- Gestione `BeginMint`/`Deposit`/`Cancel` con revisioni ottimistiche, richieste idempotenti, replay dopo riavvio, rifiuto collisioni e stock/capienza riconciliati; proibiti `DeliverHypothetical` e `Complete` nel composito.
+- Rifiuto preventivo dei salvataggi normali v15 generation 6 e del precedente database RC93; nessun cambio a GUI, clock, prezzi, salvataggi normali o regole edifici. **Non** è ancora un cantiere utilizzabile nella partita.
+- Documentazione: [ADR 0106](docs/adr/0106-contenitore-sqlite-composito-v15-finanziamento-isolato.md), [Piano RC95](docs/validation/RC95_COMPOSITE_SQLITE_TEST_PLAN.md), roadmap/handoff/stato correnti aggiornati.
+
 # RC94.2 — 07/11/2026 · Hotfix test Zecca dopo Municipio con 100 Carbone (CANDIDATA)
 
 - **Evidenza Windows RC94.1:** 1233 test eseguiti, **1228 passati e 5 falliti**, tutti nella teoria parametrizzata `Rc81LiveMintCrewTests.LiveClockConsumesInputsOnlyForCompletedMintTeams` (personale 0/9/10/19/20). Il test si aspettava 6/5/4 Carbone anziché 106/105/104, perché il Municipio fornisce ora 100 Carbone iniziali.

@@ -1,3 +1,11 @@
+> **RC105 — nuovo formato sperimentale NON giocabile:** `E4bV15UnifiedSavePrototype` genera un **nuovo SQLite generation 7** (`application_id=0x53465237`) da un composito registrato e autorevole. Conserva le **16 tabelle v15 originarie direttamente nel file** e le due tabelle `unified_campaign` (ID, revisione, deposito, modalità non autorevole) e `unified_receipt` (ricevute 1..N). Il formato generation 6 delle partite giocabili non cambia e rifiuta i prototipi. La generazione 7 RC105 è **solo leggibile/verificabile**, senza scritture di partita, promozione o migrazioni automatiche. [ADR 0116](adr/0116-prototipo-sqlite-generation7-citta-e-cantieri.md).
+
+> **RC103, solo laboratorio sperimentale:** il composito RC95+ conserva un `campaign_id` univoco e il registro RC101+ lo lega al percorso del ramo autorevole. Backup/restore conservano l'identità; il salvataggio giocabile v15 `PRAGMA user_version=6` resta invariato. File RC95–RC102 non registrati rimangono leggibili; la registrazione esegue una migrazione sperimentale esplicita. Vedi [ADR 0114](adr/0114-identita-stabile-campagna-composita-e-autorita.md).
+
+## RC99 — Ponte sperimentale, senza cambio formato v15
+
+`E4bV15FundingSaveBridge` legge un salvataggio nativo generation 6 per creare una **copia** nel composito di laboratorio. Un export dal composito produce un **nuovo** salvataggio nativo generation 6 soltanto a cantiere chiuso. Le ricevute e i depositi non sono salvati nel formato nativo; l'originale e il composito restano separati e intatti. È vietata la sovrascrittura. Non è ancora disponibile la ripresa di un cantiere nella GUI. [ADR 0110](adr/0110-ponte-sicuro-salvataggi-v15-e-finanziamenti.md).
+
 > **RC86 — dotazione nuove partite:** 2 Matite vengono accreditate soltanto dalla factory `V15FoodCampaignCheckpoints.NewCampaign`; Save/Load e `FromMigrationPlan` non alterano gli stock. SQLite generation 6 invariata. Le partite esistenti non ricevono la dotazione retroattivamente.
 
 # Aggiornamento RC81 — v15: regime squadre nel rules_version (06/11/2026)

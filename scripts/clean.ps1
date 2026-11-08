@@ -1,9 +1,14 @@
-param([switch]$DryRun)
+﻿param([switch]$DryRun, [switch]$CacheOnly)
 
 # Deletes the bin and obj folders next to every .csproj in the repository.
 # Only folders named exactly bin/obj, directly beside a project file and inside the repository, are touched.
-# .git and .local-cache (NuGet packages, validation artifacts) are never scanned; links/junctions are skipped.
+# Default mode excludes .git and .local-cache. -CacheOnly prunes only old m4 validation runs/gates; NuGet and saves remain untouched.
 $ErrorActionPreference = 'Stop'
+if ($CacheOnly) {
+    & (Join-Path $PSScriptRoot 'prune-validation-cache.ps1') -RemovePublish -DryRun:$DryRun
+    return
+}
+
 $repositoryRoot = (Resolve-Path (Split-Path -Parent $PSScriptRoot)).Path
 $excluded = @('.git', '.local-cache') | ForEach-Object { Join-Path $repositoryRoot $_ }
 

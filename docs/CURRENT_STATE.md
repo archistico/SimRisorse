@@ -1,31 +1,19 @@
-# Stato corrente — SimRisorse RC94.2
+# Stato corrente — SimRisorse RC105 (secondo hotfix test Zecca)
 
-**07/11/2026 · CANDIDATA.** Ultima baseline verde confermata: **RC93.1, 1220 test**. RC94.1 ha eseguito in Windows **1233 test (1228 passati, 5 falliti)**: i cinque casi della teoria RC81 della Zecca assumevano 0 Carbone iniziali. **RC94.2** corregge l'asserzione sul consumo del tick, con **1233 test previsti**, ancora da eseguire. [Piano hotfix RC94.2](validation/RC94_2_MINT_CREW_STARTER_COAL_HOTFIX.md). Nessuna modifica a runtime/GUI/SQLite rispetto a RC94.1.
+**08/11/2026. Ultima baseline completamente confermata: RC95 (1245 test).** RC96–RC105 ancora candidate; **1360 test cumulativi attesi**. Dopo il primo hotfix di compilazione (`CS0119`, `xUnit2013`), il nuovo report Windows conferma **compilazione riuscita** e **1359/1360 test superati**: Core 248/248, Application 602/603, Infrastructure 262/262, Desktop 247/247. Un solo test Application RC98 è fallito perché modificava il checkpoint della Fonderia d'oro senza aggiornare la capacità dell'escrow. **Secondo hotfix incluso: fixture coerente e controllo negativo su capienza incoerente; nessuna riesecuzione di `validate.cmd` o F1 dopo la correzione.**
 
-## Incremento implementato
+## A che punto siamo
 
-- `E4bV15FundingShadow`: nuovo **checkpoint composito** contenente il `V15FoodCampaignCheckpoint` completo e l'escrow Curve A. `Open`, `TryBeginMint`, `TryDeposit`, `TryCancel`, `Restore`/`ExportCheckpoint` e `Readiness` hanno contratti separati e non alterano la partita vera.
-- Tutti i versamenti diminuiscono anche le risorse dell'inventario della **copia shadow** della città; vengono validati con il validatore v15 e con controllo della capacità effettiva. Nessuna consegna ipotetica è accettata.
-- Le revisioni impediscono richieste locali su snapshot obsoleti. Prezzo e copia della Zecca restano congelati; `Readiness` verifica prerequisiti e ricerca ma **non** costruisce alcun edificio.
-- Nuova CLI `--study-e4b-v15-shadow`, ora parte del gate F1. [ADR 0104](adr/0104-checkpoint-composito-v15-escrow-curva-a-sandbox.md) e [piano RC94](validation/RC94_V15_FUNDING_SHADOW_TEST_PLAN.md).
+- RC95–RC104: laboratorio con salvataggio composito, cantieri, ricevute, backup, identità, registro di autorità e preflight del ramo attivo.
+- **RC105:** nuovo prototipo **SQLite generation 7**, con **tabelle cittadine v15 reali e tabelle finanziarie nello stesso database**, identità e ricevute. Migrazione solo da composito autorevole; supporto a cantieri aperti. **Non diventa il salvataggio attivo** e il loader del gioco continua a utilizzare generation 6. [ADR 0116](adr/0116-prototipo-sqlite-generation7-citta-e-cantieri.md).
+- Punteggio e classifica locale pianificati dopo il gameplay stabile; **classifica online tramite API soltanto alla fine**.
 
-## Cosa resta attivo e invariato
+## Cosa ci aspetta
 
-- Campagna v15, GUI pixel art v14 canonica, pannello Risorse a sette colonne e tooltip per fonte; filtri settoriali in Edifici; icone tecnologie e sblocchi edifici; pulsanti e disposizione già approvati.
-- Municipio: 2 Matite + **100 Carbone iniziali**, accreditati **solo alla creazione** della nuova partita v15; il Carbone rimane nel normale inventario e può alimentare il laboratorio Matite anche prima di Estrazione I. Ricerca, tecnologie, deposito alimentare Base/Grande/Avanzato; nessun refill al caricamento.
-- `MintTen` (10/30/100 lavoratori per Zecca completa per Base/Grande/Avanzato) ancora **opt-in**. Le nuove partite predefinite usano il regime `Legacy`.
-- Prezzi attivi invariati. Le curve A/B/C e i pagamenti rateali **non sono ancora giocabili**. Salvataggi della campagna SQLite generation 6 immutati, e database RC93 separato; il nuovo composito RC94 non è persistito in nessuno di essi.
-- Gli studi pregressi usano benchmark controfattuali e non dimostrano durata naturale con i nuovi prezzi.
+1. **Validazione Windows:** rieseguire ` .\validate.cmd ` sul secondo hotfix RC105; confermare **1360/1360 test** e gate F1 completo. Gli esiti precedenti sono 1359/1360, non una validazione della nuova consegna.
+2. **RC106+:** autorità nel nuovo formato, transazioni uniche di partita/cantiere/ricevuta, concorrenza, backup e ripristino resistenti alle interruzioni; solo dopo integrazione nei comandi e GUI.
+3. Bilanciamento naturale della curva A e squadre Zecca; poi punteggio e classifica locale, in ultima fase classifica online.
 
-## Stato test e limiti
+**Invariati:** GUI pixel art approvata, Municipio 100 Carbone + 2 Matite all'avvio, Depositi alimentari superiori, `MintTen` opt-in, prezzi correnti, salvataggi generation 6, README con screenshot autentici, documentazione unica, nessun manifest o `.local-cache` nello ZIP.
 
-| Versione | Evidenza |
-| --- | --- |
-| RC90.3 | 1167/1167 superati, comunicati dall'utente |
-| RC93.1 | **1220/1220 superati**, comunicati dall'utente (include incremento RC91.3 e RC92) |
-| RC94.1 | **1233 eseguiti: 1228 passati, 5 falliti** per attesa assoluta Carbone obsoleta nel test RC81 |
-| RC94.2 | **1233 attesi**, hotfix test RC81; gate da ripetere su Windows |
-
-**Limite di progettazione fondamentale:** un saldo escrow pagato non equivale a un edificio; collegarlo direttamente a `BuildCityProducer()` provocherebbe un doppio addebito. Prima del gameplay servono una transazione unica di commit v15, sincronizzazione col clock durante i versamenti, persistenza/replay idempotente nello stesso file di partita e prove di progressione naturale.
-
-Aprire [ROADMAP](ROADMAP.md), [AUTHORITY_REGISTRY](AUTHORITY_REGISTRY.md), [NEW_CHAT_HANDOFF](NEW_CHAT_HANDOFF.md) e [ADR 0104](adr/0104-checkpoint-composito-v15-escrow-curva-a-sandbox.md).
+[Roadmap](ROADMAP.md) · [Decisioni](AUTHORITY_REGISTRY.md) · [Handoff](NEW_CHAT_HANDOFF.md) · [Piano RC105](validation/RC105_UNIFIED_SAVE_PROTOTYPE.md).

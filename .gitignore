@@ -371,3 +371,6 @@ FodyWeavers.xsd
 *.db-shm
 *.db-wal
 *.db-journal
+
+# Release archives rely on their ZIP integrity; no per-release SHA256 manifests.
+MANIFEST_*_SHA256.txt

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using SimRisorse.Core.Content;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
@@ -24,12 +25,10 @@ public enum E4bV15FundingReadiness
 }
 
 /// <summary>
-/// An immutable, opt-in preview of a *single* mint construction project. It
-/// reconciles every escrow transfer with the same city inventory and validates
-/// the whole v15 checkpoint after every accepted transaction. Does not write
-/// into the running game or into either SQLite store. In particular a fully
-/// funded escrow is NOT converted into a building here: that needs a single
-/// authoritative player-save transaction in a later milestone.
+/// Immutable opt-in experimental mint funding checkpoint. Each escrow transfer
+/// shares the validated v15 inventory. RC98 can complete a funded mint in
+/// this isolated shadow, but never touches playable state or player saves.
+/// Authoritative player-save integration remains a separate milestone.
 /// </summary>
 public sealed class E4bV15FundingShadow
 {
@@ -73,15 +72,20 @@ public sealed class E4bV15FundingShadow
         V15FoodCampaignCheckpoints.Validate(campaign, baseline, school, technologies, food);
         var capacity = V15CityStorage.Calculate(baseline, campaign.CityCampaign);
         var owned = MintCounter(campaign);
-        var funding = E4bCurveAFundingSandbox.Open(campaign.CityCampaign.Resources, capacity, owned);
+        var mint = campaign.CityCampaign.ProductiveFamilies.Single(f => f.FamilyId == "mint");
+        var origin = new E4bMintOrigin(owned, mint.Base.Buildings,
+            mint.Large.Buildings, mint.Advanced.Buildings);
+        var funding = E4bCurveAFundingSandbox.Open(campaign.CityCampaign.Resources, capacity,
+            owned, origin);
         return new(baseline, school, technologies, food, campaign, funding, 0);
     }
 
     /// <summary>
     /// Restore a compound snapshot only if the escrow stock equals the real
     /// projected city stock, real capacity and historical mint counter. Material
-    /// deliveries and committed sandbox mints are prohibited at this boundary.
-    /// No old standalone RC93 financing database can be treated as a player save.
+    /// synthetic deliveries are prohibited; completed mint receipts must match
+    /// real city building counts, counter and total committed payments.
+    /// No standalone RC93 financing database can be treated as a player save.
     /// </summary>
     public static E4bV15FundingShadow Restore(E4bV15FundingShadowCheckpoint checkpoint,
         GameScenario baseline, SchoolResearchRules school,
@@ -94,12 +98,20 @@ public sealed class E4bV15FundingShadow
         V15FoodCampaignCheckpoints.Validate(checkpoint.Campaign, baseline, school, technologies, food);
         var funding = E4bCurveAFundingSandbox.Restore(checkpoint.Funding);
         var capacity = V15CityStorage.Calculate(baseline, checkpoint.Campaign.CityCampaign);
-        if (!funding.Capacity.Equals(capacity) ||
+        var mint = checkpoint.Campaign.CityCampaign.ProductiveFamilies.Single(f => f.FamilyId == "mint");
+        var origin = funding.MintOrigin;
+        var receipts = funding.CompletedMints;
+        var expectedBase = (long)origin.Base + receipts.Count(r => r.Tier == ProductionTier.Base);
+        var expectedLarge = (long)origin.Large + receipts.Count(r => r.Tier == ProductionTier.Large);
+        var expectedAdvanced = (long)origin.Advanced + receipts.Count(r => r.Tier == ProductionTier.Advanced);
+        if (mint.Base.Buildings != expectedBase || mint.Large.Buildings != expectedLarge ||
+            mint.Advanced.Buildings != expectedAdvanced ||
+            !funding.Capacity.Equals(capacity) ||
             !funding.Stock.Equals(checkpoint.Campaign.CityCampaign.Resources) ||
             funding.AcquiredMints != MintCounter(checkpoint.Campaign) ||
             !funding.HypotheticalDelivered.Equals(ResourceBundle.Empty) ||
-            !funding.Committed.Equals(ResourceBundle.Empty) ||
-            !funding.InitialStock.Equals(funding.Stock + funding.Escrowed))
+            !(funding.InitialStock + funding.RealClockCredits).Equals(
+                funding.Stock + funding.Escrowed + funding.Committed + funding.RealClockDebits))
             throw new ArgumentException("The v15 city and escrow diverge or contain sandbox-only deliveries.", nameof(checkpoint));
         return new(baseline, school, technologies, food,
             checkpoint.Campaign, funding, checkpoint.Revision);
@@ -119,8 +131,8 @@ public sealed class E4bV15FundingShadow
     }
 
     /// <summary>Transfers ONLY resources already in the projected city inventory.
-    /// No made-up deliveries, no implicit warehouse expansion and no completed
-    /// buildings. The city remains a valid v15 checkpoint or nothing changes.</summary>
+    /// No made-up deliveries or implicit warehouse expansion.
+    /// The city remains a valid v15 checkpoint or nothing changes.</summary>
     public bool TryDeposit(ResourceBundle materials, long expectedRevision,
         out E4bV15FundingShadow next)
     {
@@ -135,6 +147,72 @@ public sealed class E4bV15FundingShadow
         return TryProject(candidate, funded, out next);
     }
 
+    /// <summary>RC97: one REAL second in the v15 clock, independent of
+    /// whether a mint is currently being financed. This is deliberately not
+    /// exposed on the playable session; city and escrow remain in the same
+    /// immutable checkpoint, and no escrow material enters production.</summary>
+    public bool TryAdvanceClock(MeatChainPolicy meat, HorticulturePolicy crops,
+        long expectedRevision, out E4bV15FundingShadow next)
+    {
+        ArgumentNullException.ThrowIfNull(meat);
+        ArgumentNullException.ThrowIfNull(crops);
+        next = this;
+        if (expectedRevision != Revision || Revision == long.MaxValue) return false;
+        try
+        {
+            var plan = V15UnifiedCampaignClock.Plan(Campaign, _baseline, _school,
+                _technologies, FoodIndustryConstructionCatalog.Candidate,
+                meat, crops, _food, TimeSpan.FromSeconds(1));
+            // Audit all physical owners (city, animals, transit and depot) before
+            // recording the city-only inventory change in the funding ledger.
+            if (!V15StockAuditor.ReconcileSecond(Campaign, plan).Balanced) return false;
+            var capacity = V15CityStorage.Calculate(_baseline, plan.Next.CityCampaign);
+            if (!Funding.TryRecordRealClock(Campaign.CityCampaign.Resources,
+                plan.Next.CityCampaign.Resources, capacity, out var funded)) return false;
+            return TryProject(plan.Next, funded, out next);
+        }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or OverflowException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>RC98 isolated atomic completion: material has ALREADY left
+    /// city stock through deposits. Increment exactly one v15 mint tier and
+    /// its historical counter, move escrow to committed receipts and recompute
+    /// physical capacity as one validated immutable transition. Never call the
+    /// ordinary priced construction command here (it would charge twice).</summary>
+    public bool TryCompleteMint(long expectedRevision, out E4bV15FundingShadow next)
+    {
+        next = this;
+        if (expectedRevision != Revision || Revision == long.MaxValue ||
+            Readiness() != E4bV15FundingReadiness.ReadyForFutureAtomicCommit ||
+            Funding.PendingTier is not { } tier) return false;
+        try
+        {
+            var city = Campaign.CityCampaign;
+            var mint = city.ProductiveFamilies.Single(f => f.FamilyId == "mint");
+            var portfolio = TieredBuildingPortfolio.Create(mint.FamilyId,
+                mint.Base, mint.Large, mint.Advanced,
+                V15CrewRules.CrewSize(Campaign.CrewMode, "mint")).Build(tier, 1);
+            var nextCity = city with
+            {
+                ProductiveFamilies = city.ProductiveFamilies.Select(f => f.FamilyId == "mint"
+                    ? new V15ProductiveFamilySnapshot("mint", portfolio.Base,
+                        portfolio.Large, portfolio.Advanced) : f).ToImmutableArray(),
+                PurchaseCounters = city.PurchaseCounters.Select(c => c.FamilyId == "mint"
+                    ? c with { Acquired = checked(c.Acquired + 1) } : c).ToImmutableArray()
+            };
+            var nextCapacity = V15CityStorage.Calculate(_baseline, nextCity);
+            if (!Funding.TryCompleteWithCapacity(nextCapacity, out var funded)) return false;
+            return TryProject(Campaign with { CityCampaign = nextCity }, funded, out next);
+        }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or OverflowException)
+        {
+            return false;
+        }
+    }
+
     public bool TryCancel(long expectedRevision, out E4bV15FundingShadow next)
     {
         next = this;
@@ -147,9 +225,9 @@ public sealed class E4bV15FundingShadow
         return TryProject(candidate, canceled, out next);
     }
 
-    /// <summary>Even a fully paid mint is not playable until its source building
-    /// and tier research are present. "Ready" is advisory ONLY; no construction
-    /// command exists in this preview and no city counter is incremented.</summary>
+    /// <summary>A paid mint requires its source building and tier research.
+    /// Readiness alone never constructs; only the isolated RC98 completion
+    /// transition creates a building in the experimental city checkpoint.</summary>
     public E4bV15FundingReadiness Readiness()
     {
         if (Funding.PendingTier is not { } tier)

@@ -1,6 +1,16 @@
-# Registro unico delle decisioni — RC94.2
+> **RC105 candidata — ADR 0116:** SQLite generation 7 *sperimentale*: tabelle città, finanziamento, ricevute e identità nello stesso file; creazione solo dal ramo autorevole verificato, file finale non autorevole e non apribile nel gioco. [ADR 0116](adr/0116-prototipo-sqlite-generation7-citta-e-cantieri.md).
 
-**Baseline RC93.1:** 1220 test confermati superati dall'utente. **RC94.1:** 1233 eseguiti, 1228 passati, 5 falliti per un test RC81 ancorato a 0 Carbone iniziale. **RC94.2:** test corretto, 1233 attesi; gate Windows da rieseguire. **Dotazione Municipio v15 approvata:** 100 Carbone e 2 Matite alla creazione della nuova partita, nel normale inventario, senza refill ai caricamenti. [ADR 0105](adr/0105-riserva-carbone-municipio-avvio-v15.md).
+> **RC104 candidata — ADR 0115:** il preflight della futura migrazione verifica ramo autorevole, identità, ricevute e cantieri pendenti; non crea un salvataggio giocabile unico e non autorizza la Curva A in partita. [ADR 0115](adr/0115-preflight-migrazione-salvataggio-unico-e-conservazione-cantieri.md).
+
+> **RC103 (fase precedente) — ADR 0114:** il composito e il registro d'autorità sperimentali conservano lo stesso `campaign_id`; backup e restore lo mantengono, una campagna indipendente non può essere promossa, e tre nuovi trigger proteggono l'identità registrata. Non è ancora un salvataggio giocabile unico. [ADR 0114](adr/0114-identita-stabile-campagna-composita-e-autorita.md).
+
+> **RC102, base storica — ADR 0113:** i compositi registrati hanno un vincolo SQLite persistente che blocca gli accessi diretti ordinari allo stato, alle ricevute e al legame d'autorità. Gli archivi sperimentali mai registrati rimangono scrivibili; questo non è un meccanismo contro la manipolazione intenzionale dello schema o il cambio di host. [ADR 0113](adr/0113-fencing-obbligatorio-scritture-composito-registrato.md).
+
+# Registro unico delle decisioni — RC105
+
+**Baseline RC95:** 1245 test completamente confermati. **RC96–RC105:** gate F1 non ancora convalidato. **RC105:** +15 test Infrastructure, **1360 cumulativi attesi**; nel secondo tentativo Windows del 08/11 la compilazione è riuscita e **1359/1360** test sono passati; il test RC98 sulla rimozione del prerequisito Zecca è stato corretto nel secondo hotfix e attende nuova esecuzione. **Dotazione Municipio v15 approvata:** 100 Carbone e 2 Matite alla creazione della nuova partita, nel normale inventario, senza refill ai caricamenti. [ADR 0105](adr/0105-riserva-carbone-municipio-avvio-v15.md).
+
+**ADR 0106 (solo sperimentale):** il nuovo contenitore SQLite compone in un commit una copia nativa della città v15 e il deposito Curve A, con revisioni e ricevute idempotenti. È un database autonomo **non giocabile**: non autorizza il clock, la costruzione o la modifica del salvataggio normale. [ADR 0106](adr/0106-contenitore-sqlite-composito-v15-finanziamento-isolato.md).
 
 **ADR 0104 (solo sperimentale):** è autorizzato il checkpoint composito **shadow v15 + escrow Curve A** in memoria per dimostrare conservazione dei versamenti rispetto alla vera capacità/contatori della città. Non autorizza salvataggi modificati, prezzi Curve A in partita, completamento reale della Zecca, nuove interazioni GUI o riempimenti artificiali. `Readiness` è soltanto diagnostica. [ADR 0104](adr/0104-checkpoint-composito-v15-escrow-curva-a-sandbox.md).
 
@@ -33,6 +43,8 @@
 | Zecca | **10 lavoratori per modulo** come obiettivo approvato; implementazione `MintTen` nella v15 ancora opt-in e distinta dal default | [ADR 0089](adr/0089-attivazione-opt-in-squadre-zecca-v15-versionata.md) |
 | Economia | Progressione quasi esponenziale molto impegnativa; Zecca equivalente a investimento di circa 100–1000 Tagliapietre come criterio qualitativo, non prezzo applicato | [ADR 0056](adr/0056-progressione-tardiva-e-squadre-minime-proposta.md) |
 | Preflight RC89 | Verificare prima/seconda Zecca, capacità iniziale, percorso Magazzini e rate teoriche **prima** di cambiare il prezzo attivo; primo Base come riferimento 100–1000; ogni tempo importato RC88 misura solo i prezzi correnti | [ADR 0097](adr/0097-verifica-pre-attivazione-costi-zecca-e-capienza.md) |
+| RC98: completamento sandbox | Solo nel contenitore composito sperimentale, una Zecca completamente finanziata diventa un edificio del checkpoint laboratorio; saldo `Committed`, ricevute, tier, contatore e capienza sincronizzati senza doppia spesa. Non è attivo in partita. | [ADR 0109](adr/0109-completamento-atomico-zecca-finanziata-in-sandbox.md) |
+| RC95: contenitore composito | Il BLOB del salvataggio nativo v15 e il finanziamento vengono scritti nello stesso commit nel **laboratorio autonomo**, non nel salvataggio giocabile; niente completamenti o rifornimenti ipotetici | [ADR 0106](adr/0106-contenitore-sqlite-composito-v15-finanziamento-isolato.md) |
 | Finanziamento Curve A RC93 | Persistenza idempotente **solo nel sandbox separato**: transazione unica stock/escrow/ricevuta, replay e revisione; non attiva nel gameplay | [ADR 0103](adr/0103-persistenza-sandbox-finanziamento-atomica-idempotente.md) |
 | Salvataggi | Slot v14 personali distinti, checkpoint v15 in SQLite generation 6; possibile rottura controllata dei **vecchi salvataggi sperimentali**, con avviso; non sovrascrivere in modo inatteso | [SAVE_FORMAT](SAVE_FORMAT.md) |
 | Spedizioni | Esplorazione distinta dalla conquista; conquista deterministica, perdite iniziali non irreversibili | [ADR 0017](adr/0017-naval-mission-boundaries-proposta.md) |
@@ -41,6 +53,10 @@
 ## Decisioni NON approvate o ancora da misurare
 
 Curve di costo A/B/C e coefficienti esatti; moduli multipli/quantità di personale degli altri edifici avanzati; pagamenti frazionati nel gameplay; costi dei magazzini e limiti di capienza per la progressione avanzata; attivazione predefinita `MintTen`; durata della campagna completa. Le analisi RC78–RC89 non equivalgono ad approvazione numerica; il preflight RC89 è un criterio di revisione della capienza, non un assenso alle curve.
+
+## Punteggio e classifiche (pianificato)
+
+Definire formula e classifica locale **dopo** il bilanciamento, la progressione naturale e il consolidamento del gameplay. **Classifica online tramite API come una delle ultime funzionalità**, con controlli server e privacy; non esiste ancora un algoritmo o una API approvati. [Piano](design/PUNTEGGIO_CLASSIFICA.md).
 
 ## Regola documentale
 

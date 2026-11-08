@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
 using SimRisorse.Core.Food;
@@ -18,7 +19,9 @@ public sealed class E4bCurveAFundingSandbox
     private E4bCurveAFundingSandbox(ResourceBundle initialStock, ResourceBundle stock,
         ResourceBundle capacity, ResourceBundle hypotheticalDelivered,
         ResourceBundle committed, int acquiredMints, ProductionTier? pendingTier,
-        ProgressiveConstructionEscrow? escrow)
+        ProgressiveConstructionEscrow? escrow, ResourceBundle realClockCredits,
+        ResourceBundle realClockDebits, E4bMintOrigin origin,
+        ImmutableArray<E4bCompletedMint> completedMints)
     {
         InitialStock = initialStock;
         Stock = stock;
@@ -28,6 +31,10 @@ public sealed class E4bCurveAFundingSandbox
         AcquiredMints = acquiredMints;
         PendingTier = pendingTier;
         Escrow = escrow;
+        RealClockCredits = realClockCredits;
+        RealClockDebits = realClockDebits;
+        MintOrigin = origin;
+        CompletedMints = completedMints;
     }
 
     public const string Mode = "curve-A/opt-in/in-memory-only/not-playable";
@@ -36,6 +43,12 @@ public sealed class E4bCurveAFundingSandbox
     public ResourceBundle Capacity { get; }
     public ResourceBundle HypotheticalDelivered { get; }
     public ResourceBundle Committed { get; }
+    // Measured changes to the city inventory from the real v15 clock only.
+    // Food transfers in other inventories are tracked by the native checkpoint.
+    public ResourceBundle RealClockCredits { get; }
+    public ResourceBundle RealClockDebits { get; }
+    public E4bMintOrigin MintOrigin { get; }
+    public ImmutableArray<E4bCompletedMint> CompletedMints { get; }
     public int AcquiredMints { get; }
     public ProductionTier? PendingTier { get; }
     public ProgressiveConstructionEscrow? Escrow { get; }
@@ -47,7 +60,8 @@ public sealed class E4bCurveAFundingSandbox
 
     public E4bFundingCheckpoint ExportCheckpoint() => new(CheckpointVersion, InitialStock, Stock,
         Capacity, HypotheticalDelivered, Committed, AcquiredMints, PendingTier,
-        Escrow?.Quote, Escrow?.Paid);
+        Escrow?.Quote, Escrow?.Paid, RealClockCredits, RealClockDebits,
+        MintOrigin, CompletedMints);
 
     /// <summary>Reject corrupt, inconsistent or repriced checkpoints before exposing
     /// any material balance to callers. The pending quote must still match Curve A.</summary>
@@ -75,24 +89,66 @@ public sealed class E4bCurveAFundingSandbox
                 throw new ArgumentException("Pending quotation differs from the frozen Curve A price.", nameof(checkpoint));
             escrow = ProgressiveConstructionEscrow.Restore(checkpoint.PendingQuote!, checkpoint.PendingPaid!);
         }
+        // Old RC93/RC95 experimental rows omitted the clock ledgers entirely.
+        if ((checkpoint.RealClockCredits is null) != (checkpoint.RealClockDebits is null))
+            throw new ArgumentException("Incomplete real-clock reconciliation ledger.", nameof(checkpoint));
+        var receipts = checkpoint.CompletedMints.IsDefault
+            ? ImmutableArray<E4bCompletedMint>.Empty : checkpoint.CompletedMints;
+        if (checkpoint.MintOrigin is null &&
+            (!checkpoint.Committed.Equals(ResourceBundle.Empty) || !receipts.IsEmpty))
+            throw new ArgumentException("Completed financing requires an acquisition origin.", nameof(checkpoint));
+        var origin = checkpoint.MintOrigin ?? new E4bMintOrigin(checkpoint.AcquiredMints, 0, 0, 0);
+        if (origin.Acquired < 0 || origin.Base < 0 || origin.Large < 0 || origin.Advanced < 0 ||
+            origin.Acquired > checkpoint.AcquiredMints ||
+            (long)origin.Acquired + receipts.Length != checkpoint.AcquiredMints)
+            throw new ArgumentException("Invalid financing acquisition history.", nameof(checkpoint));
+        var committedFromReceipts = ResourceBundle.Empty;
+        for (var i = 0; i < receipts.Length; i++)
+        {
+            var receipt = receipts[i];
+            if (receipt is null || !Enum.IsDefined(receipt.Tier) ||
+                receipt.PreviouslyAcquired != (long)origin.Acquired + i || receipt.Quote is null)
+                throw new ArgumentException("Invalid completed mint receipt.", nameof(checkpoint));
+            try
+            {
+                var expected = new E4bEconomicCurveStudy().Quote(CurveA,
+                    "mint", receipt.Tier, receipt.PreviouslyAcquired);
+                if (!expected.Equals(receipt.Quote))
+                    throw new ArgumentException("Completed price differs from Curve A.", nameof(checkpoint));
+                committedFromReceipts += receipt.Quote;
+            }
+            catch (OverflowException e)
+            {
+                throw new ArgumentException("Completed mint receipts overflow.", nameof(checkpoint), e);
+            }
+        }
+        if (!committedFromReceipts.Equals(checkpoint.Committed))
+            throw new ArgumentException("Committed materials do not match completed purchases.", nameof(checkpoint));
         var restored = new E4bCurveAFundingSandbox(checkpoint.InitialStock, checkpoint.Stock,
             checkpoint.Capacity, checkpoint.HypotheticalDelivered, checkpoint.Committed,
-            checkpoint.AcquiredMints, checkpoint.PendingTier, escrow);
+            checkpoint.AcquiredMints, checkpoint.PendingTier, escrow,
+            checkpoint.RealClockCredits ?? ResourceBundle.Empty,
+            checkpoint.RealClockDebits ?? ResourceBundle.Empty, origin, receipts);
         if (!restored.Reconciles())
             throw new ArgumentException("Financing balances do not reconcile or exceed storage.", nameof(checkpoint));
         return restored;
     }
 
     public static E4bCurveAFundingSandbox Open(ResourceBundle initialStock,
-        ResourceBundle physicalCapacity, int alreadyAcquiredMints = 0)
+        ResourceBundle physicalCapacity, int alreadyAcquiredMints = 0, E4bMintOrigin? mintOrigin = null)
     {
         ArgumentNullException.ThrowIfNull(initialStock);
         ArgumentNullException.ThrowIfNull(physicalCapacity);
         ArgumentOutOfRangeException.ThrowIfNegative(alreadyAcquiredMints);
+        var origin = mintOrigin ?? new E4bMintOrigin(alreadyAcquiredMints, 0, 0, 0);
+        if (origin.Acquired != alreadyAcquiredMints || origin.Base < 0 ||
+            origin.Large < 0 || origin.Advanced < 0)
+            throw new ArgumentException("Invalid original mint acquisition history.", nameof(mintOrigin));
         if (!physicalCapacity.Covers(initialStock))
             throw new ArgumentException("Initial stock exceeds physical storage capacity.", nameof(initialStock));
         return new(initialStock, initialStock, physicalCapacity, ResourceBundle.Empty,
-            ResourceBundle.Empty, alreadyAcquiredMints, null, null);
+            ResourceBundle.Empty, alreadyAcquiredMints, null, null,
+            ResourceBundle.Empty, ResourceBundle.Empty, origin, ImmutableArray<E4bCompletedMint>.Empty);
     }
 
     public ResourceBundle QuoteNextMint(ProductionTier tier)
@@ -153,16 +209,29 @@ public sealed class E4bCurveAFundingSandbox
 
     /// <summary>Completion makes a sandbox purchase only. No actual building,
     /// storage or workplaces are granted to the live v15 campaign.</summary>
-    public bool TryComplete(out E4bCurveAFundingSandbox next)
+    public bool TryComplete(out E4bCurveAFundingSandbox next) =>
+        TryCompleteWithCapacity(Capacity, out next);
+
+    /// <summary>RC98: same single debit as the deposit, but retain a verifiable
+    /// completion receipt and the NEW physical capacity after the building exists.
+    /// This operation cannot create the city building by itself.</summary>
+    internal bool TryCompleteWithCapacity(ResourceBundle nextCapacity,
+        out E4bCurveAFundingSandbox next)
     {
+        ArgumentNullException.ThrowIfNull(nextCapacity);
         next = this;
         if (Escrow is null || !Escrow.IsFullyPaid || PendingTier is null ||
-            AcquiredMints == int.MaxValue) return false;
+            AcquiredMints == int.MaxValue || !nextCapacity.Covers(Stock)) return false;
         try
         {
             var committed = Committed + Escrow.Paid;
-            next = new(InitialStock, Stock, Capacity, HypotheticalDelivered,
-                committed, AcquiredMints + 1, null, null);
+            var receipts = CompletedMints.Add(new E4bCompletedMint(PendingTier.Value,
+                AcquiredMints, Escrow.Quote));
+            var candidate = new E4bCurveAFundingSandbox(InitialStock, Stock, nextCapacity,
+                HypotheticalDelivered, committed, AcquiredMints + 1, null, null,
+                RealClockCredits, RealClockDebits, MintOrigin, receipts);
+            if (!candidate.Reconciles()) return false;
+            next = candidate;
             return true;
         }
         catch (OverflowException) { return false; }
@@ -183,11 +252,49 @@ public sealed class E4bCurveAFundingSandbox
     {
         try
         {
-            return (InitialStock + HypotheticalDelivered).Equals(
-                Stock + Escrowed + Committed) && Capacity.Covers(Stock) &&
+            return (InitialStock + HypotheticalDelivered + RealClockCredits).Equals(
+                Stock + Escrowed + Committed + RealClockDebits) && Capacity.Covers(Stock) &&
                 (PendingTier is null) == (Escrow is null);
         }
         catch (OverflowException) { return false; }
+    }
+
+    /// <summary>RC97: accept only a stock delta measured by the validated native
+    /// v15 clock. This method is called by the non-playable shadow after Plan().
+    /// Escrow and price never change during a clock tick. No synthetic delivery
+    /// or sandbox building completion is authorized by this operation.</summary>
+    internal bool TryRecordRealClock(ResourceBundle previousCityStock,
+        ResourceBundle nextCityStock, ResourceBundle nextCityCapacity,
+        out E4bCurveAFundingSandbox next)
+    {
+        ArgumentNullException.ThrowIfNull(previousCityStock);
+        ArgumentNullException.ThrowIfNull(nextCityStock);
+        ArgumentNullException.ThrowIfNull(nextCityCapacity);
+        next = this;
+        if (!Stock.Equals(previousCityStock) || !Capacity.Equals(nextCityCapacity) ||
+            !Capacity.Covers(nextCityStock)) return false;
+        try
+        {
+            var credits = new List<KeyValuePair<string, ResourceAmount>>();
+            var debits = new List<KeyValuePair<string, ResourceAmount>>();
+            foreach (var id in previousCityStock.Amounts.Keys.Concat(nextCityStock.Amounts.Keys)
+                .Distinct(StringComparer.Ordinal))
+            {
+                var before = previousCityStock[id].Milliunits;
+                var after = nextCityStock[id].Milliunits;
+                if (after > before) credits.Add(KeyValuePair.Create(id,
+                    ResourceAmount.FromMilliunits(checked(after - before))));
+                else if (before > after) debits.Add(KeyValuePair.Create(id,
+                    ResourceAmount.FromMilliunits(checked(before - after))));
+            }
+            next = new E4bCurveAFundingSandbox(InitialStock, nextCityStock, Capacity,
+                HypotheticalDelivered, Committed, AcquiredMints, PendingTier, Escrow,
+                RealClockCredits + ResourceBundle.FromAmounts(credits),
+                RealClockDebits + ResourceBundle.FromAmounts(debits), MintOrigin, CompletedMints);
+            if (!next.Reconciles()) { next = this; return false; }
+            return true;
+        }
+        catch (OverflowException) { next = this; return false; }
     }
 
     private E4bCurveAFundingSandbox Copy(ResourceBundle? stock = null,
@@ -196,5 +303,6 @@ public sealed class E4bCurveAFundingSandbox
         new(InitialStock, stock ?? Stock, Capacity,
             hypotheticalDelivered ?? HypotheticalDelivered, Committed, AcquiredMints,
             clearPurchase ? null : pendingTier ?? PendingTier,
-            clearPurchase ? null : escrow ?? Escrow);
+            clearPurchase ? null : escrow ?? Escrow, RealClockCredits, RealClockDebits,
+            MintOrigin, CompletedMints);
 }

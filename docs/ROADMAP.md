@@ -1,30 +1,27 @@
-# Roadmap unica — SimRisorse RC94.2
+# Roadmap unica — SimRisorse RC105 (hotfix test Zecca)
 
-**Stato:** RC94.2 candidata; **RC93.1 1220/1220 confermati**; RC94.1 **1228 superati / 5 falliti su 1233** per test RC81 con stock Carbone obsoleto; hotfix RC94.2 predisposto, **1233 attesi**, gate da verificare. Municipio v15: 100 Carbone + 2 Matite una sola volta alla creazione. [Stato](CURRENT_STATE.md) · [Piano RC94.2](validation/RC94_2_MINT_CREW_STARTER_COAL_HOTFIX.md) · [ADR 0105](adr/0105-riserva-carbone-municipio-avvio-v15.md).
+**Siamo qui:** RC105 candidata, **1360 test attesi**. Ultima versione completamente confermata RC95 (**1245 test**). Primo tentativo RC105: 2 errori compilazione (`CS0119`, `xUnit2013`) corretti; secondo tentativo Windows: **build riuscita, 1359/1360 test**, 1 errore nella fixture RC98 per mancato aggiornamento della capacità dopo rimozione Fonderia. Secondo hotfix corregge soltanto il test; **nuovo gate F1 ancora da verificare**.
 
-## P0 — Chiudere la RC94.2
+## P0 — Validazione e stabilità
 
-1. Eseguire ` .\validate-f1.cmd ` su Windows con .NET 10: suite completa (1233 test previsti), screenshot settoriali v15, CLI RC94, gate F1 e report delle verifiche pregresse.
-2. Confermare il consumo reale della Zecca mediante i delta Oro/Carbone per 0/9/10/19/20 addetti; risolvere ulteriori errori solo se provati, senza allentare il validatore inventario/capienza o cambiare la GUI.
+Usare solo ` .\validate.cmd ` su Windows; confermare **1360/1360**, zero errori e gate F1 completo, inclusi screenshot. Il report precedente **1359/1360** non valida il secondo hotfix. La pulizia `.local-cache` deve conservare l'ultimo run, anche se fallito. Consegnare sempre ZIP completo senza manifest SHA-256.
 
-## P1 — RC95: cantiere integrato nel checkpoint di gioco (ancora opt-in)
+## P1 — Salvataggio unico e cantieri
 
-1. Definire la **versione del formato di salvataggio** con escrow, revisioni e identificativo operazione nel medesimo database della campagna v15; non sovrapporre lo store isolato RC93 al salvataggio esistente. Documentare l'eventuale incompatibilità dei vecchi salvataggi sperimentali.
-2. Collegare il deposito al clock naturale e agli altri acquisti: ogni produzione, consumo, spesa e capacità deve riconciliarsi con il deposito senza rifornimenti artificiali.
-3. Garantire una **transazione atomica** di completamento finanziamento + acquisizione edificio + contatore, evitando il secondo pagamento nell'attuale `BuildCityProducer()`.
-4. Definire e testare cancellazione, capienza del rimborso, prezzo congelato, prerequisiti/research cambiati, upgrade, tier, più progetti e prevenzione del replay dopo crash.
-5. Preservare la GUI canonica e il comportamento predefinito; testare prima in modalità opt-in, senza applicare curve A ai salvataggi standard.
+**Fatto:** preflight RC104 + prototipo SQLite generation 7 RC105 (tabelle città e deposito nello stesso file, ricevute e identità; nessuna scrittura giocabile). **Da fare:** autorità incorporata nel file, sessioni e revisioni, transazioni città+cantieri+rate, recupero e backup dopo crash, migrazione non distruttiva dal generation 6 e dal composito. Attivazione controllata nei comandi solo quando tutto è verificato. [ADR 0116](adr/0116-prototipo-sqlite-generation7-citta-e-cantieri.md).
 
-## P2 — Prove di bilanciamento e decisione economica
+## P2 — Bilanciamento economico
 
-- Misurare progressione naturale reale Scuola → Carbone → Industria → prima/seconda Zecca con squadre `MintTen`, senza grants ipotetici.
-- Confrontare costo della prima Zecca Base con la soglia qualitativa 100–1000 Tagliapietre, verificare magazzini, tempi, popolazione e costi marginali di tier/copie.
-- Soltanto dopo approvazione esplicita selezionare coefficienti e attivazione dei nuovi prezzi nel gioco.
+Provare con il clock vero, senza risorse sintetiche: Scuola → Estrazione I → Carbone → filiere → Zecca, seconda Zecca, lavoratori, capienza e rate. Valutare curva A opt-in, senza cambiare prezzi predefiniti in anticipo.
 
-## Sviluppi M5.4–M7
+## P3 — Gameplay e GUI
 
-Navi e flotta; esplorazione separata dalla conquista; missioni deterministiche; conquista, castello e obiettivo di fine partita; bilanciamento, UX/accessibilità e distribuzione.
+Consolidare filiere, ricerca, abitazioni, popolazione, spedizioni, interfaccia e distribuzione. Conservare la GUI pixel art canonica e i contratti già approvati.
 
-## Regola di consegna
+## P4 — Punteggio e classifica locale
 
-Unico stato, unica roadmap, unico registro e unico handoff; nuovi ADR e piani test incrementali; sorgenti e test sempre in ZIP integrale con manifest SHA-256. Distinguere sempre test **confermati dall'utente** da test soltanto predisposti.
+**Dopo** bilanciamento e gameplay, definire condizioni di fine partita e formula punti **versionata e verificabile**, poi classifica locale delle partite. [Piano](design/PUNTEGGIO_CLASSIFICA.md).
+
+## P5 — Ultima fase: classifica online via API
+
+Solo alla fine, estendere la classifica locale con API, privacy e validazione lato server dei risultati. Mai accettare punteggi arbitrari del client.

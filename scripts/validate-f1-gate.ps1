@@ -1,21 +1,30 @@
 param(
-    [int]$ExpectedTests = 1233,
+    [int]$ExpectedTests = 1360,
     [int]$StressSeconds = 120,
-    [switch]$Combined24Hours
+    [switch]$Combined24Hours,
+    [string]$OfflinePackageSource = ''
 )
 
-# F1 / RC72 acceptance gate. This is deliberately separate from validate.cmd:
-# the historical validation remains unchanged, and the longer 24h soak is opt-in.
+# RC96: the only public entry point is validate.cmd.
+# This gate invokes the internal validate.ps1 directly: never call validate.cmd here
+# (that would recurse). The optional 24-hour soak remains opt-in.
 # Uses only synthetic audit scenarios and the standard test artifacts; no player saves.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $cache = Join-Path $root '.local-cache\m4'
+New-Item -ItemType Directory -Path $cache -Force | Out-Null
+# Keep concurrent gates from overwriting validation.json or pruning one another's evidence.
+try {
+    $gateLock = [IO.File]::Open((Join-Path $cache 'validation.lock'),
+        [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+}
+catch { Write-Error 'Another validation/cleanup is already using the local evidence. Stop it before retrying.'; exit 1 }
 $started = [DateTime]::UtcNow
 $gateDirectory = Join-Path $cache ('f1-gates\' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $gateDirectory -Force | Out-Null
 $reportFile = Join-Path $gateDirectory 'f1-gate.json'
 $report = [ordered]@{
-    milestone = 'RC94.2 / mint-crew coal delta test hotfix; RC94.1 1228/1233 passed; RC94 shadow remains sandbox (RC93.1 green baseline 1220)'
+    milestone = 'RC105 / non-authoritative unified SQLite prototype (RC95 confirmed 1245, RC96-105 pending)'
     status = 'incomplete'
     startedUtc = $started.ToString('o')
     expectedTests = $ExpectedTests
@@ -37,9 +46,12 @@ $report = [ordered]@{
     priceReadinessStudy = $null
     curveAFundingSandbox = $null
     v15FundingShadow = $null
+    v15FundingClock = $null
+    v15MintCommit = $null
     mintFeasibilityAudit = $null
     mintHousingBufferReview = $null
     firstResearchBootstrapAudit = $null
+    cacheCleanup = $null
     longAudit = $null
     error = $null
 }
@@ -85,17 +97,31 @@ try {
     Assert-Condition ($StressSeconds -ge 4 -and $StressSeconds -le 172800) `
         'StressSeconds must be between 4 and 172800.'
 
-    # Always run a fresh complete validation. An old success report is not gate evidence.
-    $validationCommand = Join-Path $root 'validate.cmd'
-    Assert-Condition (Test-Path -LiteralPath $validationCommand) 'validate.cmd was not found.'
+    # A single public validation command, with one full F1 gate. No recursive .cmd calls.
+    $publicCommand = Join-Path $root 'validate.cmd'
+    Assert-Condition (Test-Path -LiteralPath $publicCommand) 'The public validate.cmd is missing.'
+    $publicText = Get-Content -LiteralPath $publicCommand -Raw
+    Assert-Condition ($publicText -match 'validate-f1-gate\.ps1') 'validate.cmd must invoke the full F1 gate.'
+    $validationScript = Join-Path $PSScriptRoot 'validate.ps1'
+    # An overlay extraction may leave the old batch on disk. Warn but do not block a valid run.
+    if (Test-Path -LiteralPath (Join-Path $root 'validate-f1.cmd')) {
+        Write-Warning 'Old validate-f1.cmd remains from a previous extraction: delete it; only validate.cmd is supported.'
+    }
+    Assert-Condition (Test-Path -LiteralPath $validationScript) 'The internal validation script is missing.'
+    $validationFile = Join-Path $cache 'validation.json'
+    # Never accept a successful JSON left over from a previous run.
+    if (Test-Path -LiteralPath $validationFile) { Remove-Item -LiteralPath $validationFile -Force }
+    $validationArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $validationScript)
+    if (-not [string]::IsNullOrWhiteSpace($OfflinePackageSource)) {
+        $validationArgs += @('-OfflinePackageSource', $OfflinePackageSource)
+    }
     Push-Location -LiteralPath $root
     try {
-        & $validationCommand | Tee-Object -FilePath (Join-Path $gateDirectory 'validate-output.log')
-        Assert-Condition ($LASTEXITCODE -eq 0) 'validate.cmd returned a nonzero exit code.'
+        & powershell.exe @validationArgs | Tee-Object -FilePath (Join-Path $gateDirectory 'validate-output.log')
+        Assert-Condition ($LASTEXITCODE -eq 0) 'Internal validation failed (see validate-output.log).'
     }
     finally { Pop-Location }
 
-    $validationFile = Join-Path $cache 'validation.json'
     Assert-Condition (Test-Path -LiteralPath $validationFile) 'Validation did not produce validation.json.'
     Assert-Condition ((Get-Item -LiteralPath $validationFile).LastWriteTimeUtc -ge $started.AddSeconds(-2)) `
         'Validation report is stale; this gate cannot reuse an older success.'
@@ -434,6 +460,41 @@ try {
     ($shadowLines -join "`n") | Set-Content -LiteralPath $report.v15FundingShadow -Encoding UTF8
 
 
+    # RC97: true native one-second tick on a protected v15+escrow shadow.
+    # No synthetic deliveries, no live price changes and no mint grant.
+    $clockLines = @(& dotnet $simulation --study-e4b-v15-funding-clock)
+    Assert-Condition ($LASTEXITCODE -eq 0) 'RC97 clock+escrow native smoke failed.'
+    $clock = ($clockLines -join "`n") | ConvertFrom-Json
+    Assert-Condition ($clock.Version -eq 'rc97-v15-funding-clock-1' -and
+        $clock.Mode -like '*not-playable*' -and
+        $clock.StartingRevision -eq 0 -and $clock.DepositedRevision -eq 2 -and
+        $clock.ClockRevision -eq 3 -and $clock.CancelRevision -eq 4 -and
+        $clock.NativeElapsedTicks -eq 10000000 -and
+        $clock.EscrowSurvivesClock -and $clock.CityInventoryReconciles -and
+        $clock.ClockLedgerReconciles -and $clock.RefundAfterClockReconciles -and
+        $clock.NoMintGranted -and $clock.PlayerSnapshotUnmodified -and
+        $clock.ApprovalStatus -like 'not-approved*') `
+        'RC97 clock+escrow evidence was not reconciled.'
+    $report.v15FundingClock = Join-Path $gateDirectory 'rc97-v15-funding-clock.json'
+    ($clockLines -join "`n") | Set-Content -LiteralPath $report.v15FundingClock -Encoding UTF8
+
+
+    # RC98: strict synthetic laboratory completion; NEVER natural progress or a player save.
+    $mintLines = @(& dotnet $simulation --study-e4b-v15-mint-commit)
+    Assert-Condition ($LASTEXITCODE -eq 0) 'RC98 atomic mint laboratory CLI failed.'
+    $mint = ($mintLines -join "`n") | ConvertFrom-Json
+    Assert-Condition ($mint.Version -eq 'rc98-v15-mint-commit-1' -and
+        $mint.Mode -like '*not-playable*' -and
+        $mint.InputProvenance -like 'synthetic*' -and
+        $mint.MintBuildings -eq 2 -and $mint.HistoricalAcquisitions -eq 2 -and
+        $mint.CompletionReceipts -eq 2 -and $mint.QuoteIncreases -and
+        $mint.NoSecondWithdrawal -and $mint.NoPendingFunding -and
+        $mint.FullMaterialConservation -and $mint.OriginalFixtureUnmodified -and
+        $mint.ApprovalStatus -like 'not-approved*') `
+        'RC98 composite mint completion did not reconcile.'
+    $report.v15MintCommit = Join-Path $gateDirectory 'rc98-v15-mint-commit.json'
+    ($mintLines -join "`n") | Set-Content -LiteralPath $report.v15MintCommit -Encoding UTF8
+
     if ($Combined24Hours) {
         $report.longAudit = Invoke-Audit -Name 'combined-24h' -Seconds 86400 -Combined $true `
             -Arguments @('--audit-v15', '--hours', '24', '--profile', 'combined')
@@ -441,14 +502,34 @@ try {
     $report.status = 'passed'
     $report.finishedUtc = [DateTime]::UtcNow.ToString('o')
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFile -Encoding UTF8
-    Write-Host "F1 GATE PASSED: $ExpectedTests/$ExpectedTests tests, baseline + combined audit, controlled recovery, economic/financing/crew studies MintTen diagnostic two-mint scaling risk study RC84 offline evidence audit and RC85 MintTen housing review RC94.1 municipal 100 coal and 2 pencils bootstrap RC87 research receipt audit and RC88 industrial clock-receipt audit plus RC89 pricing readiness and RC89.1 per-source flow tooltips, RC90 food depot tiers and RC90.3 technology glyph rows plus RC91 sector building filters RC92 non-playable Curve A escrow and RC93 isolated transactional SQLite replay tests, and RC94 composite v15-shadow checkpoint reconciliation."
+    Write-Host "F1 GATE PASSED: $ExpectedTests/$ExpectedTests tests; native smoke, screenshots, benchmarks and audits completed."
     Write-Host "Evidence: $reportFile"
 }
 catch {
+    # A fully green validation.json is not authoritative if a later F1 audit fails.
+    $staleSuccess = Join-Path $cache 'validation.json'
+    if (Test-Path -LiteralPath $staleSuccess) {
+        Remove-Item -LiteralPath $staleSuccess -Force -ErrorAction SilentlyContinue
+    }
     $report.status = 'failed'
     $report.error = $_.Exception.Message
     $report.finishedUtc = [DateTime]::UtcNow.ToString('o')
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFile -Encoding UTF8
-    Write-Error "F1 GATE FAILED: $($report.error). Evidence: $reportFile"
-    exit 1
+    Write-Host "F1 GATE FAILED: $($report.error). Evidence: $reportFile" -ForegroundColor Red
+    $gateFailed = $true
 }
+finally {
+    # Preserve the latest gate and its corresponding run, including failed evidence.
+    $currentRun = ''
+    $marker = Join-Path $cache 'current-run.txt'
+    if (Test-Path -LiteralPath $marker) {
+        $currentRun = (Get-Content -LiteralPath $marker -Raw).Trim()
+    }
+    try {
+        & (Join-Path $PSScriptRoot 'prune-validation-cache.ps1') `
+            -KeepGatePath $gateDirectory -KeepRunPath $currentRun -RemovePublish
+    }
+    catch { Write-Warning "Validation cache cleanup failed: $($_.Exception.Message)" }
+    finally { if ($null -ne $gateLock) { $gateLock.Dispose() } }
+}
+if ($gateFailed) { exit 1 }

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
@@ -244,6 +245,17 @@ public sealed class E4bCurveAFundingSqliteStore
         public int? PendingTier { get; set; }
         public SortedDictionary<string, long>? PendingQuote { get; set; }
         public SortedDictionary<string, long>? PendingPaid { get; set; }
+        public SortedDictionary<string, long>? RealClockCredits { get; set; }
+        public SortedDictionary<string, long>? RealClockDebits { get; set; }
+        public E4bMintOrigin? MintOrigin { get; set; }
+        public List<CompletedMintDto>? CompletedMints { get; set; }
+    }
+
+    private sealed class CompletedMintDto
+    {
+        public int Tier { get; set; }
+        public int PreviouslyAcquired { get; set; }
+        public SortedDictionary<string, long>? Quote { get; set; }
     }
 
     private static SortedDictionary<string, long> Amounts(ResourceBundle bundle) => new(
@@ -257,7 +269,7 @@ public sealed class E4bCurveAFundingSqliteStore
             KeyValuePair.Create(pair.Key, ResourceAmount.FromMilliunits(pair.Value))));
     }
 
-    private static string Encode(E4bFundingCheckpoint checkpoint) => JsonSerializer.Serialize(new CheckpointDto
+    internal static string Encode(E4bFundingCheckpoint checkpoint) => JsonSerializer.Serialize(new CheckpointDto
     {
         Version = checkpoint.Version,
         InitialStock = Amounts(checkpoint.InitialStock), Stock = Amounts(checkpoint.Stock),
@@ -266,10 +278,19 @@ public sealed class E4bCurveAFundingSqliteStore
         Committed = Amounts(checkpoint.Committed), AcquiredMints = checkpoint.AcquiredMints,
         PendingTier = checkpoint.PendingTier is null ? null : (int)checkpoint.PendingTier.Value,
         PendingQuote = checkpoint.PendingQuote is null ? null : Amounts(checkpoint.PendingQuote),
-        PendingPaid = checkpoint.PendingPaid is null ? null : Amounts(checkpoint.PendingPaid)
+        PendingPaid = checkpoint.PendingPaid is null ? null : Amounts(checkpoint.PendingPaid),
+        RealClockCredits = checkpoint.RealClockCredits is null ? null : Amounts(checkpoint.RealClockCredits),
+        RealClockDebits = checkpoint.RealClockDebits is null ? null : Amounts(checkpoint.RealClockDebits),
+        MintOrigin = checkpoint.MintOrigin,
+        CompletedMints = checkpoint.CompletedMints.IsDefault
+            ? null : checkpoint.CompletedMints.Select(receipt => new CompletedMintDto
+            {
+                Tier = (int)receipt.Tier, PreviouslyAcquired = receipt.PreviouslyAcquired,
+                Quote = Amounts(receipt.Quote)
+            }).ToList()
     });
 
-    private static E4bFundingCheckpoint Decode(string json)
+    internal static E4bFundingCheckpoint Decode(string json)
     {
         CheckpointDto dto;
         try { dto = JsonSerializer.Deserialize<CheckpointDto>(json) ??
@@ -280,6 +301,11 @@ public sealed class E4bCurveAFundingSqliteStore
             FromAmounts(dto.Committed), dto.AcquiredMints,
             dto.PendingTier is null ? null : (ProductionTier)dto.PendingTier.Value,
             dto.PendingQuote is null ? null : FromAmounts(dto.PendingQuote),
-            dto.PendingPaid is null ? null : FromAmounts(dto.PendingPaid));
+            dto.PendingPaid is null ? null : FromAmounts(dto.PendingPaid),
+            dto.RealClockCredits is null ? null : FromAmounts(dto.RealClockCredits),
+            dto.RealClockDebits is null ? null : FromAmounts(dto.RealClockDebits),
+            dto.MintOrigin, dto.CompletedMints is null ? default :
+                dto.CompletedMints.Select(item => new E4bCompletedMint((ProductionTier)item.Tier,
+                    item.PreviouslyAcquired, FromAmounts(item.Quote))).ToImmutableArray());
     }
 }

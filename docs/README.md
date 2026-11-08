@@ -1,17 +1,16 @@
 # Documentazione SimRisorse — indice unico
 
-**Release corrente:** RC94.2 candidata (hotfix test RC81 dopo dotazione Municipio 100 Carbone); **baseline verde RC93.1: 1220 test**. RC94.1: **1228 passati / 5 falliti**, RC94.2: **1233 test attesi** e gate Windows da verificare. [Piano RC94.2](validation/RC94_2_MINT_CREW_STARTER_COAL_HOTFIX.md) · [ADR 0105](adr/0105-riserva-carbone-municipio-avvio-v15.md).
+**RC105 candidata:** primo SQLite generation 7 sperimentale con città, cantieri e ricevute (non giocabile); 1360 test attesi. Ultima baseline confermata RC95 con 1245 test; gate Windows RC96–RC105 da verificare. [README principale](../README.md).
 
-| Tipo | Documento autorevole |
-|---|---|
-| Stato del progetto | **[CURRENT_STATE.md](CURRENT_STATE.md)** |
-| Roadmap e milestone | **[ROADMAP.md](ROADMAP.md)** |
-| Handoff / nuova chat | **[NEW_CHAT_HANDOFF.md](NEW_CHAT_HANDOFF.md)** |
-| Decisioni vincolanti | **[AUTHORITY_REGISTRY.md](AUTHORITY_REGISTRY.md)** |
-| Cronologia | [CHANGELOG.md](../CHANGELOG.md) |
-| Decisioni progettuali | [Indice ADR](adr/README.md) |
-| Verifica corrente | [Piano RC94.2](validation/RC94_2_MINT_CREW_STARTER_COAL_HOTFIX.md) |
+| Argomento | Documento unico da consultare |
+| --- | --- |
+| Stato e test confermati | **[CURRENT_STATE](CURRENT_STATE.md)** |
+| Attività successive | **[ROADMAP](ROADMAP.md)** |
+| Ripresa in nuova chat | **[NEW_CHAT_HANDOFF](NEW_CHAT_HANDOFF.md)** |
+| Regole approvate | **[AUTHORITY_REGISTRY](AUTHORITY_REGISTRY.md)** |
+| Guida sviluppatore / cache | [DEVELOPMENT](DEVELOPMENT.md) |
+| Decisioni | [ADR](adr/README.md) |
+| Punteggio e classifica (futuri) | [PIANO](design/PUNTEGGIO_CLASSIFICA.md) |
+| Modifiche storiche | [CHANGELOG](../CHANGELOG.md) |
 
-**Regola documentale:** questi sono gli unici file operativi per tipologia. `design/`, `validation/` e `history/releases/` contengono studi e prove di release precedenti, non roadmap o handoff paralleli. Non ricreare `*_ARCHIVE.md` o stati correnti duplicati.
-
-**Invarianti:** GUI pixel art approvata, sette colonne della tabella Risorse, Depositi alimentari tier, 100 Carbone e 2 Matite iniziali solo a nuova partita, personale Zecca MintTen opt-in, salvataggio v15 generation 6 invariato. Curva A e versamenti ancora **non giocabili**.
+`design/`, `validation/` e `history/` contengono studi di release ed evidenze, non un secondo stato corrente. Non creare nuovi `ROADMAP_*`, `HANDOFF_*` o `CURRENT_STATE_*` operativi. I pacchetti completi non includono manifest SHA256 per release.

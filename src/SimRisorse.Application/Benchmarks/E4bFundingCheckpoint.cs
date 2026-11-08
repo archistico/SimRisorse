@@ -1,15 +1,25 @@
+using System.Collections.Immutable;
 using SimRisorse.Core.Construction;
 using SimRisorse.Core.Economy;
 using SimRisorse.Core.Food;
 
 namespace SimRisorse.Application.Benchmarks;
 
-/// <summary>RC93: a complete, versioned snapshot of the *non-playable* financing sandbox.
-/// Stock and escrow are stored together; neither can be committed independently.</summary>
+/// <summary>Verified mint portfolio at the instant the isolated RC98 lab was opened.</summary>
+public sealed record E4bMintOrigin(int Acquired, int Base, int Large, int Advanced);
+
+/// <summary>Auditable, frozen-price construction receipt; paid material is never deducted twice.</summary>
+public sealed record E4bCompletedMint(ProductionTier Tier, int PreviouslyAcquired, ResourceBundle Quote);
+
+/// <summary>Versioned non-playable finance snapshot; city and escrow are committed together
+/// by the isolated composite store. RC98 includes audited completed-mint receipts.</summary>
 public sealed record E4bFundingCheckpoint(
     int Version, ResourceBundle InitialStock, ResourceBundle Stock, ResourceBundle Capacity,
     ResourceBundle HypotheticalDelivered, ResourceBundle Committed, int AcquiredMints,
-    ProductionTier? PendingTier, ResourceBundle? PendingQuote, ResourceBundle? PendingPaid);
+    ProductionTier? PendingTier, ResourceBundle? PendingQuote, ResourceBundle? PendingPaid,
+    ResourceBundle? RealClockCredits = null, ResourceBundle? RealClockDebits = null,
+    E4bMintOrigin? MintOrigin = null,
+    ImmutableArray<E4bCompletedMint> CompletedMints = default);
 
 public enum E4bFundingAction { BeginMint, DeliverHypothetical, Deposit, Complete, Cancel }
 

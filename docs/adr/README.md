@@ -1,10 +1,30 @@
 # Registro ADR — indice unico delle decisioni
 
-**Stato corrente:** RC94.1 candidata, 1233 test attesi; RC93.1 1220 test confermati. Aprire [AUTHORITY_REGISTRY](../AUTHORITY_REGISTRY.md) e [CURRENT_STATE](../CURRENT_STATE.md) per decisioni e attività attive. Gli ADR vecchi sono cronologia, non roadmap parallele.
-
-**ADR più recente:** [0105 — Carbone di avvio del Municipio](0105-riserva-carbone-municipio-avvio-v15.md) (**regola di gameplay v15**).
+**Stato corrente:** RC95 validata con 1245 test confermati. RC96–RC105 candidate, gate Windows da verificare; RC105 attende 1360 test. Per le regole correnti vedi [AUTHORITY_REGISTRY](../AUTHORITY_REGISTRY.md) e [CURRENT_STATE](../CURRENT_STATE.md). Gli ADR precedenti restano documenti storici.
 
 ## Tutti gli ADR (dal più recente)
+
+- [ADR 0116 — Prototipo SQLite unificato generation 7, non giocabile](0116-prototipo-sqlite-generation7-citta-e-cantieri.md)
+
+- [ADR 0115 — Preflight per salvataggio giocabile unico](0115-preflight-migrazione-salvataggio-unico-e-conservazione-cantieri.md)
+
+- [ADR 0114 — Identità stabile della campagna nel laboratorio composito](0114-identita-stabile-campagna-composita-e-autorita.md)
+
+- [ADR 0113 — Blocco SQLite delle scritture dirette sui compositi registrati](0113-fencing-obbligatorio-scritture-composito-registrato.md)
+
+- [ADR 0112 — Registro di autorità e fencing cooperativo dei finanziamenti](0112-autorita-esclusiva-composita-e-fencing-cooperativo.md)
+
+- [ADR 0111 — Backup consistente e ripristino del contenitore finanziamenti](0111-backup-consistente-ripristino-composito-e-ricevute.md)
+
+- [ADR 0110 — Ponte non distruttivo v15 ↔ database composito](0110-ponte-sicuro-salvataggi-v15-e-finanziamenti.md)
+
+- [ADR 0109 — Completamento atomico della Zecca in sandbox](0109-completamento-atomico-zecca-finanziata-in-sandbox.md)
+
+- [ADR 0108 — Clock reale e deposito di finanziamento v15 nel sandbox](0108-clock-reale-e-deposito-finanziamento-v15-sandbox.md)
+
+- [ADR 0107 — Unico comando di validazione, retention delle prove e README](0107-unico-ingresso-validazione-e-retention-cache.md)
+
+- [ADR 0106 — Contenitore SQLite composito sperimentale della campagna v15 e del finanziamento](0106-contenitore-sqlite-composito-v15-finanziamento-isolato.md)
 
 - [ADR 0105 — Municipio: 100 Carbone e 2 Matite solo a nuova partita v15](0105-riserva-carbone-municipio-avvio-v15.md)
 

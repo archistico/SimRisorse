@@ -12,7 +12,7 @@ Questa cartella contiene screenshot del progetto, versionati per essere visibili
 - Mostra menu da 240 px, card con icona abitanti, costi e produzione con icone. Copia integrale del PNG, senza ritagli o ritocchi.
 - SHA-256 verificata: `d1f1f212df75141d0415cf1ba7b1b6109da3939502a6f1d007512466862ed386`.
 
-È incorporata subito dopo il titolo del [README principale](../../README.md). I dati mostrati descrivono la scena di test, non la dotazione di una nuova partita.
+È incorporata subito dopo il titolo del [README principale](../../README.md). Due ritagli della stessa cattura, `colonia-elenco.png` (lista edifici) e `colonia-dettaglio.png` (dettaglio selezionato), sono mostrati nella galleria. Non rappresentano render indipendenti e non documentano le funzionalità grafiche nuove della v15. I dati mostrati descrivono la scena di test, non la dotazione di una nuova partita.
 
 ## Come aggiornarla
 
@@ -21,3 +21,7 @@ Questa cartella contiene screenshot del progetto, versionati per essere visibili
 3. Aprire il PNG e controllare che rappresenti l'interfaccia corrente senza testo sovrapposto o comandi tagliati.
 4. Copiarlo qui mantenendo il nome `colonia.png`, così il collegamento nel README resta stabile.
 5. Aggiornare data, run, scena e [rapporto di verifica](../validation/DESKTOP_UI.md). Non sostituire o modificare le immagini storiche di riferimento.
+
+## Render v15 recenti
+
+`validate.cmd` genera screenshot di Edifici (Tutti/Alimentazione/Industria), Scuola e altri pannelli in `.local-cache/m4/runs/<GUID>/screenshots`, senza distribuirli nello ZIP come immagini create artificialmente. Per aggiornare la galleria dopo la validazione Windows, selezionare soltanto catture autentiche e controllate visivamente.

@@ -1,4 +1,4 @@
-param([string]$OfflinePackageSource = '', [switch]$SkipNativeSmoke)
+﻿param([string]$OfflinePackageSource = '', [switch]$SkipNativeSmoke)
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
@@ -11,6 +11,8 @@ $previousArtifacts = $env:SIMRISORSE_DESKTOP_ARTIFACTS
 New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
 New-Item -ItemType Directory -Path $runDirectory -Force | Out-Null
 New-Item -ItemType Directory -Path $screenshotDirectory -Force | Out-Null
+# The gate uses this marker to keep the failing run's TRX/render evidence.
+$runDirectory | Set-Content -LiteralPath (Join-Path $artifacts 'current-run.txt') -Encoding UTF8
 $env:AVALONIA_TELEMETRY_OPTOUT = '1'
 $env:SIMRISORSE_DESKTOP_ARTIFACTS = $screenshotDirectory
 
